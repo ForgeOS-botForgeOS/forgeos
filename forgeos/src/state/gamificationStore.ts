@@ -91,15 +91,22 @@ export const useGami = create<GamiState>()(
 
       ensureDailyQuests: () => {
         const have = get().quests;
-        const daily = QUESTS.filter((q) => q.scope === 'daily');
+        const dailyPool = QUESTS.filter((q) => q.scope === 'daily');
         const today = todayStr();
-        // Reset daily quests if they were assigned on a previous day.
+        // Rotate a fresh subset of the daily pool each day so the board stays
+        // varied even though the pool is large.
+        const DAILY_COUNT = 5;
+        const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+        const start = (dayOfYear * DAILY_COUNT) % dailyPool.length;
+        const daily = Array.from({ length: Math.min(DAILY_COUNT, dailyPool.length) }, (_, i) => dailyPool[(start + i) % dailyPool.length]);
+        // Reset daily quests if any assigned daily quest is from a previous day.
         const staleDaily = have.some(
-          (uq) => daily.find((d) => d.id === uq.questId) && uq.assignedAt.slice(0, 10) !== today,
+          (uq) => dailyPool.find((d) => d.id === uq.questId) && uq.assignedAt.slice(0, 10) !== today,
         );
         let next = have;
-        if (staleDaily || !have.some((uq) => daily.find((d) => d.id === uq.questId))) {
-          next = have.filter((uq) => !daily.find((d) => d.id === uq.questId));
+        if (staleDaily || !have.some((uq) => dailyPool.find((d) => d.id === uq.questId))) {
+          // Drop any existing daily quests and assign today's rotated subset.
+          next = have.filter((uq) => !dailyPool.find((d) => d.id === uq.questId));
           for (const d of daily) {
             next.push({ questId: d.id, progress: 0, completed: false, claimed: false, assignedAt: new Date().toISOString() });
           }
