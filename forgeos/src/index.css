@@ -63,6 +63,66 @@
   --danger: 248 113 113;
 }
 
+/* Crimson Titan — deep oxblood, free */
+[data-theme='crimson-titan'] {
+  --bg: 18 8 10;
+  --surface: 28 13 16;
+  --surface-2: 40 19 23;
+  --line: 58 28 33;
+  --text: 248 235 237;
+  --muted: 176 138 144;
+  --accent: 239 68 68;
+  --accent-2: 251 146 60;
+  --success: 52 211 153;
+  --warn: 250 204 21;
+  --danger: 244 63 94;
+}
+
+/* Arctic Steel — cold slate + ice cyan, free */
+[data-theme='arctic-steel'] {
+  --bg: 10 14 19;
+  --surface: 17 24 32;
+  --surface-2: 25 34 45;
+  --line: 38 50 64;
+  --text: 233 241 248;
+  --muted: 142 158 176;
+  --accent: 56 189 248;
+  --accent-2: 125 211 252;
+  --success: 45 212 191;
+  --warn: 250 204 21;
+  --danger: 248 113 113;
+}
+
+/* Synthwave — neon magenta + cyan on indigo, locked (Legend) */
+[data-theme='synthwave'] {
+  --bg: 13 8 28;
+  --surface: 22 14 44;
+  --surface-2: 33 21 60;
+  --line: 52 34 86;
+  --text: 245 238 255;
+  --muted: 167 148 200;
+  --accent: 236 72 153;
+  --accent-2: 34 211 238;
+  --success: 52 211 153;
+  --warn: 250 204 21;
+  --danger: 244 63 94;
+}
+
+/* Solar Flare — molten amber + gold on near-black, locked (Strongman) */
+[data-theme='solar-flare'] {
+  --bg: 16 11 4;
+  --surface: 26 18 8;
+  --surface-2: 38 27 12;
+  --line: 56 41 20;
+  --text: 252 244 230;
+  --muted: 184 162 130;
+  --accent: 245 158 11;
+  --accent-2: 253 224 71;
+  --success: 52 211 153;
+  --warn: 251 191 36;
+  --danger: 248 113 113;
+}
+
 * {
   box-sizing: border-box;
 }

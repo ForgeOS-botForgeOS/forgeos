@@ -6,6 +6,7 @@ export const QUESTS: Quest[] = [
   { id: 'd-session', title: 'Show Up', description: 'Finish one training session today.', scope: 'daily', xp: 80, coins: 3, target: 1, metric: 'sessions' },
   { id: 'd-rpe', title: 'Honest Effort', description: 'Log RPE on 6 sets today.', scope: 'daily', xp: 60, coins: 2, target: 6, metric: 'sets' },
   { id: 'd-vol-5000', title: 'Tonnage', description: 'Move 5,000 kg of total volume today.', scope: 'daily', xp: 140, coins: 6, target: 5000, metric: 'volume' },
+  { id: 'd-sets-20', title: 'Double Digits', description: 'Grind out 20 working sets today.', scope: 'daily', xp: 180, coins: 8, target: 20, metric: 'sets' },
 
   // Weekly
   { id: 'w-sessions-4', title: 'Four Pillars', description: 'Train 4 sessions this week.', scope: 'weekly', xp: 400, coins: 25, target: 4, metric: 'sessions' },
@@ -14,16 +15,20 @@ export const QUESTS: Quest[] = [
   { id: 'w-streak-7', title: 'Unbroken', description: 'Maintain a 7-day streak.', scope: 'weekly', xp: 350, coins: 30, target: 7, metric: 'streak' },
 
   { id: 'w-vol-30k', title: 'Heavy Week', description: 'Move 30,000 kg this week.', scope: 'weekly', xp: 500, coins: 32, target: 30000, metric: 'volume' },
+  { id: 'w-sessions-5', title: 'Five Alive', description: 'Train 5 sessions this week.', scope: 'weekly', xp: 520, coins: 36, target: 5, metric: 'sessions' },
+  { id: 'w-pr-2', title: 'Breakthrough', description: 'Set 2 personal records this week.', scope: 'weekly', xp: 800, coins: 55, target: 2, metric: 'pr' },
 
   // Monthly
   { id: 'm-sessions-16', title: 'Consistency King', description: 'Train 16 sessions this month.', scope: 'monthly', xp: 1800, coins: 120, target: 16, metric: 'sessions' },
   { id: 'm-streak-20', title: 'Iron Discipline', description: 'Hold a 20-day streak this month.', scope: 'monthly', xp: 1600, coins: 110, target: 20, metric: 'streak' },
   { id: 'm-vol-150k', title: 'Iron Mountain', description: 'Move 150,000 kg this month.', scope: 'monthly', xp: 2200, coins: 150, target: 150000, metric: 'volume' },
   { id: 'm-pr-3', title: 'Record Breaker', description: 'Set 3 PRs this month.', scope: 'monthly', xp: 2500, coins: 180, target: 3, metric: 'pr' },
+  { id: 'm-sets-240', title: 'Volume Machine', description: 'Accumulate 240 sets this month.', scope: 'monthly', xp: 2000, coins: 140, target: 240, metric: 'sets' },
 
   // Yearly
   { id: 'y-sessions-180', title: 'The Long Game', description: 'Train 180 sessions this year.', scope: 'yearly', xp: 20000, coins: 1500, target: 180, metric: 'sessions' },
   { id: 'y-streak-100', title: 'Centurion', description: 'Hit a 100-day streak this year.', scope: 'yearly', xp: 15000, coins: 1200, target: 100, metric: 'streak' },
+  { id: 'y-pr-25', title: 'Relentless', description: 'Set 25 PRs this year.', scope: 'yearly', xp: 18000, coins: 1400, target: 25, metric: 'pr' },
 ];
 
 export const ICE_BREAKER = [

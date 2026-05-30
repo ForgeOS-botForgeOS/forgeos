@@ -97,6 +97,46 @@ export const QUOTES: Quote[] = [
     deepDive:
       'Paul invokes the athlete as a model of disciplined restraint — "strict training" for a crown that won’t last, to argue for greater discipline toward what does. The lesson cuts both ways: take your training seriously enough to deny yourself, and keep it in proportion to what matters most.',
   },
+  {
+    id: 'stoic-7',
+    genre: 'stoic',
+    text: 'Waste no more time arguing about what a good man should be. Be one.',
+    source: 'Marcus Aurelius, Meditations',
+    deepDive:
+      'Aurelius cuts through deliberation with a command to act. Endless planning of the perfect program, the perfect diet, the perfect start date is a sophisticated form of avoidance. The good lifter is not the one with the best theory but the one under the bar today. Stop describing the athlete you intend to be and train like one now.',
+  },
+  {
+    id: 'stoic-8',
+    genre: 'stoic',
+    text: 'He who fears death will never do anything worthy of a living man.',
+    source: 'Seneca',
+    deepDive:
+      'Seneca’s warning is against letting fear shrink your life. In training the small deaths are failure, judgement, the missed lift in front of others. Athletes who never risk a true max, never post their numbers, never enter the competition, protect their ego at the cost of their progress. Court the worthy risk; the fear is the smaller enemy.',
+  },
+  {
+    id: 'stoic-9',
+    genre: 'stoic',
+    text: 'How long are you going to wait before you demand the best for yourself?',
+    source: 'Epictetus',
+    deepDive:
+      'Epictetus addresses the part of us always promising to start "later." There is no neutral waiting — the body you neglect today is the baseline you fight tomorrow. Demanding the best for yourself is not arrogance; it is refusing to keep deferring your own life. The clock you are watching is the only one you get.',
+  },
+  {
+    id: 'biblical-7',
+    genre: 'biblical',
+    text: 'Whatever you do, work at it with all your heart, as working for the Lord.',
+    source: 'Colossians 3:23',
+    deepDive:
+      'Excellence is reframed as an act of devotion rather than performance for an audience. The half-rep nobody sees, the warm-up done properly, the food prepared with care — all of it is "as working for the Lord," which means the standard does not drop when no one is watching. Integrity in private is the whole point.',
+  },
+  {
+    id: 'biblical-8',
+    genre: 'biblical',
+    text: 'Be strong and courageous. Do not be afraid; do not be discouraged.',
+    source: 'Joshua 1:9',
+    deepDive:
+      'Spoken to Joshua at the threshold of an overwhelming task, this couples strength with courage and names discouragement as the real threat. Progress in the gym is long and largely invisible week to week; discouragement, not weakness, is what ends most journeys. The instruction is to keep going precisely when the evidence feels thin.',
+  },
 ];
 
 export function quotesByGenre(genre: 'stoic' | 'biblical') {

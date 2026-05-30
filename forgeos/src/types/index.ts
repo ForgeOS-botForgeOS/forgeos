@@ -241,7 +241,15 @@ export interface SpotifyTrack {
 }
 
 // ---- Settings ----
-export type ThemeId = 'forge-dark' | 'iron-dawn' | 'emerald-forge' | 'obsidian-platinum';
+export type ThemeId =
+  | 'forge-dark'
+  | 'iron-dawn'
+  | 'crimson-titan'
+  | 'arctic-steel'
+  | 'emerald-forge'
+  | 'obsidian-platinum'
+  | 'synthwave'
+  | 'solar-flare';
 export type QuoteGenre = 'stoic' | 'biblical';
 
 export interface Settings {

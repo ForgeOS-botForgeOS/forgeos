@@ -17,8 +17,12 @@ import { haptic } from '../lib/haptics';
 const THEMES: { id: ThemeId; name: string; locked: boolean; unlockRank: string }[] = [
   { id: 'forge-dark', name: 'Forge Dark', locked: false, unlockRank: '' },
   { id: 'iron-dawn', name: 'Iron Dawn', locked: false, unlockRank: '' },
+  { id: 'crimson-titan', name: 'Crimson Titan', locked: false, unlockRank: '' },
+  { id: 'arctic-steel', name: 'Arctic Steel', locked: false, unlockRank: '' },
   { id: 'emerald-forge', name: 'Emerald Forge', locked: true, unlockRank: 'Gold' },
   { id: 'obsidian-platinum', name: 'Obsidian Platinum', locked: true, unlockRank: 'Platinum' },
+  { id: 'synthwave', name: 'Synthwave', locked: true, unlockRank: 'Legend' },
+  { id: 'solar-flare', name: 'Solar Flare', locked: true, unlockRank: 'Strongman' },
 ];
 
 const RANK_ORDER = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Legend', 'Strongman'];
