@@ -20,3 +20,18 @@ export const SCIENCE_TIPS: string[] = [
 export function tipOfTheDay(dayIndex: number): string {
   return SCIENCE_TIPS[dayIndex % SCIENCE_TIPS.length];
 }
+
+// Form cues keyed by primary muscle — shown on each exercise in the library.
+export const MUSCLE_CUES: Record<string, string> = {
+  Chest: 'Retract the shoulder blades, keep elbows ~45°, drive through the mid-chest.',
+  Back: 'Lead with the elbows, think “pull from the lats”, avoid yanking with biceps.',
+  Shoulders: 'Brace the core, don’t arch the lower back; control the eccentric.',
+  Biceps: 'Pin the elbows, no swinging — full stretch at the bottom, squeeze at the top.',
+  Triceps: 'Lock the elbows in place; only the forearm moves. Full lockout each rep.',
+  Quads: 'Knees track over toes, full depth where mobility allows, drive through mid-foot.',
+  Hamstrings: 'Hinge at the hips, soft knees, feel the stretch — don’t round the back.',
+  Glutes: 'Posterior pelvic tilt at the top, squeeze hard, chin tucked.',
+  Calves: 'Full stretch at the bottom, pause and rise to the big toe at the top.',
+  Core: 'Brace as if about to be punched; quality of tension over reps.',
+  'Full Body': 'Master the sequence light before loading; power comes from the hips.',
+};

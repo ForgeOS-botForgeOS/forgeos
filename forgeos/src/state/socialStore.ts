@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { FeedPost } from '../types';
 import { MOCK_FEED } from '../lib/mockData';
+import { publishPostRemote, reactRemote } from '../lib/repositories';
+import { useUser } from './userStore';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -36,6 +38,8 @@ export const useSocial = create<SocialState>()(
             return { ...p, reactions, myReaction: emoji };
           }),
         });
+        const me = useUser.getState().profile?.id;
+        if (me) void reactRemote(postId, me, emoji); // no-op in mock mode
       },
 
       publishPost: (body, summary) => {
@@ -50,6 +54,8 @@ export const useSocial = create<SocialState>()(
           reactions: {},
         };
         set({ feed: [post, ...get().feed] });
+        const me = useUser.getState().profile?.id;
+        if (me) void publishPostRemote(me, body, summary); // no-op in mock mode
       },
 
       buyRoutine: (id) => {

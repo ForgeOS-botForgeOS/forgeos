@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Users, Swords, Store, Share2, Wifi, Circle } from 'lucide-react';
+import { joinRace } from '../lib/supabase';
 import { Screen } from '../components/Screen';
 import { Card, Button, Pill, Badge, SectionTitle, Sheet } from '../components/ui';
 import { useSocial } from '../state/socialStore';
@@ -147,32 +148,63 @@ function Friends() {
 }
 
 function Race() {
+  const profile = useUser((s) => s.profile);
+  const meName = profile?.name ?? 'You';
+  const meId = profile?.id ?? 'me';
   const [live, setLive] = useState(false);
-  const me = useUser((s) => s.profile?.name ?? 'You');
-  const [scores] = useState([
-    { name: me, vol: 0, you: true },
-    { name: 'Marcus', vol: 0 },
-  ]);
+  const [scores, setScores] = useState<{ userId: string; name: string; volumeKg: number }[]>([]);
+  const ctrl = useRef<{ broadcast: (v: number) => void; leave: () => void } | null>(null);
+  const myVol = useRef(0);
+  const TARGET = 8000;
+
+  function start() {
+    haptic('tap');
+    myVol.current = 0;
+    ctrl.current = joinRace('lobby-marcus', { userId: meId, name: meName, volumeKg: 0 }, (all) => setScores([...all].sort((a, b) => b.volumeKg - a.volumeKg)));
+    // Seed an opponent locally so the board is alive even in mock mode.
+    setScores([{ userId: meId, name: meName, volumeKg: 0 }, { userId: 'marcus', name: 'Marcus', volumeKg: 0 }]);
+    setLive(true);
+  }
+  function stop() {
+    ctrl.current?.leave();
+    ctrl.current = null;
+    setLive(false);
+  }
+  function logRep() {
+    myVol.current += 200;
+    haptic('tap');
+    ctrl.current?.broadcast(myVol.current);
+    // In mock mode there is no remote echo, so advance both locally.
+    setScores((prev) => prev.map((s) => (s.userId === meId ? { ...s, volumeKg: myVol.current } : s.userId === 'marcus' ? { ...s, volumeKg: Math.min(TARGET, s.volumeKg + 150 + ((myVol.current / 200) % 3) * 40) } : s)));
+  }
+
+  const leader = scores[0];
+  const won = leader && leader.volumeKg >= TARGET;
+
   return (
     <div className="space-y-3">
       <Card className="text-center space-y-3">
         <Swords className="mx-auto text-accent" />
         <p className="font-semibold">Multiplayer live race</p>
-        <p className="text-sm text-muted">Train side-by-side in real time — first to the target volume wins. Scoreboard updates live.</p>
-        <Button className="w-full justify-center" onClick={() => { setLive((v) => !v); haptic('tap'); }}>
+        <p className="text-sm text-muted">Train side-by-side in real time — first to {TARGET.toLocaleString()} kg wins. Scoreboard updates live.</p>
+        <Button className="w-full justify-center" onClick={() => (live ? stop() : start())}>
           {live ? 'Leave race' : 'Start a race vs Marcus'}
         </Button>
-        <p className="text-[11px] text-muted/70 flex items-center justify-center gap-1"><Wifi size={12} /> Realtime via Supabase channels — <code>// TODO: socket wiring</code></p>
+        <p className="text-[11px] text-muted/70 flex items-center justify-center gap-1"><Wifi size={12} /> Realtime via Supabase presence + broadcast (auto-live with keys).</p>
       </Card>
       {live && (
         <Card>
-          <SectionTitle>Live scoreboard</SectionTitle>
+          <SectionTitle action={won ? <Badge color="rgb(var(--success))">🏁 {leader.name} wins</Badge> : undefined}>Live scoreboard</SectionTitle>
           {scores.map((s) => (
-            <div key={s.name} className="flex justify-between py-1.5 text-sm">
-              <span className={s.you ? 'text-accent font-semibold' : ''}>{s.name}</span>
-              <span className="font-mono">{s.vol.toLocaleString()} kg</span>
+            <div key={s.userId} className="py-1.5">
+              <div className="flex justify-between text-sm">
+                <span className={s.userId === meId ? 'text-accent font-semibold' : ''}>{s.name}</span>
+                <span className="font-mono">{Math.round(s.volumeKg).toLocaleString()} kg</span>
+              </div>
+              <div className="h-1.5 mt-1 rounded-full bg-surface-2 overflow-hidden"><div className="h-full bg-accent rounded-full" style={{ width: `${Math.min(100, (s.volumeKg / TARGET) * 100)}%` }} /></div>
             </div>
           ))}
+          {!won && <Button variant="ghost" className="w-full justify-center mt-2" onClick={logRep}>Log a set (+200 kg)</Button>}
           <p className="text-[11px] text-muted/70 mt-2">Local co-op link also available — share a session code to train in the same room.</p>
         </Card>
       )}

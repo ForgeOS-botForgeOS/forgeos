@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { UserProfile, WeekPlan, WeighIn } from '../types';
 import { macrosFor, mifflinStJeor, tdee } from '../lib/fitness';
+import { upsertProfile } from '../lib/repositories';
 
 interface UserState {
   profile: UserProfile | null;
@@ -21,7 +22,10 @@ export const useUser = create<UserState>()(
       profile: null,
       weekPlan: null,
       weighIns: [],
-      setProfile: (p) => set({ profile: p }),
+      setProfile: (p) => {
+        set({ profile: p });
+        void upsertProfile(p); // no-op in mock mode
+      },
       updateProfile: (patch) => {
         const cur = get().profile;
         if (!cur) return;

@@ -1,20 +1,32 @@
-import type { Goal, PlannedDay, WeekPlan, Weekday } from '../../types';
+import type { Goal, PlannedDay, WeekPlan, Weekday, MuscleGroup } from '../../types';
 import { EXERCISES } from '../../data/exercises';
 
 const WEEKDAYS: Weekday[] = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
-function pickByPrimary(primaries: string[], count: number): string[] {
+// Pick `count` exercises whose primary muscle is in the set, offset so that a
+// second "Push" day in the week pulls different movements than the first.
+function pick(primaries: MuscleGroup[], count: number, offset: number): string[] {
   const pool = EXERCISES.filter((e) => primaries.includes(e.primary));
-  return pool.slice(0, count).map((e) => e.id);
+  const out: string[] = [];
+  for (let i = 0; i < count && pool.length; i++) {
+    out.push(pool[(offset * count + i) % pool.length].id);
+  }
+  return out;
 }
 
-const TEMPLATES: Record<string, { label: string; ids: () => string[] }[]> = {
-  push: [{ label: 'Push', ids: () => pickByPrimary(['Chest', 'Shoulders', 'Triceps'], 5) }],
-  pull: [{ label: 'Pull', ids: () => pickByPrimary(['Back', 'Biceps'], 5) }],
-  legs: [{ label: 'Legs', ids: () => pickByPrimary(['Quads', 'Hamstrings', 'Glutes', 'Calves'], 5) }],
-  upper: [{ label: 'Upper', ids: () => pickByPrimary(['Chest', 'Back', 'Shoulders'], 5) }],
-  lower: [{ label: 'Lower', ids: () => pickByPrimary(['Quads', 'Hamstrings', 'Glutes'], 5) }],
-  full: [{ label: 'Full Body', ids: () => pickByPrimary(['Full Body', 'Quads', 'Back', 'Chest'], 5) }],
+interface DayTemplate {
+  label: string;
+  muscles: MuscleGroup[];
+}
+
+const TEMPLATES: Record<string, DayTemplate> = {
+  push: { label: 'Push', muscles: ['Chest', 'Shoulders', 'Triceps'] },
+  pull: { label: 'Pull', muscles: ['Back', 'Biceps'] },
+  legs: { label: 'Legs', muscles: ['Quads', 'Hamstrings', 'Glutes', 'Calves'] },
+  upper: { label: 'Upper', muscles: ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps'] },
+  lower: { label: 'Lower', muscles: ['Quads', 'Hamstrings', 'Glutes', 'Calves'] },
+  full: { label: 'Full Body', muscles: ['Full Body', 'Quads', 'Back', 'Chest', 'Shoulders'] },
+  arms: { label: 'Arms & Shoulders', muscles: ['Biceps', 'Triceps', 'Shoulders'] },
 };
 
 // Choose a split shape from the requested days/week.
@@ -25,9 +37,9 @@ function splitFor(days: number): string[] {
     case 3:
       return ['push', 'pull', 'legs'];
     case 4:
-      return ['upper', 'lower', 'upper', 'lower'];
+      return ['upper', 'lower', 'push', 'pull'];
     case 5:
-      return ['push', 'pull', 'legs', 'upper', 'lower'];
+      return ['push', 'pull', 'legs', 'upper', 'arms'];
     case 6:
       return ['push', 'pull', 'legs', 'push', 'pull', 'legs'];
     default:
@@ -37,14 +49,23 @@ function splitFor(days: number): string[] {
 
 export function buildWeekPlan(days: number, _style: string, goal: Goal): WeekPlan {
   const split = splitFor(days);
-  // Distribute training days across the week, resting between where possible.
   const trainingIdx = spread(days);
+  // Track how many times each template has appeared so repeats vary.
+  const seen: Record<string, number> = {};
   let s = 0;
+
   const planned: PlannedDay[] = WEEKDAYS.map((day, idx) => {
     if (trainingIdx.includes(idx) && s < split.length) {
       const key = split[s++];
-      const tmpl = TEMPLATES[key][0];
-      return { day, label: tmpl.label, exerciseIds: tmpl.ids(), rest: false };
+      const tmpl = TEMPLATES[key];
+      const offset = seen[key] ?? 0;
+      seen[key] = offset + 1;
+      return {
+        day,
+        label: offset > 0 ? `${tmpl.label} ${offset + 1}` : tmpl.label,
+        exerciseIds: pick(tmpl.muscles, goal === 'strength' ? 4 : 5, offset),
+        rest: false,
+      };
     }
     return { day, label: 'Rest', exerciseIds: [], rest: true };
   });

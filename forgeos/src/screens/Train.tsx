@@ -1,11 +1,16 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History } from 'lucide-react';
+import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { ReactNode } from 'react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Sheet, Badge, SectionTitle } from '../components/ui';
 import { SetRow } from '../components/train/SetRow';
 import { RestTimer } from '../components/train/RestTimer';
 import { Tools } from '../components/train/Tools';
+import { Confetti } from '../components/Celebrate';
 import { useWorkout } from '../state/workoutStore';
 import { useUser } from '../state/userStore';
 import { useGami } from '../state/gamificationStore';
@@ -23,6 +28,7 @@ export default function Train() {
   const startWorkout = useWorkout((s) => s.startWorkout);
 
   const [toolsOpen, setToolsOpen] = useState(false);
+  const navigate = useNavigate();
 
   const plateaus = useMemo(() => detectPlateaus(history), [history]);
   const rec = useMemo(() => recommendBlock(history), [history]);
@@ -86,9 +92,14 @@ export default function Train() {
         </div>
       )}
 
-      <Button variant="ghost" className="w-full justify-center" onClick={() => setToolsOpen(true)}>
-        <span className="flex items-center gap-2"><Wrench size={16} /> Tools — plates, warm-up, 1RM</span>
-      </Button>
+      <div className="flex gap-2">
+        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setToolsOpen(true)}>
+          <span className="flex items-center gap-2"><Wrench size={16} /> Tools</span>
+        </Button>
+        <Button variant="ghost" className="flex-1 justify-center" onClick={() => navigate('/history')}>
+          <span className="flex items-center gap-2"><History size={16} /> History</span>
+        </Button>
+      </div>
 
       <Sheet open={toolsOpen} onClose={() => setToolsOpen(false)} title="Lifting tools">
         <Tools />
@@ -99,7 +110,17 @@ export default function Train() {
 
 function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: () => void; toolsOpen: boolean; onCloseTools: () => void }) {
   const active = useWorkout((s) => s.active)!;
-  const { addExercise, removeExercise, swapExercise, addSet, updateSet, removeSet, completeSet, finishWorkout, discardWorkout, linkSuperset, lastSetFor } = useWorkout();
+  const { addExercise, removeExercise, swapExercise, addSet, updateSet, removeSet, completeSet, finishWorkout, discardWorkout, linkSuperset, reorderExercises, lastSetFor } = useWorkout();
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  function onDragEnd(e: DragEndEvent) {
+    const { active: a2, over } = e;
+    if (!over || a2.id === over.id) return;
+    const ids = active.exercises.map((x) => x.id);
+    const next = arrayMove(ids, ids.indexOf(String(a2.id)), ids.indexOf(String(over.id)));
+    reorderExercises(next);
+    haptic('tap');
+  }
   const bodyweight = useUser((s) => s.profile?.weightKg ?? 80);
   const addXp = useGami((s) => s.addXp);
   const registerSession = useGami((s) => s.registerSession);
@@ -111,6 +132,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   const [subFor, setSubFor] = useState<string | null>(null);
   const [noteFor, setNoteFor] = useState<{ weId: string; setId: string } | null>(null);
   const [linkMode, setLinkMode] = useState<string[]>([]);
+  const [celebrating, setCelebrating] = useState(false);
 
   const totalVolume = active.exercises.reduce(
     (sum, we) => sum + we.sets.filter((s) => s.completed).reduce((a, s) => a + volumeOf(s.weightKg, s.reps), 0),
@@ -131,15 +153,15 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
     const done = finishWorkout();
     if (!done) return;
     registerSession();
-    const prCount = done.exercises.length; // simplistic; PR detection handled in store
     bumpMetric('pr', 0);
     haptic('success');
-    navigate('/quests');
-    void prCount;
+    setCelebrating(true);
+    setTimeout(() => navigate('/quests'), 1500);
   }
 
   return (
     <div className="px-4 pt-12 pb-32 space-y-4">
+      {celebrating && <Confetti />}
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold">{active.name}</h1>
@@ -148,14 +170,19 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
         <Badge color="rgb(var(--success))">LIVE</Badge>
       </header>
 
+      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+      <SortableContext items={active.exercises.map((e) => e.id)} strategy={verticalListSortingStrategy}>
       {active.exercises.map((we) => {
         const ex = exerciseById(we.exerciseId);
         const last = we.sets[we.sets.length - 1];
         const suggestion = last ? overloadSuggestion(last.weightKg, last.reps, last.reps, last.rpe) : null;
         return (
-          <Card key={we.id} className="space-y-2">
+          <Sortable key={we.id} id={we.id}>
+            {(handle) => (
+            <Card className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
+                <button {...handle} className="text-muted cursor-grab active:cursor-grabbing touch-none" title="Drag to reorder"><GripVertical size={16} /></button>
                 <span className="font-semibold">{ex?.name ?? 'Exercise'}</span>
                 {we.supersetGroup && <Badge color="rgb(var(--accent-2))">superset</Badge>}
               </div>
@@ -200,8 +227,12 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
               </Button>
             </div>
           </Card>
+            )}
+          </Sortable>
         );
       })}
+      </SortableContext>
+      </DndContext>
 
       {linkMode.length >= 2 && (
         <Button className="w-full justify-center" onClick={() => { linkSuperset(linkMode); setLinkMode([]); haptic('success'); }}>
@@ -264,6 +295,23 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
 
       <Sheet open={toolsOpen} onClose={onCloseTools} title="Lifting tools"><Tools /></Sheet>
       <p className="text-center text-[11px] text-muted/60">Swipe a set → to complete, ← to delete · long-press for notes · bodyweight {bodyweight}kg used for rank scoring</p>
+    </div>
+  );
+}
+
+// Render-prop sortable wrapper — exposes drag handle props so only the grip
+// initiates a reorder, leaving the SetRow swipe gestures untouched.
+function Sortable({ id, children }: { id: string; children: (handle: Record<string, unknown>) => ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.7 : 1,
+    zIndex: isDragging ? 20 : undefined,
+  };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ ...attributes, ...listeners })}
     </div>
   );
 }

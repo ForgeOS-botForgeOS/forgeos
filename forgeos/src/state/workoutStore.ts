@@ -22,6 +22,7 @@ interface WorkoutState {
   removeSet: (workoutExerciseId: string, setId: string) => void;
   completeSet: (workoutExerciseId: string, setId: string) => void;
   linkSuperset: (idsInOrder: string[]) => void;
+  reorderExercises: (orderedIds: string[]) => void;
   finishWorkout: (track?: SpotifyTrack | null) => Workout | null;
   discardWorkout: () => void;
 
@@ -155,6 +156,14 @@ export const useWorkout = create<WorkoutState>()(
             ),
           },
         });
+      },
+
+      reorderExercises: (orderedIds) => {
+        const a = get().active;
+        if (!a) return;
+        const byId = new Map(a.exercises.map((e) => [e.id, e]));
+        const next = orderedIds.map((id) => byId.get(id)!).filter(Boolean);
+        set({ active: { ...a, exercises: next } });
       },
 
       finishWorkout: (track) => {

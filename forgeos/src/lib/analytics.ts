@@ -48,6 +48,18 @@ export function detectPlateaus(history: Workout[]): PlateauFlag[] {
   return flags;
 }
 
+// ---- Per-lift e1RM progression series (oldest -> newest) ----
+export function e1rmSeries(history: Workout[], exerciseId: string): { date: string; e1rm: number }[] {
+  const points: { date: string; e1rm: number }[] = [];
+  for (const w of [...history].reverse()) {
+    const we = w.exercises.find((e) => e.exerciseId === exerciseId);
+    if (!we) continue;
+    const best = Math.max(0, ...we.sets.filter((s) => s.completed).map((s) => e1rm(s.weightKg, s.reps)));
+    if (best > 0) points.push({ date: w.date.slice(5, 10), e1rm: best });
+  }
+  return points;
+}
+
 // ---- Adaptive periodisation engine ----
 // Reads recent volume + average RPE and recommends the next block.
 export interface PeriodisationRec {

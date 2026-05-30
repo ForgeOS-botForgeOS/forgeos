@@ -1,5 +1,8 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
-import { isBackendLive, supabase } from './supabase';
+import { isBackendLive } from './supabase';
+import { pushWorkout } from './repositories';
+import { useUser } from '../state/userStore';
+import type { Workout } from '../types';
 
 interface ForgeDB extends DBSchema {
   queue: {
@@ -47,13 +50,15 @@ export async function pendingCount(): Promise<number> {
 export async function syncQueue(): Promise<{ synced: number }> {
   const db = await getDb();
   const pending = await db.getAllFromIndex('queue', 'by-status', 'pending');
+  const userId = useUser.getState().profile?.id;
   let synced = 0;
   for (const op of pending) {
-    if (isBackendLive && supabase) {
-      // TODO: wire backend — push op.payload to op.table via supabase
-      // await supabase.from(op.table).upsert(op.payload)
+    let ok = true;
+    if (isBackendLive && userId) {
+      // Push the queued write to Supabase. If it fails, leave it pending.
+      if (op.table === 'workouts') ok = await pushWorkout(userId, op.payload as Workout);
     }
-    if (op.id != null) {
+    if (ok && op.id != null) {
       await db.put('queue', { ...op, status: 'synced' });
       synced++;
     }

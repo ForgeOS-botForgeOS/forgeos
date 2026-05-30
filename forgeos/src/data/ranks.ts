@@ -66,3 +66,20 @@ export function strengthScore(weightKg: number, reps: number, bodyweightKg: numb
   const bwFactor = 80 / Math.max(50, bodyweightKg); // normalised around 80kg
   return Math.round(weightKg * reps * bwFactor);
 }
+
+// Map a per-lift e1RM (body-weight-adjusted) to a badge tier.
+const LIFT_TIERS: { name: string; min: number; color: string }[] = [
+  { name: 'Bronze', min: 0, color: '#cd7f32' },
+  { name: 'Silver', min: 60, color: '#c0c0c0' },
+  { name: 'Gold', min: 100, color: '#ffd24a' },
+  { name: 'Platinum', min: 140, color: '#7fe9e3' },
+  { name: 'Legend', min: 180, color: '#a78bfa' },
+  { name: 'Strongman', min: 230, color: '#ff5c35' },
+];
+
+export function liftBadge(e1rmKg: number, bodyweightKg: number): { name: string; color: string } {
+  const adjusted = e1rmKg * (80 / Math.max(50, bodyweightKg));
+  let tier = LIFT_TIERS[0];
+  for (const t of LIFT_TIERS) if (adjusted >= t.min) tier = t;
+  return { name: tier.name, color: tier.color };
+}

@@ -13,8 +13,11 @@ export const QUESTS: Quest[] = [
   { id: 'w-pr', title: 'New Heights', description: 'Set 1 personal record this week.', scope: 'weekly', xp: 600, coins: 40, target: 1, metric: 'pr' },
   { id: 'w-streak-7', title: 'Unbroken', description: 'Maintain a 7-day streak.', scope: 'weekly', xp: 350, coins: 30, target: 7, metric: 'streak' },
 
+  { id: 'w-vol-30k', title: 'Heavy Week', description: 'Move 30,000 kg this week.', scope: 'weekly', xp: 500, coins: 32, target: 30000, metric: 'volume' },
+
   // Monthly
   { id: 'm-sessions-16', title: 'Consistency King', description: 'Train 16 sessions this month.', scope: 'monthly', xp: 1800, coins: 120, target: 16, metric: 'sessions' },
+  { id: 'm-streak-20', title: 'Iron Discipline', description: 'Hold a 20-day streak this month.', scope: 'monthly', xp: 1600, coins: 110, target: 20, metric: 'streak' },
   { id: 'm-vol-150k', title: 'Iron Mountain', description: 'Move 150,000 kg this month.', scope: 'monthly', xp: 2200, coins: 150, target: 150000, metric: 'volume' },
   { id: 'm-pr-3', title: 'Record Breaker', description: 'Set 3 PRs this month.', scope: 'monthly', xp: 2500, coins: 180, target: 3, metric: 'pr' },
 

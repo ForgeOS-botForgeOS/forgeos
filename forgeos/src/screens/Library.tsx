@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Search, Nfc, Play } from 'lucide-react';
 import { Card, Sheet, Badge, Button } from '../components/ui';
 import { EXERCISES, EXERCISE_CATEGORIES } from '../data/exercises';
+import { MUSCLE_CUES } from '../data/tips';
 import type { Exercise } from '../types';
 import { haptic } from '../lib/haptics';
 
@@ -88,6 +89,10 @@ export default function Library() {
               {detail.secondary.map((m) => <Badge key={m} color="rgb(var(--muted))">{m}</Badge>)}
             </div>
             <p className="text-sm text-muted">Equipment: {detail.equipment}</p>
+            <div className="rounded-xl bg-surface-2 p-3">
+              <p className="text-[11px] uppercase tracking-wide text-accent-2 mb-1">Form cue</p>
+              <p className="text-sm">{MUSCLE_CUES[detail.primary] ?? 'Control the weight through a full range of motion.'}</p>
+            </div>
             <Button variant="outline" className="w-full justify-center" onClick={() => window.open(detail.videoUrl, '_blank')}>
               <span className="flex items-center gap-2"><Play size={16} /> Watch form video</span>
             </Button>
