@@ -246,9 +246,16 @@ export type ThemeId =
   | 'iron-dawn'
   | 'crimson-titan'
   | 'arctic-steel'
+  | 'midnight-ocean'
+  | 'forest-moss'
+  | 'rose-quartz'
+  | 'volcanic-ash'
   | 'emerald-forge'
   | 'obsidian-platinum'
+  | 'cyber-lime'
+  | 'royal-amethyst'
   | 'synthwave'
+  | 'blood-moon'
   | 'solar-flare';
 export type QuoteGenre = 'stoic' | 'biblical';
 

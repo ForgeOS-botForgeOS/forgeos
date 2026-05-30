@@ -19,9 +19,16 @@ const THEMES: { id: ThemeId; name: string; locked: boolean; unlockRank: string }
   { id: 'iron-dawn', name: 'Iron Dawn', locked: false, unlockRank: '' },
   { id: 'crimson-titan', name: 'Crimson Titan', locked: false, unlockRank: '' },
   { id: 'arctic-steel', name: 'Arctic Steel', locked: false, unlockRank: '' },
+  { id: 'midnight-ocean', name: 'Midnight Ocean', locked: false, unlockRank: '' },
+  { id: 'forest-moss', name: 'Forest Moss', locked: false, unlockRank: '' },
+  { id: 'rose-quartz', name: 'Rose Quartz', locked: false, unlockRank: '' },
+  { id: 'volcanic-ash', name: 'Volcanic Ash', locked: false, unlockRank: '' },
   { id: 'emerald-forge', name: 'Emerald Forge', locked: true, unlockRank: 'Gold' },
+  { id: 'cyber-lime', name: 'Cyber Lime', locked: true, unlockRank: 'Gold' },
   { id: 'obsidian-platinum', name: 'Obsidian Platinum', locked: true, unlockRank: 'Platinum' },
+  { id: 'royal-amethyst', name: 'Royal Amethyst', locked: true, unlockRank: 'Platinum' },
   { id: 'synthwave', name: 'Synthwave', locked: true, unlockRank: 'Legend' },
+  { id: 'blood-moon', name: 'Blood Moon', locked: true, unlockRank: 'Legend' },
   { id: 'solar-flare', name: 'Solar Flare', locked: true, unlockRank: 'Strongman' },
 ];
 

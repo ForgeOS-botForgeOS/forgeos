@@ -123,6 +123,111 @@
   --danger: 248 113 113;
 }
 
+/* Midnight Ocean — deep navy + teal, free */
+[data-theme='midnight-ocean'] {
+  --bg: 7 12 23;
+  --surface: 13 21 38;
+  --surface-2: 20 31 54;
+  --line: 31 46 76;
+  --text: 230 240 250;
+  --muted: 136 156 184;
+  --accent: 45 212 191;
+  --accent-2: 96 165 250;
+  --success: 52 211 153;
+  --warn: 250 204 21;
+  --danger: 248 113 113;
+}
+
+/* Forest Moss — earthy green + lime, free */
+[data-theme='forest-moss'] {
+  --bg: 10 15 11;
+  --surface: 16 24 17;
+  --surface-2: 24 34 25;
+  --line: 38 52 39;
+  --text: 233 244 234;
+  --muted: 140 162 142;
+  --accent: 132 204 22;
+  --accent-2: 250 204 21;
+  --success: 52 211 153;
+  --warn: 251 191 36;
+  --danger: 248 113 113;
+}
+
+/* Rose Quartz — muted plum + warm rose, free */
+[data-theme='rose-quartz'] {
+  --bg: 19 12 17;
+  --surface: 30 19 27;
+  --surface-2: 42 28 38;
+  --line: 60 41 54;
+  --text: 248 238 244;
+  --muted: 180 152 168;
+  --accent: 244 114 182;
+  --accent-2: 196 181 253;
+  --success: 52 211 153;
+  --warn: 250 204 21;
+  --danger: 244 63 94;
+}
+
+/* Volcanic Ash — charcoal + ember, free */
+[data-theme='volcanic-ash'] {
+  --bg: 12 12 13;
+  --surface: 20 20 22;
+  --surface-2: 30 30 33;
+  --line: 46 46 50;
+  --text: 238 238 240;
+  --muted: 150 150 156;
+  --accent: 249 115 22;
+  --accent-2: 239 68 68;
+  --success: 52 211 153;
+  --warn: 251 191 36;
+  --danger: 248 113 113;
+}
+
+/* Cyber Lime — black + electric lime/cyan, locked (Gold) */
+[data-theme='cyber-lime'] {
+  --bg: 8 11 8;
+  --surface: 14 18 14;
+  --surface-2: 21 27 21;
+  --line: 34 44 34;
+  --text: 236 248 236;
+  --muted: 142 164 142;
+  --accent: 163 230 53;
+  --accent-2: 34 211 238;
+  --success: 52 211 153;
+  --warn: 250 204 21;
+  --danger: 248 113 113;
+}
+
+/* Royal Amethyst — regal violet + gold, locked (Platinum) */
+[data-theme='royal-amethyst'] {
+  --bg: 14 10 22;
+  --surface: 23 16 36;
+  --surface-2: 33 24 52;
+  --line: 50 37 78;
+  --text: 243 238 252;
+  --muted: 166 152 192;
+  --accent: 168 85 247;
+  --accent-2: 250 204 21;
+  --success: 52 211 153;
+  --warn: 251 191 36;
+  --danger: 244 63 94;
+}
+
+/* Blood Moon — crimson on black, locked (Legend) */
+[data-theme='blood-moon'] {
+  --bg: 12 6 7;
+  --surface: 22 10 12;
+  --surface-2: 33 15 18;
+  --line: 52 23 27;
+  --text: 246 230 232;
+  --muted: 178 134 140;
+  --accent: 220 38 38;
+  --accent-2: 251 113 133;
+  --success: 52 211 153;
+  --warn: 250 204 21;
+  --danger: 248 113 113;
+}
+
 * {
   box-sizing: border-box;
 }

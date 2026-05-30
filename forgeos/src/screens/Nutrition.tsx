@@ -1,10 +1,11 @@
 import { useRef, useState } from 'react';
-import { Camera, Trash2, Sparkles, Calculator } from 'lucide-react';
+import { Camera, Trash2, Sparkles, Calculator, ChefHat, Clock } from 'lucide-react';
 import { Screen } from '../components/Screen';
-import { Card, Button, Sheet, Badge, SectionTitle } from '../components/ui';
+import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
 import { useNutrition } from '../state/nutritionStore';
 import { useUser } from '../state/userStore';
 import { scanMeal, visionIsLive } from '../lib/vision';
+import { RECIPES, MEAL_TYPES, type Recipe, type MealType } from '../data/recipes';
 import { haptic } from '../lib/haptics';
 import type { ScanResult } from '../types';
 
@@ -20,6 +21,7 @@ export default function Nutrition() {
   const [result, setResult] = useState<ScanResult | null>(null);
   const [recompOpen, setRecompOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
+  const [recipesOpen, setRecipesOpen] = useState(false);
 
   const macros = profile?.macros ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 };
 
@@ -79,6 +81,10 @@ export default function Nutrition() {
         <p className="text-sm">{goalText[profile?.goal ?? 'recomp']}</p>
       </Card>
 
+      <Button variant="ghost" className="w-full justify-center" onClick={() => setRecipesOpen(true)}>
+        <span className="flex items-center gap-2"><ChefHat size={16} /> Recipe library ({RECIPES.length}) — goal-aligned</span>
+      </Button>
+
       <div className="flex gap-2">
         <Button variant="ghost" className="flex-1 justify-center" onClick={() => setManualOpen(true)}>+ Manual entry</Button>
         <Button variant="ghost" className="justify-center" onClick={() => setRecompOpen(true)}><Calculator size={16} /></Button>
@@ -129,6 +135,16 @@ export default function Nutrition() {
 
       <ManualEntry open={manualOpen} onClose={() => setManualOpen(false)} onAdd={(e) => { addEntry({ ...e, source: 'manual' }); setManualOpen(false); }} />
       <RecompCalc open={recompOpen} onClose={() => setRecompOpen(false)} />
+      <RecipeBrowser
+        open={recipesOpen}
+        onClose={() => setRecipesOpen(false)}
+        userGoal={profile?.goal ?? 'recomp'}
+        onAdd={(rec) => {
+          addEntry({ name: rec.name, calories: rec.kcal, proteinG: rec.protein, carbsG: rec.carbs, fatG: rec.fat, sugarG: 0, source: 'manual' });
+          haptic('success');
+          setRecipesOpen(false);
+        }}
+      />
     </Screen>
   );
 }
@@ -227,4 +243,77 @@ function Slider({ label, min, max, step, value, onChange }: { label: string; min
 
 function RC({ label, v }: { label: string; v: string }) {
   return <div className="rounded-xl bg-surface-2 py-3"><p className="text-xs text-muted">{label}</p><p className="font-mono font-bold">{v}</p></div>;
+}
+
+function RecipeBrowser({
+  open,
+  onClose,
+  userGoal,
+  onAdd,
+}: {
+  open: boolean;
+  onClose: () => void;
+  userGoal: string;
+  onAdd: (r: Recipe) => void;
+}) {
+  const [meal, setMeal] = useState<MealType | 'All'>('All');
+  const [onlyGoal, setOnlyGoal] = useState(true);
+  const [openId, setOpenId] = useState<string | null>(null);
+
+  const list = RECIPES.filter(
+    (r) => (meal === 'All' || r.meal === meal) && (!onlyGoal || r.goals.includes(userGoal as Recipe['goals'][number])),
+  );
+
+  return (
+    <Sheet open={open} onClose={onClose} title="Recipe library">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <p className="text-xs text-muted">{list.length} recipes</p>
+          <button onClick={() => setOnlyGoal((v) => !v)} className={`text-[11px] rounded-full px-2 py-1 ${onlyGoal ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>
+            {onlyGoal ? `matched to: ${userGoal}` : 'showing all goals'}
+          </button>
+        </div>
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
+          {(['All', ...MEAL_TYPES] as const).map((m) => (
+            <Pill key={m} active={meal === m} onClick={() => setMeal(m)}>{m}</Pill>
+          ))}
+        </div>
+        <div className="space-y-2 max-h-[55vh] overflow-y-auto no-scrollbar">
+          {list.map((r) => {
+            const expanded = openId === r.id;
+            return (
+              <div key={r.id} className="rounded-xl bg-surface-2 p-3">
+                <button className="w-full text-left" onClick={() => setOpenId(expanded ? null : r.id)}>
+                  <div className="flex items-center justify-between">
+                    <p className="font-semibold text-sm">{r.name}</p>
+                    <Badge color="rgb(var(--accent-2))">{r.meal}</Badge>
+                  </div>
+                  <p className="text-xs text-muted mt-1 flex items-center gap-2">
+                    <span className="font-mono">{r.kcal} kcal</span> · P{r.protein} C{r.carbs} F{r.fat}
+                    <span className="flex items-center gap-0.5"><Clock size={11} /> {r.minutes}m</span>
+                  </p>
+                </button>
+                {expanded && (
+                  <div className="mt-2 space-y-2">
+                    <div className="flex flex-wrap gap-1">
+                      {r.goals.map((g) => <Badge key={g}>{g}</Badge>)}
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Ingredients</p>
+                      <p className="text-xs">{r.ingredients.join(' · ')}</p>
+                    </div>
+                    <div>
+                      <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Method</p>
+                      <p className="text-xs">{r.steps}</p>
+                    </div>
+                    <Button className="w-full justify-center py-2" onClick={() => onAdd(r)}>Add to today’s log</Button>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </Sheet>
+  );
 }
