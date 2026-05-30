@@ -1,0 +1,98 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---- Theme tokens. Channels are space-separated RGB so Tailwind's
+   rgb(var(--x) / <alpha>) syntax works. data-theme on <html> swaps them. ---- */
+:root,
+[data-theme='forge-dark'] {
+  --bg: 9 11 16;
+  --surface: 17 20 28;
+  --surface-2: 25 29 40;
+  --line: 38 43 56;
+  --text: 233 237 245;
+  --muted: 138 147 165;
+  --accent: 255 92 53; /* forge ember */
+  --accent-2: 255 176 32; /* molten gold */
+  --success: 52 211 153;
+  --warn: 251 191 36;
+  --danger: 248 113 113;
+}
+
+[data-theme='iron-dawn'] {
+  --bg: 18 16 22;
+  --surface: 28 24 33;
+  --surface-2: 38 33 45;
+  --line: 54 47 62;
+  --text: 244 239 248;
+  --muted: 164 152 176;
+  --accent: 124 109 242; /* dawn violet */
+  --accent-2: 56 189 248; /* steel sky */
+  --success: 45 212 191;
+  --warn: 250 204 21;
+  --danger: 244 114 182;
+}
+
+/* Locked premium themes (still defined so previews work) */
+[data-theme='emerald-forge'] {
+  --bg: 8 16 14;
+  --surface: 14 26 22;
+  --surface-2: 20 36 30;
+  --line: 30 52 44;
+  --text: 230 245 240;
+  --muted: 130 160 150;
+  --accent: 16 185 129;
+  --accent-2: 250 204 21;
+  --success: 52 211 153;
+  --warn: 251 191 36;
+  --danger: 248 113 113;
+}
+
+[data-theme='obsidian-platinum'] {
+  --bg: 6 7 9;
+  --surface: 14 16 20;
+  --surface-2: 22 25 31;
+  --line: 40 44 54;
+  --text: 240 244 250;
+  --muted: 150 158 172;
+  --accent: 226 232 240;
+  --accent-2: 148 163 184;
+  --success: 52 211 153;
+  --warn: 251 191 36;
+  --danger: 248 113 113;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: rgb(var(--bg));
+  color: rgb(var(--text));
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Hide scrollbars inside the phone frame for a native feel */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+input,
+select,
+textarea,
+button {
+  font-family: inherit;
+}

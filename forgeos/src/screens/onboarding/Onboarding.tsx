@@ -1,0 +1,324 @@
+import { useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { Flame, Mail, Apple as AppleIcon, Globe } from 'lucide-react';
+import { Button, Card, Pill } from '../../components/ui';
+import { ICE_BREAKER } from '../../data/quests';
+import { useUser } from '../../state/userStore';
+import { macrosFor, mifflinStJeor, tdee, bodyFatBand } from '../../lib/fitness';
+import { haptic } from '../../lib/haptics';
+import type { ActivityLevel, ExperienceLevel, Goal, Sex, UserProfile } from '../../types';
+import { buildWeekPlan } from './planGenerator';
+import { FitnessTest } from './FitnessTest';
+
+type Step = 'signin' | 'quiz' | 'metrics' | 'test' | 'plan';
+
+export default function Onboarding() {
+  const [step, setStep] = useState<Step>('signin');
+  const [provider, setProvider] = useState<UserProfile['authProvider']>('guest');
+  const [quiz, setQuiz] = useState<Record<string, string>>({});
+  const [name, setName] = useState('');
+  const [sex, setSex] = useState<Sex>('male');
+  const [age, setAge] = useState(28);
+  const [heightCm, setHeightCm] = useState(178);
+  const [weightKg, setWeightKg] = useState(80);
+  const [goal, setGoal] = useState<Goal>('recomp');
+  const [activity, setActivity] = useState<ActivityLevel>('moderate');
+  const [fitnessScore, setFitnessScore] = useState(0.5);
+  const [experience, setExperience] = useState<ExperienceLevel>('beginner');
+
+  const setProfile = useUser((s) => s.setProfile);
+  const setWeekPlan = useUser((s) => s.setWeekPlan);
+  const addWeighIn = useUser((s) => s.addWeighIn);
+  const navigate = useNavigate();
+
+  const derived = useMemo(() => {
+    const bmr = mifflinStJeor(sex, weightKg, heightCm, age);
+    const td = tdee(bmr, activity);
+    const macros = macrosFor(goal, td, weightKg);
+    return { bmr, td, macros };
+  }, [sex, weightKg, heightCm, age, activity, goal]);
+
+  const daysPerWeek = Number(quiz['days'] ?? 4);
+  const style = quiz['style'] ?? 'A bit of everything';
+
+  function finish() {
+    const profile: UserProfile = {
+      id: 'me',
+      name: name || 'Athlete',
+      authProvider: provider,
+      sex,
+      age,
+      heightCm,
+      weightKg,
+      goal,
+      activity,
+      experience,
+      bodyFatPct: undefined,
+      bmr: derived.bmr,
+      tdee: derived.td,
+      macros: derived.macros,
+      quizAnswers: quiz,
+      onboarded: true,
+    };
+    setProfile(profile);
+    setWeekPlan(buildWeekPlan(daysPerWeek, style, goal));
+    addWeighIn(weightKg);
+    haptic('success');
+    navigate('/home', { replace: true });
+  }
+
+  return (
+    <div className="h-full overflow-y-auto no-scrollbar px-5 py-12">
+      <div className="flex items-center gap-2 mb-6">
+        <Flame className="text-accent" />
+        <span className="font-extrabold text-xl tracking-tight">ForgeOS</span>
+      </div>
+
+      <Stepper step={step} />
+
+      {step === 'signin' && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
+          <h1 className="text-3xl font-extrabold leading-tight">Forge a stronger you.</h1>
+          <p className="text-muted">80/20 training, nutrition and gamification. Sign in to begin.</p>
+          <div className="space-y-2 pt-2">
+            <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => { setProvider('google'); setStep('quiz'); }}>
+              <Globe size={18} /> Continue with Google
+            </Button>
+            <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => { setProvider('apple'); setStep('quiz'); }}>
+              <AppleIcon size={18} /> Continue with Apple
+            </Button>
+            <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => { setProvider('email'); setStep('quiz'); }}>
+              <Mail size={18} /> Continue with Email
+            </Button>
+            <button className="w-full text-sm text-muted pt-2" onClick={() => { setProvider('guest'); setStep('quiz'); }}>
+              Skip — explore as guest
+            </button>
+          </div>
+          <p className="text-[11px] text-muted/70 text-center pt-2">
+            OAuth is scaffolded in <code>lib/supabase.ts</code>. Without keys you continue in local mock mode.
+          </p>
+        </motion.div>
+      )}
+
+      {step === 'quiz' && (
+        <QuizStep quiz={quiz} setQuiz={setQuiz} onDone={() => setStep('metrics')} setName={setName} name={name} />
+      )}
+
+      {step === 'metrics' && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
+          <h2 className="text-2xl font-bold">Your numbers</h2>
+          <p className="text-sm text-muted">Metric only — kg, cm, kcal.</p>
+
+          <div className="flex gap-2">
+            <Pill active={sex === 'male'} onClick={() => setSex('male')}>Male</Pill>
+            <Pill active={sex === 'female'} onClick={() => setSex('female')}>Female</Pill>
+          </div>
+
+          <NumberRow label="Age" value={age} unit="yrs" set={setAge} min={14} max={90} step={1} />
+          <NumberRow label="Height" value={heightCm} unit="cm" set={setHeightCm} min={130} max={220} step={1} />
+          <NumberRow label="Weight" value={weightKg} unit="kg" set={setWeightKg} min={35} max={250} step={0.5} />
+
+          <div>
+            <p className="text-sm font-medium mb-2">Goal</p>
+            <div className="flex gap-2 flex-wrap">
+              {(['lose', 'recomp', 'maintain', 'gain', 'strength'] as Goal[]).map((g) => (
+                <Pill key={g} active={goal === g} onClick={() => setGoal(g)}>{g}</Pill>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-sm font-medium mb-2">Daily activity</p>
+            <div className="flex gap-2 flex-wrap">
+              {(['sedentary', 'light', 'moderate', 'active', 'athlete'] as ActivityLevel[]).map((a) => (
+                <Pill key={a} active={activity === a} onClick={() => setActivity(a)}>{a}</Pill>
+              ))}
+            </div>
+          </div>
+
+          <Card className="bg-surface-2">
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <MiniStat label="BMR" value={`${derived.bmr}`} />
+              <MiniStat label="TDEE" value={`${derived.td}`} />
+              <MiniStat label="Protein" value={`${derived.macros.proteinG}g`} />
+              <MiniStat label="Cals" value={`${derived.macros.calories}`} />
+            </div>
+            <p className="text-[11px] text-muted mt-2">Mifflin-St Jeor · protein {(derived.macros.proteinG / weightKg).toFixed(1)} g/kg</p>
+          </Card>
+
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="What should we call you?"
+            className="w-full rounded-xl bg-surface border border-line px-4 py-3 text-sm"
+          />
+
+          <Button className="w-full justify-center" onClick={() => setStep('test')}>Continue to fitness test</Button>
+        </motion.div>
+      )}
+
+      {step === 'test' && (
+        <FitnessTest
+          onComplete={(score, level) => {
+            setFitnessScore(score);
+            setExperience(level);
+            setStep('plan');
+          }}
+        />
+      )}
+
+      {step === 'plan' && (
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
+          <h2 className="text-2xl font-bold">Your starting point</h2>
+          <Card className="bg-surface-2 space-y-1">
+            <p className="text-sm">Estimated level: <b className="capitalize">{experience}</b></p>
+            <p className="text-sm">Body-fat range: <b>{bodyFatBand(sex, fitnessScore)}</b></p>
+            <p className="text-sm">Plan: <b>{daysPerWeek} days/week</b> · {style}</p>
+          </Card>
+          <p className="text-sm text-muted">
+            We generated an editable week plan. You can change training days and swap workouts anytime from the Profile tab.
+          </p>
+          <PlanPreview days={daysPerWeek} style={style} goal={goal} />
+          <Button className="w-full justify-center" onClick={finish}>Enter the Forge 🔥</Button>
+        </motion.div>
+      )}
+    </div>
+  );
+}
+
+function Stepper({ step }: { step: Step }) {
+  const order: Step[] = ['signin', 'quiz', 'metrics', 'test', 'plan'];
+  const idx = order.indexOf(step);
+  return (
+    <div className="flex gap-1.5">
+      {order.map((s, i) => (
+        <div key={s} className={`h-1 flex-1 rounded-full ${i <= idx ? 'bg-accent' : 'bg-surface-2'}`} />
+      ))}
+    </div>
+  );
+}
+
+function QuizStep({
+  quiz,
+  setQuiz,
+  onDone,
+  name,
+  setName,
+}: {
+  quiz: Record<string, string>;
+  setQuiz: (q: Record<string, string>) => void;
+  onDone: () => void;
+  name: string;
+  setName: (n: string) => void;
+}) {
+  const [i, setI] = useState(0);
+  const q = ICE_BREAKER[i];
+  const [custom, setCustom] = useState('');
+  const isLast = i === ICE_BREAKER.length - 1;
+
+  function choose(answer: string) {
+    haptic('tap');
+    setQuiz({ ...quiz, [q.id]: answer });
+    setCustom('');
+    if (isLast) onDone();
+    else setI(i + 1);
+  }
+
+  return (
+    <motion.div key={i} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="space-y-4 mt-6">
+      <p className="text-xs text-muted">Question {i + 1} of {ICE_BREAKER.length}</p>
+      <h2 className="text-2xl font-bold leading-snug">{q.q}</h2>
+      <div className="space-y-2">
+        {q.options.map((o) => (
+          <button
+            key={o}
+            onClick={() => choose(o)}
+            className={`w-full text-left rounded-xl border px-4 py-3 text-sm transition active:scale-[0.99] ${
+              quiz[q.id] === o ? 'border-accent bg-accent/10' : 'border-line bg-surface hover:bg-surface-2'
+            }`}
+          >
+            {o}
+          </button>
+        ))}
+        <div className="flex gap-2">
+          <input
+            value={custom}
+            onChange={(e) => setCustom(e.target.value)}
+            placeholder="…or write your own"
+            className="flex-1 rounded-xl bg-surface border border-line px-4 py-3 text-sm"
+          />
+          <Button disabled={!custom.trim()} onClick={() => choose(custom.trim())}>Go</Button>
+        </div>
+      </div>
+      {i === 0 && (
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Your name (optional)"
+          className="w-full rounded-xl bg-surface border border-line px-4 py-3 text-sm"
+        />
+      )}
+      {i > 0 && (
+        <button className="text-sm text-muted" onClick={() => setI(i - 1)}>← Back</button>
+      )}
+    </motion.div>
+  );
+}
+
+function NumberRow({
+  label,
+  value,
+  unit,
+  set,
+  min,
+  max,
+  step,
+}: {
+  label: string;
+  value: number;
+  unit: string;
+  set: (v: number) => void;
+  min: number;
+  max: number;
+  step: number;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-3">
+      <span className="text-sm font-medium w-16">{label}</span>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(e) => set(Number(e.target.value))}
+        className="flex-1 accent-[rgb(var(--accent))]"
+      />
+      <span className="font-mono text-sm w-20 text-right">{value} {unit}</span>
+    </div>
+  );
+}
+
+function MiniStat({ label, value }: { label: string; value: string }) {
+  return (
+    <div>
+      <p className="font-mono font-bold">{value}</p>
+      <p className="text-[10px] text-muted">{label}</p>
+    </div>
+  );
+}
+
+function PlanPreview({ days, style, goal }: { days: number; style: string; goal: Goal }) {
+  const plan = useMemo(() => buildWeekPlan(days, style, goal), [days, style, goal]);
+  return (
+    <div className="grid grid-cols-7 gap-1">
+      {plan.days.map((d) => (
+        <div key={d.day} className={`rounded-lg p-2 text-center ${d.rest ? 'bg-surface' : 'bg-accent/15'}`}>
+          <p className="text-[10px] text-muted">{d.day}</p>
+          <p className="text-[10px] font-semibold mt-1 leading-tight">{d.rest ? 'Rest' : d.label}</p>
+        </div>
+      ))}
+    </div>
+  );
+}
