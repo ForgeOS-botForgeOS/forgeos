@@ -66,7 +66,7 @@ export const ICE_BREAKER = [
   {
     id: 'style',
     q: 'Which training flavour speaks to you?',
-    options: ['Powerlifting', 'Bodybuilding', 'Calisthenics', 'CrossFit-style', 'A bit of everything'],
+    options: ['Powerlifting', 'Bodybuilding', 'Calisthenics', 'CrossFit-style', 'Cardio', 'Isometric', 'A bit of everything'],
   },
   {
     id: 'enemy',

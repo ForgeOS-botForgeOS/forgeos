@@ -52,8 +52,9 @@ function AppShell() {
     if (Math.abs(dx) < 90 || Math.abs(dx) < Math.abs(dy) * 1.8) return; // mostly-horizontal only
     const idx = TAB_ORDER.indexOf(location.pathname);
     if (idx === -1) return; // only on main tab screens
-    // Swipe right → tab to the right; swipe left → tab to the left.
-    const next = dx > 0 ? idx + 1 : idx - 1;
+    // Natural carousel feel, works both ways: swipe left → next tab (to the
+    // right), swipe right → previous tab (to the left).
+    const next = dx < 0 ? idx + 1 : idx - 1;
     if (next >= 0 && next < TAB_ORDER.length) navigate(TAB_ORDER[next]);
   }
 
