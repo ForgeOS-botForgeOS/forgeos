@@ -246,6 +246,8 @@ export interface SpotifyTrack {
 // ---- Settings ----
 export type Language = 'en' | 'sk';
 
+export type QuoteGenrePref = QuoteGenre | 'all';
+
 export type ThemeId =
   | 'forge-dark'
   | 'iron-dawn'
@@ -262,7 +264,7 @@ export type ThemeId =
   | 'synthwave'
   | 'blood-moon'
   | 'solar-flare';
-export type QuoteGenre = 'stoic' | 'biblical';
+export type QuoteGenre = 'stoic' | 'biblical' | 'zen' | 'warrior';
 
 export interface GymConfig {
   name: string;
@@ -276,7 +278,7 @@ export interface Settings {
   language: Language;
   gym: GymConfig;
   theme: ThemeId;
-  quoteGenre: QuoteGenre;
+  quoteGenre: QuoteGenrePref;
   leaderboardPublic: boolean;
   streakGambling: boolean;
   marketplaceEnabled: boolean;

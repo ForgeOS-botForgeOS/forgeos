@@ -9,6 +9,7 @@ import { useGami } from '../state/gamificationStore';
 import { rankForXp } from '../data/ranks';
 import { pendingCount, syncQueue } from '../lib/offlineQueue';
 import { useT, LANGUAGES } from '../lib/i18n';
+import { QUOTE_GENRES } from '../data/quotes';
 import { watchGym } from '../lib/geo';
 import { EXERCISES } from '../data/exercises';
 import { exerciseById } from '../data/exercises';
@@ -138,10 +139,15 @@ export default function Profile() {
       {/* Quote genre */}
       <div>
         <SectionTitle action={<BookOpen size={14} className="text-muted" />}>{t('p.quoteGenre')}</SectionTitle>
-        <div className="flex gap-2">
-          <Pill active={s.quoteGenre === 'stoic'} onClick={() => s.set('quoteGenre', 'stoic')}>Stoic</Pill>
-          <Pill active={s.quoteGenre === 'biblical'} onClick={() => s.set('quoteGenre', 'biblical')}>Biblical</Pill>
+        <div className="flex gap-2 flex-wrap" data-noswipe>
+          {QUOTE_GENRES.map((g) => (
+            <Pill key={g.id} active={s.quoteGenre === g.id} onClick={() => s.set('quoteGenre', g.id)}>{g.label}</Pill>
+          ))}
+          <Pill active={s.quoteGenre === 'all'} onClick={() => s.set('quoteGenre', 'all')}>All</Pill>
         </div>
+        <button onClick={() => navigate('/collection')} className="text-xs text-accent-2 mt-2 flex items-center gap-1">
+          <BookOpen size={13} /> View quote collection
+        </button>
       </div>
 
       {/* Toggles */}

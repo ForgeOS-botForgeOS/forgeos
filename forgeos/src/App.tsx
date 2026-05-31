@@ -23,6 +23,7 @@ const Profile = lazy(() => import('./screens/Profile'));
 const Spotify = lazy(() => import('./screens/Spotify'));
 const QuoteDeepDive = lazy(() => import('./screens/QuoteDeepDive'));
 const History = lazy(() => import('./screens/History'));
+const Collection = lazy(() => import('./screens/Collection'));
 
 // Left→right order of the bottom tabs; swiping moves to the neighbour.
 const TAB_ORDER = ['/home', '/train', '/nutrition', '/social', '/quests', '/profile'];
@@ -119,6 +120,7 @@ export default function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/spotify" element={<Spotify />} />
             <Route path="/history" element={<History />} />
+            <Route path="/collection" element={<Collection />} />
             <Route path="/quote/:id" element={<QuoteDeepDive />} />
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />
