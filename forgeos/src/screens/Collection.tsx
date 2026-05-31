@@ -1,23 +1,52 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Lock, Quote as QuoteIcon } from 'lucide-react';
-import { Card, Pill, Badge } from '../components/ui';
-import { QUOTES, QUOTE_GENRES } from '../data/quotes';
-import { useQuotes } from '../state/quoteStore';
+import { ChevronLeft, Lock, Star, Gift, Sparkles } from 'lucide-react';
+import { Card, Pill, Badge, Button } from '../components/ui';
+import { QUOTES, QUOTE_GENRES, quotesByGenre } from '../data/quotes';
+import { useQuotes, MILESTONES } from '../state/quoteStore';
+import { useGami } from '../state/gamificationStore';
+import { useSettings } from '../state/settingsStore';
+import { haptic } from '../lib/haptics';
 import type { QuoteGenre } from '../types';
+
+function dayOfYear() {
+  return Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
+}
+
+type Filter = QuoteGenre | 'all' | 'fav';
 
 export default function Collection() {
   const navigate = useNavigate();
-  const collected = useQuotes((s) => s.collected);
-  const [genre, setGenre] = useState<QuoteGenre | 'all'>('all');
+  const { collected, favourites, claimedMilestones, collect, toggleFav, claimMilestone } = useQuotes();
+  const addXp = useGami((s) => s.addXp);
+  const addCoins = useGami((s) => s.addCoins);
+  const genrePref = useSettings((s) => s.quoteGenre);
+  const [filter, setFilter] = useState<Filter>('all');
 
-  const list = useMemo(
-    () => (genre === 'all' ? QUOTES : QUOTES.filter((q) => q.genre === genre)),
-    [genre],
-  );
+  // Today's quote (same logic as the popup) so you can reveal it manually.
+  const todayQuote = useMemo(() => {
+    const pool = quotesByGenre(genrePref);
+    return pool.length ? pool[dayOfYear() % pool.length] : null;
+  }, [genrePref]);
+  const todayCollected = todayQuote ? collected.includes(todayQuote.id) : true;
+
+  const list = useMemo(() => {
+    if (filter === 'fav') return QUOTES.filter((q) => favourites.includes(q.id));
+    return filter === 'all' ? QUOTES : QUOTES.filter((q) => q.genre === filter);
+  }, [filter, favourites]);
+
   const have = collected.length;
   const total = QUOTES.length;
-  const haveInView = list.filter((q) => collected.includes(q.id)).length;
+
+  // Next unclaimed milestone that has been reached.
+  const claimable = MILESTONES.find((m) => have >= m && !claimedMilestones.includes(m));
+  function claim() {
+    if (!claimable) return;
+    addXp(claimable * 25);
+    addCoins(Math.round(claimable / 2));
+    claimMilestone(claimable);
+    haptic('success');
+  }
 
   return (
     <div className="px-4 pt-12 pb-6 space-y-4">
@@ -34,20 +63,45 @@ export default function Collection() {
         </div>
       </div>
 
-      {/* progress bar */}
       <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
         <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${(have / total) * 100}%` }} />
       </div>
 
+      {/* Reveal today's quote */}
+      {todayQuote && !todayCollected && (
+        <Card onClick={() => { collect(todayQuote.id); haptic('success'); navigate(`/quote/${todayQuote.id}`); }} className="flex items-center gap-3 border-accent/50">
+          <Sparkles size={18} className="text-accent" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold">Reveal today’s quote</p>
+            <p className="text-[11px] text-muted">Tap to unlock it into your collection.</p>
+          </div>
+          <Badge>+1</Badge>
+        </Card>
+      )}
+
+      {/* Milestone reward */}
+      {claimable && (
+        <Card className="flex items-center gap-3 border-accent-2/50">
+          <Gift size={18} className="text-accent-2" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold">{claimable}-quote milestone!</p>
+            <p className="text-[11px] text-muted">Claim +{claimable * 25} XP · 🪙{Math.round(claimable / 2)}</p>
+          </div>
+          <Button className="py-1.5" onClick={claim}>Claim</Button>
+        </Card>
+      )}
+
+      {/* Filters */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar" data-noswipe>
-        <Pill active={genre === 'all'} onClick={() => setGenre('all')}>All</Pill>
+        <Pill active={filter === 'all'} onClick={() => setFilter('all')}>All</Pill>
         {QUOTE_GENRES.map((g) => (
-          <Pill key={g.id} active={genre === g.id} onClick={() => setGenre(g.id)}>{g.label}</Pill>
+          <Pill key={g.id} active={filter === g.id} onClick={() => setFilter(g.id)}>{g.label}</Pill>
         ))}
+        <Pill active={filter === 'fav'} onClick={() => setFilter('fav')}>★ Favourites</Pill>
       </div>
-      <p className="text-xs text-muted">{haveInView}/{list.length} in this genre</p>
 
       <div className="space-y-2">
+        {list.length === 0 && <p className="text-sm text-muted">{filter === 'fav' ? 'No favourites yet — tap the star on a quote.' : 'Nothing here.'}</p>}
         {list.map((q) => {
           const owned = collected.includes(q.id);
           if (!owned) {
@@ -55,19 +109,22 @@ export default function Collection() {
               <Card key={q.id} className="flex items-center gap-3 opacity-70">
                 <div className="w-9 h-9 rounded-lg bg-surface-2 flex items-center justify-center shrink-0"><Lock size={16} className="text-muted" /></div>
                 <div className="flex-1">
-                  <p className="text-sm text-muted">Locked — unlock by collecting the daily quote</p>
+                  <p className="text-sm text-muted">Locked — collect the daily quote to unlock</p>
                   <Badge color="rgb(var(--muted))">{q.genre}</Badge>
                 </div>
               </Card>
             );
           }
+          const fav = favourites.includes(q.id);
           return (
-            <Card key={q.id} onClick={() => navigate(`/quote/${q.id}`)} className="flex items-start gap-3">
-              <div className="w-9 h-9 rounded-lg bg-accent/15 flex items-center justify-center shrink-0"><QuoteIcon size={16} className="text-accent" /></div>
-              <div className="flex-1">
+            <Card key={q.id} className="flex items-start gap-3">
+              <button onClick={() => { toggleFav(q.id); haptic('tap'); }} className="shrink-0 mt-0.5">
+                <Star size={18} className={fav ? 'text-accent-2 fill-accent-2' : 'text-muted'} />
+              </button>
+              <button className="flex-1 text-left" onClick={() => navigate(`/quote/${q.id}`)}>
                 <p className="text-sm font-medium leading-snug">“{q.text}”</p>
                 <p className="text-[11px] text-muted mt-1">— {q.source}</p>
-              </div>
+              </button>
               <Badge color="rgb(var(--accent-2))">{q.genre}</Badge>
             </Card>
           );

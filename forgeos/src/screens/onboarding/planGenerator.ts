@@ -84,6 +84,57 @@ export function buildWeekPlan(days: number, _style: string, goal: Goal, opts: Pl
   };
 }
 
+// ---- Day-level building blocks (used by the plan editor) ----
+export const PLAN_FOCI = ['Push', 'Pull', 'Legs', 'Upper', 'Lower', 'Full Body', 'Arms', 'Core', 'Cardio'] as const;
+export type PlanFocus = (typeof PLAN_FOCI)[number];
+
+const FOCUS_MUSCLES: Record<PlanFocus, MuscleGroup[]> = {
+  Push: ['Chest', 'Shoulders', 'Triceps'],
+  Pull: ['Back', 'Biceps'],
+  Legs: ['Quads', 'Hamstrings', 'Glutes', 'Calves'],
+  Upper: ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps'],
+  Lower: ['Quads', 'Hamstrings', 'Glutes', 'Calves'],
+  'Full Body': ['Full Body', 'Quads', 'Back', 'Chest', 'Shoulders'],
+  Arms: ['Biceps', 'Triceps', 'Shoulders'],
+  Core: ['Core'],
+  Cardio: ['Full Body'],
+};
+
+// Build a full workout for a focus. Cardio returns cardio movements.
+export function exercisesForFocus(focus: PlanFocus, count = 5): string[] {
+  if (focus === 'Cardio') {
+    return EXERCISES.filter((e) => e.category === 'Cardio').slice(0, count).map((e) => e.id);
+  }
+  const muscles = FOCUS_MUSCLES[focus];
+  const pool = EXERCISES.filter((e) => muscles.includes(e.primary) && e.category !== 'Cardio');
+  // de-dupe and take a spread across the targeted muscles
+  const out: string[] = [];
+  for (const m of muscles) {
+    const first = pool.find((e) => e.primary === m && !out.includes(e.id));
+    if (first) out.push(first.id);
+    if (out.length >= count) break;
+  }
+  for (const e of pool) {
+    if (out.length >= count) break;
+    if (!out.includes(e.id)) out.push(e.id);
+  }
+  return out.slice(0, count);
+}
+
+// Guess the focus from a free-typed day name (e.g. "Chest day" -> Push).
+export function inferFocus(name: string): PlanFocus {
+  const n = name.toLowerCase();
+  if (/cardio|run|row|ski|bike|condition|hiit/.test(n)) return 'Cardio';
+  if (/push|chest|press/.test(n)) return 'Push';
+  if (/pull|back|lat|row/.test(n)) return 'Pull';
+  if (/leg|quad|squat|glute|ham|calf/.test(n)) return 'Legs';
+  if (/arm|bicep|tricep|curl/.test(n)) return 'Arms';
+  if (/core|ab|plank/.test(n)) return 'Core';
+  if (/upper/.test(n)) return 'Upper';
+  if (/lower/.test(n)) return 'Lower';
+  return 'Full Body';
+}
+
 // Spread N training days across the available slots as evenly as possible.
 // When noWeekends is set, only weekdays (Mo–Fr) are used.
 function spread(n: number, noWeekends?: boolean): number[] {

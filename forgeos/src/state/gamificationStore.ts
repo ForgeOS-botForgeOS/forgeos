@@ -12,6 +12,7 @@ interface GamiState {
   wager: StreakWager | null;
 
   addXp: (amount: number) => void;
+  addCoins: (amount: number) => void;
   convertXpToCoins: (coins: number, rate: number) => boolean;
   registerSession: () => void;
   buyStreakFreeze: () => boolean;
@@ -39,6 +40,8 @@ export const useGami = create<GamiState>()(
       wager: null,
 
       addXp: (amount) => set({ xp: get().xp + Math.max(0, Math.round(amount)) }),
+
+      addCoins: (amount) => set({ coins: get().coins + Math.max(0, Math.round(amount)) }),
 
       convertXpToCoins: (coins, rate) => {
         const cost = coins * rate;

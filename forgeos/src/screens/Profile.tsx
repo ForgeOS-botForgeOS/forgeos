@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages } from 'lucide-react';
 import { Screen } from '../components/Screen';
-import { Card, Button, Toggle, Badge, SectionTitle, Sheet, Pill } from '../components/ui';
+import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { useSettings } from '../state/settingsStore';
 import { useUser } from '../state/userStore';
 import { useGami } from '../state/gamificationStore';
@@ -12,7 +12,6 @@ import { useT, LANGUAGES } from '../lib/i18n';
 import { QUOTE_GENRES } from '../data/quotes';
 import { watchGym } from '../lib/geo';
 import { EXERCISES } from '../data/exercises';
-import { exerciseById } from '../data/exercises';
 import type { ThemeId } from '../types';
 import { haptic } from '../lib/haptics';
 
@@ -44,7 +43,6 @@ export default function Profile() {
   const xp = useGami((g) => g.xp);
   const navigate = useNavigate();
   const [pending, setPending] = useState(0);
-  const [planOpen, setPlanOpen] = useState(false);
   const [gymBusy, setGymBusy] = useState(false);
   const [gymMsg, setGymMsg] = useState<string | null>(null);
 
@@ -182,7 +180,7 @@ export default function Profile() {
       </div>
 
       {/* Plan editor */}
-      <Button variant="ghost" className="w-full justify-center" onClick={() => setPlanOpen(true)}>
+      <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/plan')}>
         <span className="flex items-center gap-2"><CalendarDays size={16} /> {t('p.editPlan')}</span>
       </Button>
 
@@ -240,8 +238,6 @@ export default function Profile() {
       <Button variant="outline" className="w-full justify-center text-danger" onClick={() => { if (confirm('Reset profile and onboarding?')) { reset(); navigate('/onboarding'); } }}>
         <span className="flex items-center gap-2"><LogOut size={16} /> Reset / sign out</span>
       </Button>
-
-      <PlanEditor open={planOpen} onClose={() => setPlanOpen(false)} />
     </Screen>
   );
 }
@@ -258,59 +254,3 @@ function Row({ label, desc, children }: { label: string; desc: string; children:
   );
 }
 
-function PlanEditor({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const plan = useUser((s) => s.weekPlan);
-  const setWeekPlan = useUser((s) => s.setWeekPlan);
-  const [editDay, setEditDay] = useState<string | null>(null);
-
-  if (!plan) return null;
-
-  function toggleRest(day: string) {
-    setWeekPlan({ ...plan!, days: plan!.days.map((d) => (d.day === day ? { ...d, rest: !d.rest, label: d.rest ? 'Training' : 'Rest', exerciseIds: d.rest ? d.exerciseIds : [] } : d)) });
-  }
-  function renameDay(day: string, label: string) {
-    setWeekPlan({ ...plan!, days: plan!.days.map((d) => (d.day === day ? { ...d, label } : d)) });
-  }
-  function swapExercise(day: string, oldId: string, newId: string) {
-    setWeekPlan({ ...plan!, days: plan!.days.map((d) => (d.day === day ? { ...d, exerciseIds: d.exerciseIds.map((id) => (id === oldId ? newId : id)) } : d)) });
-  }
-
-  const day = plan.days.find((d) => d.day === editDay);
-
-  return (
-    <Sheet open={open} onClose={onClose} title="Edit week plan">
-      <div className="space-y-2">
-        {plan.days.map((d) => (
-          <div key={d.day} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2">
-            <span className="font-mono text-xs w-6">{d.day}</span>
-            <input value={d.label} onChange={(e) => renameDay(d.day, e.target.value)} disabled={d.rest} className="flex-1 bg-transparent text-sm outline-none disabled:text-muted" />
-            <button onClick={() => toggleRest(d.day)} className="text-[11px] text-accent-2">{d.rest ? 'make training' : 'make rest'}</button>
-            {!d.rest && <button onClick={() => setEditDay(editDay === d.day ? null : d.day)} className="text-[11px] text-muted">{editDay === d.day ? 'close' : 'exercises'}</button>}
-          </div>
-        ))}
-
-        {day && !day.rest && (
-          <div className="rounded-xl bg-surface p-3 border border-line space-y-2">
-            <p className="text-xs text-muted">{day.label} — tap an exercise to swap it</p>
-            {day.exerciseIds.length === 0 && <p className="text-xs text-muted">No exercises. Generated days come pre-filled.</p>}
-            {day.exerciseIds.map((id) => {
-              const ex = exerciseById(id);
-              const alts = EXERCISES.filter((e) => e.primary === ex?.primary).slice(0, 5);
-              return (
-                <details key={id} className="text-sm">
-                  <summary className="cursor-pointer py-1">{ex?.name ?? id}</summary>
-                  <div className="pl-3 space-y-1 mt-1">
-                    {alts.map((a) => (
-                      <button key={a.id} onClick={() => swapExercise(day.day, id, a.id)} className="block text-left text-xs text-muted hover:text-text">→ {a.name}</button>
-                    ))}
-                  </div>
-                </details>
-              );
-            })}
-          </div>
-        )}
-        <p className="text-[11px] text-muted/70">Change training days and swap workouts freely — saved instantly.</p>
-      </div>
-    </Sheet>
-  );
-}
