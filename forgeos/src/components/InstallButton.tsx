@@ -6,14 +6,13 @@ import { haptic } from '../lib/haptics';
 // A prominent "Install app" CTA. Uses the native prompt on Android/desktop
 // Chrome; shows Add-to-Home-Screen steps on iOS; hides once installed.
 export function InstallButton({ variant = 'big' }: { variant?: 'big' | 'banner' }) {
-  const { canInstall, promptInstall, standalone, ios } = useInstall();
+  const { promptInstall, standalone, ios } = useInstall();
   const [iosOpen, setIosOpen] = useState(false);
   const [done, setDone] = useState(false);
 
   if (standalone || done) return null; // already installed / running as app
-  // The banner only appears when an install is actually possible (or on iOS,
-  // which needs manual Add-to-Home-Screen); the big button always shows.
-  if (variant === 'banner' && !canInstall && !ios) return null;
+  // Always show the button (unless already installed). If the browser can't do
+  // a one-tap install, onClick falls back to step-by-step instructions.
 
   async function onClick() {
     haptic('tap');
