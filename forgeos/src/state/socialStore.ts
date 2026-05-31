@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { FeedPost, Friend } from '../types';
+import type { FeedPost, Friend, MarketplaceRoutine, WeekPlan } from '../types';
 import { MOCK_FEED, MOCK_FRIENDS } from '../lib/mockData';
 import { publishPostRemote, reactRemote } from '../lib/repositories';
 import { useUser } from './userStore';
@@ -11,9 +11,11 @@ interface SocialState {
   feed: FeedPost[];
   friends: Friend[];
   ownedRoutineIds: string[];
+  publishedRoutines: MarketplaceRoutine[];
   react: (postId: string, emoji: string) => void;
   publishPost: (body: string, summary?: FeedPost['workoutSummary']) => void;
   buyRoutine: (id: string) => void;
+  publishRoutine: (r: { title: string; priceCoins: number; focus: string; plan: WeekPlan; author: string; authorRank: string }) => void;
   addFriend: (name: string) => void;
   removeFriend: (id: string) => void;
   seedIfEmpty: () => void;
@@ -25,6 +27,7 @@ export const useSocial = create<SocialState>()(
       feed: [],
       friends: [],
       ownedRoutineIds: [],
+      publishedRoutines: [],
 
       seedIfEmpty: () => {
         if (get().feed.length === 0) set({ feed: MOCK_FEED });
@@ -83,6 +86,24 @@ export const useSocial = create<SocialState>()(
       buyRoutine: (id) => {
         if (get().ownedRoutineIds.includes(id)) return;
         set({ ownedRoutineIds: [...get().ownedRoutineIds, id] });
+      },
+
+      publishRoutine: (r) => {
+        const routine: MarketplaceRoutine = {
+          id: uid(),
+          title: r.title,
+          author: r.author,
+          authorRank: r.authorRank,
+          priceCoins: r.priceCoins,
+          weeks: 4,
+          daysPerWeek: r.plan.days.filter((d) => !d.rest).length,
+          focus: r.focus,
+          rating: 5,
+          byMe: true,
+          owned: true,
+          plan: r.plan,
+        };
+        set({ publishedRoutines: [routine, ...get().publishedRoutines], ownedRoutineIds: [...get().ownedRoutineIds, routine.id] });
       },
     }),
     { name: 'forge-social' },

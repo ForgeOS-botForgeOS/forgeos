@@ -1,13 +1,21 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, Wand2, Trash2, Search, X, Dumbbell, Share2, Save, Play, ChevronUp, ChevronDown, FolderOpen } from 'lucide-react';
+import { ChevronLeft, Plus, Wand2, Trash2, Search, X, Share2, Save, Play, GripVertical, FolderOpen, Sparkles, Store, ClipboardPaste } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import type { ReactNode } from 'react';
 import { Card, Button, Sheet, Toggle } from '../components/ui';
 import { useUser } from '../state/userStore';
 import { useWorkout } from '../state/workoutStore';
 import { useSettings } from '../state/settingsStore';
+import { useSocial } from '../state/socialStore';
+import { useGami } from '../state/gamificationStore';
 import { EXERCISES, EXERCISE_CATEGORIES, exerciseById } from '../data/exercises';
 import { PLAN_FOCI, type PlanFocus, exercisesForFocus, inferFocus } from './onboarding/planGenerator';
-import { sharePlan } from '../lib/planShare';
+import { sharePlan, decodePlan } from '../lib/planShare';
+import { tailorPlan } from '../lib/tailor';
+import { rankForXp, rankLabel } from '../data/ranks';
 import type { ExerciseTarget, PlannedDay } from '../types';
 import { haptic } from '../lib/haptics';
 
@@ -19,14 +27,21 @@ export default function PlanEditor() {
   const savePlanAs = useUser((s) => s.savePlanAs);
   const loadPlan = useUser((s) => s.loadPlan);
   const deletePlan = useUser((s) => s.deletePlan);
-  const specialRequest = useUser((s) => s.profile?.specialRequest);
+  const profile = useUser((s) => s.profile);
+  const specialRequest = profile?.specialRequest;
   const gym = useSettings((s) => s.gym);
   const startWorkout = useWorkout((s) => s.startWorkout);
+  const publishRoutine = useSocial((s) => s.publishRoutine);
+  const xp = useGami((s) => s.xp);
+  const addCoins = useGami((s) => s.addCoins);
 
   const [openDay, setOpenDay] = useState<string | null>(null);
   const [pickerDay, setPickerDay] = useState<string | null>(null);
   const [toast, setToast] = useState<string | null>(null);
   const [showSaved, setShowSaved] = useState(false);
+  const [importOpen, setImportOpen] = useState(false);
+  const [importCode, setImportCode] = useState('');
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   if (!plan) {
     return (
@@ -56,16 +71,6 @@ export default function PlanEditor() {
     delete targets[id];
     patch(day, { exerciseIds: d.exerciseIds.filter((x) => x !== id), targets });
   }
-  function move(day: string, id: string, dir: -1 | 1) {
-    const d = plan!.days.find((x) => x.day === day)!;
-    const ids = [...d.exerciseIds];
-    const i = ids.indexOf(id);
-    const j = i + dir;
-    if (j < 0 || j >= ids.length) return;
-    [ids[i], ids[j]] = [ids[j], ids[i]];
-    patch(day, { exerciseIds: ids });
-    haptic('tap');
-  }
   function setTarget(day: string, id: string, t: ExerciseTarget) {
     const d = plan!.days.find((x) => x.day === day)!;
     patch(day, { targets: { ...(d.targets ?? {}), [id]: t } });
@@ -79,9 +84,45 @@ export default function PlanEditor() {
     haptic('success');
     navigate('/train');
   }
+  function onDragEnd(day: string, e: DragEndEvent) {
+    const { active, over } = e;
+    if (!over || active.id === over.id) return;
+    const d = plan!.days.find((x) => x.day === day)!;
+    const ids = arrayMove(d.exerciseIds, d.exerciseIds.indexOf(String(active.id)), d.exerciseIds.indexOf(String(over.id)));
+    patch(day, { exerciseIds: ids });
+    haptic('tap');
+  }
+  function tailor() {
+    const note = specialRequest || prompt('Describe a limitation (e.g. "bad knees", "no overhead", "short on time")') || '';
+    if (!note.trim()) return;
+    const { plan: tailored, notes } = tailorPlan(plan!, note);
+    setWeekPlan(tailored);
+    flash(notes.length ? notes.join(' ') : 'No matching rules — try keywords like knees, shoulder, back, time.');
+    haptic('success');
+  }
+  function publish() {
+    const title = prompt('Publish your plan as…', 'My Forge Week');
+    if (!title) return;
+    const price = Number(prompt('Price in Forge Coins (0 = free)', '0')) || 0;
+    const { tier } = rankForXp(xp);
+    publishRoutine({ title, priceCoins: price, focus: 'Custom', plan: plan!, author: profile?.name ?? 'You', authorRank: rankLabel(tier) });
+    addCoins(25); // publishing bonus
+    flash('Published to the marketplace (+🪙25)');
+    haptic('success');
+  }
+  function importFromCode() {
+    const raw = importCode.includes('p=') ? importCode.split('p=')[1] : importCode.trim();
+    const p = decodePlan(raw);
+    if (!p) { flash('That code/link is invalid.'); return; }
+    setWeekPlan(p);
+    setImportOpen(false);
+    setImportCode('');
+    flash('Plan imported!');
+    haptic('success');
+  }
   function flash(msg: string) {
     setToast(msg);
-    setTimeout(() => setToast(null), 2200);
+    setTimeout(() => setToast(null), 2600);
   }
 
   const trainingDays = plan.days.filter((d) => !d.rest).length;
@@ -106,6 +147,17 @@ export default function PlanEditor() {
         </Button>
         <Button variant="ghost" className="flex-1 justify-center" onClick={() => setShowSaved(true)}>
           <span className="flex items-center gap-1 text-xs"><FolderOpen size={14} /> Templates ({savedPlans.length})</span>
+        </Button>
+      </div>
+      <div className="flex gap-2">
+        <Button variant="ghost" className="flex-1 justify-center" onClick={tailor}>
+          <span className="flex items-center gap-1 text-xs"><Sparkles size={14} /> Tailor to my note</span>
+        </Button>
+        <Button variant="ghost" className="flex-1 justify-center" onClick={publish}>
+          <span className="flex items-center gap-1 text-xs"><Store size={14} /> Publish</span>
+        </Button>
+        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setImportOpen(true)}>
+          <span className="flex items-center gap-1 text-xs"><ClipboardPaste size={14} /> Import</span>
         </Button>
       </div>
 
@@ -157,25 +209,31 @@ export default function PlanEditor() {
                       </div>
 
                       {d.exerciseIds.length === 0 && <p className="text-xs text-muted">No exercises — add some or build a full workout above.</p>}
-                      {d.exerciseIds.map((id, i) => {
-                        const ex = exerciseById(id);
-                        const tgt = d.targets?.[id] ?? { sets: 3, reps: 8 };
-                        return (
-                          <div key={id} className="rounded-lg bg-surface-2 px-3 py-2 space-y-1.5">
-                            <div className="flex items-center gap-2">
-                              <Dumbbell size={13} className="text-muted shrink-0" />
-                              <span className="text-sm flex-1">{ex?.name ?? id}</span>
-                              <button onClick={() => move(d.day, id, -1)} disabled={i === 0} className="text-muted disabled:opacity-30"><ChevronUp size={15} /></button>
-                              <button onClick={() => move(d.day, id, 1)} disabled={i === d.exerciseIds.length - 1} className="text-muted disabled:opacity-30"><ChevronDown size={15} /></button>
-                              <button onClick={() => removeExercise(d.day, id)} className="text-danger"><Trash2 size={14} /></button>
-                            </div>
-                            <div className="flex items-center gap-3 pl-5">
-                              <Stepper label="sets" value={tgt.sets} min={1} max={10} onChange={(v) => setTarget(d.day, id, { ...tgt, sets: v })} />
-                              <Stepper label="reps" value={tgt.reps} min={1} max={30} onChange={(v) => setTarget(d.day, id, { ...tgt, reps: v })} />
-                            </div>
-                          </div>
-                        );
-                      })}
+                      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEnd(d.day, e)}>
+                        <SortableContext items={d.exerciseIds} strategy={verticalListSortingStrategy}>
+                          {d.exerciseIds.map((id) => {
+                            const ex = exerciseById(id);
+                            const tgt = d.targets?.[id] ?? { sets: 3, reps: 8 };
+                            return (
+                              <Sortable key={id} id={id}>
+                                {(handle) => (
+                                  <div className="rounded-lg bg-surface-2 px-3 py-2 space-y-1.5">
+                                    <div className="flex items-center gap-2">
+                                      <button {...handle} className="text-muted cursor-grab active:cursor-grabbing touch-none shrink-0"><GripVertical size={15} /></button>
+                                      <span className="text-sm flex-1">{ex?.name ?? id}</span>
+                                      <button onClick={() => removeExercise(d.day, id)} className="text-danger"><Trash2 size={14} /></button>
+                                    </div>
+                                    <div className="flex items-center gap-3 pl-6">
+                                      <Stepper label="sets" value={tgt.sets} min={1} max={10} onChange={(v) => setTarget(d.day, id, { ...tgt, sets: v })} />
+                                      <Stepper label="reps" value={tgt.reps} min={1} max={30} onChange={(v) => setTarget(d.day, id, { ...tgt, reps: v })} />
+                                    </div>
+                                  </div>
+                                )}
+                              </Sortable>
+                            );
+                          })}
+                        </SortableContext>
+                      </DndContext>
 
                       <Button variant="ghost" className="w-full justify-center py-2" onClick={() => setPickerDay(d.day)}>
                         <span className="flex items-center gap-1 text-xs"><Plus size={14} /> Add exercise</span>
@@ -197,6 +255,15 @@ export default function PlanEditor() {
 
       <ExercisePickerSheet open={!!pickerDay} onClose={() => setPickerDay(null)} onPick={(id) => { if (pickerDay) addExercise(pickerDay, id); }} />
 
+      {/* Import by code/link */}
+      <Sheet open={importOpen} onClose={() => setImportOpen(false)} title="Import a shared plan">
+        <div className="space-y-3">
+          <p className="text-sm text-muted">Paste a friend’s share link or code.</p>
+          <textarea value={importCode} onChange={(e) => setImportCode(e.target.value)} placeholder="https://…#/import?p=… or the raw code" className="w-full rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm h-24" />
+          <Button className="w-full justify-center" disabled={!importCode.trim()} onClick={importFromCode}>Import plan</Button>
+        </div>
+      </Sheet>
+
       {/* Saved templates */}
       <Sheet open={showSaved} onClose={() => setShowSaved(false)} title="Saved plans">
         <div className="space-y-2">
@@ -213,6 +280,16 @@ export default function PlanEditor() {
           ))}
         </div>
       </Sheet>
+    </div>
+  );
+}
+
+function Sortable({ id, children }: { id: string; children: (handle: Record<string, unknown>) => ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id });
+  const style = { transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.7 : 1, zIndex: isDragging ? 20 : undefined };
+  return (
+    <div ref={setNodeRef} style={style}>
+      {children({ ...attributes, ...listeners })}
     </div>
   );
 }

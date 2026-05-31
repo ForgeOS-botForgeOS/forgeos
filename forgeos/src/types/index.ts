@@ -220,6 +220,8 @@ export interface MarketplaceRoutine {
   focus: string;
   rating: number;
   owned?: boolean;
+  byMe?: boolean;
+  plan?: WeekPlan; // attached week plan that buyers can adopt
 }
 
 // ---- Nutrition ----

@@ -1,4 +1,5 @@
 import { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Users, Swords, Store, Share2, Wifi, Circle } from 'lucide-react';
 import { joinRace } from '../lib/supabase';
 import { Screen } from '../components/Screen';
@@ -244,18 +245,26 @@ function Race() {
 
 function Marketplace() {
   const owned = useSocial((s) => s.ownedRoutineIds);
+  const published = useSocial((s) => s.publishedRoutines);
   const buy = useSocial((s) => s.buyRoutine);
   const coins = useGami((s) => s.coins);
   const spend = useGami((s) => s.spendCoins);
+  const setWeekPlan = useUser((s) => s.setWeekPlan);
+  const savePlanAs = useUser((s) => s.savePlanAs);
+  const navigate = useNavigate();
+
+  const all = [...published, ...MOCK_MARKETPLACE];
 
   function purchase(id: string, price: number) {
     if (owned.includes(id)) return;
-    if (spend(price)) {
-      buy(id);
-      haptic('success');
-    } else {
-      haptic('warning');
-    }
+    if (spend(price)) { buy(id); haptic('success'); } else haptic('warning');
+  }
+  function usePlan(r: typeof all[number]) {
+    if (!r.plan) return;
+    setWeekPlan(r.plan);
+    savePlanAs(r.title);
+    haptic('success');
+    navigate('/plan');
   }
 
   return (
@@ -264,22 +273,27 @@ function Marketplace() {
         <SectionTitle>Routine marketplace</SectionTitle>
         <Badge color="rgb(var(--accent-2))">🪙 {coins}</Badge>
       </div>
-      {MOCK_MARKETPLACE.map((r) => {
+      <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/plan')}>Publish your plan → open editor</Button>
+      {all.map((r) => {
         const isOwned = owned.includes(r.id);
         return (
           <Card key={r.id} className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="font-semibold text-sm">{r.title}</p>
+              <p className="font-semibold text-sm">{r.title} {r.byMe && <Badge color="rgb(var(--success))">yours</Badge>}</p>
               <Badge>{r.focus}</Badge>
             </div>
             <p className="text-xs text-muted">by {r.author} ({r.authorRank}) · {r.weeks}wk · {r.daysPerWeek}d/wk · ⭐ {r.rating}</p>
-            <Button variant={isOwned ? 'ghost' : 'primary'} className="w-full justify-center" disabled={isOwned} onClick={() => purchase(r.id, r.priceCoins)}>
-              {isOwned ? 'Owned ✓' : `Buy · 🪙 ${r.priceCoins}`}
-            </Button>
+            {isOwned && r.plan ? (
+              <Button className="w-full justify-center" onClick={() => usePlan(r)}>Use this plan</Button>
+            ) : (
+              <Button variant={isOwned ? 'ghost' : 'primary'} className="w-full justify-center" disabled={isOwned} onClick={() => purchase(r.id, r.priceCoins)}>
+                {isOwned ? 'Owned ✓' : `Buy · 🪙 ${r.priceCoins}`}
+              </Button>
+            )}
           </Card>
         );
       })}
-      <p className="text-[11px] text-muted/70 flex items-center gap-1"><Store size={12} /> High-rank athletes publish programs; toggle the marketplace off in Settings.</p>
+      <p className="text-[11px] text-muted/70 flex items-center gap-1"><Store size={12} /> Publish your own plan from the week-plan editor; buyers can adopt it in one tap.</p>
     </div>
   );
 }
