@@ -5,6 +5,7 @@ import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recha
 import { Screen } from '../components/Screen';
 import { Card, Ring, SectionTitle, Badge } from '../components/ui';
 import { DailyQuote } from '../components/DailyQuote';
+import { InstallButton } from '../components/InstallButton';
 import { useUser } from '../state/userStore';
 import { useNutrition } from '../state/nutritionStore';
 import { useWorkout } from '../state/workoutStore';
@@ -60,6 +61,9 @@ export default function Home() {
           </div>
         }
       >
+        {/* Install CTA — only shows in a browser, hidden once installed */}
+        <InstallButton variant="banner" />
+
         {/* Calorie ring + macro donuts */}
         <Card>
           <div className="flex items-center gap-4">

@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Flame, Mail, Apple as AppleIcon, Globe } from 'lucide-react';
+import { Flame, Mail, Apple as AppleIcon, Globe, Loader2, Check } from 'lucide-react';
 import { Button, Card, Pill } from '../../components/ui';
+import { InstallButton } from '../../components/InstallButton';
 import { ICE_BREAKER } from '../../data/quests';
 import { useUser } from '../../state/userStore';
 import { macrosFor, mifflinStJeor, tdee, bodyFatBand } from '../../lib/fitness';
+import { signInWithGoogle, googleIsLive } from '../../lib/googleAuth';
 import { haptic } from '../../lib/haptics';
 import type { ActivityLevel, ExperienceLevel, Goal, Sex, UserProfile } from '../../types';
 import { buildWeekPlan } from './planGenerator';
@@ -16,6 +18,7 @@ type Step = 'signin' | 'quiz' | 'metrics' | 'test' | 'plan';
 export default function Onboarding() {
   const [step, setStep] = useState<Step>('signin');
   const [provider, setProvider] = useState<UserProfile['authProvider']>('guest');
+  const [googleEmail, setGoogleEmail] = useState<string | undefined>(undefined);
   const [quiz, setQuiz] = useState<Record<string, string>>({});
   const [name, setName] = useState('');
   const [sex, setSex] = useState<Sex>('male');
@@ -26,6 +29,31 @@ export default function Onboarding() {
   const [activity, setActivity] = useState<ActivityLevel>('moderate');
   const [fitnessScore, setFitnessScore] = useState(0.5);
   const [experience, setExperience] = useState<ExperienceLevel>('beginner');
+  const [signingIn, setSigningIn] = useState<null | 'google'>(null);
+  const [signInErr, setSignInErr] = useState<string | null>(null);
+
+  async function continueWithGoogle() {
+    setSignInErr(null);
+    if (!googleIsLive) {
+      // No Client ID configured yet — proceed in demo mode.
+      setProvider('google');
+      setStep('quiz');
+      return;
+    }
+    setSigningIn('google');
+    try {
+      const u = await signInWithGoogle();
+      setProvider('google');
+      setName((prev) => prev || u.name || '');
+      setGoogleEmail(u.email);
+      haptic('success');
+      setStep('quiz');
+    } catch {
+      setSignInErr('Google sign-in was cancelled or failed. Try again.');
+    } finally {
+      setSigningIn(null);
+    }
+  }
 
   const setProfile = useUser((s) => s.setProfile);
   const setWeekPlan = useUser((s) => s.setWeekPlan);
@@ -39,13 +67,15 @@ export default function Onboarding() {
     return { bmr, td, macros };
   }, [sex, weightKg, heightCm, age, activity, goal]);
 
-  const daysPerWeek = Number(quiz['days'] ?? 4);
-  const style = quiz['style'] ?? 'A bit of everything';
+  // Quiz answers may be multi-select (joined by ' · '); take the first day value.
+  const daysPerWeek = Number((quiz['days'] ?? '4').split(' · ')[0]) || 4;
+  const style = (quiz['style'] ?? 'A bit of everything').split(' · ')[0];
 
   function finish() {
     const profile: UserProfile = {
       id: 'me',
       name: name || 'Athlete',
+      email: googleEmail,
       authProvider: provider,
       sex,
       age,
@@ -81,9 +111,14 @@ export default function Onboarding() {
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
           <h1 className="text-3xl font-extrabold leading-tight">Forge a stronger you.</h1>
           <p className="text-muted">80/20 training, nutrition and gamification. Sign in to begin.</p>
+
+          {/* Big, obvious install CTA when opened in a browser */}
+          <InstallButton variant="big" />
+
           <div className="space-y-2 pt-2">
-            <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => { setProvider('google'); setStep('quiz'); }}>
-              <Globe size={18} /> Continue with Google
+            <Button variant="outline" className="w-full justify-center flex items-center gap-2" disabled={signingIn === 'google'} onClick={continueWithGoogle}>
+              {signingIn === 'google' ? <Loader2 size={18} className="animate-spin" /> : <Globe size={18} />}
+              {signingIn === 'google' ? 'Connecting to Google…' : 'Continue with Google'}
             </Button>
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => { setProvider('apple'); setStep('quiz'); }}>
               <AppleIcon size={18} /> Continue with Apple
@@ -95,8 +130,11 @@ export default function Onboarding() {
               Skip — explore as guest
             </button>
           </div>
+          {signInErr && <p className="text-xs text-danger text-center">{signInErr}</p>}
           <p className="text-[11px] text-muted/70 text-center pt-2">
-            OAuth is scaffolded in <code>lib/supabase.ts</code>. Without keys you continue in local mock mode.
+            {googleIsLive
+              ? 'Google sign-in opens the real Google account picker.'
+              : 'Demo mode — add a Google Client ID to enable real Google sign-in.'}
           </p>
         </motion.div>
       )}
@@ -212,45 +250,83 @@ function QuizStep({
   name: string;
   setName: (n: string) => void;
 }) {
+  const SEP = ' · ';
   const [i, setI] = useState(0);
   const q = ICE_BREAKER[i];
   const [custom, setCustom] = useState('');
   const isLast = i === ICE_BREAKER.length - 1;
 
-  function choose(answer: string) {
+  const selected = quiz[q.id] ? quiz[q.id].split(SEP) : [];
+
+  function setSelected(next: string[]) {
+    const copy = { ...quiz };
+    if (next.length) copy[q.id] = next.join(SEP);
+    else delete copy[q.id];
+    setQuiz(copy);
+  }
+
+  function toggle(option: string) {
     haptic('tap');
-    setQuiz({ ...quiz, [q.id]: answer });
+    setSelected(selected.includes(option) ? selected.filter((s) => s !== option) : [...selected, option]);
+  }
+
+  function addCustom() {
+    const v = custom.trim();
+    if (!v || selected.includes(v)) return;
+    haptic('tap');
+    setSelected([...selected, v]);
     setCustom('');
+  }
+
+  function next() {
+    haptic('tap');
     if (isLast) onDone();
     else setI(i + 1);
   }
 
   return (
     <motion.div key={i} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="space-y-4 mt-6">
-      <p className="text-xs text-muted">Question {i + 1} of {ICE_BREAKER.length}</p>
+      <p className="text-xs text-muted">Question {i + 1} of {ICE_BREAKER.length} · pick all that apply</p>
       <h2 className="text-2xl font-bold leading-snug">{q.q}</h2>
       <div className="space-y-2">
-        {q.options.map((o) => (
-          <button
-            key={o}
-            onClick={() => choose(o)}
-            className={`w-full text-left rounded-xl border px-4 py-3 text-sm transition active:scale-[0.99] ${
-              quiz[q.id] === o ? 'border-accent bg-accent/10' : 'border-line bg-surface hover:bg-surface-2'
-            }`}
-          >
-            {o}
+        {q.options.map((o) => {
+          const on = selected.includes(o);
+          return (
+            <button
+              key={o}
+              onClick={() => toggle(o)}
+              className={`w-full flex items-center gap-3 text-left rounded-xl border px-4 py-3 text-sm transition active:scale-[0.99] ${
+                on ? 'border-accent bg-accent/10' : 'border-line bg-surface hover:bg-surface-2'
+              }`}
+            >
+              <span className={`w-5 h-5 shrink-0 rounded-md border flex items-center justify-center ${on ? 'bg-accent border-accent text-black' : 'border-line'}`}>
+                {on && <Check size={13} strokeWidth={3} />}
+              </span>
+              {o}
+            </button>
+          );
+        })}
+
+        {/* custom answers the user has added show as removable chips */}
+        {selected.filter((s) => !q.options.includes(s)).map((s) => (
+          <button key={s} onClick={() => toggle(s)} className="w-full flex items-center gap-3 text-left rounded-xl border border-accent bg-accent/10 px-4 py-3 text-sm">
+            <span className="w-5 h-5 shrink-0 rounded-md bg-accent border-accent text-black flex items-center justify-center"><Check size={13} strokeWidth={3} /></span>
+            {s} <span className="ml-auto text-xs text-muted">tap to remove</span>
           </button>
         ))}
+
         <div className="flex gap-2">
           <input
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') addCustom(); }}
             placeholder="…or write your own"
             className="flex-1 rounded-xl bg-surface border border-line px-4 py-3 text-sm"
           />
-          <Button disabled={!custom.trim()} onClick={() => choose(custom.trim())}>Go</Button>
+          <Button variant="ghost" disabled={!custom.trim()} onClick={addCustom}>Add</Button>
         </div>
       </div>
+
       {i === 0 && (
         <input
           value={name}
@@ -259,9 +335,14 @@ function QuizStep({
           className="w-full rounded-xl bg-surface border border-line px-4 py-3 text-sm"
         />
       )}
-      {i > 0 && (
-        <button className="text-sm text-muted" onClick={() => setI(i - 1)}>← Back</button>
-      )}
+
+      <div className="flex items-center gap-2 pt-1">
+        {i > 0 && <Button variant="outline" onClick={() => setI(i - 1)}>← Back</Button>}
+        <Button className="flex-1 justify-center" disabled={selected.length === 0} onClick={next}>
+          {isLast ? 'Finish' : 'Next'} {selected.length > 0 && `(${selected.length})`}
+        </Button>
+      </div>
+      {selected.length === 0 && <p className="text-[11px] text-muted/70 text-center">Select at least one option to continue.</p>}
     </motion.div>
   );
 }
