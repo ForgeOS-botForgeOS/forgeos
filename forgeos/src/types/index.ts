@@ -11,7 +11,8 @@ export type ExerciseCategory =
   | 'Plyometrics'
   | 'Calisthenics'
   | 'Olympic'
-  | 'CrossFit';
+  | 'CrossFit'
+  | 'Cardio';
 
 export type MuscleGroup =
   | 'Chest'
@@ -241,6 +242,8 @@ export interface SpotifyTrack {
 }
 
 // ---- Settings ----
+export type Language = 'en' | 'sk';
+
 export type ThemeId =
   | 'forge-dark'
   | 'iron-dawn'
@@ -260,6 +263,7 @@ export type ThemeId =
 export type QuoteGenre = 'stoic' | 'biblical';
 
 export interface Settings {
+  language: Language;
   theme: ThemeId;
   quoteGenre: QuoteGenre;
   leaderboardPublic: boolean;

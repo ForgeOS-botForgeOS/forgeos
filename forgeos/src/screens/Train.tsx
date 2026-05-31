@@ -11,6 +11,7 @@ import { SetRow } from '../components/train/SetRow';
 import { RestTimer } from '../components/train/RestTimer';
 import { Tools } from '../components/train/Tools';
 import { Confetti } from '../components/Celebrate';
+import { useT } from '../lib/i18n';
 import { useWorkout } from '../state/workoutStore';
 import { useUser } from '../state/userStore';
 import { useGami } from '../state/gamificationStore';
@@ -29,6 +30,7 @@ export default function Train() {
 
   const [toolsOpen, setToolsOpen] = useState(false);
   const navigate = useNavigate();
+  const t = useT();
 
   const plateaus = useMemo(() => detectPlateaus(history), [history]);
   const rec = useMemo(() => recommendBlock(history), [history]);
@@ -43,10 +45,10 @@ export default function Train() {
   if (active) return <ActiveSession onOpenTools={() => setToolsOpen(true)} toolsOpen={toolsOpen} onCloseTools={() => setToolsOpen(false)} />;
 
   return (
-    <Screen title="Train" subtitle="Log it, beat last week.">
+    <Screen title={t('train.title')} subtitle={t('train.subtitle')}>
       {/* Today's plan */}
       <Card>
-        <SectionTitle>Today’s session</SectionTitle>
+        <SectionTitle>{t('train.todaySession')}</SectionTitle>
         {todayPlan && !todayPlan.rest ? (
           <>
             <p className="font-semibold text-lg">{todayPlan.label}</p>

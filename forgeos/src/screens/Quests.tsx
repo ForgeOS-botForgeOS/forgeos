@@ -12,13 +12,15 @@ import { RANKS, rankForXp, rankLabel, progressToNext } from '../data/ranks';
 import { buildLeaderboard } from '../lib/mockData';
 import { MOCK_TRACKS } from '../lib/spotify';
 import { haptic } from '../lib/haptics';
+import { useT } from '../lib/i18n';
 
 type Tab = 'rank' | 'quests' | 'board' | 'prs';
 
 export default function Quests() {
+  const t = useT();
   const [tab, setTab] = useState<Tab>('rank');
   return (
-    <Screen title="Quests" subtitle="Rank up. Stay hungry.">
+    <Screen title={t('q.title')} subtitle={t('q.subtitle')}>
       <div className="flex gap-2 overflow-x-auto no-scrollbar">
         <Pill active={tab === 'rank'} onClick={() => setTab('rank')}>Rank</Pill>
         <Pill active={tab === 'quests'} onClick={() => setTab('quests')}>Quests</Pill>

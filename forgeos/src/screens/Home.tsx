@@ -6,6 +6,7 @@ import { Screen } from '../components/Screen';
 import { Card, Ring, SectionTitle, Badge } from '../components/ui';
 import { DailyQuote } from '../components/DailyQuote';
 import { InstallButton } from '../components/InstallButton';
+import { useT } from '../lib/i18n';
 import { useUser } from '../state/userStore';
 import { useNutrition } from '../state/nutritionStore';
 import { useWorkout } from '../state/workoutStore';
@@ -16,6 +17,7 @@ import { WeighInTracker } from '../components/WeighInTracker';
 import { Heatmap } from '../components/Heatmap';
 
 export default function Home() {
+  const t = useT();
   const profile = useUser((s) => s.profile);
   const totals = useNutrition((s) => s.todaysTotals)();
   const history = useWorkout((s) => s.history);
@@ -52,7 +54,7 @@ export default function Home() {
     <>
       <DailyQuote />
       <Screen
-        title={`Hi, ${profile?.name ?? 'Athlete'}`}
+        title={`${t('home.hi')}, ${profile?.name ?? 'Athlete'}`}
         subtitle={`${rankLabel(tier)} · ${xp.toLocaleString()} XP`}
         right={
           <div className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5">

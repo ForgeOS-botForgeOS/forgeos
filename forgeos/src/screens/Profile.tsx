@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut } from 'lucide-react';
+import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Sheet, Pill } from '../components/ui';
 import { useSettings } from '../state/settingsStore';
@@ -8,6 +8,7 @@ import { useUser } from '../state/userStore';
 import { useGami } from '../state/gamificationStore';
 import { rankForXp } from '../data/ranks';
 import { pendingCount, syncQueue } from '../lib/offlineQueue';
+import { useT, LANGUAGES } from '../lib/i18n';
 import { watchGym, DEFAULT_GYM } from '../lib/geo';
 import { EXERCISES } from '../data/exercises';
 import { exerciseById } from '../data/exercises';
@@ -35,6 +36,7 @@ const THEMES: { id: ThemeId; name: string; locked: boolean; unlockRank: string }
 const RANK_ORDER = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Legend', 'Strongman'];
 
 export default function Profile() {
+  const t = useT();
   const s = useSettings();
   const profile = useUser((u) => u.profile);
   const reset = useUser((u) => u.reset);
@@ -70,17 +72,17 @@ export default function Profile() {
     <Screen title={profile?.name ?? 'You'} subtitle={profile?.email ?? `${profile?.authProvider ?? 'guest'} account`}>
       {/* Theme switcher */}
       <div>
-        <SectionTitle action={<Palette size={14} className="text-muted" />}>Theme</SectionTitle>
+        <SectionTitle action={<Palette size={14} className="text-muted" />}>{t('p.theme')}</SectionTitle>
         <div className="grid grid-cols-2 gap-2">
-          {THEMES.map((t) => {
-            const unlocked = themeUnlocked(t);
-            const active = s.theme === t.id;
+          {THEMES.map((th) => {
+            const unlocked = themeUnlocked(th);
+            const active = s.theme === th.id;
             return (
               <button
-                key={t.id}
+                key={th.id}
                 disabled={!unlocked}
-                onClick={() => { s.set('theme', t.id); haptic('tap'); }}
-                data-theme={t.id}
+                onClick={() => { s.set('theme', th.id); haptic('tap'); }}
+                data-theme={th.id}
                 className={`relative rounded-xl border p-3 text-left ${active ? 'border-accent ring-1 ring-accent' : 'border-line'} ${!unlocked ? 'opacity-50' : ''}`}
                 style={{ background: 'rgb(var(--surface))' }}
               >
@@ -90,18 +92,28 @@ export default function Profile() {
                   <span className="w-4 h-4 rounded-full" style={{ background: 'rgb(var(--surface-2))' }} />
                 </div>
                 <p className="text-sm font-medium flex items-center gap-1" style={{ color: 'rgb(var(--text))' }}>
-                  {t.name} {!unlocked && <Lock size={12} />}
+                  {th.name} {!unlocked && <Lock size={12} />}
                 </p>
-                {!unlocked && <p className="text-[10px]" style={{ color: 'rgb(var(--muted))' }}>Unlocks at {t.unlockRank}</p>}
+                {!unlocked && <p className="text-[10px]" style={{ color: 'rgb(var(--muted))' }}>Unlocks at {th.unlockRank}</p>}
               </button>
             );
           })}
         </div>
       </div>
 
+      {/* Language */}
+      <div>
+        <SectionTitle action={<Languages size={14} className="text-muted" />}>{t('p.language')}</SectionTitle>
+        <div className="flex gap-2">
+          {LANGUAGES.map((l) => (
+            <Pill key={l.id} active={s.language === l.id} onClick={() => s.set('language', l.id)}>{l.label}</Pill>
+          ))}
+        </div>
+      </div>
+
       {/* Quote genre */}
       <div>
-        <SectionTitle action={<BookOpen size={14} className="text-muted" />}>Daily quote genre</SectionTitle>
+        <SectionTitle action={<BookOpen size={14} className="text-muted" />}>{t('p.quoteGenre')}</SectionTitle>
         <div className="flex gap-2">
           <Pill active={s.quoteGenre === 'stoic'} onClick={() => s.set('quoteGenre', 'stoic')}>Stoic</Pill>
           <Pill active={s.quoteGenre === 'biblical'} onClick={() => s.set('quoteGenre', 'biblical')}>Biblical</Pill>
@@ -110,21 +122,21 @@ export default function Profile() {
 
       {/* Toggles */}
       <div>
-        <SectionTitle>Preferences</SectionTitle>
+        <SectionTitle>{t('p.preferences')}</SectionTitle>
         <Card className="divide-y divide-line">
-          <Row label="Public leaderboard" desc="Show your rank to others">
+          <Row label={t('p.publicLeaderboard')} desc="Show your rank to others">
             <Toggle checked={s.leaderboardPublic} onChange={(v) => s.set('leaderboardPublic', v)} />
           </Row>
-          <Row label="Streak gambling" desc="Wager coins on session targets">
+          <Row label={t('p.streakGambling')} desc="Wager coins on session targets">
             <Toggle checked={s.streakGambling} onChange={(v) => s.set('streakGambling', v)} />
           </Row>
-          <Row label="Routine marketplace" desc="Buy & sell programs">
+          <Row label={t('p.marketplace')} desc="Buy & sell programs">
             <Toggle checked={s.marketplaceEnabled} onChange={(v) => s.set('marketplaceEnabled', v)} />
           </Row>
-          <Row label="Haptics" desc="Vibration feedback">
+          <Row label={t('p.haptics')} desc="Vibration feedback">
             <Toggle checked={s.hapticsEnabled} onChange={(v) => s.set('hapticsEnabled', v)} />
           </Row>
-          <Row label="Gym geofence" desc="“Welcome to the Forge” check-in">
+          <Row label={t('p.geofence')} desc="“Welcome to the Forge” check-in">
             <Toggle checked={s.geofenceEnabled} onChange={(v) => s.set('geofenceEnabled', v)} />
           </Row>
         </Card>
@@ -141,7 +153,7 @@ export default function Profile() {
 
       {/* Plan editor */}
       <Button variant="ghost" className="w-full justify-center" onClick={() => setPlanOpen(true)}>
-        <span className="flex items-center gap-2"><CalendarDays size={16} /> Edit week plan</span>
+        <span className="flex items-center gap-2"><CalendarDays size={16} /> {t('p.editPlan')}</span>
       </Button>
 
       {/* Offline sync */}
@@ -149,16 +161,16 @@ export default function Profile() {
         <div className="flex items-center gap-2">
           <RefreshCw size={16} className="text-muted" />
           <div>
-            <p className="text-sm">Offline sync</p>
+            <p className="text-sm">{t('p.offlineSync')}</p>
             <p className="text-[11px] text-muted">{pending} queued · {navigator.onLine ? 'online' : 'offline'}</p>
           </div>
         </div>
-        <Button variant="outline" className="py-1.5" onClick={async () => { const r = await syncQueue(); setPending(0); haptic('success'); alert(`Synced ${r.synced} item(s).`); }}>Sync now</Button>
+        <Button variant="outline" className="py-1.5" onClick={async () => { const r = await syncQueue(); setPending(0); haptic('success'); alert(`Synced ${r.synced} item(s).`); }}>{t('p.syncNow')}</Button>
       </Card>
 
       <Card className="flex items-center justify-between" onClick={() => navigate('/spotify')}>
-        <div className="flex items-center gap-2"><Music size={16} className="text-muted" /><span className="text-sm">Spotify player</span></div>
-        <Badge>Open</Badge>
+        <div className="flex items-center gap-2"><Music size={16} className="text-muted" /><span className="text-sm">{t('p.spotify')}</span></div>
+        <Badge>{t('common.open')}</Badge>
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/library')}>
         <div className="flex items-center gap-2"><BookOpen size={16} className="text-muted" /><span className="text-sm">Exercise library</span></div>

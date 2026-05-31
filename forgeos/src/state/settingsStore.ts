@@ -9,6 +9,7 @@ interface SettingsState extends Settings {
 }
 
 const DEFAULTS: Settings = {
+  language: 'en',
   theme: 'forge-dark',
   quoteGenre: 'stoic',
   leaderboardPublic: true,

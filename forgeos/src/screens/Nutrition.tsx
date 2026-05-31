@@ -6,10 +6,12 @@ import { useNutrition } from '../state/nutritionStore';
 import { useUser } from '../state/userStore';
 import { scanMeal, visionIsLive } from '../lib/vision';
 import { RECIPES, MEAL_TYPES, type Recipe, type MealType } from '../data/recipes';
+import { useT } from '../lib/i18n';
 import { haptic } from '../lib/haptics';
 import type { ScanResult } from '../types';
 
 export default function Nutrition() {
+  const t = useT();
   const profile = useUser((s) => s.profile);
   const log = useNutrition((s) => s.todaysEntries)();
   const totals = useNutrition((s) => s.todaysTotals)();
@@ -48,7 +50,7 @@ export default function Nutrition() {
   };
 
   return (
-    <Screen title="Nutrition" subtitle={`${profile?.goal ?? 'recomp'} · ${macros.calories} kcal target`}>
+    <Screen title={t('nut.title')} subtitle={`${profile?.goal ?? 'recomp'} · ${macros.calories} kcal`}>
       <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
 
       <Card className="space-y-3">
