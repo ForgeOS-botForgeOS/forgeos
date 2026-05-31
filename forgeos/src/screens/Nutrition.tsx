@@ -6,6 +6,8 @@ import { useNutrition } from '../state/nutritionStore';
 import { useUser } from '../state/userStore';
 import { scanMeal, visionIsLive, estimateMock } from '../lib/vision';
 import { RECIPES, MEAL_TYPES, type Recipe, type MealType } from '../data/recipes';
+import { RECIPES_SK, MEAL_TYPE_SK } from '../data/recipes.sk';
+import { useSettings } from '../state/settingsStore';
 import { useT } from '../lib/i18n';
 import { haptic } from '../lib/haptics';
 import type { ScanResult } from '../types';
@@ -266,26 +268,32 @@ function RecipeBrowser({
   userGoal: string;
   onAdd: (r: Recipe) => void;
 }) {
+  const t = useT();
+  const lang = useSettings((s) => s.language);
   const [meal, setMeal] = useState<MealType | 'All'>('All');
   const [onlyGoal, setOnlyGoal] = useState(true);
   const [openId, setOpenId] = useState<string | null>(null);
 
+  // Merge Slovak translation over the recipe when in SK mode.
+  const loc = (r: Recipe): Recipe => (lang === 'sk' && RECIPES_SK[r.id] ? { ...r, ...RECIPES_SK[r.id] } : r);
+  const mealLabel = (m: string) => (lang === 'sk' ? MEAL_TYPE_SK[m] ?? m : m);
+
   const list = RECIPES.filter(
     (r) => (meal === 'All' || r.meal === meal) && (!onlyGoal || r.goals.includes(userGoal as Recipe['goals'][number])),
-  );
+  ).map(loc);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Recipe library">
+    <Sheet open={open} onClose={onClose} title={t('nut.recipes')}>
       <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="text-xs text-muted">{list.length} recipes</p>
+          <p className="text-xs text-muted">{list.length} {lang === 'sk' ? 'receptov' : 'recipes'}</p>
           <button onClick={() => setOnlyGoal((v) => !v)} className={`text-[11px] rounded-full px-2 py-1 ${onlyGoal ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>
             {onlyGoal ? `matched to: ${userGoal}` : 'showing all goals'}
           </button>
         </div>
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
           {(['All', ...MEAL_TYPES] as const).map((m) => (
-            <Pill key={m} active={meal === m} onClick={() => setMeal(m)}>{m}</Pill>
+            <Pill key={m} active={meal === m} onClick={() => setMeal(m)}>{m === 'All' ? (lang === 'sk' ? 'Všetky' : 'All') : mealLabel(m)}</Pill>
           ))}
         </div>
         <div className="space-y-2 max-h-[55vh] overflow-y-auto no-scrollbar">
@@ -296,7 +304,7 @@ function RecipeBrowser({
                 <button className="w-full text-left" onClick={() => setOpenId(expanded ? null : r.id)}>
                   <div className="flex items-center justify-between">
                     <p className="font-semibold text-sm">{r.name}</p>
-                    <Badge color="rgb(var(--accent-2))">{r.meal}</Badge>
+                    <Badge color="rgb(var(--accent-2))">{mealLabel(r.meal)}</Badge>
                   </div>
                   <p className="text-xs text-muted mt-1 flex items-center gap-2">
                     <span className="font-mono">{r.kcal} kcal</span> · P{r.protein} C{r.carbs} F{r.fat}
