@@ -8,25 +8,27 @@ import { useSettings } from '../state/settingsStore';
 import { useGami } from '../state/gamificationStore';
 import { useUser } from '../state/userStore';
 import { useWorkout } from '../state/workoutStore';
-import { MOCK_FRIENDS, MOCK_MARKETPLACE } from '../lib/mockData';
+import { MOCK_MARKETPLACE } from '../lib/mockData';
 import { rankForXp, rankLabel } from '../data/ranks';
 import { generateShareCard, downloadDataUrl } from '../lib/shareCard';
 import { haptic } from '../lib/haptics';
+import { useT } from '../lib/i18n';
 
 const REACTIONS = ['🔥', '💪', '👏', '🐐', '🧠'];
 type Tab = 'feed' | 'friends' | 'race' | 'market';
 
 export default function Social() {
+  const t = useT();
   const [tab, setTab] = useState<Tab>('feed');
   const marketEnabled = useSettings((s) => s.marketplaceEnabled);
 
   return (
-    <Screen title="Social" subtitle="Iron sharpens iron.">
+    <Screen title={t('nav.social')} subtitle="Iron sharpens iron.">
       <div className="flex gap-2 overflow-x-auto no-scrollbar">
-        <Pill active={tab === 'feed'} onClick={() => setTab('feed')}>Feed</Pill>
-        <Pill active={tab === 'friends'} onClick={() => setTab('friends')}>Friends</Pill>
-        <Pill active={tab === 'race'} onClick={() => setTab('race')}>Live Race</Pill>
-        {marketEnabled && <Pill active={tab === 'market'} onClick={() => setTab('market')}>Marketplace</Pill>}
+        <Pill active={tab === 'feed'} onClick={() => setTab('feed')}>{t('s.feed')}</Pill>
+        <Pill active={tab === 'friends'} onClick={() => setTab('friends')}>{t('s.friends')}</Pill>
+        <Pill active={tab === 'race'} onClick={() => setTab('race')}>{t('s.race')}</Pill>
+        {marketEnabled && <Pill active={tab === 'market'} onClick={() => setTab('market')}>{t('s.market')}</Pill>}
       </div>
 
       {tab === 'feed' && <Feed />}
@@ -126,10 +128,38 @@ function ShareCardSheet({ open, onClose }: { open: boolean; onClose: () => void 
 }
 
 function Friends() {
+  const t = useT();
+  const friends = useSocial((s) => s.friends);
+  const addFriend = useSocial((s) => s.addFriend);
+  const removeFriend = useSocial((s) => s.removeFriend);
+  const [name, setName] = useState('');
+
+  function add() {
+    if (!name.trim()) return;
+    addFriend(name);
+    setName('');
+    haptic('success');
+  }
+
   return (
     <div className="space-y-2">
-      <SectionTitle>Your circle</SectionTitle>
-      {MOCK_FRIENDS.map((f) => (
+      {/* Add a friend */}
+      <Card className="space-y-2">
+        <SectionTitle>{t('s.addFriend')}</SectionTitle>
+        <div className="flex gap-2">
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            onKeyDown={(e) => { if (e.key === 'Enter') add(); }}
+            placeholder={t('s.friendName')}
+            className="flex-1 rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm"
+          />
+          <Button disabled={!name.trim()} onClick={add}><span className="flex items-center gap-1"><Users size={15} /> {t('s.add')}</span></Button>
+        </div>
+      </Card>
+
+      <SectionTitle>{t('s.yourCircle')}</SectionTitle>
+      {friends.map((f) => (
         <Card key={f.id} className="flex items-center gap-3">
           <Avatar seed={f.avatarSeed} />
           <div className="flex-1">
@@ -139,10 +169,10 @@ function Friends() {
             </p>
             <p className="text-xs text-muted">{f.rank} · {f.xp.toLocaleString()} XP</p>
           </div>
-          <Badge>{f.online ? 'online' : 'offline'}</Badge>
+          <button onClick={() => { removeFriend(f.id); haptic('tap'); }} className="text-muted text-xs">✕</button>
         </Card>
       ))}
-      <Button variant="outline" className="w-full justify-center mt-2"><span className="flex items-center gap-2"><Users size={16} /> Invite a friend</span></Button>
+      {friends.length === 0 && <p className="text-sm text-muted">No friends yet — add one above.</p>}
     </div>
   );
 }

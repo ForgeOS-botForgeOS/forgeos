@@ -262,8 +262,17 @@ export type ThemeId =
   | 'solar-flare';
 export type QuoteGenre = 'stoic' | 'biblical';
 
+export interface GymConfig {
+  name: string;
+  lat: number;
+  lng: number;
+  radiusM: number;
+  maxWeightKg: number; // heaviest available weight (e.g. dumbbells), default 20
+}
+
 export interface Settings {
   language: Language;
+  gym: GymConfig;
   theme: ThemeId;
   quoteGenre: QuoteGenre;
   leaderboardPublic: boolean;

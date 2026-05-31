@@ -9,7 +9,7 @@ import { useGami } from '../state/gamificationStore';
 import { rankForXp } from '../data/ranks';
 import { pendingCount, syncQueue } from '../lib/offlineQueue';
 import { useT, LANGUAGES } from '../lib/i18n';
-import { watchGym, DEFAULT_GYM } from '../lib/geo';
+import { watchGym } from '../lib/geo';
 import { EXERCISES } from '../data/exercises';
 import { exerciseById } from '../data/exercises';
 import type { ThemeId } from '../types';
@@ -44,6 +44,30 @@ export default function Profile() {
   const navigate = useNavigate();
   const [pending, setPending] = useState(0);
   const [planOpen, setPlanOpen] = useState(false);
+  const [gymBusy, setGymBusy] = useState(false);
+  const [gymMsg, setGymMsg] = useState<string | null>(null);
+
+  function setGymToHere() {
+    if (!navigator.geolocation) {
+      setGymMsg('Location not available on this device.');
+      return;
+    }
+    setGymBusy(true);
+    setGymMsg(null);
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        s.set('gym', { ...s.gym, lat: pos.coords.latitude, lng: pos.coords.longitude });
+        setGymBusy(false);
+        setGymMsg('Saved this spot as your gym ✅');
+        haptic('success');
+      },
+      () => {
+        setGymBusy(false);
+        setGymMsg('Couldn’t get your location (permission denied?).');
+      },
+      { enableHighAccuracy: true, timeout: 15000 },
+    );
+  }
 
   const { tier } = rankForXp(xp);
   const rankIdx = RANK_ORDER.indexOf(tier.name);
@@ -52,16 +76,16 @@ export default function Profile() {
     void pendingCount().then(setPending);
   }, []);
 
-  // Geofenced check-in watcher — only while enabled.
+  // Geofenced check-in watcher — only while enabled, uses your saved gym.
   useEffect(() => {
     if (!s.geofenceEnabled) return;
-    const stop = watchGym(DEFAULT_GYM, () => {
+    const stop = watchGym(s.gym, () => {
       haptic('success');
       alert('🔥 Welcome to the Forge — opening today’s workout.');
       navigate('/train');
     });
     return stop;
-  }, [s.geofenceEnabled, navigate]);
+  }, [s.geofenceEnabled, s.gym, navigate]);
 
   function themeUnlocked(t: (typeof THEMES)[number]) {
     if (!t.locked) return true;
@@ -177,9 +201,35 @@ export default function Profile() {
         <Badge>{EXERCISES.length}</Badge>
       </Card>
 
-      <Card className="flex items-center justify-between bg-surface-2">
-        <div className="flex items-center gap-2"><MapPin size={16} className="text-muted" /><span className="text-xs text-muted">Geofence: {DEFAULT_GYM.name} · {DEFAULT_GYM.radiusM}m</span></div>
-      </Card>
+      {/* Your gym */}
+      <div>
+        <SectionTitle action={<MapPin size={14} className="text-muted" />}>{t('p.yourGym')}</SectionTitle>
+        <Card className="space-y-3">
+          <input
+            value={s.gym.name}
+            onChange={(e) => s.set('gym', { ...s.gym, name: e.target.value })}
+            placeholder="Gym name"
+            className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm"
+          />
+          <Button variant="outline" className="w-full justify-center" onClick={setGymToHere}>
+            <span className="flex items-center gap-2"><MapPin size={15} /> {gymBusy ? t('p.locating') : t('p.useLocation')}</span>
+          </Button>
+          {gymMsg && <p className="text-[11px] text-accent-2">{gymMsg}</p>}
+          <div>
+            <p className="text-xs text-muted mb-1">{t('p.radius')}: {s.gym.radiusM} m</p>
+            <input type="range" min={50} max={500} step={10} value={s.gym.radiusM} onChange={(e) => s.set('gym', { ...s.gym, radiusM: Number(e.target.value) })} className="w-full accent-[rgb(var(--accent))]" />
+          </div>
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-sm">{t('p.maxWeight')}</span>
+            <div className="flex items-center gap-1">
+              <button onClick={() => s.set('gym', { ...s.gym, maxWeightKg: Math.max(0, s.gym.maxWeightKg - 2.5) })} className="w-8 h-8 rounded-md bg-surface-2">−</button>
+              <span className="font-mono font-bold w-16 text-center">{s.gym.maxWeightKg} kg</span>
+              <button onClick={() => s.set('gym', { ...s.gym, maxWeightKg: s.gym.maxWeightKg + 2.5 })} className="w-8 h-8 rounded-md bg-surface-2">+</button>
+            </div>
+          </div>
+          <p className="text-[11px] text-muted/70">{t('p.gymHint')}</p>
+        </Card>
+      </div>
 
       <Button variant="outline" className="w-full justify-center text-danger" onClick={() => { if (confirm('Reset profile and onboarding?')) { reset(); navigate('/onboarding'); } }}>
         <span className="flex items-center gap-2"><LogOut size={16} /> Reset / sign out</span>

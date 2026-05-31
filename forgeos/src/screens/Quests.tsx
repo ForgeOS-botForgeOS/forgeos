@@ -10,6 +10,7 @@ import { useWorkout } from '../state/workoutStore';
 import { QUESTS } from '../data/quests';
 import { RANKS, rankForXp, rankLabel, progressToNext } from '../data/ranks';
 import { buildLeaderboard } from '../lib/mockData';
+import { useSocial } from '../state/socialStore';
 import { MOCK_TRACKS } from '../lib/spotify';
 import { haptic } from '../lib/haptics';
 import { useT } from '../lib/i18n';
@@ -191,6 +192,7 @@ function Leaderboard() {
   const setSetting = useSettings((s) => s.set);
   const xp = useGami((s) => s.xp);
   const name = useUser((s) => s.profile?.name ?? 'You');
+  const friends = useSocial((s) => s.friends);
 
   if (!isPublic) {
     return (
@@ -203,7 +205,7 @@ function Leaderboard() {
     );
   }
 
-  const rows = buildLeaderboard(name, xp);
+  const rows = buildLeaderboard(name, xp, friends);
   return (
     <div className="space-y-2">
       <div className="flex justify-end">

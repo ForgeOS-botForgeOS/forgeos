@@ -99,6 +99,21 @@ const EN: Dict = {
   'p.reset': 'Reset / sign out',
   'p.exerciseLibrary': 'Exercise library',
   'p.spotify': 'Spotify player',
+  'p.yourGym': 'Your gym',
+  'p.useLocation': 'Use my current location',
+  'p.locating': 'Getting location…',
+  'p.radius': 'Check-in radius',
+  'p.maxWeight': 'Max weight (e.g. dumbbells)',
+  'p.gymHint': 'Geofence check-in works while the app is open. Max weight defaults to 20 kg.',
+  // social
+  's.feed': 'Feed',
+  's.friends': 'Friends',
+  's.race': 'Live Race',
+  's.market': 'Marketplace',
+  's.addFriend': 'Add a friend',
+  's.friendName': 'Friend’s name or code',
+  's.add': 'Add',
+  's.yourCircle': 'Your circle',
 };
 
 const SK: Dict = {
@@ -195,6 +210,21 @@ const SK: Dict = {
   'p.reset': 'Reset / odhlásiť sa',
   'p.exerciseLibrary': 'Knižnica cvikov',
   'p.spotify': 'Spotify prehrávač',
+  'p.yourGym': 'Tvoja posilňovňa',
+  'p.useLocation': 'Použiť moju aktuálnu polohu',
+  'p.locating': 'Zisťujem polohu…',
+  'p.radius': 'Polomer pre check-in',
+  'p.maxWeight': 'Max váha (napr. činky)',
+  'p.gymHint': 'Geo-check-in funguje, kým je appka otvorená. Max váha je predvolene 20 kg.',
+  // social
+  's.feed': 'Feed',
+  's.friends': 'Priatelia',
+  's.race': 'Live preteky',
+  's.market': 'Trhovisko',
+  's.addFriend': 'Pridať priateľa',
+  's.friendName': 'Meno priateľa alebo kód',
+  's.add': 'Pridať',
+  's.yourCircle': 'Tvoj okruh',
 };
 
 const DICTS: Record<Language, Dict> = { en: EN, sk: SK };

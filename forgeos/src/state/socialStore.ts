@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { FeedPost } from '../types';
-import { MOCK_FEED } from '../lib/mockData';
+import type { FeedPost, Friend } from '../types';
+import { MOCK_FEED, MOCK_FRIENDS } from '../lib/mockData';
 import { publishPostRemote, reactRemote } from '../lib/repositories';
 import { useUser } from './userStore';
 
@@ -9,10 +9,13 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 
 interface SocialState {
   feed: FeedPost[];
+  friends: Friend[];
   ownedRoutineIds: string[];
   react: (postId: string, emoji: string) => void;
   publishPost: (body: string, summary?: FeedPost['workoutSummary']) => void;
   buyRoutine: (id: string) => void;
+  addFriend: (name: string) => void;
+  removeFriend: (id: string) => void;
   seedIfEmpty: () => void;
 }
 
@@ -20,11 +23,30 @@ export const useSocial = create<SocialState>()(
   persist(
     (set, get) => ({
       feed: [],
+      friends: [],
       ownedRoutineIds: [],
 
       seedIfEmpty: () => {
         if (get().feed.length === 0) set({ feed: MOCK_FEED });
+        if (get().friends.length === 0) set({ friends: MOCK_FRIENDS });
       },
+
+      addFriend: (name) => {
+        const clean = name.trim();
+        if (!clean) return;
+        const seed = clean.slice(0, 2).toUpperCase();
+        const friend: Friend = {
+          id: uid(),
+          name: clean,
+          rank: 'Bronze I',
+          xp: Math.floor(Math.random() * 1500),
+          online: Math.random() > 0.5,
+          avatarSeed: seed,
+        };
+        set({ friends: [friend, ...get().friends] });
+      },
+
+      removeFriend: (id) => set({ friends: get().friends.filter((f) => f.id !== id) }),
 
       react: (postId, emoji) => {
         set({

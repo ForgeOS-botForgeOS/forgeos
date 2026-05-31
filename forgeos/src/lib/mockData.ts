@@ -55,9 +55,9 @@ export interface LeaderboardRow {
   you?: boolean;
 }
 
-export function buildLeaderboard(youName: string, youXp: number): LeaderboardRow[] {
+export function buildLeaderboard(youName: string, youXp: number, friends: Friend[] = MOCK_FRIENDS): LeaderboardRow[] {
   const rows = [
-    ...MOCK_FRIENDS.map((f) => ({ name: f.name, rankTier: f.rank, xp: f.xp })),
+    ...friends.map((f) => ({ name: f.name, rankTier: f.rank, xp: f.xp })),
     { name: youName || 'You', rankTier: '—', xp: youXp, you: true },
   ];
   rows.sort((a, b) => b.xp - a.xp);

@@ -10,6 +10,7 @@ interface SettingsState extends Settings {
 
 const DEFAULTS: Settings = {
   language: 'en',
+  gym: { name: 'My Forge', lat: 52.52, lng: 13.405, radiusM: 120, maxWeightKg: 20 },
   theme: 'forge-dark',
   quoteGenre: 'stoic',
   leaderboardPublic: true,
