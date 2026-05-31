@@ -48,10 +48,20 @@ const RESPONSE_SCHEMA = {
   required: ['name', 'calories', 'proteinG', 'carbsG', 'fatG', 'sugarG', 'confidence', 'tip'],
 };
 
+export function estimateMock(file: File): ScanResult {
+  return MOCK_MEALS[file.size % MOCK_MEALS.length];
+}
+
+export class VisionError extends Error {
+  constructor(message: string, readonly status?: number) {
+    super(message);
+  }
+}
+
 export async function scanMeal(file: File): Promise<ScanResult> {
   if (!GEMINI_KEY) {
     await new Promise((r) => setTimeout(r, 900));
-    return MOCK_MEALS[file.size % MOCK_MEALS.length];
+    return estimateMock(file);
   }
 
   const { data, mime } = await fileToBase64(file);
@@ -64,7 +74,15 @@ export async function scanMeal(file: File): Promise<ScanResult> {
       generationConfig: { responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA, temperature: 0.2 },
     }),
   });
-  if (!res.ok) throw new Error(`Gemini error ${res.status}`);
+  if (!res.ok) {
+    const msg =
+      res.status === 429
+        ? 'Gemini quota/billing not active for this project yet.'
+        : res.status === 403
+          ? 'Gemini key rejected (check key restrictions).'
+          : `Gemini error ${res.status}.`;
+    throw new VisionError(msg, res.status);
+  }
   const json = await res.json();
   const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
   if (!text) throw new Error('Empty response from Gemini');

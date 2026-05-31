@@ -4,7 +4,7 @@ import { Screen } from '../components/Screen';
 import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
 import { useNutrition } from '../state/nutritionStore';
 import { useUser } from '../state/userStore';
-import { scanMeal, visionIsLive } from '../lib/vision';
+import { scanMeal, visionIsLive, estimateMock } from '../lib/vision';
 import { RECIPES, MEAL_TYPES, type Recipe, type MealType } from '../data/recipes';
 import { useT } from '../lib/i18n';
 import { haptic } from '../lib/haptics';
@@ -21,6 +21,7 @@ export default function Nutrition() {
 
   const [scanning, setScanning] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
+  const [scanNote, setScanNote] = useState<string | null>(null);
   const [recompOpen, setRecompOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [recipesOpen, setRecipesOpen] = useState(false);
@@ -31,10 +32,16 @@ export default function Nutrition() {
     const file = e.target.files?.[0];
     if (!file) return;
     setScanning(true);
+    setScanNote(null);
     try {
       const r = await scanMeal(file);
       setResult(r);
       haptic('success');
+    } catch (err) {
+      // AI unavailable (e.g. quota/billing) — show a realistic estimate + note.
+      setResult(estimateMock(file));
+      setScanNote(err instanceof Error ? `${err.message} Showing an estimate instead.` : 'AI unavailable — showing an estimate.');
+      haptic('warning');
     } finally {
       setScanning(false);
       e.target.value = '';
@@ -116,6 +123,7 @@ export default function Nutrition() {
       <Sheet open={!!result} onClose={() => setResult(null)} title="Scan result">
         {result && (
           <div className="space-y-3">
+            {scanNote && <p className="text-xs text-warn bg-warn/10 rounded-lg px-3 py-2">{scanNote}</p>}
             <p className="font-semibold">{result.name}</p>
             <div className="grid grid-cols-5 gap-2 text-center text-xs">
               <ScanStat label="kcal" v={result.calories} />
