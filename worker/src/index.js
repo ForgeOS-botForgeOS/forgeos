@@ -30,14 +30,14 @@ export default {
       if (!image) return json({ error: 'no image' }, 400);
       const bytes = Uint8Array.from(atob(image), (c) => c.charCodeAt(0));
 
-      const ai = await env.AI.run('@cf/meta/llama-3.2-11b-vision-instruct', {
+      // LLaVA 1.5 is the EU-permitted vision model on Workers AI.
+      const ai = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
         prompt: PROMPT,
         image: [...bytes],
         max_tokens: 512,
-        temperature: 0.2,
       });
 
-      const text = (ai && ai.response) || '';
+      const text = (ai && (ai.description || ai.response)) || '';
       const match = text.match(/\{[\s\S]*\}/);
       let data = null;
       if (match) {
