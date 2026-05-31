@@ -3,10 +3,16 @@ import { EXERCISES } from '../../data/exercises';
 
 const WEEKDAYS: Weekday[] = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
 
-// Pick `count` exercises whose primary muscle is in the set, offset so that a
-// second "Push" day in the week pulls different movements than the first.
+// Cardio finishers rotated into training days.
+const CARDIO_IDS = EXERCISES.filter((e) => e.category === 'Cardio').map((e) => e.id);
+
+export interface PlanOptions {
+  noWeekends?: boolean;
+  includeCardio?: boolean;
+}
+
 function pick(primaries: MuscleGroup[], count: number, offset: number): string[] {
-  const pool = EXERCISES.filter((e) => primaries.includes(e.primary));
+  const pool = EXERCISES.filter((e) => primaries.includes(e.primary) && e.category !== 'Cardio');
   const out: string[] = [];
   for (let i = 0; i < count && pool.length; i++) {
     out.push(pool[(offset * count + i) % pool.length].id);
@@ -29,7 +35,6 @@ const TEMPLATES: Record<string, DayTemplate> = {
   arms: { label: 'Arms & Shoulders', muscles: ['Biceps', 'Triceps', 'Shoulders'] },
 };
 
-// Choose a split shape from the requested days/week.
 function splitFor(days: number): string[] {
   switch (days) {
     case 2:
@@ -47,12 +52,13 @@ function splitFor(days: number): string[] {
   }
 }
 
-export function buildWeekPlan(days: number, _style: string, goal: Goal): WeekPlan {
+export function buildWeekPlan(days: number, _style: string, goal: Goal, opts: PlanOptions = {}): WeekPlan {
+  const includeCardio = opts.includeCardio !== false; // default on
   const split = splitFor(days);
-  const trainingIdx = spread(days);
-  // Track how many times each template has appeared so repeats vary.
+  const trainingIdx = spread(days, opts.noWeekends);
   const seen: Record<string, number> = {};
   let s = 0;
+  let cardioN = 0;
 
   const planned: PlannedDay[] = WEEKDAYS.map((day, idx) => {
     if (trainingIdx.includes(idx) && s < split.length) {
@@ -60,12 +66,13 @@ export function buildWeekPlan(days: number, _style: string, goal: Goal): WeekPla
       const tmpl = TEMPLATES[key];
       const offset = seen[key] ?? 0;
       seen[key] = offset + 1;
-      return {
-        day,
-        label: offset > 0 ? `${tmpl.label} ${offset + 1}` : tmpl.label,
-        exerciseIds: pick(tmpl.muscles, goal === 'strength' ? 4 : 5, offset),
-        rest: false,
-      };
+      const exerciseIds = pick(tmpl.muscles, goal === 'strength' ? 4 : 5, offset);
+      // Add a cardio finisher to the day.
+      if (includeCardio && CARDIO_IDS.length) {
+        exerciseIds.push(CARDIO_IDS[cardioN % CARDIO_IDS.length]);
+        cardioN += 1;
+      }
+      return { day, label: offset > 0 ? `${tmpl.label} ${offset + 1}` : tmpl.label, exerciseIds, rest: false };
     }
     return { day, label: 'Rest', exerciseIds: [], rest: true };
   });
@@ -77,11 +84,13 @@ export function buildWeekPlan(days: number, _style: string, goal: Goal): WeekPla
   };
 }
 
-// Spread N training days across 7 as evenly as possible.
-function spread(n: number): number[] {
-  if (n <= 0) return [];
-  if (n >= 7) return [0, 1, 2, 3, 4, 5, 6].slice(0, n);
+// Spread N training days across the available slots as evenly as possible.
+// When noWeekends is set, only weekdays (Mo–Fr) are used.
+function spread(n: number, noWeekends?: boolean): number[] {
+  const avail = noWeekends ? [0, 1, 2, 3, 4] : [0, 1, 2, 3, 4, 5, 6];
+  const count = Math.min(n, avail.length);
+  if (count <= 0) return [];
   const out: number[] = [];
-  for (let i = 0; i < n; i++) out.push(Math.round((i * 7) / n));
-  return out;
+  for (let i = 0; i < count; i++) out.push(avail[Math.round((i * (avail.length - 1)) / Math.max(1, count - 1))]);
+  return [...new Set(out)];
 }

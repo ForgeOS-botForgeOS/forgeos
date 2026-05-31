@@ -31,7 +31,7 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
   }
 
   return (
-    <div className="relative overflow-hidden rounded-xl">
+    <div data-noswipe className="relative overflow-hidden rounded-xl">
       {/* swipe action hints */}
       <div className="absolute inset-0 flex items-center justify-between px-4 text-black/70">
         <Trash2 size={16} />

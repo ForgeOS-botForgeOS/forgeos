@@ -22,7 +22,7 @@ export default function Quests() {
   const [tab, setTab] = useState<Tab>('rank');
   return (
     <Screen title={t('q.title')} subtitle={t('q.subtitle')}>
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+      <div data-noswipe className="flex gap-2 overflow-x-auto no-scrollbar">
         <Pill active={tab === 'rank'} onClick={() => setTab('rank')}>Rank</Pill>
         <Pill active={tab === 'quests'} onClick={() => setTab('quests')}>Quests</Pill>
         <Pill active={tab === 'board'} onClick={() => setTab('board')}>Leaderboard</Pill>

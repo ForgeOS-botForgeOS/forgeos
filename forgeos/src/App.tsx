@@ -1,5 +1,5 @@
-import { useEffect, lazy, Suspense } from 'react';
-import { HashRouter, Routes, Route, Navigate, Outlet } from 'react-router-dom';
+import { useEffect, useRef, lazy, Suspense } from 'react';
+import { HashRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { PhoneFrame } from './components/PhoneFrame';
 import { TabBar } from './components/TabBar';
 import { RankUpWatcher } from './components/Celebrate';
@@ -24,10 +24,42 @@ const Spotify = lazy(() => import('./screens/Spotify'));
 const QuoteDeepDive = lazy(() => import('./screens/QuoteDeepDive'));
 const History = lazy(() => import('./screens/History'));
 
+// Left→right order of the bottom tabs; swiping moves to the neighbour.
+const TAB_ORDER = ['/home', '/train', '/nutrition', '/social', '/quests', '/profile'];
+
 function AppShell() {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const touch = useRef<{ x: number; y: number; ok: boolean } | null>(null);
+
+  function onTouchStart(e: React.TouchEvent) {
+    if (e.touches.length !== 1) {
+      touch.current = null;
+      return;
+    }
+    const el = e.target as HTMLElement;
+    // Don't hijack swipes on inputs, sliders, or anything opting out.
+    const ok = !el.closest('input, textarea, select, [role="slider"], [data-noswipe]');
+    touch.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, ok };
+  }
+
+  function onTouchEnd(e: React.TouchEvent) {
+    const t = touch.current;
+    touch.current = null;
+    if (!t || !t.ok) return;
+    const dx = e.changedTouches[0].clientX - t.x;
+    const dy = e.changedTouches[0].clientY - t.y;
+    if (Math.abs(dx) < 90 || Math.abs(dx) < Math.abs(dy) * 1.8) return; // mostly-horizontal only
+    const idx = TAB_ORDER.indexOf(location.pathname);
+    if (idx === -1) return; // only on main tab screens
+    // Swipe right → tab to the right; swipe left → tab to the left.
+    const next = dx > 0 ? idx + 1 : idx - 1;
+    if (next >= 0 && next < TAB_ORDER.length) navigate(TAB_ORDER[next]);
+  }
+
   return (
     <div className="flex flex-col h-full">
-      <main className="flex-1 overflow-y-auto no-scrollbar">
+      <main className="flex-1 overflow-y-auto no-scrollbar" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <Suspense fallback={<ScreenSkeleton />}>
           <Outlet />
         </Suspense>

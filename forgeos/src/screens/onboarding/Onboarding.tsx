@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Flame, Mail, Apple as AppleIcon, Globe, Loader2, Check } from 'lucide-react';
-import { Button, Card, Pill, Sheet } from '../../components/ui';
+import { Button, Card, Pill, Sheet, Toggle } from '../../components/ui';
 import { InstallButton } from '../../components/InstallButton';
 import { isBackendLive, signInWithEmail, signUpWithEmail } from '../../lib/supabase';
 import { ICE_BREAKER } from '../../data/quests';
@@ -35,6 +35,8 @@ export default function Onboarding() {
   const [signingIn, setSigningIn] = useState<null | 'google'>(null);
   const [signInErr, setSignInErr] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [noWeekends, setNoWeekends] = useState(false);
+  const [specialRequest, setSpecialRequest] = useState('');
 
   function emailContinue() {
     if (!isBackendLive) {
@@ -103,10 +105,12 @@ export default function Onboarding() {
       tdee: derived.td,
       macros: derived.macros,
       quizAnswers: quiz,
+      specialRequest: specialRequest.trim() || undefined,
+      noWeekends,
       onboarded: true,
     };
     setProfile(profile);
-    setWeekPlan(buildWeekPlan(daysPerWeek, style, goal));
+    setWeekPlan(buildWeekPlan(daysPerWeek, style, goal, { noWeekends, includeCardio: true }));
     addWeighIn(weightKg);
     haptic('success');
     navigate('/home', { replace: true });
@@ -206,6 +210,22 @@ export default function Onboarding() {
             className="w-full rounded-xl bg-surface border border-line px-4 py-3 text-sm"
           />
 
+          {/* Special requests for the generated plan */}
+          <Card className="space-y-3 bg-surface-2">
+            <p className="text-sm font-semibold">Special requests</p>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">Don’t train on weekends</span>
+              <Toggle checked={noWeekends} onChange={setNoWeekends} />
+            </div>
+            <textarea
+              value={specialRequest}
+              onChange={(e) => setSpecialRequest(e.target.value)}
+              placeholder="Anything else? e.g. bad knees, no overhead pressing, short on time…"
+              className="w-full rounded-xl bg-surface border border-line px-3 py-2 text-sm h-20"
+            />
+            <p className="text-[11px] text-muted/70">We’ll keep weekends as rest if toggled, and save your notes to your profile.</p>
+          </Card>
+
           <Button className="w-full justify-center" onClick={() => setStep('test')}>Continue to fitness test</Button>
         </motion.div>
       )}
@@ -231,7 +251,7 @@ export default function Onboarding() {
           <p className="text-sm text-muted">
             We generated an editable week plan. You can change training days and swap workouts anytime from the Profile tab.
           </p>
-          <PlanPreview days={daysPerWeek} style={style} goal={goal} />
+          <PlanPreview days={daysPerWeek} style={style} goal={goal} noWeekends={noWeekends} />
           <Button className="w-full justify-center" onClick={finish}>{t('ob.enter')}</Button>
         </motion.div>
       )}
@@ -453,8 +473,8 @@ function MiniStat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function PlanPreview({ days, style, goal }: { days: number; style: string; goal: Goal }) {
-  const plan = useMemo(() => buildWeekPlan(days, style, goal), [days, style, goal]);
+function PlanPreview({ days, style, goal, noWeekends }: { days: number; style: string; goal: Goal; noWeekends?: boolean }) {
+  const plan = useMemo(() => buildWeekPlan(days, style, goal, { noWeekends, includeCardio: true }), [days, style, goal, noWeekends]);
   return (
     <div className="grid grid-cols-7 gap-1">
       {plan.days.map((d) => (

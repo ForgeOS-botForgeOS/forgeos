@@ -133,6 +133,8 @@ export interface UserProfile {
   bmr: number;
   macros: MacroTargets;
   quizAnswers: Record<string, string>;
+  specialRequest?: string;
+  noWeekends?: boolean;
   onboarded: boolean;
 }
 

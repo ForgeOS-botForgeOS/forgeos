@@ -58,7 +58,7 @@ export default function Library() {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${EXERCISES.length} exercises…`} className="bg-transparent text-sm flex-1 outline-none" />
       </div>
 
-      <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+      <div data-noswipe className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
         {['All', ...EXERCISE_CATEGORIES].map((c) => (
           <button key={c} onClick={() => setCat(c)} className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs ${cat === c ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>{c}</button>
         ))}

@@ -24,7 +24,7 @@ export default function Social() {
 
   return (
     <Screen title={t('nav.social')} subtitle="Iron sharpens iron.">
-      <div className="flex gap-2 overflow-x-auto no-scrollbar">
+      <div data-noswipe className="flex gap-2 overflow-x-auto no-scrollbar">
         <Pill active={tab === 'feed'} onClick={() => setTab('feed')}>{t('s.feed')}</Pill>
         <Pill active={tab === 'friends'} onClick={() => setTab('friends')}>{t('s.friends')}</Pill>
         <Pill active={tab === 'race'} onClick={() => setTab('race')}>{t('s.race')}</Pill>
