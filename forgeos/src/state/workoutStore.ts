@@ -13,7 +13,11 @@ interface WorkoutState {
   prs: PR[];
   customExerciseIds: string[];
 
-  startWorkout: (name: string, exerciseIds?: string[]) => void;
+  startWorkout: (
+    name: string,
+    exerciseIds?: string[],
+    opts?: { targets?: Record<string, { sets: number; reps: number }>; maxWeightKg?: number },
+  ) => void;
   addExercise: (exerciseId: string) => void;
   removeExercise: (workoutExerciseId: string) => void;
   swapExercise: (workoutExerciseId: string, newExerciseId: string) => void;
@@ -45,13 +49,19 @@ export const useWorkout = create<WorkoutState>()(
       prs: [],
       customExerciseIds: [],
 
-      startWorkout: (name, exerciseIds = []) => {
-        const exercises: WorkoutExercise[] = exerciseIds.map((id) => ({
-          id: uid(),
-          exerciseId: id,
-          sets: [{ id: uid(), weightKg: 20, reps: 8, completed: false, rpe: 7 }],
-          restPresetSec: 90,
-        }));
+      startWorkout: (name, exerciseIds = [], opts = {}) => {
+        const seedWeight = opts.maxWeightKg ? Math.min(20, opts.maxWeightKg) : 20;
+        const exercises: WorkoutExercise[] = exerciseIds.map((id) => {
+          const target = opts.targets?.[id];
+          const setCount = Math.max(1, target?.sets ?? 1);
+          const reps = target?.reps ?? 8;
+          return {
+            id: uid(),
+            exerciseId: id,
+            sets: Array.from({ length: setCount }, () => ({ id: uid(), weightKg: seedWeight, reps, completed: false, rpe: 7 })),
+            restPresetSec: 90,
+          };
+        });
         set({
           active: { id: uid(), name, date: new Date().toISOString(), exercises, completed: false, synced: false },
         });

@@ -14,6 +14,7 @@ import { Confetti } from '../components/Celebrate';
 import { useT } from '../lib/i18n';
 import { useWorkout } from '../state/workoutStore';
 import { useUser } from '../state/userStore';
+import { useSettings } from '../state/settingsStore';
 import { useGami } from '../state/gamificationStore';
 import { EXERCISES, exerciseById, substitutesFor, EXERCISE_CATEGORIES } from '../data/exercises';
 import { detectPlateaus, recommendBlock } from '../lib/analytics';
@@ -26,6 +27,7 @@ export default function Train() {
   const active = useWorkout((s) => s.active);
   const history = useWorkout((s) => s.history);
   const weekPlan = useUser((s) => s.weekPlan);
+  const gymMax = useSettings((s) => s.gym.maxWeightKg);
   const startWorkout = useWorkout((s) => s.startWorkout);
 
   const [toolsOpen, setToolsOpen] = useState(false);
@@ -53,7 +55,7 @@ export default function Train() {
           <>
             <p className="font-semibold text-lg">{todayPlan.label}</p>
             <p className="text-sm text-muted mt-1">{todayPlan.exerciseIds.map((id) => exerciseById(id)?.name).filter(Boolean).slice(0, 4).join(' · ')}…</p>
-            <Button className="w-full justify-center mt-3" onClick={() => { startWorkout(todayPlan.label, todayPlan.exerciseIds); haptic('success'); }}>
+            <Button className="w-full justify-center mt-3" onClick={() => { startWorkout(todayPlan.label, todayPlan.exerciseIds, { targets: todayPlan.targets, maxWeightKg: gymMax }); haptic('success'); }}>
               <span className="flex items-center gap-2"><Dumbbell size={16} /> Start {todayPlan.label}</span>
             </Button>
           </>

@@ -95,11 +95,24 @@ export interface WeighIn {
 // ---- Plans ----
 export type Weekday = 'Mo' | 'Di' | 'Mi' | 'Do' | 'Fr' | 'Sa' | 'So';
 
+export interface ExerciseTarget {
+  sets: number;
+  reps: number;
+}
+
 export interface PlannedDay {
   day: Weekday;
   label: string; // e.g. "Push", "Rest", "Legs"
   exerciseIds: string[];
   rest: boolean;
+  targets?: Record<string, ExerciseTarget>; // per-exercise sets×reps
+}
+
+export interface SavedPlan {
+  id: string;
+  name: string;
+  plan: WeekPlan;
+  savedAt: string;
 }
 
 export interface WeekPlan {
