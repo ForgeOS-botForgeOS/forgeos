@@ -1,0 +1,8 @@
+name = "forgeos-vision"
+main = "src/index.js"
+compatibility_date = "2024-11-06"
+workers_dev = true
+
+# Free Workers AI binding — runs vision models with no credit card.
+[ai]
+binding = "AI"

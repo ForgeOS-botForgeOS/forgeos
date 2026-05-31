@@ -4,8 +4,10 @@ import type { ScanResult } from '../types';
 // (Google AI Studio). Restrict the key by HTTP referrer to your site origin.
 // Without a key, returns a realistic mocked estimate so the screen still works.
 const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
+// Preferred free path: a Cloudflare Worker running Workers AI vision.
+const WORKER_URL = import.meta.env.VITE_VISION_API_URL as string | undefined;
 const MODEL = 'gemini-2.0-flash';
-export const visionIsLive = Boolean(GEMINI_KEY);
+export const visionIsLive = Boolean(WORKER_URL || GEMINI_KEY);
 
 const MOCK_MEALS: ScanResult[] = [
   { name: 'Grilled chicken, rice & broccoli', calories: 540, proteinG: 48, carbsG: 55, fatG: 12, sugarG: 4, confidence: 0.88, tip: 'Solid recomp plate — lean protein with slow carbs.' },
@@ -59,12 +61,27 @@ export class VisionError extends Error {
 }
 
 export async function scanMeal(file: File): Promise<ScanResult> {
+  const { data, mime } = await fileToBase64(file);
+
+  // 1) Free Cloudflare Worker (Workers AI) if configured.
+  if (WORKER_URL) {
+    const res = await fetch(WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: data, mime }),
+    });
+    if (!res.ok) throw new VisionError(`Vision worker error ${res.status}.`, res.status);
+    const out = await res.json();
+    if (out.error) throw new VisionError(String(out.error));
+    out.confidence = Math.max(0, Math.min(1, out.confidence ?? 0.6));
+    return out as ScanResult;
+  }
+
+  // 2) Gemini direct (needs billing-enabled key).
   if (!GEMINI_KEY) {
     await new Promise((r) => setTimeout(r, 900));
     return estimateMock(file);
   }
-
-  const { data, mime } = await fileToBase64(file);
   const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
   const res = await fetch(url, {
     method: 'POST',
