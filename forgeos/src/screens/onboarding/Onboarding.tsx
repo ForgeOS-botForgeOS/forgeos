@@ -2,12 +2,14 @@ import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Flame, Mail, Apple as AppleIcon, Globe, Loader2, Check } from 'lucide-react';
-import { Button, Card, Pill } from '../../components/ui';
+import { Button, Card, Pill, Sheet } from '../../components/ui';
 import { InstallButton } from '../../components/InstallButton';
+import { isBackendLive, signInWithEmail, signUpWithEmail } from '../../lib/supabase';
 import { ICE_BREAKER } from '../../data/quests';
 import { useUser } from '../../state/userStore';
 import { macrosFor, mifflinStJeor, tdee, bodyFatBand } from '../../lib/fitness';
 import { signInWithGoogle, googleIsLive } from '../../lib/googleAuth';
+import { useT } from '../../lib/i18n';
 import { haptic } from '../../lib/haptics';
 import type { ActivityLevel, ExperienceLevel, Goal, Sex, UserProfile } from '../../types';
 import { buildWeekPlan } from './planGenerator';
@@ -16,6 +18,7 @@ import { FitnessTest } from './FitnessTest';
 type Step = 'signin' | 'quiz' | 'metrics' | 'test' | 'plan';
 
 export default function Onboarding() {
+  const t = useT();
   const [step, setStep] = useState<Step>('signin');
   const [provider, setProvider] = useState<UserProfile['authProvider']>('guest');
   const [googleEmail, setGoogleEmail] = useState<string | undefined>(undefined);
@@ -31,6 +34,17 @@ export default function Onboarding() {
   const [experience, setExperience] = useState<ExperienceLevel>('beginner');
   const [signingIn, setSigningIn] = useState<null | 'google'>(null);
   const [signInErr, setSignInErr] = useState<string | null>(null);
+  const [emailOpen, setEmailOpen] = useState(false);
+
+  function emailContinue() {
+    if (!isBackendLive) {
+      // No backend yet — proceed in demo mode.
+      setProvider('email');
+      setStep('quiz');
+      return;
+    }
+    setEmailOpen(true);
+  }
 
   async function continueWithGoogle() {
     setSignInErr(null);
@@ -109,8 +123,8 @@ export default function Onboarding() {
 
       {step === 'signin' && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
-          <h1 className="text-3xl font-extrabold leading-tight">Forge a stronger you.</h1>
-          <p className="text-muted">80/20 training, nutrition and gamification. Sign in to begin.</p>
+          <h1 className="text-3xl font-extrabold leading-tight">{t('ob.tagline')}</h1>
+          <p className="text-muted">{t('ob.sub')}</p>
 
           {/* Big, obvious install CTA when opened in a browser */}
           <InstallButton variant="big" />
@@ -118,16 +132,16 @@ export default function Onboarding() {
           <div className="space-y-2 pt-2">
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" disabled={signingIn === 'google'} onClick={continueWithGoogle}>
               {signingIn === 'google' ? <Loader2 size={18} className="animate-spin" /> : <Globe size={18} />}
-              {signingIn === 'google' ? 'Connecting to Google…' : 'Continue with Google'}
+              {signingIn === 'google' ? t('ob.connecting') : t('ob.google')}
             </Button>
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => { setProvider('apple'); setStep('quiz'); }}>
-              <AppleIcon size={18} /> Continue with Apple
+              <AppleIcon size={18} /> {t('ob.apple')}
             </Button>
-            <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => { setProvider('email'); setStep('quiz'); }}>
-              <Mail size={18} /> Continue with Email
+            <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={emailContinue}>
+              <Mail size={18} /> {t('ob.email')}
             </Button>
             <button className="w-full text-sm text-muted pt-2" onClick={() => { setProvider('guest'); setStep('quiz'); }}>
-              Skip — explore as guest
+              {t('ob.guest')}
             </button>
           </div>
           {signInErr && <p className="text-xs text-danger text-center">{signInErr}</p>}
@@ -218,10 +232,59 @@ export default function Onboarding() {
             We generated an editable week plan. You can change training days and swap workouts anytime from the Profile tab.
           </p>
           <PlanPreview days={daysPerWeek} style={style} goal={goal} />
-          <Button className="w-full justify-center" onClick={finish}>Enter the Forge 🔥</Button>
+          <Button className="w-full justify-center" onClick={finish}>{t('ob.enter')}</Button>
         </motion.div>
       )}
+
+      <EmailAuthSheet
+        open={emailOpen}
+        onClose={() => setEmailOpen(false)}
+        onAuthed={(email) => { setProvider('email'); setGoogleEmail(email); setEmailOpen(false); haptic('success'); setStep('quiz'); }}
+      />
     </div>
+  );
+}
+
+function EmailAuthSheet({ open, onClose, onAuthed }: { open: boolean; onClose: () => void; onAuthed: (email: string) => void }) {
+  const [mode, setMode] = useState<'in' | 'up'>('up');
+  const [email, setEmail] = useState('');
+  const [pw, setPw] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+
+  async function submit() {
+    setErr(null);
+    setBusy(true);
+    try {
+      const res = mode === 'up' ? await signUpWithEmail(email, pw) : await signInWithEmail(email, pw);
+      if ('error' in res && res.error) {
+        setErr(typeof res.error === 'string' ? res.error : (res.error as { message?: string }).message ?? 'Failed');
+        return;
+      }
+      onAuthed(email);
+    } catch {
+      setErr('Something went wrong. Try again.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <Sheet open={open} onClose={onClose} title={mode === 'up' ? 'Create account' : 'Sign in'}>
+      <div className="space-y-3">
+        <div className="flex gap-2">
+          <Pill active={mode === 'up'} onClick={() => setMode('up')}>Sign up</Pill>
+          <Pill active={mode === 'in'} onClick={() => setMode('in')}>Sign in</Pill>
+        </div>
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-3 text-sm" />
+        <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-3 text-sm" />
+        {err && <p className="text-xs text-danger">{err}</p>}
+        <Button className="w-full justify-center" disabled={busy || !email || pw.length < 6} onClick={submit}>
+          {busy ? 'Please wait…' : mode === 'up' ? 'Create account' : 'Sign in'}
+        </Button>
+        <p className="text-[11px] text-muted/70">Real accounts via Supabase. Passwords are min. 6 characters.</p>
+      </div>
+    </Sheet>
   );
 }
 
