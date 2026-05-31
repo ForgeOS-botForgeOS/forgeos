@@ -93,7 +93,7 @@ export interface WeighIn {
 }
 
 // ---- Plans ----
-export type Weekday = 'Mo' | 'Di' | 'Mi' | 'Do' | 'Fr' | 'Sa' | 'So';
+export type Weekday = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
 
 export interface ExerciseTarget {
   sets: number;

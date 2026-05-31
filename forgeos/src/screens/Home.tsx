@@ -31,7 +31,7 @@ export default function Home() {
   const { tier } = rankForXp(xp);
 
   const weeklyVolume = useMemo(() => {
-    const labels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     const buckets = labels.map((d) => ({ day: d, volume: 0 }));
     const now = new Date();
     const monday = new Date(now);

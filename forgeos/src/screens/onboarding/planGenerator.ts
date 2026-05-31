@@ -1,7 +1,7 @@
 import type { Goal, PlannedDay, WeekPlan, Weekday, MuscleGroup } from '../../types';
 import { EXERCISES } from '../../data/exercises';
 
-const WEEKDAYS: Weekday[] = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+const WEEKDAYS: Weekday[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 // Cardio finishers rotated into training days.
 const CARDIO_IDS = EXERCISES.filter((e) => e.category === 'Cardio').map((e) => e.id);

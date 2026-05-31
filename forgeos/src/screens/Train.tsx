@@ -39,7 +39,7 @@ export default function Train() {
 
   const todayPlan = useMemo(() => {
     if (!weekPlan) return null;
-    const map = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa'];
+    const map = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     const today = map[new Date().getDay()];
     return weekPlan.days.find((d) => d.day === today) ?? null;
   }, [weekPlan]);

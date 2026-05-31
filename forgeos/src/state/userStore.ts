@@ -67,6 +67,17 @@ export const useUser = create<UserState>()(
       },
       reset: () => set({ profile: null, weekPlan: null, weighIns: [] }),
     }),
-    { name: 'forge-user' },
+    {
+      name: 'forge-user',
+      // Migrate old German weekday codes (Mo/Di/Mi…) to English (Mon/Tue/Wed…).
+      onRehydrateStorage: () => (state) => {
+        if (!state) return;
+        const MAP: Record<string, string> = { Mo: 'Mon', Di: 'Tue', Mi: 'Wed', Do: 'Thu', Fr: 'Fri', Sa: 'Sat', So: 'Sun' };
+        const fix = (plan: WeekPlan | null) =>
+          plan ? { ...plan, days: plan.days.map((d) => ({ ...d, day: (MAP[d.day] ?? d.day) as WeekPlan['days'][number]['day'] })) } : plan;
+        if (state.weekPlan) state.weekPlan = fix(state.weekPlan)!;
+        if (state.savedPlans?.length) state.savedPlans = state.savedPlans.map((sp) => ({ ...sp, plan: fix(sp.plan)! }));
+      },
+    },
   ),
 );
