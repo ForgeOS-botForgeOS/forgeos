@@ -191,10 +191,7 @@ function bestMatch(name) {
   return best;
 }
 
-function macrosFromTable(name, grams) {
-  const key = bestMatch(name);
-  if (!key) return null;
-  const [kcal, p, c, f, s] = TABLE[key];
+function scale([kcal, p, c, f, s], grams) {
   const factor = (Number(grams) || 0) / 100;
   return {
     calories: Math.round(kcal * factor),
@@ -203,6 +200,59 @@ function macrosFromTable(name, grams) {
     fatG: Math.round(f * factor),
     sugarG: Math.round((s || 0) * factor),
   };
+}
+
+function macrosFromTable(name, grams) {
+  const key = bestMatch(name);
+  return key ? scale(TABLE[key], grams) : null;
+}
+
+// USDA FoodData Central — comprehensive for generic/whole foods. Free key
+// (DEMO_KEY works but is rate-limited; set FDC_KEY var for higher limits).
+async function usdaLookup(name, key) {
+  try {
+    const url = `https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${key}&query=${encodeURIComponent(name)}&pageSize=2&dataType=${encodeURIComponent('Foundation,SR Legacy,Survey (FNDDS)')}`;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4500);
+    const res = await fetch(url, { signal: ctrl.signal });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    const j = await res.json();
+    const food = (j.foods || [])[0];
+    if (!food || !Array.isArray(food.foodNutrients)) return null;
+    const find = (re, unit) => {
+      const n = food.foodNutrients.find((x) => re.test(x.nutrientName || '') && (!unit || (x.unitName || '').toUpperCase() === unit));
+      return n ? Number(n.value) || 0 : 0;
+    };
+    const kcal = find(/energy/i, 'KCAL');
+    if (kcal <= 0 || kcal > 1000) return null;
+    return [kcal, find(/protein/i), find(/carbohydrate/i), find(/total lipid|^fat/i), find(/sugars/i)];
+  } catch {
+    return null;
+  }
+}
+
+// Look a food up in Open Food Facts (free, ~3M foods, no key). Returns per-100g.
+async function offLookup(name) {
+  try {
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(name)}&search_simple=1&action=process&json=1&page_size=5&fields=product_name,nutriments`;
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), 4500);
+    const res = await fetch(url, { headers: { 'User-Agent': 'ForgeOS/1.0 (fitness app)' }, signal: ctrl.signal });
+    clearTimeout(t);
+    if (!res.ok) return null;
+    const j = await res.json();
+    for (const p of j.products || []) {
+      const n = p.nutriments || {};
+      const kcal = Number(n['energy-kcal_100g']);
+      if (kcal > 0 && kcal < 1000) {
+        return [kcal, Number(n.proteins_100g) || 0, Number(n.carbohydrates_100g) || 0, Number(n.fat_100g) || 0, Number(n.sugars_100g) || 0];
+      }
+    }
+  } catch {
+    /* timeout or network — fall back */
+  }
+  return null;
 }
 
 export default {
@@ -239,22 +289,34 @@ export default {
         return json({ name: 'Meal (estimate)', calories: 500, proteinG: 30, carbsG: 50, fatG: 18, sugarG: 8, confidence: 0.25, tip: (text || 'Could not identify items — edit manually.').slice(0, 160), items: [{ name: 'Meal', calories: 500, proteinG: 30, carbsG: 50, fatG: 18, sugarG: 8 }] });
       }
 
-      const items = rawItems.map((it) => {
-        const grams = Number(it.grams) || 150;
-        const m = macrosFromTable(it.name, grams) || { calories: Math.round(grams * 1.5), proteinG: Math.round(grams * 0.08), carbsG: Math.round(grams * 0.15), fatG: Math.round(grams * 0.05), sugarG: 0 };
-        const matched = !!bestMatch(it.name);
-        return { name: `${it.name} (${grams}g)`, ...m, _matched: matched };
-      });
+      // Table first (fast/curated), then Open Food Facts (millions of foods), then estimate.
+      const items = await Promise.all(
+        rawItems.slice(0, 8).map(async (it) => {
+          const grams = Number(it.grams) || 150;
+          let m = macrosFromTable(it.name, grams);
+          let source = m ? 'db' : '';
+          if (!m) {
+            const usda = await usdaLookup(it.name, env.FDC_KEY || 'DEMO_KEY');
+            if (usda) { m = scale(usda, grams); source = 'usda'; }
+          }
+          if (!m) {
+            const off = await offLookup(it.name);
+            if (off) { m = scale(off, grams); source = 'off'; }
+          }
+          if (!m) { m = { calories: Math.round(grams * 1.5), proteinG: Math.round(grams * 0.08), carbsG: Math.round(grams * 0.15), fatG: Math.round(grams * 0.05), sugarG: 0 }; source = 'estimate'; }
+          return { name: `${it.name} (${grams}g)`, ...m, _source: source };
+        }),
+      );
       const totals = items.reduce((a, b) => ({ calories: a.calories + b.calories, proteinG: a.proteinG + b.proteinG, carbsG: a.carbsG + b.carbsG, fatG: a.fatG + b.fatG, sugarG: a.sugarG + b.sugarG }), { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, sugarG: 0 });
-      const matchedCount = items.filter((i) => i._matched).length;
-      const cleanItems = items.map(({ _matched, ...rest }) => rest); // eslint-disable-line @typescript-eslint/no-unused-vars
+      const matchedCount = items.filter((i) => i._source !== 'estimate').length;
+      const cleanItems = items.map(({ _source, ...rest }) => rest); // eslint-disable-line no-unused-vars
 
       return json({
         name: rawItems.map((i) => i.name).join(', '),
         ...totals,
         items: cleanItems,
         confidence: Math.max(0.3, Math.min(0.95, matchedCount / items.length)),
-        tip: `${matchedCount}/${items.length} items matched the nutrition database. Edit grams/macros if needed.`,
+        tip: `${matchedCount}/${items.length} items matched a nutrition database (built-in + Open Food Facts). Edit anything if needed.`,
       });
     } catch (e) {
       return json({ error: String(e && e.message ? e.message : e) }, 500);
