@@ -27,7 +27,12 @@ interface NutritionState {
   todaysWaterMl: () => number;
   saveMeal: (m: Omit<SavedMeal, 'id'>) => void;
   removeSavedMeal: (id: string) => void;
+  learned: Record<string, SavedMeal>;
+  learn: (m: Omit<SavedMeal, 'id'>) => void;
+  getLearned: (name: string) => SavedMeal | null;
 }
+
+const normalize = (s: string) => s.trim().toLowerCase().replace(/\s+/g, ' ');
 
 export const useNutrition = create<NutritionState>()(
   persist(
@@ -48,6 +53,21 @@ export const useNutrition = create<NutritionState>()(
         set({ savedMeals: [{ id: uid(), ...m }, ...get().savedMeals] });
       },
       removeSavedMeal: (id) => set({ savedMeals: get().savedMeals.filter((s) => s.id !== id) }),
+      learned: {},
+      // Remember a (corrected) food so future scans of the same name auto-apply it.
+      learn: (m) => {
+        const key = normalize(m.name);
+        if (!key) return;
+        set({ learned: { ...get().learned, [key]: { id: key, ...m } } });
+      },
+      getLearned: (name) => {
+        const key = normalize(name);
+        const lm = get().learned;
+        if (lm[key]) return lm[key];
+        // loose match: a learned name contained in the scanned name (or vice-versa)
+        const hit = Object.keys(lm).find((k) => k.length > 3 && (key.includes(k) || k.includes(key)));
+        return hit ? lm[hit] : null;
+      },
       todaysEntries: () => {
         const today = new Date().toISOString().slice(0, 10);
         return get().log.filter((e) => e.date.slice(0, 10) === today);

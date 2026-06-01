@@ -7,10 +7,11 @@ const CORS = {
 };
 
 const FOOD_PROMPT =
-  'You are a precise sports-nutrition estimator. Identify every food item in the ' +
-  'photo, estimate realistic portion sizes, and sum the macros for the whole plate. ' +
-  'Be specific in the name (list the items). Respond with ONLY a JSON object, no prose: ' +
-  '{"name": string, "calories": number, "proteinG": number, "carbsG": number, ' +
+  'You are a precise sports-nutrition estimator. List EACH distinct food item in the ' +
+  'photo with its own estimated macros, then give the plate totals. Respond with ONLY ' +
+  'a JSON object, no prose: {"items": [{"name": string, "calories": number, ' +
+  '"proteinG": number, "carbsG": number, "fatG": number, "sugarG": number}], ' +
+  '"name": string, "calories": number, "proteinG": number, "carbsG": number, ' +
   '"fatG": number, "sugarG": number, "confidence": number (0-1), "tip": string}.';
 
 const CARDIO_PROMPT =

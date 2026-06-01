@@ -71,7 +71,13 @@ const RESPONSE_SCHEMA = {
 };
 
 export function estimateMock(file: File): ScanResult {
-  return MOCK_MEALS[file.size % MOCK_MEALS.length];
+  return withItems(MOCK_MEALS[file.size % MOCK_MEALS.length]);
+}
+
+// Guarantee a per-item breakdown (fallback: the whole result as one item).
+function withItems(r: ScanResult): ScanResult {
+  if (Array.isArray(r.items) && r.items.length) return r;
+  return { ...r, items: [{ name: r.name, calories: r.calories, proteinG: r.proteinG, carbsG: r.carbsG, fatG: r.fatG, sugarG: r.sugarG }] };
 }
 
 export class VisionError extends Error {
@@ -94,7 +100,7 @@ export async function scanMeal(file: File): Promise<ScanResult> {
     const out = await res.json();
     if (out.error) throw new VisionError(String(out.error));
     out.confidence = Math.max(0, Math.min(1, out.confidence ?? 0.6));
-    return out as ScanResult;
+    return withItems(out as ScanResult);
   }
 
   // 2) Gemini direct (needs billing-enabled key).
@@ -126,5 +132,5 @@ export async function scanMeal(file: File): Promise<ScanResult> {
   const parsed = JSON.parse(text) as ScanResult;
   // clamp confidence to 0..1
   parsed.confidence = Math.max(0, Math.min(1, parsed.confidence ?? 0.7));
-  return parsed;
+  return withItems(parsed);
 }

@@ -12,11 +12,14 @@ const uid = () => Math.random().toString(36).slice(2, 10);
 export default function WorkoutEdit() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const isNew = id === 'new';
   const original = useWorkout((s) => s.history.find((w) => w.id === id));
   const updateHistoryWorkout = useWorkout((s) => s.updateHistoryWorkout);
   const deleteHistoryWorkout = useWorkout((s) => s.deleteHistoryWorkout);
+  const addManualWorkout = useWorkout((s) => s.addManualWorkout);
 
-  const [draft, setDraft] = useState<Workout | null>(original ? structuredClone(original) : null);
+  const blank: Workout = { id: uid(), name: 'New workout', date: new Date().toISOString(), exercises: [], completed: true, totalVolumeKg: 0 };
+  const [draft, setDraft] = useState<Workout | null>(isNew ? blank : original ? structuredClone(original) : null);
   const [pickerOpen, setPickerOpen] = useState(false);
 
   if (!draft) {
@@ -41,7 +44,8 @@ export default function WorkoutEdit() {
   };
 
   function save() {
-    updateHistoryWorkout(draft!.id, draft!);
+    if (isNew) addManualWorkout(draft!);
+    else updateHistoryWorkout(draft!.id, draft!);
     haptic('success');
     navigate(-1);
   }
@@ -77,8 +81,8 @@ export default function WorkoutEdit() {
       <Button variant="ghost" className="w-full justify-center" onClick={() => setPickerOpen(true)}><span className="flex items-center gap-1"><Plus size={16} /> Add exercise</span></Button>
 
       <div className="flex gap-2">
-        <Button variant="outline" className="flex-1 justify-center text-danger" onClick={del}>Delete</Button>
-        <Button className="flex-1 justify-center" onClick={save}>Save changes</Button>
+        {!isNew && <Button variant="outline" className="flex-1 justify-center text-danger" onClick={del}>Delete</Button>}
+        <Button className="flex-1 justify-center" onClick={save}>{isNew ? 'Save workout' : 'Save changes'}</Button>
       </div>
 
       <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="Add exercise">

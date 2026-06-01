@@ -1,13 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Dumbbell, TrendingUp } from 'lucide-react';
+import { ChevronLeft, Dumbbell, TrendingUp, Plus, Copy } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { Card, Badge, Pill } from '../components/ui';
+import { Card, Badge, Pill, Button } from '../components/ui';
 import { useWorkout } from '../state/workoutStore';
 import { useUser } from '../state/userStore';
 import { exerciseById } from '../data/exercises';
 import { e1rmSeries } from '../lib/analytics';
 import { liftBadge } from '../data/ranks';
+import { haptic } from '../lib/haptics';
 
 export default function History() {
   const navigate = useNavigate();
@@ -30,17 +31,37 @@ export default function History() {
 
 function Sessions() {
   const history = useWorkout((s) => s.history);
+  const addManualWorkout = useWorkout((s) => s.addManualWorkout);
   const navigate = useNavigate();
+  const uid = () => Math.random().toString(36).slice(2, 10);
+
+  function duplicate(w: typeof history[number]) {
+    addManualWorkout({
+      ...structuredClone(w),
+      id: uid(),
+      date: new Date().toISOString(),
+      name: w.name.replace(/ \(copy\)$/, '') + ' (copy)',
+      exercises: w.exercises.map((e) => ({ ...e, id: uid(), sets: e.sets.map((s) => ({ ...s, id: uid(), completed: true })) })),
+    });
+    haptic('success');
+  }
+
   return (
     <div className="space-y-2">
-      {history.length > 0 && <p className="text-[11px] text-muted">Tap a session to edit it.</p>}
+      <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/workout/new')}>
+        <span className="flex items-center gap-1"><Plus size={15} /> Add a past workout</span>
+      </Button>
+      {history.length > 0 && <p className="text-[11px] text-muted">Tap a session to edit · ⧉ to duplicate.</p>}
       {history.map((w) => {
         const sets = w.exercises.reduce((a, e) => a + e.sets.filter((s) => s.completed).length, 0);
         return (
-          <Card key={w.id} onClick={() => navigate(`/workout/${w.id}`)} className="space-y-1">
+          <Card key={w.id} className="space-y-1">
             <div className="flex items-center justify-between">
-              <p className="font-semibold text-sm flex items-center gap-2"><Dumbbell size={14} className="text-accent" /> {w.name}</p>
-              <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString()}</span>
+              <button onClick={() => navigate(`/workout/${w.id}`)} className="font-semibold text-sm flex items-center gap-2 text-left flex-1"><Dumbbell size={14} className="text-accent" /> {w.name}</button>
+              <div className="flex items-center gap-2">
+                <button onClick={() => duplicate(w)} title="Duplicate" className="text-muted"><Copy size={14} /></button>
+                <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString()}</span>
+              </div>
             </div>
             <p className="text-xs text-muted">{Math.round(w.totalVolumeKg ?? 0).toLocaleString()} kg · {sets} sets · {w.exercises.length} exercises {w.synced === false && '· ⏳ queued'}</p>
             <div className="flex flex-wrap gap-1 pt-1">

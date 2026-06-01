@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Camera, Trash2, Sparkles, Calculator, ChefHat, Clock, Star } from 'lucide-react';
+import { Camera, Trash2, Sparkles, Calculator, ChefHat, Clock, Star, Check } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
 import { useNutrition } from '../state/nutritionStore';
@@ -10,7 +10,7 @@ import { RECIPES_SK, MEAL_TYPE_SK } from '../data/recipes.sk';
 import { useSettings } from '../state/settingsStore';
 import { useT } from '../lib/i18n';
 import { haptic } from '../lib/haptics';
-import type { ScanResult } from '../types';
+import type { ScanResult, FoodItem } from '../types';
 
 export default function Nutrition() {
   const t = useT();
@@ -26,8 +26,12 @@ export default function Nutrition() {
   const waterGoal = 3000;
   const fileRef = useRef<HTMLInputElement>(null);
 
+  const learn = useNutrition((s) => s.learn);
+  const getLearned = useNutrition((s) => s.getLearned);
+
   const [scanning, setScanning] = useState(false);
-  const [result, setResult] = useState<ScanResult | null>(null);
+  const [items, setItems] = useState<FoodItem[] | null>(null);
+  const [selected, setSelected] = useState<Set<number>>(new Set());
   const [scanNote, setScanNote] = useState<string | null>(null);
   const [recompOpen, setRecompOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
@@ -35,24 +39,49 @@ export default function Nutrition() {
 
   const macros = profile?.macros ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 };
 
+  function openItems(r: ScanResult) {
+    let learnedCount = 0;
+    // Apply learned corrections to any item the user has fixed before.
+    const list = (r.items ?? [r]).map((it) => {
+      const l = getLearned(it.name);
+      if (l) { learnedCount++; return { name: it.name, calories: l.calories, proteinG: l.proteinG, carbsG: l.carbsG, fatG: l.fatG, sugarG: l.sugarG }; }
+      return { name: it.name, calories: it.calories, proteinG: it.proteinG, carbsG: it.carbsG, fatG: it.fatG, sugarG: it.sugarG };
+    });
+    setItems(list);
+    setSelected(new Set(list.map((_, i) => i)));
+    if (learnedCount) setScanNote(`Auto-corrected ${learnedCount} item(s) from your past edits.`);
+  }
+
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setScanning(true);
     setScanNote(null);
     try {
-      const r = await scanMeal(file);
-      setResult(r);
+      openItems(await scanMeal(file));
       haptic('success');
     } catch (err) {
-      // AI unavailable (e.g. quota/billing) — show a realistic estimate + note.
-      setResult(estimateMock(file));
+      openItems(estimateMock(file));
       setScanNote(err instanceof Error ? `${err.message} Showing an estimate instead.` : 'AI unavailable — showing an estimate.');
       haptic('warning');
     } finally {
       setScanning(false);
       e.target.value = '';
     }
+  }
+
+  function patchItem(idx: number, p: Partial<FoodItem>) {
+    setItems((cur) => (cur ? cur.map((it, i) => (i === idx ? { ...it, ...p } : it)) : cur));
+  }
+  function addSelected() {
+    if (!items) return;
+    items.forEach((it, i) => {
+      if (!selected.has(i)) return;
+      addEntry({ name: it.name, calories: it.calories, proteinG: it.proteinG, carbsG: it.carbsG, fatG: it.fatG, sugarG: it.sugarG, source: 'scan' });
+      learn(it); // remember the (possibly corrected) values for next time
+    });
+    haptic('success');
+    setItems(null);
   }
 
   const goalText: Record<string, string> = {
@@ -158,27 +187,34 @@ export default function Nutrition() {
         )}
       </div>
 
-      {/* Scan result sheet — fully editable before logging */}
-      <Sheet open={!!result} onClose={() => setResult(null)} title="Review scan">
-        {result && (
+      {/* Scan review — per-item, editable, toggleable, learns your edits */}
+      <Sheet open={!!items} onClose={() => setItems(null)} title="Review scan">
+        {items && (
           <div className="space-y-3">
-            {scanNote && <p className="text-xs text-warn bg-warn/10 rounded-lg px-3 py-2">{scanNote}</p>}
-            <p className="text-[11px] text-muted">AI estimate — tweak anything before adding. Confidence {Math.round(result.confidence * 100)}%.</p>
-            <input value={result.name} onChange={(e) => setResult({ ...result, name: e.target.value })} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm font-semibold" />
-            <div className="space-y-2">
-              <EditStat label="Calories (kcal)" step={10} v={result.calories} onChange={(v) => setResult({ ...result, calories: v })} />
-              <EditStat label="Protein (g)" step={1} v={result.proteinG} onChange={(v) => setResult({ ...result, proteinG: v })} />
-              <EditStat label="Carbs (g)" step={1} v={result.carbsG} onChange={(v) => setResult({ ...result, carbsG: v })} />
-              <EditStat label="Fat (g)" step={1} v={result.fatG} onChange={(v) => setResult({ ...result, fatG: v })} />
-              <EditStat label="Sugar (g)" step={1} v={result.sugarG} onChange={(v) => setResult({ ...result, sugarG: v })} />
+            {scanNote && <p className="text-xs text-accent-2 bg-accent-2/10 rounded-lg px-3 py-2">{scanNote}</p>}
+            <p className="text-[11px] text-muted">Tick the items to log and tweak anything — your edits are remembered for next time.</p>
+            <div className="space-y-2 max-h-[52vh] overflow-y-auto no-scrollbar">
+              {items.map((it, idx) => {
+                const on = selected.has(idx);
+                return (
+                  <div key={idx} className={`rounded-xl border p-3 space-y-2 ${on ? 'border-accent/50 bg-surface-2' : 'border-line opacity-60'}`}>
+                    <div className="flex items-center gap-2">
+                      <button onClick={() => setSelected((s) => { const n = new Set(s); n.has(idx) ? n.delete(idx) : n.add(idx); return n; })} className={`w-5 h-5 shrink-0 rounded-md border flex items-center justify-center ${on ? 'bg-accent border-accent text-black' : 'border-line'}`}>{on && <Check size={13} strokeWidth={3} />}</button>
+                      <input value={it.name} onChange={(e) => patchItem(idx, { name: e.target.value })} className="flex-1 bg-transparent text-sm font-semibold outline-none" />
+                    </div>
+                    <div className="grid grid-cols-5 gap-1.5">
+                      <MiniNum label="kcal" v={it.calories} onChange={(v) => patchItem(idx, { calories: v })} />
+                      <MiniNum label="P" v={it.proteinG} onChange={(v) => patchItem(idx, { proteinG: v })} />
+                      <MiniNum label="C" v={it.carbsG} onChange={(v) => patchItem(idx, { carbsG: v })} />
+                      <MiniNum label="F" v={it.fatG} onChange={(v) => patchItem(idx, { fatG: v })} />
+                      <MiniNum label="sug" v={it.sugarG} onChange={(v) => patchItem(idx, { sugarG: v })} />
+                    </div>
+                  </div>
+                );
+              })}
             </div>
-            {result.tip && <p className="text-xs text-muted">💡 {result.tip}</p>}
-            <Button className="w-full justify-center" onClick={() => {
-              addEntry({ name: result.name, calories: result.calories, proteinG: result.proteinG, carbsG: result.carbsG, fatG: result.fatG, sugarG: result.sugarG, source: 'scan', confidence: result.confidence });
-              setResult(null);
-            }}>
-              Add to log
-            </Button>
+            <p className="text-xs text-muted text-center">Selected total: {items.filter((_, i) => selected.has(i)).reduce((a, b) => a + b.calories, 0)} kcal</p>
+            <Button className="w-full justify-center" disabled={selected.size === 0} onClick={addSelected}>Add {selected.size} item{selected.size === 1 ? '' : 's'} to log</Button>
           </div>
         )}
       </Sheet>
@@ -209,21 +245,17 @@ function Tot({ label, value, target }: { label: string; value: number; target: n
   );
 }
 
-function EditStat({ label, v, step, onChange }: { label: string; v: number; step: number; onChange: (v: number) => void }) {
+function MiniNum({ label, v, onChange }: { label: string; v: number; onChange: (v: number) => void }) {
   return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-sm text-muted">{label}</span>
-      <div className="flex items-center gap-1">
-        <button onClick={() => onChange(Math.max(0, Math.round((v - step) * 10) / 10))} className="w-8 h-8 rounded-md bg-surface-2">−</button>
-        <input
-          type="number"
-          value={v}
-          onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
-          className="w-16 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-center font-mono text-text"
-        />
-        <button onClick={() => onChange(Math.round((v + step) * 10) / 10)} className="w-8 h-8 rounded-md bg-surface-2">+</button>
-      </div>
-    </div>
+    <label className="text-center">
+      <input
+        type="number"
+        value={v}
+        onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))}
+        className="w-full rounded-md bg-surface border border-line px-1 py-1 text-xs text-center font-mono text-text"
+      />
+      <span className="text-[9px] text-muted">{label}</span>
+    </label>
   );
 }
 

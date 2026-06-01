@@ -239,15 +239,19 @@ export interface FoodEntry {
   confidence?: number;
 }
 
-export interface ScanResult {
+export interface FoodItem {
   name: string;
   calories: number;
   proteinG: number;
   carbsG: number;
   fatG: number;
   sugarG: number;
+}
+
+export interface ScanResult extends FoodItem {
   confidence: number;
   tip: string;
+  items?: FoodItem[]; // per-food breakdown
 }
 
 export interface CardioScan {
