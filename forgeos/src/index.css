@@ -213,6 +213,36 @@
   --danger: 244 63 94;
 }
 
+/* Daybreak — clean light theme */
+[data-theme='daybreak-light'] {
+  --bg: 247 248 250;
+  --surface: 255 255 255;
+  --surface-2: 238 241 245;
+  --line: 218 223 230;
+  --text: 17 24 39;
+  --muted: 107 114 128;
+  --accent: 234 88 12;
+  --accent-2: 37 99 235;
+  --success: 22 163 74;
+  --warn: 202 138 4;
+  --danger: 220 38 38;
+}
+
+/* Paper — warm light theme */
+[data-theme='paper-light'] {
+  --bg: 247 243 235;
+  --surface: 255 252 247;
+  --surface-2: 238 231 219;
+  --line: 222 213 198;
+  --text: 41 37 30;
+  --muted: 120 110 95;
+  --accent: 180 83 9;
+  --accent-2: 13 148 136;
+  --success: 21 128 61;
+  --warn: 180 130 10;
+  --danger: 185 28 28;
+}
+
 /* Blood Moon — crimson on black, locked (Legend) */
 [data-theme='blood-moon'] {
   --bg: 12 6 7;

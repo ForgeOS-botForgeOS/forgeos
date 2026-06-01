@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { PR, SetEntry, SpotifyTrack, Workout, WorkoutExercise } from '../types';
-import { e1rm, volumeOf } from '../lib/fitness';
+import { e1rm, volumeOf, overloadSuggestion } from '../lib/fitness';
 import { exerciseById } from '../data/exercises';
 import { enqueue } from '../lib/offlineQueue';
 
@@ -51,14 +51,32 @@ export const useWorkout = create<WorkoutState>()(
 
       startWorkout: (name, exerciseIds = [], opts = {}) => {
         const seedWeight = opts.maxWeightKg ? Math.min(20, opts.maxWeightKg) : 20;
+        const history = get().history;
+        // Auto-progression: find the most recent completed set for this exercise
+        // and suggest the next target via progressive overload.
+        const lastBest = (exerciseId: string): SetEntry | undefined => {
+          for (const w of history) {
+            const we = w.exercises.find((e) => e.exerciseId === exerciseId);
+            const done = we?.sets.filter((s) => s.completed) ?? [];
+            if (done.length) return done.reduce((a, b) => (b.weightKg * b.reps > a.weightKg * a.reps ? b : a));
+          }
+          return undefined;
+        };
         const exercises: WorkoutExercise[] = exerciseIds.map((id) => {
           const target = opts.targets?.[id];
           const setCount = Math.max(1, target?.sets ?? 1);
-          const reps = target?.reps ?? 8;
+          const prev = lastBest(id);
+          let weightKg = seedWeight;
+          let reps = target?.reps ?? 8;
+          if (prev) {
+            const sug = overloadSuggestion(prev.weightKg, prev.reps, target?.reps ?? prev.reps, prev.rpe ?? 8);
+            weightKg = sug.weightKg; // no cap — based on what was actually lifted
+            reps = sug.reps;
+          }
           return {
             id: uid(),
             exerciseId: id,
-            sets: Array.from({ length: setCount }, () => ({ id: uid(), weightKg: seedWeight, reps, completed: false, rpe: 7 })),
+            sets: Array.from({ length: setCount }, () => ({ id: uid(), weightKg, reps, completed: false, rpe: 7 })),
             restPresetSec: 90,
           };
         });

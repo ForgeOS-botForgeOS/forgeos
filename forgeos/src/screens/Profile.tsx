@@ -1,6 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages } from 'lucide-react';
+import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { useSettings } from '../state/settingsStore';
@@ -10,6 +10,8 @@ import { rankForXp } from '../data/ranks';
 import { pendingCount, syncQueue } from '../lib/offlineQueue';
 import { useT, LANGUAGES } from '../lib/i18n';
 import { QUOTE_GENRES } from '../data/quotes';
+import { requestNotifyPermission } from '../lib/reminders';
+import { exportData, importData } from '../lib/backup';
 import { watchGym } from '../lib/geo';
 import { EXERCISES } from '../data/exercises';
 import type { ThemeId } from '../types';
@@ -20,6 +22,8 @@ const THEMES: { id: ThemeId; name: string; locked: boolean; unlockRank: string }
   { id: 'iron-dawn', name: 'Iron Dawn', locked: false, unlockRank: '' },
   { id: 'crimson-titan', name: 'Crimson Titan', locked: false, unlockRank: '' },
   { id: 'arctic-steel', name: 'Arctic Steel', locked: false, unlockRank: '' },
+  { id: 'daybreak-light', name: 'Daybreak (light)', locked: false, unlockRank: '' },
+  { id: 'paper-light', name: 'Paper (light)', locked: false, unlockRank: '' },
   { id: 'midnight-ocean', name: 'Midnight Ocean', locked: false, unlockRank: '' },
   { id: 'forest-moss', name: 'Forest Moss', locked: false, unlockRank: '' },
   { id: 'rose-quartz', name: 'Rose Quartz', locked: false, unlockRank: '' },
@@ -45,6 +49,7 @@ export default function Profile() {
   const [pending, setPending] = useState(0);
   const [gymBusy, setGymBusy] = useState(false);
   const [gymMsg, setGymMsg] = useState<string | null>(null);
+  const backupFileRef = useRef<HTMLInputElement>(null);
 
   function setGymToHere() {
     if (!navigator.geolocation) {
@@ -121,6 +126,13 @@ export default function Profile() {
               </button>
             );
           })}
+        </div>
+        <div className="flex items-center justify-between mt-2">
+          <div>
+            <p className="text-sm">Auto day / night</p>
+            <p className="text-[11px] text-muted">Light by day, dark at night</p>
+          </div>
+          <Toggle checked={s.autoTheme} onChange={(v) => s.set('autoTheme', v)} />
         </div>
       </div>
 
@@ -204,6 +216,52 @@ export default function Profile() {
         <div className="flex items-center gap-2"><BookOpen size={16} className="text-muted" /><span className="text-sm">Exercise library</span></div>
         <Badge>{EXERCISES.length}</Badge>
       </Card>
+      <Card className="flex items-center justify-between" onClick={() => navigate('/calendar')}>
+        <div className="flex items-center gap-2"><CalendarDays size={16} className="text-muted" /><span className="text-sm">Workout calendar</span></div>
+        <Badge>{t('common.open')}</Badge>
+      </Card>
+      <Card className="flex items-center justify-between" onClick={() => navigate('/achievements')}>
+        <div className="flex items-center gap-2"><Trophy size={16} className="text-muted" /><span className="text-sm">Achievements</span></div>
+        <Badge>{t('common.open')}</Badge>
+      </Card>
+
+      {/* Workout reminders */}
+      <div>
+        <SectionTitle action={<Bell size={14} className="text-muted" />}>Workout reminders</SectionTitle>
+        <Card className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm">Daily reminder</span>
+            <Toggle checked={s.reminder.enabled} onChange={async (v) => { if (v) { const ok = await requestNotifyPermission(); if (!ok) { alert('Enable notifications in your browser to use reminders.'); return; } } s.set('reminder', { ...s.reminder, enabled: v }); }} />
+          </div>
+          {s.reminder.enabled && (
+            <>
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted">Time</span>
+                <input type="time" value={s.reminder.time} onChange={(e) => s.set('reminder', { ...s.reminder, time: e.target.value })} className="rounded-lg bg-surface-2 border border-line px-3 py-1.5 text-sm" />
+              </div>
+              <div className="flex gap-1 justify-between">
+                {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((d, i) => {
+                  const on = s.reminder.days.includes(i);
+                  return (
+                    <button key={d} onClick={() => s.set('reminder', { ...s.reminder, days: on ? s.reminder.days.filter((x) => x !== i) : [...s.reminder.days, i] })} className={`flex-1 rounded-lg py-1.5 text-[10px] ${on ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>{d}</button>
+                  );
+                })}
+              </div>
+              <p className="text-[11px] text-muted/70">Fires while the app is open or in the background. Say “notify me when…” for one-offs.</p>
+            </>
+          )}
+        </Card>
+      </div>
+
+      {/* Backup */}
+      <div>
+        <SectionTitle action={<Database size={14} className="text-muted" />}>Backup & restore</SectionTitle>
+        <div className="flex gap-2">
+          <Button variant="ghost" className="flex-1 justify-center" onClick={exportData}>Export data</Button>
+          <Button variant="ghost" className="flex-1 justify-center" onClick={() => backupFileRef.current?.click()}>Import data</Button>
+        </div>
+        <input ref={backupFileRef} type="file" accept="application/json" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { try { await importData(f); } catch { alert('That file is not a valid ForgeOS backup.'); } } }} />
+      </div>
 
       {/* Your gym */}
       <div>

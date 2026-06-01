@@ -278,7 +278,9 @@ export type ThemeId =
   | 'royal-amethyst'
   | 'synthwave'
   | 'blood-moon'
-  | 'solar-flare';
+  | 'solar-flare'
+  | 'daybreak-light'
+  | 'paper-light';
 export type QuoteGenre = 'stoic' | 'biblical' | 'zen' | 'warrior';
 
 export interface GymConfig {
@@ -289,10 +291,18 @@ export interface GymConfig {
   maxWeightKg: number; // heaviest available weight (e.g. dumbbells), default 20
 }
 
+export interface ReminderConfig {
+  enabled: boolean;
+  time: string; // "HH:MM"
+  days: number[]; // 0=Mon … 6=Sun
+}
+
 export interface Settings {
   language: Language;
   gym: GymConfig;
+  reminder: ReminderConfig;
   theme: ThemeId;
+  autoTheme: boolean; // day = light, night = dark
   quoteGenre: QuoteGenrePref;
   leaderboardPublic: boolean;
   streakGambling: boolean;

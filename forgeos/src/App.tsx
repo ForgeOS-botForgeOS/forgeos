@@ -9,6 +9,7 @@ import { useSettings } from './state/settingsStore';
 import { useGami } from './state/gamificationStore';
 import { useSocial } from './state/socialStore';
 import { initAuth } from './lib/auth';
+import { startReminderScheduler } from './lib/reminders';
 import { onReconnect, syncQueue } from './lib/offlineQueue';
 
 // Code-split every screen so the initial route loads a small chunk.
@@ -26,6 +27,8 @@ const History = lazy(() => import('./screens/History'));
 const Collection = lazy(() => import('./screens/Collection'));
 const PlanEditorScreen = lazy(() => import('./screens/PlanEditor'));
 const ImportPlan = lazy(() => import('./screens/ImportPlan'));
+const Calendar = lazy(() => import('./screens/Calendar'));
+const Achievements = lazy(() => import('./screens/Achievements'));
 
 // Left→right order of the bottom tabs; swiping moves to the neighbour.
 const TAB_ORDER = ['/home', '/train', '/nutrition', '/social', '/quests', '/profile'];
@@ -83,22 +86,32 @@ function RequireOnboarding({ children }: { children: React.ReactNode }) {
 export default function App() {
   const applyTheme = useSettings((s) => s.applyTheme);
   const theme = useSettings((s) => s.theme);
+  const autoTheme = useSettings((s) => s.autoTheme);
   const ensureDailyQuests = useGami((s) => s.ensureDailyQuests);
   const seedFeed = useSocial((s) => s.seedIfEmpty);
 
   useEffect(() => {
-    applyTheme(theme);
+    // Auto day/night overrides the chosen theme when enabled.
+    if (autoTheme) {
+      const h = new Date().getHours();
+      applyTheme(h >= 7 && h < 19 ? 'daybreak-light' : 'forge-dark');
+    } else {
+      applyTheme(theme);
+    }
     ensureDailyQuests();
     seedFeed();
     // Restore any live Supabase session and keep stores in sync.
     const stopAuth = initAuth();
+    // Best-effort workout reminders while the app is open.
+    const stopReminders = startReminderScheduler(() => useSettings.getState().reminder);
     // Offline sync engine: flush queued writes whenever we regain connectivity.
     const off = onReconnect(() => void syncQueue());
     return () => {
       stopAuth();
+      stopReminders();
       off();
     };
-  }, [applyTheme, theme, ensureDailyQuests, seedFeed]);
+  }, [applyTheme, theme, autoTheme, ensureDailyQuests, seedFeed]);
 
   return (
     <PhoneFrame>
@@ -125,6 +138,8 @@ export default function App() {
             <Route path="/collection" element={<Collection />} />
             <Route path="/plan" element={<PlanEditorScreen />} />
             <Route path="/import" element={<ImportPlan />} />
+            <Route path="/calendar" element={<Calendar />} />
+            <Route path="/achievements" element={<Achievements />} />
             <Route path="/quote/:id" element={<QuoteDeepDive />} />
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />
