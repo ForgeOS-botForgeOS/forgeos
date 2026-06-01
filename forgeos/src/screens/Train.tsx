@@ -1,6 +1,6 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical } from 'lucide-react';
+import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -19,6 +19,8 @@ import { useGami } from '../state/gamificationStore';
 import { EXERCISES, exerciseById, substitutesFor, EXERCISE_CATEGORIES } from '../data/exercises';
 import { detectPlateaus, recommendBlock } from '../lib/analytics';
 import { overloadSuggestion, volumeOf } from '../lib/fitness';
+import { scanCardio } from '../lib/vision';
+import type { CardioScan } from '../types';
 import { xpForSet } from '../data/ranks';
 import { haptic } from '../lib/haptics';
 import type { SetEntry } from '../types';
@@ -105,10 +107,94 @@ export default function Train() {
         </Button>
       </div>
 
+      <CardioScanCard />
+
       <Sheet open={toolsOpen} onClose={() => setToolsOpen(false)} title="Lifting tools">
         <Tools />
       </Sheet>
     </Screen>
+  );
+}
+
+function CardioScanCard() {
+  const fileRef = useRef<HTMLInputElement>(null);
+  const addManualWorkout = useWorkout((s) => s.addManualWorkout);
+  const registerSession = useGami((s) => s.registerSession);
+  const addXp = useGami((s) => s.addXp);
+  const [busy, setBusy] = useState(false);
+  const [scan, setScan] = useState<CardioScan | null>(null);
+
+  async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setBusy(true);
+    try {
+      setScan(await scanCardio(file));
+      haptic('success');
+    } catch {
+      setScan({ machine: 'Cardio', durationMin: 0, distanceKm: 0, calories: 0, avgPace: '', confidence: 0, tip: 'Could not read it — enter the numbers manually.' });
+      haptic('warning');
+    } finally {
+      setBusy(false);
+      e.target.value = '';
+    }
+  }
+
+  function logIt() {
+    if (!scan) return;
+    const ex = EXERCISES.find((x) => x.category === 'Cardio' && scan.machine.toLowerCase().includes(x.name.split(' ')[0].toLowerCase()))
+      ?? EXERCISES.find((x) => x.category === 'Cardio')!;
+    const uid = () => Math.random().toString(36).slice(2, 10);
+    addManualWorkout({
+      id: uid(),
+      name: `${scan.machine} · ${scan.distanceKm}km · ${scan.calories}kcal`,
+      date: new Date().toISOString(),
+      exercises: [{ id: uid(), exerciseId: ex.id, sets: [{ id: uid(), weightKg: 0, reps: Math.round(scan.durationMin), completed: true }] }],
+      durationSec: Math.round(scan.durationMin * 60),
+      completed: true,
+      totalVolumeKg: 0,
+    });
+    registerSession();
+    addXp(Math.round(scan.calories / 5) + 40);
+    haptic('success');
+    setScan(null);
+  }
+
+  return (
+    <Card className="space-y-2">
+      <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
+      <Button variant="ghost" className="w-full justify-center" disabled={busy} onClick={() => fileRef.current?.click()}>
+        <span className="flex items-center gap-2"><Camera size={16} /> {busy ? 'Reading console…' : 'Log cardio from a photo'}</span>
+      </Button>
+      <p className="text-[11px] text-muted/70 text-center">Snap any cardio machine’s display — treadmill, rower, bike, ski-erg.</p>
+
+      <Sheet open={!!scan} onClose={() => setScan(null)} title="Review cardio">
+        {scan && (
+          <div className="space-y-3">
+            <p className="text-[11px] text-muted">Read from the console — adjust anything. Confidence {Math.round(scan.confidence * 100)}%.</p>
+            <input value={scan.machine} onChange={(e) => setScan({ ...scan, machine: e.target.value })} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm font-semibold" />
+            <CRow label="Duration (min)" v={scan.durationMin} step={1} onChange={(v) => setScan({ ...scan, durationMin: v })} />
+            <CRow label="Distance (km)" v={scan.distanceKm} step={0.1} onChange={(v) => setScan({ ...scan, distanceKm: v })} />
+            <CRow label="Calories" v={scan.calories} step={10} onChange={(v) => setScan({ ...scan, calories: v })} />
+            {scan.tip && <p className="text-xs text-muted">💡 {scan.tip}</p>}
+            <Button className="w-full justify-center" onClick={logIt}>Log session</Button>
+          </div>
+        )}
+      </Sheet>
+    </Card>
+  );
+}
+
+function CRow({ label, v, step, onChange }: { label: string; v: number; step: number; onChange: (v: number) => void }) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <span className="text-sm text-muted">{label}</span>
+      <div className="flex items-center gap-1">
+        <button onClick={() => onChange(Math.max(0, Math.round((v - step) * 10) / 10))} className="w-8 h-8 rounded-md bg-surface-2">−</button>
+        <input type="number" value={v} onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))} className="w-16 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-center font-mono text-text" />
+        <button onClick={() => onChange(Math.round((v + step) * 10) / 10)} className="w-8 h-8 rounded-md bg-surface-2">+</button>
+      </div>
+    </div>
   );
 }
 

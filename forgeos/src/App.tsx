@@ -3,6 +3,7 @@ import { HashRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation }
 import { PhoneFrame } from './components/PhoneFrame';
 import { TabBar } from './components/TabBar';
 import { RankUpWatcher } from './components/Celebrate';
+import { Tutorial } from './components/Tutorial';
 import { ScreenSkeleton } from './components/Skeleton';
 import { useUser } from './state/userStore';
 import { useSettings } from './state/settingsStore';
@@ -30,6 +31,7 @@ const ImportPlan = lazy(() => import('./screens/ImportPlan'));
 const Calendar = lazy(() => import('./screens/Calendar'));
 const Achievements = lazy(() => import('./screens/Achievements'));
 const Shop = lazy(() => import('./screens/Shop'));
+const WorkoutEdit = lazy(() => import('./screens/WorkoutEdit'));
 
 // Left→right order of the bottom tabs; swiping moves to the neighbour.
 const TAB_ORDER = ['/home', '/train', '/nutrition', '/social', '/quests', '/profile'];
@@ -73,6 +75,7 @@ function AppShell() {
         </Suspense>
       </main>
       <RankUpWatcher />
+      <Tutorial />
       <TabBar />
     </div>
   );
@@ -142,6 +145,7 @@ export default function App() {
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/shop" element={<Shop />} />
+            <Route path="/workout/:id" element={<WorkoutEdit />} />
             <Route path="/quote/:id" element={<QuoteDeepDive />} />
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />

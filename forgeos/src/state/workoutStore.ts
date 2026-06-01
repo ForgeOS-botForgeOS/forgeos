@@ -30,8 +30,19 @@ interface WorkoutState {
   finishWorkout: (track?: SpotifyTrack | null) => Workout | null;
   discardWorkout: () => void;
 
+  updateHistoryWorkout: (id: string, w: Workout) => void;
+  deleteHistoryWorkout: (id: string) => void;
+  addManualWorkout: (w: Workout) => void;
+
   lastSetFor: (exerciseId: string, setIndex: number) => SetEntry | undefined;
   bestE1rm: (exerciseId: string) => number;
+}
+
+export function computeVolume(w: Workout): number {
+  return w.exercises.reduce(
+    (sum, we) => sum + we.sets.filter((s) => s.completed).reduce((a, s) => a + s.weightKg * s.reps, 0),
+    0,
+  );
 }
 
 function recalcVolume(w: Workout): number {
@@ -243,6 +254,13 @@ export const useWorkout = create<WorkoutState>()(
       },
 
       discardWorkout: () => set({ active: null }),
+
+      updateHistoryWorkout: (id, w) => {
+        const updated = { ...w, totalVolumeKg: computeVolume(w) };
+        set({ history: get().history.map((h) => (h.id === id ? updated : h)) });
+      },
+      deleteHistoryWorkout: (id) => set({ history: get().history.filter((h) => h.id !== id) }),
+      addManualWorkout: (w) => set({ history: [{ ...w, totalVolumeKg: computeVolume(w) }, ...get().history] }),
 
       lastSetFor: (exerciseId, setIndex) => {
         for (const w of get().history) {

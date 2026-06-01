@@ -30,12 +30,14 @@ export default function History() {
 
 function Sessions() {
   const history = useWorkout((s) => s.history);
+  const navigate = useNavigate();
   return (
     <div className="space-y-2">
+      {history.length > 0 && <p className="text-[11px] text-muted">Tap a session to edit it.</p>}
       {history.map((w) => {
         const sets = w.exercises.reduce((a, e) => a + e.sets.filter((s) => s.completed).length, 0);
         return (
-          <Card key={w.id} className="space-y-1">
+          <Card key={w.id} onClick={() => navigate(`/workout/${w.id}`)} className="space-y-1">
             <div className="flex items-center justify-between">
               <p className="font-semibold text-sm flex items-center gap-2"><Dumbbell size={14} className="text-accent" /> {w.name}</p>
               <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString()}</span>

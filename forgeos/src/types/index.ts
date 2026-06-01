@@ -250,6 +250,16 @@ export interface ScanResult {
   tip: string;
 }
 
+export interface CardioScan {
+  machine: string;
+  durationMin: number;
+  distanceKm: number;
+  calories: number;
+  avgPace: string;
+  confidence: number;
+  tip: string;
+}
+
 // ---- Spotify ----
 export interface SpotifyTrack {
   id: string;

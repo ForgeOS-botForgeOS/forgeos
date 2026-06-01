@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database } from 'lucide-react';
+import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { useSettings } from '../state/settingsStore';
@@ -14,6 +14,7 @@ import { requestNotifyPermission } from '../lib/reminders';
 import { exportData, importData } from '../lib/backup';
 import { useCosmetics } from '../state/cosmeticsStore';
 import { cosmeticById } from '../data/cosmetics';
+import { openTutorial } from '../components/Tutorial';
 import { watchGym } from '../lib/geo';
 import { EXERCISES } from '../data/exercises';
 import type { ThemeId } from '../types';
@@ -243,6 +244,10 @@ export default function Profile() {
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/achievements')}>
         <div className="flex items-center gap-2"><Trophy size={16} className="text-muted" /><span className="text-sm">Achievements</span></div>
+        <Badge>{t('common.open')}</Badge>
+      </Card>
+      <Card className="flex items-center justify-between" onClick={() => openTutorial()}>
+        <div className="flex items-center gap-2"><HelpCircle size={16} className="text-muted" /><span className="text-sm">Replay app tour</span></div>
         <Badge>{t('common.open')}</Badge>
       </Card>
 

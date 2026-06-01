@@ -1,4 +1,4 @@
-import type { ScanResult } from '../types';
+import type { ScanResult, CardioScan } from '../types';
 
 // Real meal-photo macro counting via Google Gemini vision. Set VITE_GEMINI_API_KEY
 // (Google AI Studio). Restrict the key by HTTP referrer to your site origin.
@@ -8,6 +8,26 @@ const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
 const WORKER_URL = import.meta.env.VITE_VISION_API_URL as string | undefined;
 const MODEL = 'gemini-2.0-flash';
 export const visionIsLive = Boolean(WORKER_URL || GEMINI_KEY);
+export const cardioScanIsLive = Boolean(WORKER_URL);
+
+// Read a cardio machine console from a photo (needs the Worker).
+export async function scanCardio(file: File): Promise<CardioScan> {
+  const { data, mime } = await fileToBase64(file);
+  if (!WORKER_URL) {
+    await new Promise((r) => setTimeout(r, 700));
+    return { machine: 'Treadmill', durationMin: 30, distanceKm: 5, calories: 320, avgPace: '6:00 /km', confidence: 0.3, tip: 'Sample — add a vision Worker to read real consoles.' };
+  }
+  const res = await fetch(WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: data, mime, mode: 'cardio' }),
+  });
+  if (!res.ok) throw new VisionError(`Vision worker error ${res.status}.`, res.status);
+  const out = await res.json();
+  if (out.error) throw new VisionError(String(out.error));
+  out.confidence = Math.max(0, Math.min(1, out.confidence ?? 0.5));
+  return out as CardioScan;
+}
 
 const MOCK_MEALS: ScanResult[] = [
   { name: 'Grilled chicken, rice & broccoli', calories: 540, proteinG: 48, carbsG: 55, fatG: 12, sugarG: 4, confidence: 0.88, tip: 'Solid recomp plate — lean protein with slow carbs.' },
@@ -68,7 +88,7 @@ export async function scanMeal(file: File): Promise<ScanResult> {
     const res = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: data, mime }),
+      body: JSON.stringify({ image: data, mime, mode: 'food' }),
     });
     if (!res.ok) throw new VisionError(`Vision worker error ${res.status}.`, res.status);
     const out = await res.json();
