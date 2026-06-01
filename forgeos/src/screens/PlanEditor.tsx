@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, Wand2, Trash2, Search, X, Share2, Save, Play, GripVertical, FolderOpen, Sparkles, Store, ClipboardPaste } from 'lucide-react';
+import { ChevronLeft, Plus, Wand2, Trash2, Search, X, Share2, Save, Play, GripVertical, FolderOpen, Sparkles, Store, ClipboardPaste, History, TrendingDown } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -32,6 +32,7 @@ export default function PlanEditor() {
   const gym = useSettings((s) => s.gym);
   const startWorkout = useWorkout((s) => s.startWorkout);
   const publishRoutine = useSocial((s) => s.publishRoutine);
+  const history = useWorkout((s) => s.history);
   const xp = useGami((s) => s.xp);
   const addCoins = useGami((s) => s.addCoins);
 
@@ -41,7 +42,54 @@ export default function PlanEditor() {
   const [showSaved, setShowSaved] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importCode, setImportCode] = useState('');
+  const [weightStep, setWeightStep] = useState(2.5);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+
+  // Heaviest weight you last lifted for an exercise, from completed sets.
+  function histWeight(exerciseId: string): number | null {
+    for (const w of history) {
+      const we = w.exercises.find((e) => e.exerciseId === exerciseId);
+      const done = we?.sets.filter((s) => s.completed) ?? [];
+      if (done.length) return done.reduce((a, b) => (b.weightKg > a.weightKg ? b : a)).weightKg;
+    }
+    return null;
+  }
+  const round2 = (n: number) => Math.round(n / 2.5) * 2.5;
+
+  function fillFromHistory() {
+    let filled = 0;
+    setWeekPlan({
+      ...plan!,
+      days: plan!.days.map((d) => {
+        if (d.rest) return d;
+        const targets = { ...(d.targets ?? {}) };
+        for (const id of d.exerciseIds) {
+          const hw = histWeight(id);
+          if (hw) { targets[id] = { sets: targets[id]?.sets ?? 3, reps: targets[id]?.reps ?? 8, weightKg: round2(hw) }; filled++; }
+        }
+        return { ...d, targets };
+      }),
+    });
+    flash(filled ? `Set ${filled} weights from your history` : 'No history yet — log some sets first');
+    haptic('success');
+  }
+
+  function deload() {
+    setWeekPlan({
+      ...plan!,
+      days: plan!.days.map((d) => {
+        if (d.rest) return d;
+        const targets = { ...(d.targets ?? {}) };
+        for (const id of d.exerciseIds) {
+          const base = targets[id]?.weightKg || histWeight(id) || 0;
+          targets[id] = { sets: Math.max(2, (targets[id]?.sets ?? 3) - 1), reps: targets[id]?.reps ?? 8, weightKg: base ? round2(base * 0.6) : 0 };
+        }
+        return { ...d, targets };
+      }),
+    });
+    flash('Deload applied — ~60% load, one fewer set per lift');
+    haptic('success');
+  }
 
   if (!plan) {
     return (
@@ -161,6 +209,26 @@ export default function PlanEditor() {
         </Button>
       </div>
 
+      {/* Weights: increment + history fill + deload */}
+      <Card className="space-y-2">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] uppercase tracking-wide text-muted">Weight step</span>
+          <div className="flex gap-1" data-noswipe>
+            {[2.5, 5, 10, 20].map((st) => (
+              <button key={st} onClick={() => setWeightStep(st)} className={`rounded-full px-2.5 py-1 text-xs font-medium ${weightStep === st ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>+{st}</button>
+            ))}
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" className="flex-1 justify-center" onClick={fillFromHistory}>
+            <span className="flex items-center gap-1 text-xs"><History size={14} /> Fill from history</span>
+          </Button>
+          <Button variant="ghost" className="flex-1 justify-center" onClick={deload}>
+            <span className="flex items-center gap-1 text-xs"><TrendingDown size={14} /> Deload</span>
+          </Button>
+        </div>
+      </Card>
+
       {specialRequest && (
         <Card className="bg-surface-2 text-xs text-muted">📝 Your note: <span className="text-text">{specialRequest}</span></Card>
       )}
@@ -226,7 +294,7 @@ export default function PlanEditor() {
                                     <div className="flex items-center gap-2 pl-6 flex-wrap">
                                       <Stepper label="sets" value={tgt.sets} min={1} max={10} onChange={(v) => setTarget(d.day, id, { ...tgt, sets: v })} />
                                       <Stepper label="reps" value={tgt.reps} min={1} max={30} onChange={(v) => setTarget(d.day, id, { ...tgt, reps: v })} />
-                                      <Stepper label={tgt.weightKg ? 'kg' : 'auto'} value={tgt.weightKg ?? 0} min={0} max={500} step={2.5} onChange={(v) => setTarget(d.day, id, { ...tgt, weightKg: v })} />
+                                      <Stepper label={tgt.weightKg ? 'kg' : 'auto'} value={tgt.weightKg ?? 0} min={0} max={500} step={weightStep} onChange={(v) => setTarget(d.day, id, { ...tgt, weightKg: v })} />
                                     </div>
                                   </div>
                                 )}
