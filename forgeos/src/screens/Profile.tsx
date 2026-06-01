@@ -12,6 +12,8 @@ import { useT, LANGUAGES } from '../lib/i18n';
 import { QUOTE_GENRES } from '../data/quotes';
 import { requestNotifyPermission } from '../lib/reminders';
 import { exportData, importData } from '../lib/backup';
+import { useCosmetics } from '../state/cosmeticsStore';
+import { cosmeticById } from '../data/cosmetics';
 import { watchGym } from '../lib/geo';
 import { EXERCISES } from '../data/exercises';
 import type { ThemeId } from '../types';
@@ -50,6 +52,8 @@ export default function Profile() {
   const [gymBusy, setGymBusy] = useState(false);
   const [gymMsg, setGymMsg] = useState<string | null>(null);
   const backupFileRef = useRef<HTMLInputElement>(null);
+  const equippedTitle = useCosmetics((c) => c.equippedTitle);
+  const equippedFrame = useCosmetics((c) => c.equippedFrame);
 
   function setGymToHere() {
     if (!navigator.geolocation) {
@@ -96,8 +100,25 @@ export default function Profile() {
     return rankIdx >= RANK_ORDER.indexOf(t.unlockRank);
   }
 
+  const title = equippedTitle ? cosmeticById(equippedTitle)?.value : null;
+  const frame = equippedFrame ? cosmeticById(equippedFrame)?.value : null;
+
   return (
-    <Screen title={profile?.name ?? 'You'} subtitle={profile?.email ?? `${profile?.authProvider ?? 'guest'} account`}>
+    <Screen title={profile?.name ?? 'You'} subtitle={title ?? (profile?.email ?? `${profile?.authProvider ?? 'guest'} account`)}>
+      {/* Identity card with equipped cosmetics */}
+      <Card className="flex items-center gap-3">
+        <div className="w-14 h-14 rounded-full p-[3px]" style={{ background: frame ?? 'rgb(var(--line))' }}>
+          <div className="w-full h-full rounded-full bg-surface-2 flex items-center justify-center text-lg font-extrabold text-accent">
+            {(profile?.name ?? 'Y').slice(0, 2).toUpperCase()}
+          </div>
+        </div>
+        <div className="flex-1">
+          <p className="font-bold">{profile?.name ?? 'You'}</p>
+          {title && <p className="text-xs text-accent-2 font-semibold">“{title}”</p>}
+        </div>
+        <Button variant="ghost" className="py-1.5" onClick={() => navigate('/shop')}>Shop</Button>
+      </Card>
+
       {/* Theme switcher */}
       <div>
         <SectionTitle action={<Palette size={14} className="text-muted" />}>{t('p.theme')}</SectionTitle>

@@ -29,6 +29,7 @@ const PlanEditorScreen = lazy(() => import('./screens/PlanEditor'));
 const ImportPlan = lazy(() => import('./screens/ImportPlan'));
 const Calendar = lazy(() => import('./screens/Calendar'));
 const Achievements = lazy(() => import('./screens/Achievements'));
+const Shop = lazy(() => import('./screens/Shop'));
 
 // Left→right order of the bottom tabs; swiping moves to the neighbour.
 const TAB_ORDER = ['/home', '/train', '/nutrition', '/social', '/quests', '/profile'];
@@ -140,6 +141,7 @@ export default function App() {
             <Route path="/import" element={<ImportPlan />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/achievements" element={<Achievements />} />
+            <Route path="/shop" element={<Shop />} />
             <Route path="/quote/:id" element={<QuoteDeepDive />} />
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />

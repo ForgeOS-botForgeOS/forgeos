@@ -6,6 +6,7 @@ import { Screen } from '../components/Screen';
 import { Card, Ring, SectionTitle, Badge } from '../components/ui';
 import { DailyQuote } from '../components/DailyQuote';
 import { InstallButton } from '../components/InstallButton';
+import { WeeklyRecap } from '../components/WeeklyRecap';
 import { useT } from '../lib/i18n';
 import { useUser } from '../state/userStore';
 import { useNutrition } from '../state/nutritionStore';
@@ -98,6 +99,9 @@ export default function Home() {
             <p className="text-sm mt-1">{tipOfTheDay(dayIdx)}</p>
           </div>
         </Card>
+
+        {/* Week in review */}
+        <WeeklyRecap />
 
         {/* Weekly volume */}
         <div>

@@ -4,6 +4,8 @@ import { ChevronLeft, Search, Nfc, Play } from 'lucide-react';
 import { Card, Sheet, Badge, Button } from '../components/ui';
 import { EXERCISES, EXERCISE_CATEGORIES } from '../data/exercises';
 import { MUSCLE_CUES } from '../data/tips';
+import { useWorkout } from '../state/workoutStore';
+import { e1rm, warmupSets } from '../lib/fitness';
 import type { Exercise, MuscleGroup } from '../types';
 import { haptic } from '../lib/haptics';
 
@@ -139,6 +141,7 @@ export default function Library() {
               {detail.secondary.map((m) => <Badge key={m} color="rgb(var(--muted))">{m}</Badge>)}
             </div>
             <p className="text-sm text-muted">Equipment: {detail.equipment}</p>
+            <ExerciseStats exercise={detail} />
             <div className="rounded-xl bg-surface-2 p-3">
               <p className="text-[11px] uppercase tracking-wide text-accent-2 mb-1">Form cue</p>
               <p className="text-sm">{MUSCLE_CUES[detail.primary] ?? 'Control the weight through a full range of motion.'}</p>
@@ -150,6 +153,53 @@ export default function Library() {
           </div>
         )}
       </Sheet>
+    </div>
+  );
+}
+
+function ExerciseStats({ exercise }: { exercise: Exercise }) {
+  const history = useWorkout((s) => s.history);
+  const stats = (() => {
+    let times = 0;
+    let best: { weightKg: number; reps: number } | null = null;
+    let last: { weightKg: number; reps: number; date: string } | null = null;
+    for (const w of history) {
+      const we = w.exercises.find((e) => e.exerciseId === exercise.id);
+      const done = we?.sets.filter((s) => s.completed) ?? [];
+      if (!done.length) continue;
+      times += 1;
+      const top = done.reduce((a, b) => (b.weightKg * b.reps > a.weightKg * a.reps ? b : a));
+      if (!last) last = { weightKg: top.weightKg, reps: top.reps, date: w.date };
+      if (!best || e1rm(top.weightKg, top.reps) > e1rm(best.weightKg, best.reps)) best = { weightKg: top.weightKg, reps: top.reps };
+    }
+    return { times, best, last };
+  })();
+
+  const working = stats.best ? stats.best.weightKg : 60;
+  const warm = warmupSets(working);
+
+  return (
+    <div className="rounded-xl bg-surface-2 p-3 space-y-2">
+      <p className="text-[11px] uppercase tracking-wide text-accent mb-1">Your stats</p>
+      {stats.times === 0 ? (
+        <p className="text-sm text-muted">No history yet — log this lift and your PB & progress show up here.</p>
+      ) : (
+        <div className="grid grid-cols-3 gap-2 text-center">
+          <div><p className="font-mono font-bold">{stats.times}</p><p className="text-[10px] text-muted">sessions</p></div>
+          <div><p className="font-mono font-bold">{stats.best ? e1rm(stats.best.weightKg, stats.best.reps) : '—'}</p><p className="text-[10px] text-muted">best e1RM</p></div>
+          <div><p className="font-mono font-bold">{stats.last ? `${stats.last.weightKg}×${stats.last.reps}` : '—'}</p><p className="text-[10px] text-muted">last set</p></div>
+        </div>
+      )}
+      <div>
+        <p className="text-[11px] uppercase tracking-wide text-muted mt-1 mb-1">Warm-up to {working}kg</p>
+        <div className="flex gap-2">
+          {warm.map((s) => (
+            <span key={s.pct} className="flex-1 text-center rounded-lg bg-surface py-1.5 text-xs">
+              <b className="font-mono">{s.kg}</b><span className="text-muted"> · {s.pct}%</span>
+            </span>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }

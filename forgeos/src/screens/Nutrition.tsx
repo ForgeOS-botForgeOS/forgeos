@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import { Camera, Trash2, Sparkles, Calculator, ChefHat, Clock } from 'lucide-react';
+import { Camera, Trash2, Sparkles, Calculator, ChefHat, Clock, Star } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
 import { useNutrition } from '../state/nutritionStore';
@@ -19,6 +19,11 @@ export default function Nutrition() {
   const totals = useNutrition((s) => s.todaysTotals)();
   const addEntry = useNutrition((s) => s.addEntry);
   const removeEntry = useNutrition((s) => s.removeEntry);
+  const water = useNutrition((s) => s.todaysWaterMl)();
+  const addWater = useNutrition((s) => s.addWater);
+  const savedMeals = useNutrition((s) => s.savedMeals);
+  const saveMeal = useNutrition((s) => s.saveMeal);
+  const waterGoal = 3000;
   const fileRef = useRef<HTMLInputElement>(null);
 
   const [scanning, setScanning] = useState(false);
@@ -87,10 +92,39 @@ export default function Nutrition() {
         </div>
       </Card>
 
+      {/* Water tracker */}
+      <Card className="space-y-2">
+        <div className="flex items-center justify-between">
+          <SectionTitle>💧 Water</SectionTitle>
+          <span className="font-mono text-sm">{(water / 1000).toFixed(2)} / {(waterGoal / 1000).toFixed(1)} L</span>
+        </div>
+        <div className="h-2 rounded-full bg-surface-2 overflow-hidden"><div className="h-full bg-accent-2 rounded-full transition-all" style={{ width: `${Math.min(100, (water / waterGoal) * 100)}%` }} /></div>
+        <div className="flex gap-2">
+          <Button variant="ghost" className="flex-1 justify-center py-1.5" onClick={() => { addWater(250); haptic('tap'); }}>+250 ml</Button>
+          <Button variant="ghost" className="flex-1 justify-center py-1.5" onClick={() => { addWater(500); haptic('tap'); }}>+500 ml</Button>
+          <Button variant="ghost" className="justify-center py-1.5" onClick={() => addWater(-250)}>−</Button>
+        </div>
+      </Card>
+
       <Card className="flex gap-3 items-start bg-surface-2">
         <Sparkles size={16} className="text-accent-2 mt-0.5 shrink-0" />
         <p className="text-sm">{goalText[profile?.goal ?? 'recomp']}</p>
       </Card>
+
+      {/* Saved meals quick-add */}
+      {savedMeals.length > 0 && (
+        <div>
+          <SectionTitle>Quick add</SectionTitle>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1" data-noswipe>
+            {savedMeals.map((m) => (
+              <button key={m.id} onClick={() => { addEntry({ name: m.name, calories: m.calories, proteinG: m.proteinG, carbsG: m.carbsG, fatG: m.fatG, sugarG: m.sugarG, source: 'manual' }); haptic('success'); }} className="shrink-0 rounded-xl bg-surface-2 px-3 py-2 text-left">
+                <p className="text-xs font-medium">{m.name}</p>
+                <p className="text-[10px] text-muted">{m.calories} kcal · P{m.proteinG}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       <Button variant="ghost" className="w-full justify-center" onClick={() => setRecipesOpen(true)}>
         <span className="flex items-center gap-2"><ChefHat size={16} /> Recipe library ({RECIPES.length}) — goal-aligned</span>
@@ -114,7 +148,10 @@ export default function Nutrition() {
                   <p className="text-sm font-medium flex items-center gap-2">{f.name} {f.source === 'scan' && <Badge color="rgb(var(--accent-2))">scan</Badge>}</p>
                   <p className="text-xs text-muted">{f.calories} kcal · P{f.proteinG} C{f.carbsG} F{f.fatG}</p>
                 </div>
-                <button onClick={() => removeEntry(f.id)} className="text-muted"><Trash2 size={16} /></button>
+                <div className="flex items-center gap-3">
+                  <button onClick={() => { saveMeal({ name: f.name, calories: f.calories, proteinG: f.proteinG, carbsG: f.carbsG, fatG: f.fatG, sugarG: f.sugarG }); haptic('success'); }} title="Save for quick-add" className="text-muted"><Star size={15} /></button>
+                  <button onClick={() => removeEntry(f.id)} className="text-muted"><Trash2 size={16} /></button>
+                </div>
               </Card>
             ))}
           </div>
