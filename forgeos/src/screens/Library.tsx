@@ -9,11 +9,27 @@ import { haptic } from '../lib/haptics';
 
 const MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Full Body'];
 
+const EQUIPMENT = ['Barbell', 'Dumbbell', 'Cable', 'Machine', 'Bodyweight', 'Kettlebell', 'Bands', 'Cardio'];
+
+// Bucket each exercise's free-text equipment into a broad filter group.
+function equipGroup(equipment: string): string {
+  const eq = equipment.toLowerCase();
+  if (/barbell|ez-bar|ssb|safety bar|cambered|football bar|trap|landmine/.test(eq)) return 'Barbell';
+  if (/dumbbell/.test(eq)) return 'Dumbbell';
+  if (/kettlebell/.test(eq)) return 'Kettlebell';
+  if (/cable/.test(eq)) return 'Cable';
+  if (/band/.test(eq)) return 'Bands';
+  if (/rower|ski erg|air bike|echo bike|spin|bike|treadmill|jump rope|pool|sled|prowler|battle|heavy bag|speed bag|elliptical|stair|versaclimber|jacobs|poles|inline|skis/.test(eq)) return 'Cardio';
+  if (/machine|smith|pendulum|ghd|hack/.test(eq)) return 'Machine';
+  return 'Bodyweight';
+}
+
 export default function Library() {
   const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<string>('All');
   const [muscle, setMuscle] = useState<string>('All');
+  const [equip, setEquip] = useState<string>('All');
   const [detail, setDetail] = useState<Exercise | null>(null);
   const [nfcMsg, setNfcMsg] = useState<string | null>(null);
 
@@ -23,9 +39,10 @@ export default function Library() {
         (e) =>
           (cat === 'All' || e.category === cat) &&
           (muscle === 'All' || e.primary === muscle || e.secondary.includes(muscle as MuscleGroup)) &&
+          (equip === 'All' || equipGroup(e.equipment) === equip) &&
           (e.name.toLowerCase().includes(q.toLowerCase()) || e.primary.toLowerCase().includes(q.toLowerCase())),
       ),
-    [q, cat, muscle],
+    [q, cat, muscle, equip],
   );
 
   async function pairNfc() {
@@ -82,10 +99,20 @@ export default function Library() {
         </div>
       </div>
 
+      {/* Equipment filter */}
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">Equipment</p>
+        <div data-noswipe className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          {['All', ...EQUIPMENT].map((x) => (
+            <button key={x} onClick={() => setEquip(x)} className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium border transition ${equip === x ? 'bg-success text-black border-success' : 'bg-surface-2 text-muted border-line'}`}>{x}</button>
+          ))}
+        </div>
+      </div>
+
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted"><b className="text-text">{list.length}</b> exercises{cat !== 'All' && ` · ${cat}`}{muscle !== 'All' && ` · ${muscle}`}</p>
-        {(cat !== 'All' || muscle !== 'All' || q) && (
-          <button onClick={() => { setCat('All'); setMuscle('All'); setQ(''); }} className="text-xs text-accent">Clear filters</button>
+        <p className="text-xs text-muted"><b className="text-text">{list.length}</b> exercises{cat !== 'All' && ` · ${cat}`}{muscle !== 'All' && ` · ${muscle}`}{equip !== 'All' && ` · ${equip}`}</p>
+        {(cat !== 'All' || muscle !== 'All' || equip !== 'All' || q) && (
+          <button onClick={() => { setCat('All'); setMuscle('All'); setEquip('All'); setQ(''); }} className="text-xs text-accent">Clear filters</button>
         )}
       </div>
       <div className="space-y-2">
