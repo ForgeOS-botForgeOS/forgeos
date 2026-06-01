@@ -98,6 +98,7 @@ export type Weekday = 'Mon' | 'Tue' | 'Wed' | 'Thu' | 'Fri' | 'Sat' | 'Sun';
 export interface ExerciseTarget {
   sets: number;
   reps: number;
+  weightKg?: number; // planned working weight (0/undefined = auto-progress)
 }
 
 export interface PlannedDay {

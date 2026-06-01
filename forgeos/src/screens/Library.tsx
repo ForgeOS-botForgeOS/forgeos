@@ -4,13 +4,16 @@ import { ChevronLeft, Search, Nfc, Play } from 'lucide-react';
 import { Card, Sheet, Badge, Button } from '../components/ui';
 import { EXERCISES, EXERCISE_CATEGORIES } from '../data/exercises';
 import { MUSCLE_CUES } from '../data/tips';
-import type { Exercise } from '../types';
+import type { Exercise, MuscleGroup } from '../types';
 import { haptic } from '../lib/haptics';
+
+const MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Full Body'];
 
 export default function Library() {
   const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<string>('All');
+  const [muscle, setMuscle] = useState<string>('All');
   const [detail, setDetail] = useState<Exercise | null>(null);
   const [nfcMsg, setNfcMsg] = useState<string | null>(null);
 
@@ -19,9 +22,10 @@ export default function Library() {
       EXERCISES.filter(
         (e) =>
           (cat === 'All' || e.category === cat) &&
+          (muscle === 'All' || e.primary === muscle || e.secondary.includes(muscle as MuscleGroup)) &&
           (e.name.toLowerCase().includes(q.toLowerCase()) || e.primary.toLowerCase().includes(q.toLowerCase())),
       ),
-    [q, cat],
+    [q, cat, muscle],
   );
 
   async function pairNfc() {
@@ -58,13 +62,32 @@ export default function Library() {
         <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${EXERCISES.length} exercises…`} className="bg-transparent text-sm flex-1 outline-none" />
       </div>
 
-      <div data-noswipe className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
-        {['All', ...EXERCISE_CATEGORIES].map((c) => (
-          <button key={c} onClick={() => setCat(c)} className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs ${cat === c ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>{c}</button>
-        ))}
+      {/* Category filter */}
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">Category</p>
+        <div data-noswipe className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          {['All', ...EXERCISE_CATEGORIES].map((c) => (
+            <button key={c} onClick={() => setCat(c)} className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium border transition ${cat === c ? 'bg-accent text-black border-accent' : 'bg-surface-2 text-muted border-line'}`}>{c}</button>
+          ))}
+        </div>
       </div>
 
-      <p className="text-xs text-muted">{list.length} exercises</p>
+      {/* Muscle-group filter */}
+      <div>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">Muscle group</p>
+        <div data-noswipe className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+          {['All', ...MUSCLES].map((m) => (
+            <button key={m} onClick={() => setMuscle(m)} className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium border transition ${muscle === m ? 'bg-accent-2 text-black border-accent-2' : 'bg-surface-2 text-muted border-line'}`}>{m}</button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex items-center justify-between">
+        <p className="text-xs text-muted"><b className="text-text">{list.length}</b> exercises{cat !== 'All' && ` · ${cat}`}{muscle !== 'All' && ` · ${muscle}`}</p>
+        {(cat !== 'All' || muscle !== 'All' || q) && (
+          <button onClick={() => { setCat('All'); setMuscle('All'); setQ(''); }} className="text-xs text-accent">Clear filters</button>
+        )}
+      </div>
       <div className="space-y-2">
         {list.map((e) => (
           <Card key={e.id} onClick={() => setDetail(e)} className="flex items-center justify-between">

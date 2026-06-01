@@ -16,7 +16,7 @@ interface WorkoutState {
   startWorkout: (
     name: string,
     exerciseIds?: string[],
-    opts?: { targets?: Record<string, { sets: number; reps: number }>; maxWeightKg?: number },
+    opts?: { targets?: Record<string, { sets: number; reps: number; weightKg?: number }>; maxWeightKg?: number },
   ) => void;
   addExercise: (exerciseId: string) => void;
   removeExercise: (workoutExerciseId: string) => void;
@@ -68,7 +68,11 @@ export const useWorkout = create<WorkoutState>()(
           const prev = lastBest(id);
           let weightKg = seedWeight;
           let reps = target?.reps ?? 8;
-          if (prev) {
+          if (target?.weightKg && target.weightKg > 0) {
+            // Explicit planned weight wins.
+            weightKg = target.weightKg;
+            reps = target?.reps ?? 8;
+          } else if (prev) {
             const sug = overloadSuggestion(prev.weightKg, prev.reps, target?.reps ?? prev.reps, prev.rpe ?? 8);
             weightKg = sug.weightKg; // no cap — based on what was actually lifted
             reps = sug.reps;

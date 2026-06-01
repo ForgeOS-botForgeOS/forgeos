@@ -223,9 +223,10 @@ export default function PlanEditor() {
                                       <span className="text-sm flex-1">{ex?.name ?? id}</span>
                                       <button onClick={() => removeExercise(d.day, id)} className="text-danger"><Trash2 size={14} /></button>
                                     </div>
-                                    <div className="flex items-center gap-3 pl-6">
+                                    <div className="flex items-center gap-2 pl-6 flex-wrap">
                                       <Stepper label="sets" value={tgt.sets} min={1} max={10} onChange={(v) => setTarget(d.day, id, { ...tgt, sets: v })} />
                                       <Stepper label="reps" value={tgt.reps} min={1} max={30} onChange={(v) => setTarget(d.day, id, { ...tgt, reps: v })} />
+                                      <Stepper label={tgt.weightKg ? 'kg' : 'auto'} value={tgt.weightKg ?? 0} min={0} max={500} step={2.5} onChange={(v) => setTarget(d.day, id, { ...tgt, weightKg: v })} />
                                     </div>
                                   </div>
                                 )}
@@ -294,12 +295,12 @@ function Sortable({ id, children }: { id: string; children: (handle: Record<stri
   );
 }
 
-function Stepper({ label, value, min, max, onChange }: { label: string; value: number; min: number; max: number; onChange: (v: number) => void }) {
+function Stepper({ label, value, min, max, step = 1, onChange }: { label: string; value: number; min: number; max: number; step?: number; onChange: (v: number) => void }) {
   return (
     <div className="flex items-center gap-1">
-      <button onClick={() => onChange(Math.max(min, value - 1))} className="w-6 h-6 rounded bg-surface text-muted text-sm">−</button>
+      <button onClick={() => onChange(Math.max(min, value - step))} className="w-6 h-6 rounded bg-surface text-muted text-sm">−</button>
       <span className="text-xs font-mono w-12 text-center">{value} {label}</span>
-      <button onClick={() => onChange(Math.min(max, value + 1))} className="w-6 h-6 rounded bg-surface text-muted text-sm">+</button>
+      <button onClick={() => onChange(Math.min(max, value + step))} className="w-6 h-6 rounded bg-surface text-muted text-sm">+</button>
     </div>
   );
 }
