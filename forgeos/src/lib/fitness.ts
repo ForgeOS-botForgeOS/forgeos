@@ -64,11 +64,12 @@ export function macrosFor(goal: Goal, tdeeKcal: number, weightKg: number): Macro
 
 // ---- Plate calculator (kg, 20kg bar) ----
 export const PLATES_KG = [25, 20, 15, 10, 5, 2.5, 1.25];
-export function platesPerSide(totalKg: number, barKg = 20): { plate: number; count: number }[] {
+// maxPlateKg lets gyms cap the heaviest available plate (e.g. 20 kg).
+export function platesPerSide(totalKg: number, barKg = 20, maxPlateKg = 25): { plate: number; count: number }[] {
   let perSide = (totalKg - barKg) / 2;
   if (perSide <= 0) return [];
   const out: { plate: number; count: number }[] = [];
-  for (const p of PLATES_KG) {
+  for (const p of PLATES_KG.filter((x) => x <= maxPlateKg)) {
     let count = 0;
     while (perSide >= p - 1e-6) {
       perSide -= p;

@@ -13,7 +13,7 @@ export function Card({
   return (
     <div
       onClick={onClick}
-      className={`rounded-2xl bg-surface border border-line p-4 ${onClick ? 'cursor-pointer active:scale-[0.99] transition' : ''} ${className}`}
+      className={`rounded-2xl bg-surface border border-line p-4 animate-fade-in-up ${onClick ? 'cursor-pointer active:scale-[0.99] transition hover:border-line/80' : ''} ${className}`}
     >
       {children}
     </div>

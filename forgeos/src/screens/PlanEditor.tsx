@@ -14,6 +14,7 @@ import { useGami } from '../state/gamificationStore';
 import { EXERCISES, EXERCISE_CATEGORIES, exerciseById } from '../data/exercises';
 import { PLAN_FOCI, type PlanFocus, exercisesForFocus, inferFocus } from './onboarding/planGenerator';
 import { sharePlan, decodePlan } from '../lib/planShare';
+import { buildSmartDay, parsePastedWorkout } from '../lib/planSmart';
 import { tailorPlan } from '../lib/tailor';
 import { rankForXp, rankLabel } from '../data/ranks';
 import type { ExerciseTarget, PlannedDay } from '../types';
@@ -43,6 +44,8 @@ export default function PlanEditor() {
   const [importOpen, setImportOpen] = useState(false);
   const [importCode, setImportCode] = useState('');
   const [weightStep, setWeightStep] = useState(2.5);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [pasteOpen, setPasteOpen] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   // Heaviest weight you last lifted for an exercise, from completed sets.
@@ -208,6 +211,14 @@ export default function PlanEditor() {
           <span className="flex items-center gap-1 text-xs"><ClipboardPaste size={14} /> Import</span>
         </Button>
       </div>
+      <div className="flex gap-2">
+        <Button className="flex-1 justify-center" onClick={() => setAiOpen(true)}>
+          <span className="flex items-center gap-1 text-xs"><Sparkles size={14} /> AI build a day</span>
+        </Button>
+        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setPasteOpen(true)}>
+          <span className="flex items-center gap-1 text-xs"><ClipboardPaste size={14} /> Paste workout</span>
+        </Button>
+      </div>
 
       {/* Weights: increment + history fill + deload */}
       <Card className="space-y-2">
@@ -324,6 +335,9 @@ export default function PlanEditor() {
 
       <ExercisePickerSheet open={!!pickerDay} onClose={() => setPickerDay(null)} onPick={(id) => { if (pickerDay) addExercise(pickerDay, id); }} />
 
+      <AiBuildSheet open={aiOpen} onClose={() => setAiOpen(false)} days={plan.days} onBuild={(day, built) => { patch(day, { label: built.label, exerciseIds: built.exerciseIds, targets: built.targets, rest: false }); setAiOpen(false); flash('Workout built ✨'); haptic('success'); }} />
+      <PasteSheet open={pasteOpen} onClose={() => setPasteOpen(false)} days={plan.days} onParse={(day, built) => { patch(day, { label: built.label, exerciseIds: built.exerciseIds, targets: built.targets, rest: false }); setPasteOpen(false); flash(`Matched ${built.exerciseIds.length} exercises`); haptic('success'); }} />
+
       {/* Import by code/link */}
       <Sheet open={importOpen} onClose={() => setImportOpen(false)} title="Import a shared plan">
         <div className="space-y-3">
@@ -350,6 +364,59 @@ export default function PlanEditor() {
         </div>
       </Sheet>
     </div>
+  );
+}
+
+function DayPicker({ days, value, onChange }: { days: PlannedDay[]; value: string; onChange: (d: string) => void }) {
+  return (
+    <div className="flex gap-1 flex-wrap" data-noswipe>
+      {days.map((d) => (
+        <button key={d.day} onClick={() => onChange(d.day)} className={`rounded-full px-2.5 py-1 text-xs ${value === d.day ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>{d.day}</button>
+      ))}
+    </div>
+  );
+}
+
+function AiBuildSheet({ open, onClose, days, onBuild }: { open: boolean; onClose: () => void; days: PlannedDay[]; onBuild: (day: string, built: ReturnType<typeof buildSmartDay>) => void }) {
+  const [day, setDay] = useState<string>(days.find((d) => !d.rest)?.day ?? days[0]?.day ?? 'Mon');
+  const [name, setName] = useState('');
+  const [focus, setFocus] = useState('');
+  const [skip, setSkip] = useState('');
+  const [goal, setGoal] = useState<'hypertrophy' | 'strength'>('hypertrophy');
+  return (
+    <Sheet open={open} onClose={onClose} title="AI trainer — build a day">
+      <div className="space-y-3">
+        <p className="text-[11px] text-muted">Name the day (e.g. “Push”, “Leg day”, “Upper body”) and I’ll program a full session like a coach.</p>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Workout name / goal (e.g. Push day)" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+        <input value={focus} onChange={(e) => setFocus(e.target.value)} placeholder="Focus on… (e.g. chest, arms)" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+        <input value={skip} onChange={(e) => setSkip(e.target.value)} placeholder="Skip / avoid… (e.g. no deadlift, bad knees)" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+        <div className="flex gap-2">
+          <Button variant={goal === 'hypertrophy' ? 'primary' : 'ghost'} className="flex-1 justify-center py-1.5" onClick={() => setGoal('hypertrophy')}>Hypertrophy</Button>
+          <Button variant={goal === 'strength' ? 'primary' : 'ghost'} className="flex-1 justify-center py-1.5" onClick={() => setGoal('strength')}>Strength</Button>
+        </div>
+        <p className="text-[11px] text-muted">Write into day:</p>
+        <DayPicker days={days} value={day} onChange={setDay} />
+        <Button className="w-full justify-center" onClick={() => onBuild(day, buildSmartDay(name, focus, skip, goal))}>Create workout</Button>
+      </div>
+    </Sheet>
+  );
+}
+
+function PasteSheet({ open, onClose, days, onParse }: { open: boolean; onClose: () => void; days: PlannedDay[]; onParse: (day: string, built: ReturnType<typeof parsePastedWorkout>) => void }) {
+  const [day, setDay] = useState<string>(days.find((d) => !d.rest)?.day ?? days[0]?.day ?? 'Mon');
+  const [text, setText] = useState('');
+  const preview = text.trim() ? parsePastedWorkout(text) : null;
+  return (
+    <Sheet open={open} onClose={onClose} title="Paste a workout">
+      <div className="space-y-3">
+        <p className="text-[11px] text-muted">Paste a workout from anywhere — one exercise per line, e.g. “Bench Press 3x8 80kg”. We’ll match it to the library.</p>
+        <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={'Bench Press 4x8 80kg\nLat Pulldown 3x10 60kg\nSquat 5x5 100kg'} className="w-full rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm h-32 font-mono" />
+        {preview && <p className="text-[11px] text-accent-2">Matched {preview.exerciseIds.length} exercise(s).</p>}
+        <p className="text-[11px] text-muted">Write into day:</p>
+        <DayPicker days={days} value={day} onChange={setDay} />
+        <Button className="w-full justify-center" disabled={!preview || preview.exerciseIds.length === 0} onClick={() => preview && onParse(day, preview)}>Fill day from text</Button>
+      </div>
+    </Sheet>
   );
 }
 

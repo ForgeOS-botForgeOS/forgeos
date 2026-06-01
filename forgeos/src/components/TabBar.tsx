@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Home, Dumbbell, Apple, Users, Trophy, User } from 'lucide-react';
 import { haptic } from '../lib/haptics';
 import { useT } from '../lib/i18n';
@@ -25,14 +26,17 @@ export function TabBar() {
               to={tab.to}
               onClick={() => haptic('tap')}
               className={({ isActive }) =>
-                `flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition ${
+                `relative flex-1 flex flex-col items-center gap-0.5 py-2 text-[10px] transition ${
                   isActive ? 'text-accent' : 'text-muted'
                 }`
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                  {isActive && <motion.span layoutId="tab-indicator" className="absolute top-0 h-0.5 w-8 rounded-full bg-accent" transition={{ type: 'spring', stiffness: 500, damping: 32 }} />}
+                  <motion.span animate={{ scale: isActive ? 1.12 : 1, y: isActive ? -1 : 0 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
+                    <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
+                  </motion.span>
                   {t(tab.key)}
                 </>
               )}

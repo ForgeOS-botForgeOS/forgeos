@@ -34,9 +34,14 @@ export default {
           '60%': { transform: 'scale(1.08)', opacity: '1' },
           '100%': { transform: 'scale(1)' },
         },
+        fadeInUp: {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
       },
       animation: {
         pop: 'pop 0.35s ease-out',
+        'fade-in-up': 'fadeInUp 0.3s ease-out both',
       },
     },
   },

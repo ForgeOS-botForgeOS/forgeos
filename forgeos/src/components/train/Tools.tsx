@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Pill } from '../ui';
 import { platesPerSide, warmupSets, e1rm } from '../../lib/fitness';
+import { useUser } from '../../state/userStore';
 
 type Tool = 'plate' | 'warmup' | '1rm';
 
@@ -32,10 +33,19 @@ const PLATE_COLOR: Record<number, string> = {
 
 function PlateCalc() {
   const [total, setTotal] = useState(100);
-  const plates = platesPerSide(total);
+  const [maxPlate, setMaxPlate] = useState(20);
+  const plates = platesPerSide(total, 20, maxPlate);
   return (
     <div className="space-y-3">
       <NumInput label="Target (incl. 20kg bar)" value={total} step={2.5} onChange={setTotal} unit="kg" />
+      <div className="flex items-center justify-between">
+        <span className="text-xs text-muted">Heaviest plate available</span>
+        <div className="flex gap-1">
+          {[25, 20, 15].map((p) => (
+            <button key={p} onClick={() => setMaxPlate(p)} className={`rounded-full px-2.5 py-1 text-xs font-medium ${maxPlate === p ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>{p}kg</button>
+          ))}
+        </div>
+      </div>
       <div className="flex items-center justify-center gap-1 py-4 bg-surface-2 rounded-xl min-h-[100px]">
         {/* visual plate layout, one side */}
         {plates.length === 0 ? (
@@ -93,17 +103,46 @@ function WarmupCalc() {
   );
 }
 
+// Bodyweight-relative 1RM standards for the main lifts (realistic; e.g. a
+// ~1.25×BW bench is already strong — most people never bench 100 kg).
+const STANDARDS: Record<string, { mult: number; label: string }[]> = {
+  Squat: [{ mult: 0.75, label: 'Beginner' }, { mult: 1.25, label: 'Novice' }, { mult: 1.5, label: 'Intermediate' }, { mult: 2, label: 'Advanced' }, { mult: 2.5, label: 'Elite' }],
+  Bench: [{ mult: 0.5, label: 'Beginner' }, { mult: 0.75, label: 'Novice' }, { mult: 1, label: 'Intermediate' }, { mult: 1.5, label: 'Advanced' }, { mult: 2, label: 'Elite' }],
+  Deadlift: [{ mult: 1, label: 'Beginner' }, { mult: 1.5, label: 'Novice' }, { mult: 2, label: 'Intermediate' }, { mult: 2.5, label: 'Advanced' }, { mult: 3, label: 'Elite' }],
+};
+
 function OneRmCalc() {
-  const [w, setW] = useState(100);
+  const bodyweight = useUser((s) => s.profile?.weightKg ?? 80);
+  const [lift, setLift] = useState<'Squat' | 'Bench' | 'Deadlift'>('Bench');
+  const [w, setW] = useState(60);
   const [r, setR] = useState(5);
   const est = e1rm(w, r);
+  const ratio = est / bodyweight;
+  const tiers = STANDARDS[lift];
+  let level = 'Untrained';
+  let next: { mult: number; label: string } | null = tiers[0];
+  for (let i = 0; i < tiers.length; i++) {
+    if (ratio >= tiers[i].mult) { level = tiers[i].label; next = tiers[i + 1] ?? null; }
+  }
+
   return (
     <div className="space-y-3">
+      <div className="flex gap-2">
+        {(['Squat', 'Bench', 'Deadlift'] as const).map((l) => (
+          <Pill key={l} active={lift === l} onClick={() => setLift(l)}>{l}</Pill>
+        ))}
+      </div>
       <NumInput label="Weight" value={w} step={2.5} onChange={setW} unit="kg" />
       <NumInput label="Reps" value={r} step={1} onChange={setR} unit="" />
       <div className="rounded-xl bg-accent/15 px-4 py-5 text-center">
         <p className="text-xs text-muted">Estimated 1RM (Epley + Brzycki avg)</p>
         <p className="font-mono text-3xl font-bold mt-1">{est} kg</p>
+        <p className="text-xs text-muted mt-1">{ratio.toFixed(2)}× bodyweight</p>
+      </div>
+      <div className="rounded-xl bg-surface-2 px-4 py-3 text-center">
+        <p className="text-xs text-muted">{lift} strength level</p>
+        <p className="text-lg font-bold text-accent-2">{level}</p>
+        {next && <p className="text-[11px] text-muted">Next: {next.label} at {Math.round(next.mult * bodyweight)} kg ({next.mult}× BW)</p>}
       </div>
       <div className="grid grid-cols-3 gap-2 text-center text-xs">
         {[0.9, 0.8, 0.7].map((p) => (
@@ -113,6 +152,7 @@ function OneRmCalc() {
           </div>
         ))}
       </div>
+      <p className="text-[11px] text-muted/70">Standards are relative to your bodyweight ({bodyweight} kg) — set it in your profile.</p>
     </div>
   );
 }

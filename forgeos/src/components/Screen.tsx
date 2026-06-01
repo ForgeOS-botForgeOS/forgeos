@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import { motion } from 'framer-motion';
 
 export function Screen({
   title,
@@ -12,7 +13,12 @@ export function Screen({
   children: ReactNode;
 }) {
   return (
-    <div className="px-4 pt-12 pb-6 space-y-4">
+    <motion.div
+      className="px-4 pt-12 pb-6 space-y-4"
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: 'easeOut' }}
+    >
       {(title || right) && (
         <header className="flex items-start justify-between">
           <div>
@@ -23,6 +29,6 @@ export function Screen({
         </header>
       )}
       {children}
-    </div>
+    </motion.div>
   );
 }
