@@ -1,12 +1,16 @@
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft } from 'lucide-react';
 import { QUOTES } from '../data/quotes';
+import { localizeQuote } from '../data/quotes.sk';
+import { useSettings } from '../state/settingsStore';
 import { Card } from '../components/ui';
 
 export default function QuoteDeepDive() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const quote = QUOTES.find((q) => q.id === id);
+  const lang = useSettings((s) => s.language);
+  const raw = QUOTES.find((q) => q.id === id);
+  const quote = raw ? localizeQuote(raw, lang) : undefined;
 
   return (
     <div className="px-4 pt-12 pb-6 space-y-4">

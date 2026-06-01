@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Lock, Star, Gift, Sparkles } from 'lucide-react';
 import { Card, Pill, Badge, Button } from '../components/ui';
 import { QUOTES, QUOTE_GENRES, quotesByGenre } from '../data/quotes';
+import { localizeQuote } from '../data/quotes.sk';
 import { useQuotes, MILESTONES } from '../state/quoteStore';
 import { useGami } from '../state/gamificationStore';
 import { useSettings } from '../state/settingsStore';
@@ -21,6 +22,7 @@ export default function Collection() {
   const addXp = useGami((s) => s.addXp);
   const addCoins = useGami((s) => s.addCoins);
   const genrePref = useSettings((s) => s.quoteGenre);
+  const lang = useSettings((s) => s.language);
   const [filter, setFilter] = useState<Filter>('all');
 
   // Today's quote (same logic as the popup) so you can reveal it manually.
@@ -116,14 +118,15 @@ export default function Collection() {
             );
           }
           const fav = favourites.includes(q.id);
+          const lq = localizeQuote(q, lang);
           return (
             <Card key={q.id} className="flex items-start gap-3">
               <button onClick={() => { toggleFav(q.id); haptic('tap'); }} className="shrink-0 mt-0.5">
                 <Star size={18} className={fav ? 'text-accent-2 fill-accent-2' : 'text-muted'} />
               </button>
               <button className="flex-1 text-left" onClick={() => navigate(`/quote/${q.id}`)}>
-                <p className="text-sm font-medium leading-snug">“{q.text}”</p>
-                <p className="text-[11px] text-muted mt-1">— {q.source}</p>
+                <p className="text-sm font-medium leading-snug">“{lq.text}”</p>
+                <p className="text-[11px] text-muted mt-1">— {lq.source}</p>
               </button>
               <Badge color="rgb(var(--accent-2))">{q.genre}</Badge>
             </Card>

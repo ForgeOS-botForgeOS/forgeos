@@ -4,6 +4,7 @@ import { motion } from 'framer-motion';
 import { X, Library } from 'lucide-react';
 import { Button } from './ui';
 import { quotesByGenre } from '../data/quotes';
+import { localizeQuote } from '../data/quotes.sk';
 import { useSettings } from '../state/settingsStore';
 import { useQuotes } from '../state/quoteStore';
 
@@ -16,6 +17,7 @@ function dayOfYear() {
 // Fires once on the first home visit of each calendar day.
 export function DailyQuote() {
   const genre = useSettings((s) => s.quoteGenre);
+  const lang = useSettings((s) => s.language);
   const collect = useQuotes((s) => s.collect);
   const [open, setOpen] = useState(false);
   const [quoteId, setQuoteId] = useState<string | null>(null);
@@ -33,8 +35,9 @@ export function DailyQuote() {
     localStorage.setItem(KEY, today);
   }, [genre, collect]);
 
-  const quote = quotesByGenre('all').find((q) => q.id === quoteId);
-  if (!open || !quote) return null;
+  const raw = quotesByGenre('all').find((q) => q.id === quoteId);
+  if (!open || !raw) return null;
+  const quote = localizeQuote(raw, lang);
 
   return (
     <div className="absolute inset-0 z-[60] flex items-center justify-center p-6">
