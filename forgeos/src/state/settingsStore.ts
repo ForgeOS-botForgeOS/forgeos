@@ -11,6 +11,7 @@ interface SettingsState extends Settings {
 const DEFAULTS: Settings = {
   language: 'en',
   gym: { name: 'My Forge', lat: 52.52, lng: 13.405, radiusM: 120, maxWeightKg: 20 },
+  appLock: { enabled: false, code: '' },
   reminder: { enabled: false, time: '18:00', days: [0, 1, 2, 3, 4] },
   theme: 'forge-dark',
   autoTheme: false,

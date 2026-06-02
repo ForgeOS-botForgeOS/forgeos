@@ -6,6 +6,7 @@ export interface AchievementStats {
   quotes: number;
   coins: number;
   rankIndex: number; // index into RANKS
+  heavyLifts: number;
 }
 
 export interface Achievement {
@@ -34,4 +35,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'rich', title: 'Coin Hoarder', desc: 'Hold 500 Forge Coins', icon: '🪙', goal: 500, value: (s) => s.coins },
   { id: 'gold', title: 'Struck Gold', desc: 'Reach Gold rank', icon: '🏆', goal: 6, value: (s) => s.rankIndex },
   { id: 'legend', title: 'Living Legend', desc: 'Reach Legend rank', icon: '👑', goal: 12, value: (s) => s.rankIndex },
+  { id: 'heavy1', title: '100 Club', desc: 'Complete a set at 100 kg+', icon: '💪', goal: 1, value: (s) => s.heavyLifts },
+  { id: 'heavy25', title: 'Plate Mover', desc: '25 sets at 100 kg+', icon: '🔩', goal: 25, value: (s) => s.heavyLifts },
+  { id: 'heavy100', title: 'Heavy Hitter', desc: '100 sets at 100 kg+', icon: '🦏', goal: 100, value: (s) => s.heavyLifts },
 ];

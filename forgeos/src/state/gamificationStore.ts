@@ -13,6 +13,8 @@ interface GamiState {
 
   addXp: (amount: number) => void;
   addCoins: (amount: number) => void;
+  heavyLifts: number;
+  recordHeavyLift: () => void;
   convertXpToCoins: (coins: number, rate: number) => boolean;
   registerSession: () => void;
   buyStreakFreeze: () => boolean;
@@ -34,6 +36,7 @@ export const useGami = create<GamiState>()(
     (set, get) => ({
       xp: 0,
       coins: 50,
+      heavyLifts: 0,
       streakDays: 0,
       lastSessionDate: null,
       quests: [],
@@ -42,6 +45,8 @@ export const useGami = create<GamiState>()(
       addXp: (amount) => set({ xp: get().xp + Math.max(0, Math.round(amount)) }),
 
       addCoins: (amount) => set({ coins: get().coins + Math.max(0, Math.round(amount)) }),
+
+      recordHeavyLift: () => set({ heavyLifts: get().heavyLifts + 1 }),
 
       convertXpToCoins: (coins, rate) => {
         const cost = coins * rate;

@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Flame, Mail, Apple as AppleIcon, Globe, Loader2, Check } from 'lucide-react';
+import { Flame, Mail, Globe, Loader2, Check } from 'lucide-react';
 import { Button, Card, Pill, Sheet, Toggle } from '../../components/ui';
 import { InstallButton } from '../../components/InstallButton';
 import { isBackendLive, signInWithEmail, signUpWithEmail } from '../../lib/supabase';
@@ -137,9 +137,6 @@ export default function Onboarding() {
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" disabled={signingIn === 'google'} onClick={continueWithGoogle}>
               {signingIn === 'google' ? <Loader2 size={18} className="animate-spin" /> : <Globe size={18} />}
               {signingIn === 'google' ? t('ob.connecting') : t('ob.google')}
-            </Button>
-            <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => { setProvider('apple'); setStep('quiz'); }}>
-              <AppleIcon size={18} /> {t('ob.apple')}
             </Button>
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={emailContinue}>
               <Mail size={18} /> {t('ob.email')}

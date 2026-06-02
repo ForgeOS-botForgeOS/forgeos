@@ -1,9 +1,10 @@
-import { useEffect, useRef, lazy, Suspense } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { PhoneFrame } from './components/PhoneFrame';
 import { TabBar } from './components/TabBar';
 import { RankUpWatcher } from './components/Celebrate';
 import { Tutorial } from './components/Tutorial';
+import { LockScreen } from './components/LockScreen';
 import { ScreenSkeleton } from './components/Skeleton';
 import { useUser } from './state/userStore';
 import { useSettings } from './state/settingsStore';
@@ -91,8 +92,10 @@ export default function App() {
   const applyTheme = useSettings((s) => s.applyTheme);
   const theme = useSettings((s) => s.theme);
   const autoTheme = useSettings((s) => s.autoTheme);
+  const appLock = useSettings((s) => s.appLock);
   const ensureDailyQuests = useGami((s) => s.ensureDailyQuests);
   const seedFeed = useSocial((s) => s.seedIfEmpty);
+  const [locked, setLocked] = useState(() => appLock.enabled && !!appLock.code);
 
   useEffect(() => {
     // Auto day/night overrides the chosen theme when enabled.
@@ -116,6 +119,14 @@ export default function App() {
       off();
     };
   }, [applyTheme, theme, autoTheme, ensureDailyQuests, seedFeed]);
+
+  if (locked) {
+    return (
+      <PhoneFrame>
+        <LockScreen code={appLock.code} onUnlock={() => setLocked(false)} />
+      </PhoneFrame>
+    );
+  }
 
   return (
     <PhoneFrame>

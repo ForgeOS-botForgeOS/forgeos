@@ -11,6 +11,8 @@ import { SetRow } from '../components/train/SetRow';
 import { RestTimer } from '../components/train/RestTimer';
 import { Tools } from '../components/train/Tools';
 import { Confetti } from '../components/Celebrate';
+import { HeavyDrop, type Drop } from '../components/HeavyDrop';
+import { pickHeavyQuote, rollRarity } from '../data/heavyQuotes';
 import { useT } from '../lib/i18n';
 import { useWorkout } from '../state/workoutStore';
 import { useUser } from '../state/userStore';
@@ -200,7 +202,26 @@ function CRow({ label, v, step, onChange }: { label: string; v: number; step: nu
 
 function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: () => void; toolsOpen: boolean; onCloseTools: () => void }) {
   const active = useWorkout((s) => s.active)!;
-  const { addExercise, removeExercise, swapExercise, addSet, updateSet, removeSet, completeSet, finishWorkout, discardWorkout, linkSuperset, reorderExercises, lastSetFor } = useWorkout();
+  const { addExercise, removeExercise, swapExercise, addSet, updateSet, removeSet, completeSet, finishWorkout, discardWorkout, linkSuperset, reorderExercises, addCardioToActive, lastSetFor } = useWorkout();
+  const cardioRef = useRef<HTMLInputElement>(null);
+  const [cardioBusy, setCardioBusy] = useState(false);
+
+  async function onCardioFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCardioBusy(true);
+    try {
+      const c = await scanCardio(file);
+      const cx = EXERCISES.find((x) => x.category === 'Cardio' && c.machine.toLowerCase().includes(x.name.split(' ')[0].toLowerCase())) ?? EXERCISES.find((x) => x.category === 'Cardio')!;
+      addCardioToActive(cx.id, c.durationMin, `${c.distanceKm}km · ${c.calories}kcal${c.avgPace ? ' · ' + c.avgPace : ''}`);
+      haptic('success');
+    } catch {
+      haptic('warning');
+    } finally {
+      setCardioBusy(false);
+      e.target.value = '';
+    }
+  }
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   function onDragEnd(e: DragEndEvent) {
@@ -215,6 +236,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   const addXp = useGami((s) => s.addXp);
   const registerSession = useGami((s) => s.registerSession);
   const bumpMetric = useGami((s) => s.bumpMetric);
+  const recordHeavyLift = useGami((s) => s.recordHeavyLift);
   const navigate = useNavigate();
 
   const [restOpen, setRestOpen] = useState(false);
@@ -223,6 +245,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   const [noteFor, setNoteFor] = useState<{ weId: string; setId: string } | null>(null);
   const [linkMode, setLinkMode] = useState<string[]>([]);
   const [celebrating, setCelebrating] = useState(false);
+  const [drop, setDrop] = useState<Drop | null>(null);
 
   const totalVolume = active.exercises.reduce(
     (sum, we) => sum + we.sets.filter((s) => s.completed).reduce((a, s) => a + volumeOf(s.weightKg, s.reps), 0),
@@ -236,7 +259,15 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
     addXp(xpForSet(set.weightKg, set.reps, set.rpe ?? 7));
     bumpMetric('sets', 1);
     bumpMetric('volume', volumeOf(set.weightKg, set.reps));
-    setRestOpen(true);
+    // Heavy-set quote "drop" + achievement progress on 100kg+ lifts.
+    if (set.weightKg >= 100) {
+      const ex = exerciseById(active.exercises.find((e) => e.id === weId)?.exerciseId ?? '');
+      setDrop({ quote: pickHeavyQuote(ex), rarity: rollRarity(), exercise: ex?.name ?? 'Lift', weightKg: set.weightKg });
+      recordHeavyLift();
+      addXp(50);
+    } else {
+      setRestOpen(true);
+    }
   }
 
   function finish() {
@@ -334,8 +365,12 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
         <Button variant="ghost" className="flex-1 justify-center" onClick={() => setPickerOpen(true)}>
           <span className="flex items-center gap-1"><Plus size={16} /> Exercise</span>
         </Button>
+        <Button variant="ghost" className="flex-1 justify-center" disabled={cardioBusy} onClick={() => cardioRef.current?.click()}>
+          <span className="flex items-center gap-1"><Camera size={16} /> {cardioBusy ? 'Reading…' : 'Cardio'}</span>
+        </Button>
         <Button variant="ghost" className="justify-center" onClick={onOpenTools}><Wrench size={16} /></Button>
       </div>
+      <input ref={cardioRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onCardioFile} />
 
       <div className="flex gap-2">
         <Button variant="outline" className="flex-1 justify-center" onClick={() => { discardWorkout(); navigate('/home'); }}>Discard</Button>
@@ -343,6 +378,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       </div>
 
       <RestTimer open={restOpen} onClose={() => setRestOpen(false)} />
+      <HeavyDrop drop={drop} onClose={() => { setDrop(null); setRestOpen(true); }} />
 
       {/* Exercise picker */}
       <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="Add exercise">

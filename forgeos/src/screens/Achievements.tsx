@@ -14,6 +14,7 @@ export default function Achievements() {
   const xp = useGami((s) => s.xp);
   const coins = useGami((s) => s.coins);
   const streak = useGami((s) => s.streakDays);
+  const heavyLifts = useGami((s) => s.heavyLifts);
   const quotes = useQuotes((s) => s.collected);
 
   const stats: AchievementStats = {
@@ -24,6 +25,7 @@ export default function Achievements() {
     quotes: quotes.length,
     coins,
     rankIndex: rankForXp(xp).index,
+    heavyLifts,
   };
 
   const evaluated = ACHIEVEMENTS.map((a) => {

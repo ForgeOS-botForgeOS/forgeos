@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle } from 'lucide-react';
+import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { useSettings } from '../state/settingsStore';
@@ -15,6 +15,7 @@ import { exportData, importData } from '../lib/backup';
 import { useCosmetics } from '../state/cosmeticsStore';
 import { cosmeticById } from '../data/cosmetics';
 import { openTutorial } from '../components/Tutorial';
+import { supabase, isBackendLive } from '../lib/supabase';
 import { watchGym } from '../lib/geo';
 import { EXERCISES } from '../data/exercises';
 import type { ThemeId } from '../types';
@@ -76,6 +77,15 @@ export default function Profile() {
       },
       { enableHighAccuracy: true, timeout: 15000 },
     );
+  }
+
+  async function changePassword() {
+    if (!isBackendLive || !supabase) { alert('Sign in with email (Supabase) to change your account password.'); return; }
+    const pw = prompt('New password (min 6 characters)');
+    if (!pw) return;
+    if (pw.length < 6) { alert('Password must be at least 6 characters.'); return; }
+    const { error } = await supabase.auth.updateUser({ password: pw });
+    alert(error ? `Failed: ${error.message}` : 'Password updated ✅');
   }
 
   const { tier } = rankForXp(xp);
@@ -276,6 +286,24 @@ export default function Profile() {
               <p className="text-[11px] text-muted/70">Fires while the app is open or in the background. Say “notify me when…” for one-offs.</p>
             </>
           )}
+        </Card>
+      </div>
+
+      {/* Security */}
+      <div>
+        <SectionTitle action={<Shield size={14} className="text-muted" />}>Security</SectionTitle>
+        <Card className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div><p className="text-sm">App passcode lock</p><p className="text-[11px] text-muted">Ask for a code on launch</p></div>
+            <Toggle checked={s.appLock.enabled} onChange={(v) => {
+              if (v) { const c = prompt('Set a numeric passcode (4–8 digits)'); if (c && /^\d{4,8}$/.test(c)) s.set('appLock', { enabled: true, code: c }); else if (c) alert('Use 4–8 digits.'); }
+              else s.set('appLock', { enabled: false, code: '' });
+            }} />
+          </div>
+          {s.appLock.enabled && (
+            <Button variant="ghost" className="w-full justify-center" onClick={() => { const c = prompt('New passcode (4–8 digits)'); if (c && /^\d{4,8}$/.test(c)) { s.set('appLock', { enabled: true, code: c }); alert('Passcode updated.'); } }}>Change passcode</Button>
+          )}
+          <Button variant="ghost" className="w-full justify-center" onClick={changePassword}>Change account password</Button>
         </Card>
       </div>
 

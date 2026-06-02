@@ -312,9 +312,15 @@ export interface ReminderConfig {
   days: number[]; // 0=Mon … 6=Sun
 }
 
+export interface AppLock {
+  enabled: boolean;
+  code: string; // local passcode (app lock, not account auth)
+}
+
 export interface Settings {
   language: Language;
   gym: GymConfig;
+  appLock: AppLock;
   reminder: ReminderConfig;
   theme: ThemeId;
   autoTheme: boolean; // day = light, night = dark

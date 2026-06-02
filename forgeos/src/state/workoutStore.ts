@@ -19,6 +19,7 @@ interface WorkoutState {
     opts?: { targets?: Record<string, { sets: number; reps: number; weightKg?: number }>; maxWeightKg?: number },
   ) => void;
   addExercise: (exerciseId: string) => void;
+  addCardioToActive: (exerciseId: string, durationMin: number, note: string) => void;
   removeExercise: (workoutExerciseId: string) => void;
   swapExercise: (workoutExerciseId: string, newExerciseId: string) => void;
   addSet: (workoutExerciseId: string, seed?: Partial<SetEntry>) => void;
@@ -107,6 +108,18 @@ export const useWorkout = create<WorkoutState>()(
           id: uid(),
           exerciseId,
           sets: [{ id: uid(), weightKg: 20, reps: 8, completed: false, rpe: 7 }],
+          restPresetSec: 90,
+        };
+        set({ active: { ...a, exercises: [...a.exercises, we] } });
+      },
+
+      addCardioToActive: (exerciseId, durationMin, note) => {
+        const a = get().active;
+        if (!a) return;
+        const we: WorkoutExercise = {
+          id: uid(),
+          exerciseId,
+          sets: [{ id: uid(), weightKg: 0, reps: Math.round(durationMin), completed: true, note }],
           restPresetSec: 90,
         };
         set({ active: { ...a, exercises: [...a.exercises, we] } });
