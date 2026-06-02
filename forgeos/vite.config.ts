@@ -12,7 +12,9 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      // 'prompt' so a new deploy surfaces an in-app "Update" banner the user
+      // taps to reload, instead of silently swapping under them.
+      registerType: 'prompt',
       includeAssets: ['apple-touch-icon.png', 'vite.svg'],
       manifest: {
         name: 'ForgeOS — Fitness, Nutrition & Social',

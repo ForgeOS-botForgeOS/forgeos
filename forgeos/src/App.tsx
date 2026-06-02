@@ -5,6 +5,7 @@ import { TabBar } from './components/TabBar';
 import { RankUpWatcher } from './components/Celebrate';
 import { Tutorial } from './components/Tutorial';
 import { LockScreen } from './components/LockScreen';
+import { UpdatePrompt } from './components/UpdatePrompt';
 import { ScreenSkeleton } from './components/Skeleton';
 import { useUser } from './state/userStore';
 import { useSettings } from './state/settingsStore';
@@ -131,6 +132,7 @@ export default function App() {
 
   return (
     <PhoneFrame>
+      <UpdatePrompt />
       <HashRouter>
         <Suspense fallback={<ScreenSkeleton />}>
         <Routes>
