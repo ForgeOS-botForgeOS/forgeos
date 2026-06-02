@@ -1,12 +1,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield } from 'lucide-react';
+import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2 } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { useSettings } from '../state/settingsStore';
 import { useUser } from '../state/userStore';
 import { useGami } from '../state/gamificationStore';
-import { rankForXp } from '../data/ranks';
+import { rankForXp, rankLabel } from '../data/ranks';
 import { pendingCount, syncQueue } from '../lib/offlineQueue';
 import { useT, LANGUAGES } from '../lib/i18n';
 import { QUOTE_GENRES } from '../data/quotes';
@@ -16,6 +16,11 @@ import { useCosmetics } from '../state/cosmeticsStore';
 import { cosmeticById } from '../data/cosmetics';
 import { openTutorial } from '../components/Tutorial';
 import { supabase, isBackendLive } from '../lib/supabase';
+import { useWorkout } from '../state/workoutStore';
+import { useQuotes } from '../state/quoteStore';
+import { ACHIEVEMENTS } from '../data/achievements';
+import { shareProfile, generateProfileCard, type PublicProfile } from '../lib/profileShare';
+import { downloadDataUrl } from '../lib/shareCard';
 import { watchGym } from '../lib/geo';
 import { EXERCISES } from '../data/exercises';
 import type { ThemeId } from '../types';
@@ -77,6 +82,30 @@ export default function Profile() {
       },
       { enableHighAccuracy: true, timeout: 15000 },
     );
+  }
+
+  function buildSummary(): PublicProfile {
+    const w = useWorkout.getState();
+    const g = useGami.getState();
+    const q = useQuotes.getState();
+    const { tier, index } = rankForXp(g.xp);
+    const stats = {
+      sessions: w.history.length,
+      prs: w.prs.length,
+      streak: g.streakDays,
+      totalVolumeKg: w.history.reduce((a, x) => a + (x.totalVolumeKg ?? 0), 0),
+      quotes: q.collected.length,
+      coins: g.coins,
+      rankIndex: index,
+      heavyLifts: g.heavyLifts,
+    };
+    const achievements = ACHIEVEMENTS.filter((a) => a.value(stats) >= a.goal).length;
+    const bestLifts = [...w.prs].sort((a, b) => b.e1rm - a.e1rm).slice(0, 3).map((p) => ({ name: p.exerciseName, e1rm: p.e1rm }));
+    return { name: profile?.name ?? 'Athlete', rank: rankLabel(tier), xp: g.xp, streak: g.streakDays, sessions: w.history.length, achievements, title: title ?? undefined, bestLifts };
+  }
+  async function shareMyProfile() {
+    const r = await shareProfile(buildSummary());
+    if (r === 'copied') alert('Public profile link copied to clipboard.');
   }
 
   async function changePassword() {
@@ -285,6 +314,25 @@ export default function Profile() {
               </div>
               <p className="text-[11px] text-muted/70">Fires while the app is open or in the background. Say “notify me when…” for one-offs.</p>
             </>
+          )}
+        </Card>
+      </div>
+
+      {/* Public profile */}
+      <div>
+        <SectionTitle action={<Globe2 size={14} className="text-muted" />}>Public profile</SectionTitle>
+        <Card className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div><p className="text-sm">Shareable profile</p><p className="text-[11px] text-muted">Let others view your rank & stats via a link</p></div>
+            <Toggle checked={s.publicProfile} onChange={(v) => s.set('publicProfile', v)} />
+          </div>
+          {s.publicProfile ? (
+            <div className="flex gap-2">
+              <Button className="flex-1 justify-center" onClick={shareMyProfile}>Share profile</Button>
+              <Button variant="ghost" className="flex-1 justify-center" onClick={() => downloadDataUrl(generateProfileCard(buildSummary()), 'forgeos-profile.png')}>Save card</Button>
+            </div>
+          ) : (
+            <p className="text-[11px] text-muted/70">Turn on to generate a read-only share link and a profile card.</p>
           )}
         </Card>
       </div>

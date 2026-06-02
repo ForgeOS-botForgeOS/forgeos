@@ -33,6 +33,7 @@ const Calendar = lazy(() => import('./screens/Calendar'));
 const Achievements = lazy(() => import('./screens/Achievements'));
 const Shop = lazy(() => import('./screens/Shop'));
 const WorkoutEdit = lazy(() => import('./screens/WorkoutEdit'));
+const PublicProfile = lazy(() => import('./screens/PublicProfile'));
 
 // Left→right order of the bottom tabs; swiping moves to the neighbour.
 const TAB_ORDER = ['/home', '/train', '/nutrition', '/social', '/quests', '/profile'];
@@ -157,6 +158,7 @@ export default function App() {
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/shop" element={<Shop />} />
             <Route path="/workout/:id" element={<WorkoutEdit />} />
+            <Route path="/u" element={<PublicProfile />} />
             <Route path="/quote/:id" element={<QuoteDeepDive />} />
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />

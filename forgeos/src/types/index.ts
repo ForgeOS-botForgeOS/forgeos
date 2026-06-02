@@ -321,6 +321,7 @@ export interface Settings {
   language: Language;
   gym: GymConfig;
   appLock: AppLock;
+  publicProfile: boolean;
   reminder: ReminderConfig;
   theme: ThemeId;
   autoTheme: boolean; // day = light, night = dark
