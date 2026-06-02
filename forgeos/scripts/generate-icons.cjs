@@ -52,18 +52,48 @@ function makePng(size, draw) {
   ]);
 }
 
+// Original ForgeOS mark: a stylised anvil with a forge spark, drawn from
+// scratch as filled blocks. Full-bleed ember background = maskable-safe.
 function drawForge(set, n) {
-  const rect = (x0, y0, x1, y1, r, g, b) => {
-    for (let y = Math.round(y0); y < Math.round(y1); y++)
-      for (let x = Math.round(x0); x < Math.round(x1); x++) set(x, y, r, g, b);
+  const rect = (x0, y0, x1, y1, c) => {
+    for (let y = Math.round(y0 * n); y < Math.round(y1 * n); y++)
+      for (let x = Math.round(x0 * n); x < Math.round(x1 * n); x++) set(x, y, c[0], c[1], c[2]);
   };
-  // forge-orange background (full bleed = maskable safe)
-  rect(0, 0, n, n, 255, 92, 53);
-  // white "F"
-  const W = [255, 255, 255];
-  rect(0.34 * n, 0.27 * n, 0.45 * n, 0.73 * n, ...W); // stem
-  rect(0.34 * n, 0.27 * n, 0.66 * n, 0.37 * n, ...W); // top bar
-  rect(0.34 * n, 0.45 * n, 0.6 * n, 0.54 * n, ...W); // mid bar
+  const W = [245, 245, 247]; // anvil white
+  const G = [255, 211, 74]; // spark gold
+  const S = [9, 11, 16]; // subtle shadow (forge-dark)
+
+  // background (slightly darker ember at the very edges via two fills)
+  rect(0, 0, 1, 1, [255, 92, 53]);
+
+  // --- Anvil silhouette ---
+  // soft drop shadow under the base
+  rect(0.26, 0.715, 0.76, 0.745, S);
+
+  // horn (left taper) — two stepped blocks for a pointed feel
+  rect(0.10, 0.375, 0.20, 0.43, W);
+  rect(0.06, 0.39, 0.13, 0.42, W);
+  // heel (small right step)
+  rect(0.80, 0.385, 0.88, 0.45, W);
+  // top working face (the wide beam)
+  rect(0.18, 0.36, 0.82, 0.46, W);
+  // under-bevel step (right-biased, classic anvil underside)
+  rect(0.34, 0.46, 0.74, 0.52, W);
+  // neck / waist (narrow column)
+  rect(0.42, 0.52, 0.58, 0.62, W);
+  // base / foot (wide, with a slight lip)
+  rect(0.28, 0.62, 0.72, 0.71, W);
+  rect(0.24, 0.685, 0.76, 0.71, W);
+
+  // --- Forge sparks (gold) above the horn ---
+  // big spark: a plus + a centre block
+  rect(0.275, 0.20, 0.305, 0.30, G); // vertical
+  rect(0.24, 0.235, 0.34, 0.265, G); // horizontal
+  // medium spark upper-right of the first
+  rect(0.40, 0.255, 0.418, 0.305, G);
+  rect(0.382, 0.272, 0.436, 0.288, G);
+  // tiny spark dot
+  rect(0.165, 0.30, 0.195, 0.33, G);
 }
 
 const outDir = path.join(__dirname, '..', 'public');
