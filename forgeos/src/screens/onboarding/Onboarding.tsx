@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Flame, Mail, Globe, Loader2, Check } from 'lucide-react';
+import { Mail, Globe, Loader2, Check } from 'lucide-react';
 import { Button, Card, Pill, Sheet, Toggle } from '../../components/ui';
+import { ForgeLogo } from '../../components/ForgeLogo';
 import { InstallButton } from '../../components/InstallButton';
 import { isBackendLive, signInWithEmail, signUpWithEmail } from '../../lib/supabase';
 import { ICE_BREAKER } from '../../data/quests';
@@ -119,7 +120,7 @@ export default function Onboarding() {
   return (
     <div className="h-full overflow-y-auto no-scrollbar px-5 py-12">
       <div className="flex items-center gap-2 mb-6">
-        <Flame className="text-accent" />
+        <ForgeLogo size={32} tile />
         <span className="font-extrabold text-xl tracking-tight">ForgeOS</span>
       </div>
 
