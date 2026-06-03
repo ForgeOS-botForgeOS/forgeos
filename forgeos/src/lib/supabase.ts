@@ -29,6 +29,13 @@ export async function signUpWithEmail(email: string, password: string) {
   return supabase.auth.signUp({ email, password });
 }
 
+// Email a password-reset link. Can't reveal an existing password (it's only
+// stored hashed), so this is the recovery path when one is forgotten.
+export async function sendPasswordReset(email: string) {
+  if (!supabase) return { error: 'mock-mode' } as const;
+  return supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href.split('#')[0] });
+}
+
 // The currently authenticated user (or null in mock mode / signed out). Used so
 // each account's profile is stored under its real auth id and can be restored
 // on login from any device.

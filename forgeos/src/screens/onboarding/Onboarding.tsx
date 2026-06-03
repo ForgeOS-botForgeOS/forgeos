@@ -1,11 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Globe, Loader2, Check } from 'lucide-react';
+import { Mail, Globe, Loader2, Check, Eye, EyeOff } from 'lucide-react';
 import { Button, Card, Pill, Sheet, Toggle } from '../../components/ui';
 import { ForgeLogo } from '../../components/ForgeLogo';
 import { InstallButton } from '../../components/InstallButton';
-import { isBackendLive, signInWithEmail, signUpWithEmail, currentAuthUser } from '../../lib/supabase';
+import { isBackendLive, signInWithEmail, signUpWithEmail, currentAuthUser, sendPasswordReset } from '../../lib/supabase';
 import { fetchProfile } from '../../lib/repositories';
 import { ICE_BREAKER } from '../../data/quests';
 import { useUser } from '../../state/userStore';
@@ -309,16 +309,32 @@ function EmailAuthSheet({ open, initialMode = 'up', onClose, onAuthed }: { open:
   const [mode, setMode] = useState<'in' | 'up'>(initialMode);
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
+  const [show, setShow] = useState(false);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   // Respect the chosen entry point (Sign up vs Log in) each time it opens.
   useEffect(() => {
     if (open) {
       setMode(initialMode);
       setErr(null);
+      setNotice(null);
+      setShow(false);
     }
   }, [open, initialMode]);
+
+  async function forgotPassword() {
+    setErr(null);
+    setNotice(null);
+    if (!email) { setErr('Enter your email above first, then tap “Forgot password”.'); return; }
+    const res = await sendPasswordReset(email);
+    if ('error' in res && res.error) {
+      setErr(typeof res.error === 'string' ? 'Password reset needs an email account.' : res.error.message);
+      return;
+    }
+    setNotice(`Reset link sent to ${email}. Check your inbox to set a new password.`);
+  }
 
   async function submit() {
     setErr(null);
@@ -345,12 +361,21 @@ function EmailAuthSheet({ open, initialMode = 'up', onClose, onAuthed }: { open:
           <Pill active={mode === 'in'} onClick={() => setMode('in')}>Sign in</Pill>
         </div>
         <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-3 text-sm" />
-        <input type="password" value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-3 text-sm" />
+        <div className="relative">
+          <input type={show ? 'text' : 'password'} value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-3 pr-11 text-sm" />
+          <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text">
+            {show ? <EyeOff size={18} /> : <Eye size={18} />}
+          </button>
+        </div>
+        {mode === 'in' && (
+          <button type="button" onClick={forgotPassword} className="text-xs text-accent text-left underline-offset-2 hover:underline">Forgot password?</button>
+        )}
         {err && <p className="text-xs text-danger">{err}</p>}
+        {notice && <p className="text-xs text-accent-2">{notice}</p>}
         <Button className="w-full justify-center" disabled={busy || !email || pw.length < 6} onClick={submit}>
           {busy ? 'Please wait…' : mode === 'up' ? 'Create account' : 'Sign in'}
         </Button>
-        <p className="text-[11px] text-muted/70">Real accounts via Supabase. Passwords are min. 6 characters.</p>
+        <p className="text-[11px] text-muted/70">Real accounts via Supabase. Passwords are min. 6 characters. Tap the eye to show what you type — your existing password can’t be displayed (it’s stored encrypted).</p>
       </div>
     </Sheet>
   );
