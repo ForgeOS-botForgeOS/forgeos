@@ -22,6 +22,7 @@ interface GamiState {
   ensureDailyQuests: () => void;
   bumpMetric: (metric: 'sets' | 'sessions' | 'volume' | 'pr' | 'streak', amount: number) => void;
   claimQuest: (questId: string) => void;
+  claimAllQuests: () => { count: number; xp: number; coins: number };
   startWager: (targetSessions: number, staked: number, days: number) => boolean;
   resolveWagerProgress: () => void;
 }
@@ -148,6 +149,24 @@ export const useGami = create<GamiState>()(
           coins: get().coins + def.coins,
           quests: get().quests.map((q) => (q.questId === questId ? { ...q, claimed: true } : q)),
         });
+      },
+
+      // Claim every completed-but-unclaimed quest at once, summing the rewards.
+      claimAllQuests: () => {
+        let xp = 0;
+        let coins = 0;
+        let count = 0;
+        const quests = get().quests.map((q) => {
+          if (!q.completed || q.claimed) return q;
+          const def = QUESTS.find((d) => d.id === q.questId);
+          if (!def) return q;
+          xp += def.xp;
+          coins += def.coins;
+          count++;
+          return { ...q, claimed: true };
+        });
+        if (count > 0) set({ xp: get().xp + xp, coins: get().coins + coins, quests });
+        return { count, xp, coins };
       },
 
       startWager: (targetSessions, staked, days) => {

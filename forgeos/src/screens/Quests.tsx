@@ -150,11 +150,19 @@ function WagerSheet({ open, onClose, coins, start }: { open: boolean; onClose: (
 function QuestBoard() {
   const quests = useGami((s) => s.quests);
   const claim = useGami((s) => s.claimQuest);
+  const claimAll = useGami((s) => s.claimAllQuests);
   const [scope, setScope] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
 
   const visible = quests
     .map((uq) => ({ uq, def: QUESTS.find((q) => q.id === uq.questId)! }))
     .filter((x) => x.def && x.def.scope === scope);
+
+  // Every completed-but-unclaimed quest across all scopes, with total rewards.
+  const claimable = quests
+    .map((uq) => ({ uq, def: QUESTS.find((q) => q.id === uq.questId) }))
+    .filter((x) => x.def && x.uq.completed && !x.uq.claimed);
+  const totalXp = claimable.reduce((a, x) => a + (x.def?.xp ?? 0), 0);
+  const totalCoins = claimable.reduce((a, x) => a + (x.def?.coins ?? 0), 0);
 
   return (
     <div className="space-y-3">
@@ -163,6 +171,12 @@ function QuestBoard() {
           <Pill key={s} active={scope === s} onClick={() => setScope(s)}>{s}</Pill>
         ))}
       </div>
+
+      {claimable.length > 0 && (
+        <Button className="w-full justify-center gap-2" onClick={() => { claimAll(); haptic('success'); }}>
+          <Trophy size={16} /> Claim all {claimable.length} · +{totalXp.toLocaleString()} XP · 🪙{totalCoins}
+        </Button>
+      )}
       {visible.length === 0 && <p className="text-sm text-muted">No {scope} quests assigned.</p>}
       {visible.map(({ uq, def }) => {
         const pct = Math.min(100, (uq.progress / def.target) * 100);
