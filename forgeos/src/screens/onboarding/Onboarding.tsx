@@ -1,11 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Mail, Globe, Loader2, Check } from 'lucide-react';
 import { Button, Card, Pill, Sheet, Toggle } from '../../components/ui';
 import { ForgeLogo } from '../../components/ForgeLogo';
 import { InstallButton } from '../../components/InstallButton';
-import { isBackendLive, signInWithEmail, signUpWithEmail } from '../../lib/supabase';
+import { isBackendLive, signInWithEmail, signUpWithEmail, currentAuthUser } from '../../lib/supabase';
+import { fetchProfile } from '../../lib/repositories';
 import { ICE_BREAKER } from '../../data/quests';
 import { useUser } from '../../state/userStore';
 import { macrosFor, mifflinStJeor, tdee, bodyFatBand } from '../../lib/fitness';
@@ -36,6 +37,7 @@ export default function Onboarding() {
   const [signingIn, setSigningIn] = useState<null | 'google'>(null);
   const [signInErr, setSignInErr] = useState<string | null>(null);
   const [emailOpen, setEmailOpen] = useState(false);
+  const [authMode, setAuthMode] = useState<'in' | 'up'>('up');
   const [noWeekends, setNoWeekends] = useState(false);
   const [specialRequest, setSpecialRequest] = useState('');
 
@@ -46,6 +48,12 @@ export default function Onboarding() {
       setStep('quiz');
       return;
     }
+    setAuthMode('up');
+    setEmailOpen(true);
+  }
+
+  function loginExisting() {
+    setAuthMode('in');
     setEmailOpen(true);
   }
 
@@ -88,11 +96,27 @@ export default function Onboarding() {
   const daysPerWeek = Number((quiz['days'] ?? '4').split(' · ')[0]) || 4;
   const style = (quiz['style'] ?? 'A bit of everything').split(' · ')[0];
 
-  function finish() {
+  // Pull an existing account's profile straight into the app, skipping the
+  // whole onboarding quiz. Returns true if a saved profile was restored.
+  async function restoreExistingAccount(): Promise<boolean> {
+    const user = await currentAuthUser();
+    if (!user) return false;
+    const remote = await fetchProfile(user.id);
+    if (remote && remote.onboarded) {
+      setProfile({ ...remote, id: user.id, email: remote.email ?? user.email });
+      haptic('success');
+      navigate('/home', { replace: true });
+      return true;
+    }
+    return false;
+  }
+
+  async function finish() {
+    const user = await currentAuthUser();
     const profile: UserProfile = {
-      id: 'me',
+      id: user?.id ?? 'me',
       name: name || 'Athlete',
-      email: googleEmail,
+      email: googleEmail ?? user?.email,
       authProvider: provider,
       sex,
       age,
@@ -146,6 +170,15 @@ export default function Onboarding() {
               {t('ob.guest')}
             </button>
           </div>
+
+          {isBackendLive && (
+            <div className="pt-1 text-center text-sm">
+              <span className="text-muted">Already have an account? </span>
+              <button className="font-semibold text-accent underline-offset-2 hover:underline" onClick={loginExisting}>
+                Log in
+              </button>
+            </div>
+          )}
           {signInErr && <p className="text-xs text-danger text-center">{signInErr}</p>}
           <p className="text-[11px] text-muted/70 text-center pt-2">
             {googleIsLive
@@ -256,19 +289,36 @@ export default function Onboarding() {
 
       <EmailAuthSheet
         open={emailOpen}
+        initialMode={authMode}
         onClose={() => setEmailOpen(false)}
-        onAuthed={(email) => { setProvider('email'); setGoogleEmail(email); setEmailOpen(false); haptic('success'); setStep('quiz'); }}
+        onAuthed={async (email, mode) => {
+          setProvider('email');
+          setGoogleEmail(email);
+          setEmailOpen(false);
+          // Existing account → restore their profile and go straight in.
+          if (mode === 'in' && (await restoreExistingAccount())) return;
+          haptic('success');
+          setStep('quiz');
+        }}
       />
     </div>
   );
 }
 
-function EmailAuthSheet({ open, onClose, onAuthed }: { open: boolean; onClose: () => void; onAuthed: (email: string) => void }) {
-  const [mode, setMode] = useState<'in' | 'up'>('up');
+function EmailAuthSheet({ open, initialMode = 'up', onClose, onAuthed }: { open: boolean; initialMode?: 'in' | 'up'; onClose: () => void; onAuthed: (email: string, mode: 'in' | 'up') => void }) {
+  const [mode, setMode] = useState<'in' | 'up'>(initialMode);
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+
+  // Respect the chosen entry point (Sign up vs Log in) each time it opens.
+  useEffect(() => {
+    if (open) {
+      setMode(initialMode);
+      setErr(null);
+    }
+  }, [open, initialMode]);
 
   async function submit() {
     setErr(null);
@@ -279,7 +329,7 @@ function EmailAuthSheet({ open, onClose, onAuthed }: { open: boolean; onClose: (
         setErr(typeof res.error === 'string' ? res.error : (res.error as { message?: string }).message ?? 'Failed');
         return;
       }
-      onAuthed(email);
+      onAuthed(email, mode);
     } catch {
       setErr('Something went wrong. Try again.');
     } finally {

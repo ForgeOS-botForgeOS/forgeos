@@ -29,6 +29,15 @@ export async function signUpWithEmail(email: string, password: string) {
   return supabase.auth.signUp({ email, password });
 }
 
+// The currently authenticated user (or null in mock mode / signed out). Used so
+// each account's profile is stored under its real auth id and can be restored
+// on login from any device.
+export async function currentAuthUser(): Promise<{ id: string; email?: string } | null> {
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getUser();
+  return data.user ? { id: data.user.id, email: data.user.email ?? undefined } : null;
+}
+
 // ---- Realtime ----
 export interface RaceUpdate {
   userId: string;
