@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Eye, EyeOff, Loader2, Check, KeyRound, ShieldCheck } from 'lucide-react';
 import { Sheet, Button } from './ui';
-import { supabase, isBackendLive } from '../lib/supabase';
+import { supabase, isBackendLive, currentAuthUser } from '../lib/supabase';
 import { haptic } from '../lib/haptics';
 
 const field = 'w-full rounded-xl bg-surface-2 border border-line px-4 py-3 text-sm outline-none focus:border-accent transition-colors';
@@ -35,12 +35,27 @@ export function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose:
 
   async function submit() {
     if (!valid || busy) return;
-    if (!isBackendLive || !supabase) { setErr('Sign in with an email account to change your password.'); return; }
+    if (!isBackendLive || !supabase) { setErr('Password changes need an email account — this build is running in demo mode.'); return; }
     setErr(null);
     setBusy(true);
+    // No active session = signed in as guest/Google or the session expired.
+    const user = await currentAuthUser();
+    if (!user) {
+      setBusy(false);
+      setErr('You’re not logged in with an email account. Log out and log back in with your email & password, then change it here.');
+      haptic('warning');
+      return;
+    }
     const { error } = await supabase.auth.updateUser({ password: pw });
     setBusy(false);
-    if (error) { setErr(error.message); haptic('warning'); return; }
+    if (error) {
+      const msg = /session/i.test(error.message)
+        ? 'Your login session has expired. Log in again with your email & password, then retry.'
+        : error.message;
+      setErr(msg);
+      haptic('warning');
+      return;
+    }
     setDone(true);
     haptic('success');
     setTimeout(onClose, 1100);
