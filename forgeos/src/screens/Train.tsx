@@ -164,7 +164,7 @@ function CardioScanCard() {
 
   return (
     <Card className="space-y-2">
-      <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
       <Button variant="ghost" className="w-full justify-center" disabled={busy} onClick={() => fileRef.current?.click()}>
         <span className="flex items-center gap-2"><Camera size={16} /> {busy ? 'Reading console…' : 'Log cardio from a photo'}</span>
       </Button>
@@ -370,7 +370,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
         </Button>
         <Button variant="ghost" className="justify-center" onClick={onOpenTools}><Wrench size={16} /></Button>
       </div>
-      <input ref={cardioRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onCardioFile} />
+      <input ref={cardioRef} type="file" accept="image/*" className="hidden" onChange={onCardioFile} />
 
       <div className="flex gap-2">
         <Button variant="outline" className="flex-1 justify-center" onClick={() => { discardWorkout(); navigate('/home'); }}>Discard</Button>

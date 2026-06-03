@@ -94,7 +94,8 @@ export default function Nutrition() {
 
   return (
     <Screen title={t('nut.title')} subtitle={`${profile?.goal ?? 'recomp'} · ${macros.calories} kcal`}>
-      <input ref={fileRef} type="file" accept="image/*" capture="environment" className="hidden" onChange={onFile} />
+      {/* No `capture` attribute → the native picker offers Camera *and* Photo Library. */}
+      <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
 
       <Card className="space-y-3">
         <div className="flex items-center justify-between">
