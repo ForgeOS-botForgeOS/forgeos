@@ -1,5 +1,5 @@
 import { EXERCISES, exerciseById } from '../data/exercises';
-import type { ExerciseTarget, MuscleGroup } from '../types';
+import type { ExerciseTarget, MuscleGroup, PlannedDay, Weekday } from '../types';
 import { exercisesForFocus, inferFocus } from '../screens/onboarding/planGenerator';
 
 export interface BuiltDay {
@@ -92,6 +92,76 @@ export function parsePastedWorkout(text: string): BuiltDay {
     };
   }
   return { label: 'Pasted workout', exerciseIds, targets };
+}
+
+// ---- Whole-week paste ----
+const WEEKDAYS: Weekday[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+const DAY_ALIASES: Record<string, Weekday> = {
+  monday: 'Mon', mon: 'Mon', tuesday: 'Tue', tue: 'Tue', tues: 'Tue', wednesday: 'Wed', wed: 'Wed',
+  thursday: 'Thu', thu: 'Thu', thurs: 'Thu', friday: 'Fri', fri: 'Fri', saturday: 'Sat', sat: 'Sat', sunday: 'Sun', sun: 'Sun',
+};
+
+interface Section { day?: Weekday; dayIndex?: number; label?: string; lines: string[] }
+
+// Is this line a day header (e.g. "Monday", "Mon - Push", "Day 1: Legs")?
+function detectHeader(line: string): Omit<Section, 'lines'> | null {
+  const l = line.replace(/[*#>•]/g, '').trim();
+  const dayN = l.match(/^day\s*(\d+)\s*[:\-–—.)]*\s*(.*)$/i);
+  if (dayN) return { dayIndex: Number(dayN[1]) - 1, label: dayN[2].trim() || undefined };
+  const m = l.match(/^([a-zA-Z]+)\s*[:\-–—.)]*\s*(.*)$/);
+  if (m && DAY_ALIASES[m[1].toLowerCase()]) return { day: DAY_ALIASES[m[1].toLowerCase()], label: m[2].trim() || undefined };
+  return null;
+}
+
+const isRestText = (s: string) => /\b(rest|off|recovery|none)\b/i.test(s);
+
+// Parse a pasted full week into 7 PlannedDays. Splits on day headers; lines
+// under each header are matched as exercises. Unlisted days become rest days.
+export function parsePastedWeek(text: string): { days: PlannedDay[]; matchedDays: number; matchedExercises: number } {
+  const lines = text.split(/\n+/).map((l) => l.trim()).filter(Boolean);
+  const sections: Section[] = [];
+  let cur: Section | null = null;
+
+  for (const line of lines) {
+    const looksExercise = /\d+\s*[x×]\s*\d+/i.test(line);
+    const h = !looksExercise ? detectHeader(line) : null;
+    if (h) {
+      cur = { ...h, lines: [] };
+      sections.push(cur);
+    } else if (cur) {
+      cur.lines.push(line);
+    } else {
+      cur = { lines: [line] };
+      sections.push(cur);
+    }
+  }
+
+  // Place each section onto a weekday: explicit name → that day; "Day N" → Nth;
+  // otherwise fill the next free slot from Monday.
+  const byDay = new Map<Weekday, Section>();
+  const free = () => WEEKDAYS.find((d) => !byDay.has(d));
+  for (const sec of sections) {
+    let day = sec.day ?? (sec.dayIndex != null ? WEEKDAYS[sec.dayIndex] : undefined) ?? free();
+    if (!day) continue;
+    byDay.set(day, sec);
+  }
+
+  let matchedDays = 0;
+  let matchedExercises = 0;
+  const days: PlannedDay[] = WEEKDAYS.map((day) => {
+    const sec = byDay.get(day);
+    if (!sec) return { day, label: 'Rest', exerciseIds: [], rest: true };
+    const built = parsePastedWorkout(sec.lines.join('\n'));
+    const restDay = built.exerciseIds.length === 0 && (isRestText(sec.label ?? '') || sec.lines.every(isRestText));
+    if (restDay) return { day, label: 'Rest', exerciseIds: [], rest: true };
+    if (built.exerciseIds.length) { matchedDays++; matchedExercises += built.exerciseIds.length; }
+    const label = (sec.label && !isRestText(sec.label))
+      ? sec.label
+      : (built.exerciseIds.length ? inferFocus(sec.lines.join(' ')) : 'Rest');
+    return { day, label: label || 'Workout', exerciseIds: built.exerciseIds, rest: built.exerciseIds.length === 0, targets: built.targets };
+  });
+
+  return { days, matchedDays, matchedExercises };
 }
 
 function bestExerciseMatch(name: string): string | null {

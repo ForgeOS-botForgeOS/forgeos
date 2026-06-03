@@ -14,7 +14,7 @@ import { useGami } from '../state/gamificationStore';
 import { EXERCISES, EXERCISE_CATEGORIES, exerciseById } from '../data/exercises';
 import { PLAN_FOCI, type PlanFocus, exercisesForFocus, inferFocus } from './onboarding/planGenerator';
 import { sharePlan, decodePlan } from '../lib/planShare';
-import { buildSmartDay, parsePastedWorkout } from '../lib/planSmart';
+import { buildSmartDay, parsePastedWorkout, parsePastedWeek } from '../lib/planSmart';
 import { tailorPlan } from '../lib/tailor';
 import { rankForXp, rankLabel } from '../data/ranks';
 import type { ExerciseTarget, PlannedDay } from '../types';
@@ -46,6 +46,7 @@ export default function PlanEditor() {
   const [weightStep, setWeightStep] = useState(2.5);
   const [aiOpen, setAiOpen] = useState(false);
   const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteWeekOpen, setPasteWeekOpen] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
   // Heaviest weight you last lifted for an exercise, from completed sets.
@@ -218,6 +219,9 @@ export default function PlanEditor() {
         <Button variant="ghost" className="flex-1 justify-center" onClick={() => setPasteOpen(true)}>
           <span className="flex items-center gap-1 text-xs"><ClipboardPaste size={14} /> Paste workout</span>
         </Button>
+        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setPasteWeekOpen(true)}>
+          <span className="flex items-center gap-1 text-xs"><ClipboardPaste size={14} /> Paste week</span>
+        </Button>
       </div>
 
       {/* Weights: increment + history fill + deload */}
@@ -337,6 +341,7 @@ export default function PlanEditor() {
 
       <AiBuildSheet open={aiOpen} onClose={() => setAiOpen(false)} days={plan.days} onBuild={(day, built) => { patch(day, { label: built.label, exerciseIds: built.exerciseIds, targets: built.targets, rest: false }); setAiOpen(false); flash('Workout built ✨'); haptic('success'); }} />
       <PasteSheet open={pasteOpen} onClose={() => setPasteOpen(false)} days={plan.days} onParse={(day, built) => { patch(day, { label: built.label, exerciseIds: built.exerciseIds, targets: built.targets, rest: false }); setPasteOpen(false); flash(`Matched ${built.exerciseIds.length} exercises`); haptic('success'); }} />
+      <PasteWeekSheet open={pasteWeekOpen} onClose={() => setPasteWeekOpen(false)} onApply={(days, matchedDays, matchedExercises) => { setWeekPlan({ id: plan.id, blockType: plan.blockType, days }); setPasteWeekOpen(false); flash(`Built ${matchedDays} day(s) · ${matchedExercises} exercises`); haptic('success'); }} />
 
       {/* Import by code/link */}
       <Sheet open={importOpen} onClose={() => setImportOpen(false)} title="Import a shared plan">
@@ -415,6 +420,35 @@ function PasteSheet({ open, onClose, days, onParse }: { open: boolean; onClose: 
         <p className="text-[11px] text-muted">Write into day:</p>
         <DayPicker days={days} value={day} onChange={setDay} />
         <Button className="w-full justify-center" disabled={!preview || preview.exerciseIds.length === 0} onClick={() => preview && onParse(day, preview)}>Fill day from text</Button>
+      </div>
+    </Sheet>
+  );
+}
+
+function PasteWeekSheet({ open, onClose, onApply }: { open: boolean; onClose: () => void; onApply: (days: PlannedDay[], matchedDays: number, matchedExercises: number) => void }) {
+  const [text, setText] = useState('');
+  const preview = text.trim() ? parsePastedWeek(text) : null;
+  const example = 'Monday - Push\nBench Press 4x8 80kg\nOverhead Press 3x10\nTuesday - Pull\nDeadlift 5x5 120kg\nLat Pulldown 3x12\nWednesday - Rest\nThursday: Legs\nSquat 5x5 100kg\nLeg Press 3x12';
+  return (
+    <Sheet open={open} onClose={onClose} title="Paste a whole week">
+      <div className="space-y-3">
+        <p className="text-[11px] text-muted">
+          Paste a full week from anywhere. Start each day with its name (<b>Monday</b>, <b>Mon - Push</b>, or <b>Day 1: Legs</b>), then one exercise per line (<b>Bench Press 4x8 80kg</b>). Write <b>Rest</b> for off days. Unlisted days become rest.
+        </p>
+        <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={example} className="w-full rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm h-48 font-mono" />
+        {preview && (
+          <Card className="bg-surface-2 space-y-1">
+            <p className="text-[11px] text-accent-2">{preview.matchedDays} training day(s) · {preview.matchedExercises} exercise(s) matched.</p>
+            {preview.days.map((d) => (
+              <div key={d.day} className="flex items-center justify-between text-[11px]">
+                <span className="font-medium">{d.day}</span>
+                <span className="text-muted truncate ml-2">{d.rest ? 'Rest' : `${d.label} · ${d.exerciseIds.length} ex`}</span>
+              </div>
+            ))}
+          </Card>
+        )}
+        <p className="text-[11px] text-muted">This replaces your current week plan.</p>
+        <Button className="w-full justify-center" disabled={!preview || preview.matchedDays === 0} onClick={() => preview && onApply(preview.days, preview.matchedDays, preview.matchedExercises)}>Replace week from text</Button>
       </div>
     </Sheet>
   );
