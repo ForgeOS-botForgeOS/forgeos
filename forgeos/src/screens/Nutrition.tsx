@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Camera, Trash2, Sparkles, Calculator, ChefHat, Clock, Star, Check } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
@@ -15,11 +15,23 @@ import type { ScanResult, FoodItem } from '../types';
 export default function Nutrition() {
   const t = useT();
   const profile = useUser((s) => s.profile);
-  const log = useNutrition((s) => s.todaysEntries)();
-  const totals = useNutrition((s) => s.todaysTotals)();
+  // Subscribe to raw state so the component re-renders the instant it changes.
+  // (The old code selected the getter *function* — a stable ref — so taps only
+  // showed on the next unrelated render, which felt laggy. We derive today's
+  // values with useMemo to keep selectors returning cached references.)
+  const rawLog = useNutrition((s) => s.log);
   const addEntry = useNutrition((s) => s.addEntry);
   const removeEntry = useNutrition((s) => s.removeEntry);
-  const water = useNutrition((s) => s.todaysWaterMl)();
+  const water = useNutrition((s) => s.todaysWaterMl());
+  const today = new Date().toISOString().slice(0, 10);
+  const log = useMemo(() => rawLog.filter((e) => e.date.slice(0, 10) === today), [rawLog, today]);
+  const totals = useMemo(
+    () => log.reduce(
+      (a, e) => ({ calories: a.calories + e.calories, proteinG: a.proteinG + e.proteinG, carbsG: a.carbsG + e.carbsG, fatG: a.fatG + e.fatG, sugarG: a.sugarG + e.sugarG }),
+      { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, sugarG: 0 },
+    ),
+    [log],
+  );
   const addWater = useNutrition((s) => s.addWater);
   const savedMeals = useNutrition((s) => s.savedMeals);
   const saveMeal = useNutrition((s) => s.saveMeal);

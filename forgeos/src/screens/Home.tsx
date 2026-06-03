@@ -20,7 +20,18 @@ import { Heatmap } from '../components/Heatmap';
 export default function Home() {
   const t = useT();
   const profile = useUser((s) => s.profile);
-  const totals = useNutrition((s) => s.todaysTotals)();
+  // Derive today's macro totals from raw state (memoised) so the selector
+  // returns a cached reference and the dashboard updates immediately.
+  const rawLog = useNutrition((s) => s.log);
+  const totals = useMemo(() => {
+    const today = new Date().toISOString().slice(0, 10);
+    return rawLog
+      .filter((e) => e.date.slice(0, 10) === today)
+      .reduce(
+        (a, e) => ({ calories: a.calories + e.calories, proteinG: a.proteinG + e.proteinG, carbsG: a.carbsG + e.carbsG, fatG: a.fatG + e.fatG, sugarG: a.sugarG + e.sugarG }),
+        { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, sugarG: 0 },
+      );
+  }, [rawLog]);
   const history = useWorkout((s) => s.history);
   const xp = useGami((s) => s.xp);
   const streak = useGami((s) => s.streakDays);
