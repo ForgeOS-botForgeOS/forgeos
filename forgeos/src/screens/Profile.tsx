@@ -15,7 +15,7 @@ import { exportData, importData } from '../lib/backup';
 import { useCosmetics } from '../state/cosmeticsStore';
 import { cosmeticById } from '../data/cosmetics';
 import { openTutorial } from '../components/Tutorial';
-import { supabase, isBackendLive } from '../lib/supabase';
+import { ChangePasswordSheet, PasscodeSheet } from '../components/SecuritySheets';
 import { useWorkout } from '../state/workoutStore';
 import { useQuotes } from '../state/quoteStore';
 import { ACHIEVEMENTS } from '../data/achievements';
@@ -58,6 +58,8 @@ export default function Profile() {
   const [pending, setPending] = useState(0);
   const [gymBusy, setGymBusy] = useState(false);
   const [gymMsg, setGymMsg] = useState<string | null>(null);
+  const [pwSheet, setPwSheet] = useState(false);
+  const [passcodeSheet, setPasscodeSheet] = useState<null | 'set' | 'change'>(null);
   const backupFileRef = useRef<HTMLInputElement>(null);
   const equippedTitle = useCosmetics((c) => c.equippedTitle);
   const equippedFrame = useCosmetics((c) => c.equippedFrame);
@@ -106,15 +108,6 @@ export default function Profile() {
   async function shareMyProfile() {
     const r = await shareProfile(buildSummary());
     if (r === 'copied') alert('Public profile link copied to clipboard.');
-  }
-
-  async function changePassword() {
-    if (!isBackendLive || !supabase) { alert('Sign in with email (Supabase) to change your account password.'); return; }
-    const pw = prompt('New password (min 6 characters)');
-    if (!pw) return;
-    if (pw.length < 6) { alert('Password must be at least 6 characters.'); return; }
-    const { error } = await supabase.auth.updateUser({ password: pw });
-    alert(error ? `Failed: ${error.message}` : 'Password updated ✅');
   }
 
   const { tier } = rankForXp(xp);
@@ -344,16 +337,24 @@ export default function Profile() {
           <div className="flex items-center justify-between">
             <div><p className="text-sm">App passcode lock</p><p className="text-[11px] text-muted">Ask for a code on launch</p></div>
             <Toggle checked={s.appLock.enabled} onChange={(v) => {
-              if (v) { const c = prompt('Set a numeric passcode (4–8 digits)'); if (c && /^\d{4,8}$/.test(c)) s.set('appLock', { enabled: true, code: c }); else if (c) alert('Use 4–8 digits.'); }
+              if (v) setPasscodeSheet('set');
               else s.set('appLock', { enabled: false, code: '' });
             }} />
           </div>
           {s.appLock.enabled && (
-            <Button variant="ghost" className="w-full justify-center" onClick={() => { const c = prompt('New passcode (4–8 digits)'); if (c && /^\d{4,8}$/.test(c)) { s.set('appLock', { enabled: true, code: c }); alert('Passcode updated.'); } }}>Change passcode</Button>
+            <Button variant="ghost" className="w-full justify-center" onClick={() => setPasscodeSheet('change')}>Change passcode</Button>
           )}
-          <Button variant="ghost" className="w-full justify-center" onClick={changePassword}>Change account password</Button>
+          <Button variant="ghost" className="w-full justify-center" onClick={() => setPwSheet(true)}>Change account password</Button>
         </Card>
       </div>
+
+      <ChangePasswordSheet open={pwSheet} onClose={() => setPwSheet(false)} />
+      <PasscodeSheet
+        open={passcodeSheet !== null}
+        mode={passcodeSheet ?? 'set'}
+        onClose={() => setPasscodeSheet(null)}
+        onSave={(code) => s.set('appLock', { enabled: true, code })}
+      />
 
       {/* Backup */}
       <div>
