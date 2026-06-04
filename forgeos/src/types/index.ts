@@ -196,6 +196,44 @@ export interface Friend {
   xp: number;
   online: boolean;
   avatarSeed: string;
+  trainingNow?: boolean;
+  streak?: number;
+  lastActiveISO?: string;
+  cheeredAt?: string; // last time you cheered them
+}
+
+export interface FriendRequest {
+  id: string;
+  name: string;
+  avatarSeed: string;
+  rank: string;
+  xp: number;
+  direction: 'incoming' | 'outgoing';
+  createdAt: string;
+  mutuals?: number;
+}
+
+export interface FeedComment {
+  id: string;
+  authorName: string;
+  avatarSeed: string;
+  body: string;
+  createdAt: string;
+}
+
+export type DuelMetric = 'volume' | 'sessions' | 'sets';
+
+export interface Duel {
+  id: string;
+  opponentName: string;
+  opponentAvatar: string;
+  metric: DuelMetric;
+  target: number;
+  myProgress: number;
+  theirProgress: number;
+  endsAt: string;
+  createdAt: string;
+  status: 'active' | 'won' | 'lost';
 }
 
 export interface FeedPost {
@@ -208,6 +246,10 @@ export interface FeedPost {
   createdAt: string;
   reactions: Record<string, number>; // emoji -> count
   myReaction?: string;
+  flex?: { icon: string; label: string }; // a "flex" badge, e.g. 🏆 New PR
+  comments?: FeedComment[];
+  mine?: boolean; // authored by the local user
+  imageUrl?: string; // optional attached share-card / photo
 }
 
 export interface MarketplaceRoutine {
