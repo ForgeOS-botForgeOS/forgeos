@@ -4,6 +4,7 @@ import { Flame, TrendingUp, Lightbulb, ChevronRight } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Screen } from '../components/Screen';
 import { Card, Ring, SectionTitle, Badge } from '../components/ui';
+import { CountUp } from '../components/CountUp';
 import { DailyQuote } from '../components/DailyQuote';
 import { InstallButton } from '../components/InstallButton';
 import { WeeklyRecap } from '../components/WeeklyRecap';
@@ -71,7 +72,7 @@ export default function Home() {
         right={
           <div className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5">
             <Flame size={16} className="text-accent" />
-            <span className="font-bold text-sm">{streak}</span>
+            <CountUp value={streak} className="font-bold text-sm" />
           </div>
         }
       >
@@ -82,7 +83,7 @@ export default function Home() {
         <Card>
           <div className="flex items-center gap-4">
             <Ring value={totals.calories} max={macros.calories}>
-              <span className="text-2xl font-bold font-mono">{Math.round(totals.calories)}</span>
+              <CountUp value={Math.round(totals.calories)} className="text-2xl font-bold font-mono" duration={500} />
               <span className="text-[10px] text-muted">/ {macros.calories} kcal</span>
             </Ring>
             <div className="flex-1 space-y-2">

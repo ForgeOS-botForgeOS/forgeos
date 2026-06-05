@@ -16,6 +16,7 @@ import { useCosmetics } from '../state/cosmeticsStore';
 import { cosmeticById } from '../data/cosmetics';
 import { openTutorial } from '../components/Tutorial';
 import { ChangePasswordSheet, PasscodeSheet } from '../components/SecuritySheets';
+import { toast } from '../lib/toast';
 import { useWorkout } from '../state/workoutStore';
 import { useQuotes } from '../state/quoteStore';
 import { ACHIEVEMENTS } from '../data/achievements';
@@ -107,7 +108,8 @@ export default function Profile() {
   }
   async function shareMyProfile() {
     const r = await shareProfile(buildSummary());
-    if (r === 'copied') alert('Public profile link copied to clipboard.');
+    if (r === 'copied') toast('Public profile link copied to clipboard.');
+    else toast('Profile shared 🔥');
   }
 
   const { tier } = rankForXp(xp);
@@ -122,7 +124,7 @@ export default function Profile() {
     if (!s.geofenceEnabled) return;
     const stop = watchGym(s.gym, () => {
       haptic('success');
-      alert('🔥 Welcome to the Forge — opening today’s workout.');
+      toast('🔥 Welcome to the Forge — opening today’s workout.', 'info');
       navigate('/train');
     });
     return stop;
@@ -259,7 +261,7 @@ export default function Profile() {
             <p className="text-[11px] text-muted">{pending} queued · {navigator.onLine ? 'online' : 'offline'}</p>
           </div>
         </div>
-        <Button variant="outline" className="py-1.5" onClick={async () => { const r = await syncQueue(); setPending(0); haptic('success'); alert(`Synced ${r.synced} item(s).`); }}>{t('p.syncNow')}</Button>
+        <Button variant="outline" className="py-1.5" onClick={async () => { const r = await syncQueue(); setPending(0); haptic('success'); toast(`Synced ${r.synced} item(s).`); }}>{t('p.syncNow')}</Button>
       </Card>
 
       <Card className="flex items-center justify-between" onClick={() => navigate('/spotify')}>
@@ -289,7 +291,7 @@ export default function Profile() {
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm">Daily reminder</span>
-            <Toggle checked={s.reminder.enabled} onChange={async (v) => { if (v) { const ok = await requestNotifyPermission(); if (!ok) { alert('Enable notifications in your browser to use reminders.'); return; } } s.set('reminder', { ...s.reminder, enabled: v }); }} />
+            <Toggle checked={s.reminder.enabled} onChange={async (v) => { if (v) { const ok = await requestNotifyPermission(); if (!ok) { toast('Enable notifications in your browser to use reminders.', 'error'); return; } } s.set('reminder', { ...s.reminder, enabled: v }); }} />
           </div>
           {s.reminder.enabled && (
             <>
@@ -363,7 +365,7 @@ export default function Profile() {
           <Button variant="ghost" className="flex-1 justify-center" onClick={exportData}>Export data</Button>
           <Button variant="ghost" className="flex-1 justify-center" onClick={() => backupFileRef.current?.click()}>Import data</Button>
         </div>
-        <input ref={backupFileRef} type="file" accept="application/json" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { try { await importData(f); } catch { alert('That file is not a valid ForgeOS backup.'); } } }} />
+        <input ref={backupFileRef} type="file" accept="application/json" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { try { await importData(f); toast('Backup restored ✅'); } catch { toast('That file is not a valid ForgeOS backup.', 'error'); } } }} />
       </div>
 
       {/* Your gym */}

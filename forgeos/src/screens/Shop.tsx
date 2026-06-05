@@ -6,6 +6,8 @@ import { COSMETICS } from '../data/cosmetics';
 import { useCosmetics } from '../state/cosmeticsStore';
 import { useGami } from '../state/gamificationStore';
 import { haptic } from '../lib/haptics';
+import { toast, celebrate } from '../lib/toast';
+import { CountUp } from '../components/CountUp';
 
 export default function Shop() {
   const navigate = useNavigate();
@@ -18,7 +20,8 @@ export default function Shop() {
 
   function buy(id: string, price: number) {
     if (owned.includes(id)) return;
-    if (spend(price)) { own(id); haptic('success'); } else haptic('warning');
+    const c = COSMETICS.find((x) => x.id === id);
+    if (spend(price)) { own(id); celebrate(); toast(`Unlocked ${c?.name ?? 'item'} 🎉`); } else { haptic('warning'); toast(`Not enough coins — need 🪙${price}.`, 'error'); }
   }
   function equip(id: string, type: 'title' | 'frame') {
     const equipped = type === 'title' ? equippedTitle : equippedFrame;
@@ -32,7 +35,7 @@ export default function Shop() {
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
       <div className="flex items-end justify-between">
         <h1 className="text-2xl font-extrabold">Forge Shop</h1>
-        <Badge color="rgb(var(--accent-2))"><span className="flex items-center gap-1"><Coins size={12} /> {coins}</span></Badge>
+        <Badge color="rgb(var(--accent-2))"><span className="flex items-center gap-1"><Coins size={12} /> <CountUp value={coins} /></span></Badge>
       </div>
 
       <div className="flex gap-2" data-noswipe>

@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Swords, Store, Share2, Wifi, Circle, UserPlus, Check, X, Copy,
@@ -16,6 +16,7 @@ import { MOCK_MARKETPLACE, MOCK_SUGGESTED } from '../lib/mockData';
 import { rankForXp, rankLabel } from '../data/ranks';
 import { generateShareCard, downloadDataUrl } from '../lib/shareCard';
 import { haptic } from '../lib/haptics';
+import { toast, celebrate } from '../lib/toast';
 import { useT } from '../lib/i18n';
 import type { DuelMetric, Friend } from '../types';
 
@@ -288,6 +289,7 @@ function Friends() {
     sendFriendRequest(clean);
     setName('');
     haptic('success');
+    toast(`Request sent to ${clean}`);
   }
 
   async function shareCode() {
@@ -333,7 +335,7 @@ function Friends() {
                 <p className="text-sm font-semibold">{r.name}</p>
                 <p className="text-xs text-muted">{r.rank} · {r.xp.toLocaleString()} XP{r.mutuals ? ` · ${r.mutuals} mutual` : ''}</p>
               </div>
-              <button onClick={() => { acceptRequest(r.id); haptic('success'); }} className="rounded-full bg-accent p-1.5 text-black"><Check size={16} /></button>
+              <button onClick={() => { acceptRequest(r.id); haptic('success'); toast(`${r.name} is now your friend 🤝`); }} className="rounded-full bg-accent p-1.5 text-black"><Check size={16} /></button>
               <button onClick={() => { declineRequest(r.id); haptic('tap'); }} className="rounded-full bg-surface-2 p-1.5 text-muted"><X size={16} /></button>
             </Card>
           ))}
@@ -367,7 +369,7 @@ function Friends() {
             </p>
             <p className="text-xs text-muted">{f.rank} · {f.xp.toLocaleString()} XP{f.streak ? ` · 🔥${f.streak}` : ''}</p>
           </button>
-          <button onClick={() => { cheerFriend(f.id); haptic('success'); }} aria-label="Cheer" className={`rounded-full p-2 ${f.cheeredAt ? 'text-accent' : 'text-muted hover:text-accent'}`}>
+          <button onClick={() => { cheerFriend(f.id); haptic('success'); toast(`Cheered ${f.name} 👏`); }} aria-label="Cheer" className={`rounded-full p-2 ${f.cheeredAt ? 'text-accent' : 'text-muted hover:text-accent'}`}>
             <Heart size={16} className={f.cheeredAt ? 'fill-accent' : ''} />
           </button>
           <ChevronRight size={16} className="text-muted" onClick={() => setOpenFriend(f)} />
@@ -383,7 +385,7 @@ function Friends() {
             <Card key={p.id} className="flex items-center gap-3">
               <Avatar seed={p.avatarSeed} />
               <div className="flex-1"><p className="text-sm font-semibold">{p.name}</p><p className="text-xs text-muted">{p.rank} · {p.xp.toLocaleString()} XP</p></div>
-              <Button variant="ghost" className="px-3" onClick={() => { sendFriendRequest(p.name, p); haptic('success'); }}><span className="flex items-center gap-1 text-xs"><UserPlus size={14} /> Add</span></Button>
+              <Button variant="ghost" className="px-3" onClick={() => { sendFriendRequest(p.name, p); haptic('success'); toast(`Request sent to ${p.name}`); }}><span className="flex items-center gap-1 text-xs"><UserPlus size={14} /> Add</span></Button>
             </Card>
           ))}
         </div>
@@ -484,6 +486,17 @@ function LiveRace() {
   const won = leader && leader.volumeKg >= TARGET;
   const online = friends;
 
+  const celebrated = useRef(false);
+  useEffect(() => {
+    if (!live) { celebrated.current = false; return; }
+    if (won && !celebrated.current) {
+      celebrated.current = true;
+      const meWon = leader?.userId === meId;
+      celebrate();
+      toast(meWon ? 'You won the race! 🏁🔥' : `${leader?.name} took this one 🏁`, meWon ? 'success' : 'info');
+    }
+  }, [won, live, leader, meId]);
+
   if (!live) {
     return (
       <Card className="space-y-3">
@@ -546,7 +559,8 @@ function Duels() {
     advanceDuel(id, step);
     haptic('tap');
     const d = useSocial.getState().duels.find((x) => x.id === id);
-    if (d?.status === 'won') { addXp(150); addCoins(20); haptic('success'); }
+    if (d?.status === 'won') { addXp(150); addCoins(20); celebrate(); toast('Challenge won! +150 XP · 🪙20 🏆'); }
+    else if (d?.status === 'lost') { toast('Challenge lost — get them next time.', 'info'); }
   }
 
   return (
@@ -631,13 +645,13 @@ function Marketplace() {
 
   const all = [...published, ...MOCK_MARKETPLACE];
 
-  function purchase(id: string, price: number) {
+  function purchase(id: string, price: number, title: string) {
     if (owned.includes(id)) return;
-    if (spend(price)) { buy(id); haptic('success'); } else haptic('warning');
+    if (spend(price)) { buy(id); celebrate(); toast(`Unlocked “${title}” 🎉`); } else { haptic('warning'); toast(`Not enough coins — need 🪙${price}.`, 'error'); }
   }
   function usePlan(r: typeof all[number]) {
     if (!r.plan) return;
-    setWeekPlan(r.plan); savePlanAs(r.title); haptic('success'); navigate('/plan');
+    setWeekPlan(r.plan); savePlanAs(r.title); haptic('success'); toast(`“${r.title}” loaded into your plan`); navigate('/plan');
   }
 
   return (
@@ -659,7 +673,7 @@ function Marketplace() {
             {isOwned && r.plan ? (
               <Button className="w-full justify-center" onClick={() => usePlan(r)}>Use this plan</Button>
             ) : (
-              <Button variant={isOwned ? 'ghost' : 'primary'} className="w-full justify-center" disabled={isOwned} onClick={() => purchase(r.id, r.priceCoins)}>
+              <Button variant={isOwned ? 'ghost' : 'primary'} className="w-full justify-center" disabled={isOwned} onClick={() => purchase(r.id, r.priceCoins, r.title)}>
                 {isOwned ? 'Owned ✓' : `Buy · 🪙 ${r.priceCoins}`}
               </Button>
             )}

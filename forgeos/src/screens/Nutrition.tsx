@@ -10,6 +10,7 @@ import { RECIPES_SK, MEAL_TYPE_SK } from '../data/recipes.sk';
 import { useSettings } from '../state/settingsStore';
 import { useT } from '../lib/i18n';
 import { haptic } from '../lib/haptics';
+import { toast, celebrate } from '../lib/toast';
 import type { ScanResult, FoodItem } from '../types';
 
 export default function Nutrition() {
@@ -142,8 +143,8 @@ export default function Nutrition() {
         </div>
         <div className="h-2 rounded-full bg-surface-2 overflow-hidden"><div className="h-full bg-accent-2 rounded-full transition-all" style={{ width: `${Math.min(100, (water / waterGoal) * 100)}%` }} /></div>
         <div className="flex gap-2">
-          <Button variant="ghost" className="flex-1 justify-center py-1.5" onClick={() => { addWater(250); haptic('tap'); }}>+250 ml</Button>
-          <Button variant="ghost" className="flex-1 justify-center py-1.5" onClick={() => { addWater(500); haptic('tap'); }}>+500 ml</Button>
+          <Button variant="ghost" className="flex-1 justify-center py-1.5" onClick={() => { const hit = water < waterGoal && water + 250 >= waterGoal; addWater(250); if (hit) { celebrate(); toast('Hydration goal hit 💧'); } else haptic('tap'); }}>+250 ml</Button>
+          <Button variant="ghost" className="flex-1 justify-center py-1.5" onClick={() => { const hit = water < waterGoal && water + 500 >= waterGoal; addWater(500); if (hit) { celebrate(); toast('Hydration goal hit 💧'); } else haptic('tap'); }}>+500 ml</Button>
           <Button variant="ghost" className="justify-center py-1.5" onClick={() => addWater(-250)}>−</Button>
         </div>
       </Card>
@@ -159,7 +160,7 @@ export default function Nutrition() {
           <SectionTitle>Quick add</SectionTitle>
           <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1" data-noswipe>
             {savedMeals.map((m) => (
-              <button key={m.id} onClick={() => { addEntry({ name: m.name, calories: m.calories, proteinG: m.proteinG, carbsG: m.carbsG, fatG: m.fatG, sugarG: m.sugarG, source: 'manual' }); haptic('success'); }} className="shrink-0 rounded-xl bg-surface-2 px-3 py-2 text-left">
+              <button key={m.id} onClick={() => { addEntry({ name: m.name, calories: m.calories, proteinG: m.proteinG, carbsG: m.carbsG, fatG: m.fatG, sugarG: m.sugarG, source: 'manual' }); haptic('success'); toast(`Added ${m.name} · ${m.calories} kcal`); }} className="shrink-0 rounded-xl bg-surface-2 px-3 py-2 text-left">
                 <p className="text-xs font-medium">{m.name}</p>
                 <p className="text-[10px] text-muted">{m.calories} kcal · P{m.proteinG}</p>
               </button>
@@ -191,7 +192,7 @@ export default function Nutrition() {
                   <p className="text-xs text-muted">{f.calories} kcal · P{f.proteinG} C{f.carbsG} F{f.fatG}</p>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button onClick={() => { saveMeal({ name: f.name, calories: f.calories, proteinG: f.proteinG, carbsG: f.carbsG, fatG: f.fatG, sugarG: f.sugarG }); haptic('success'); }} title="Save for quick-add" className="text-muted"><Star size={15} /></button>
+                  <button onClick={() => { saveMeal({ name: f.name, calories: f.calories, proteinG: f.proteinG, carbsG: f.carbsG, fatG: f.fatG, sugarG: f.sugarG }); haptic('success'); toast(`Saved ${f.name} for quick-add ⭐`); }} title="Save for quick-add" className="text-muted"><Star size={15} /></button>
                   <button onClick={() => removeEntry(f.id)} className="text-muted"><Trash2 size={16} /></button>
                 </div>
               </Card>

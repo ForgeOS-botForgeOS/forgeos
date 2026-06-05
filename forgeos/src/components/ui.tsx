@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function Card({
   children,
@@ -20,9 +20,10 @@ export function Card({
   );
 }
 
-type BtnProps = ButtonHTMLAttributes<HTMLButtonElement> & {
+type BtnProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onAnimationStart' | 'onAnimationEnd' | 'onDrag' | 'onDragStart' | 'onDragEnd'> & {
   variant?: 'primary' | 'ghost' | 'outline' | 'danger';
 };
+const PRESS = { type: 'spring' as const, stiffness: 500, damping: 30 };
 export function Button({ variant = 'primary', className = '', children, ...rest }: BtnProps) {
   const styles: Record<string, string> = {
     primary: 'bg-accent text-black font-semibold hover:brightness-110',
@@ -31,25 +32,29 @@ export function Button({ variant = 'primary', className = '', children, ...rest 
     danger: 'bg-danger text-black font-semibold hover:brightness-110',
   };
   return (
-    <button
-      className={`rounded-xl px-4 py-2.5 text-sm transition active:scale-95 disabled:opacity-40 disabled:active:scale-100 ${styles[variant]} ${className}`}
+    <motion.button
+      whileTap={rest.disabled ? undefined : { scale: 0.95 }}
+      transition={PRESS}
+      className={`rounded-xl px-4 py-2.5 text-sm transition-colors disabled:opacity-40 ${styles[variant]} ${className}`}
       {...rest}
     >
       {children}
-    </button>
+    </motion.button>
   );
 }
 
 export function Pill({ children, active = false, onClick }: { children: ReactNode; active?: boolean; onClick?: () => void }) {
   return (
-    <button
+    <motion.button
       onClick={onClick}
-      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition ${
+      whileTap={{ scale: 0.92 }}
+      transition={PRESS}
+      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
         active ? 'bg-accent text-black' : 'bg-surface-2 text-muted hover:text-text'
       }`}
     >
       {children}
-    </button>
+    </motion.button>
   );
 }
 
@@ -125,34 +130,53 @@ export function Sheet({
   title?: string;
   children: ReactNode;
 }) {
-  if (!open) return null;
   return (
-    <div className="absolute inset-0 z-50 flex items-end" onClick={onClose}>
-      <div className="absolute inset-0 bg-black/60" />
-      <motion.div
-        initial={{ y: 40, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        className="relative w-full max-h-[80%] overflow-y-auto no-scrollbar rounded-t-2xl bg-surface border-t border-line p-5 pb-8"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line" />
-        {title && <h3 className="text-lg font-bold mb-3">{title}</h3>}
-        {children}
-      </motion.div>
-    </div>
+    <AnimatePresence>
+      {open && (
+        <div className="absolute inset-0 z-50 flex items-end" onClick={onClose}>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+          />
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 360, damping: 34 }}
+            drag="y"
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.4 }}
+            onDragEnd={(_, info) => { if (info.offset.y > 120) onClose(); }}
+            className="relative w-full max-h-[85%] overflow-y-auto no-scrollbar rounded-t-2xl bg-surface border-t border-line p-5 pb-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line" />
+            {title && <h3 className="text-lg font-bold mb-3">{title}</h3>}
+            {children}
+          </motion.div>
+        </div>
+      )}
+    </AnimatePresence>
   );
 }
 
 export function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button
+    <motion.button
       onClick={() => onChange(!checked)}
-      className={`relative h-7 w-12 rounded-full transition ${checked ? 'bg-accent' : 'bg-surface-2'}`}
+      whileTap={{ scale: 0.9 }}
+      transition={PRESS}
+      className={`relative h-7 w-12 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-surface-2'}`}
     >
-      <span
-        className={`absolute top-1 h-5 w-5 rounded-full bg-white transition-all ${checked ? 'left-6' : 'left-1'}`}
+      <motion.span
+        layout
+        animate={{ x: checked ? 20 : 0 }}
+        transition={{ type: 'spring', stiffness: 600, damping: 32 }}
+        className="absolute top-1 left-1 h-5 w-5 rounded-full bg-white shadow"
       />
-    </button>
+    </motion.button>
   );
 }
 

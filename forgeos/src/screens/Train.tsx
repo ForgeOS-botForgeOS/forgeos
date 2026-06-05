@@ -11,6 +11,7 @@ import { SetRow } from '../components/train/SetRow';
 import { RestTimer } from '../components/train/RestTimer';
 import { Tools } from '../components/train/Tools';
 import { Confetti } from '../components/Celebrate';
+import { toast } from '../lib/toast';
 import { HeavyDrop, type Drop } from '../components/HeavyDrop';
 import { pickHeavyQuote, rollRarity } from '../data/heavyQuotes';
 import { useT } from '../lib/i18n';
@@ -276,6 +277,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
     registerSession();
     bumpMetric('pr', 0);
     haptic('success');
+    toast(`Session forged 🔥 ${completedSets} sets · ${Math.round(totalVolume).toLocaleString()} kg`);
     setCelebrating(true);
     setTimeout(() => navigate('/quests'), 1500);
   }

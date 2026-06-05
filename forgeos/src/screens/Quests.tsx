@@ -13,6 +13,8 @@ import { buildLeaderboard } from '../lib/mockData';
 import { useSocial } from '../state/socialStore';
 import { MOCK_TRACKS } from '../lib/spotify';
 import { haptic } from '../lib/haptics';
+import { toast, celebrate } from '../lib/toast';
+import { CountUp } from '../components/CountUp';
 import { useT } from '../lib/i18n';
 
 type Tab = 'rank' | 'quests' | 'board' | 'prs';
@@ -59,7 +61,7 @@ function RankPanel() {
         </Ring>
         <div className="flex-1">
           <p className="text-xl font-extrabold" style={{ color: tier.color }}>{rankLabel(tier)}</p>
-          <p className="text-sm text-muted">{xp.toLocaleString()} XP</p>
+          <CountUp value={xp} className="text-sm text-muted block" format={(n) => `${n.toLocaleString()} XP`} />
           {next && <p className="text-[11px] text-muted/70">{(next.minXp - xp).toLocaleString()} XP to {rankLabel(next)}</p>}
         </div>
       </Card>
@@ -67,17 +69,17 @@ function RankPanel() {
       <div className="grid grid-cols-2 gap-3">
         <Card className="flex items-center gap-3">
           <Flame className="text-accent" />
-          <div><p className="font-mono font-bold text-lg">{streak}</p><p className="text-[11px] text-muted">day streak</p></div>
+          <div><CountUp value={streak} className="font-mono font-bold text-lg block" /><p className="text-[11px] text-muted">day streak</p></div>
         </Card>
         <Card className="flex items-center gap-3">
           <Coins className="text-accent-2" />
-          <div><p className="font-mono font-bold text-lg">{coins}</p><p className="text-[11px] text-muted">Forge Coins</p></div>
+          <div><CountUp value={coins} className="font-mono font-bold text-lg block" /><p className="text-[11px] text-muted">Forge Coins</p></div>
         </Card>
       </div>
 
       <div className="flex gap-2">
         <Button variant="ghost" className="flex-1 justify-center" onClick={() => setConvertOpen(true)}>Convert XP → 🪙</Button>
-        <Button variant="ghost" className="flex-1 justify-center" onClick={() => { if (buyFreeze()) haptic('success'); else haptic('warning'); }}>Streak freeze · 🪙20</Button>
+        <Button variant="ghost" className="flex-1 justify-center" onClick={() => { if (buyFreeze()) { haptic('success'); toast('Streak freeze bought 🧊'); } else { haptic('warning'); toast('Not enough coins for a freeze.', 'error'); } }}>Streak freeze · 🪙20</Button>
       </div>
 
       {gambling && (
@@ -126,7 +128,7 @@ function ConvertSheet({ open, onClose, xp, rate, convert }: { open: boolean; onC
         <p className="text-sm text-muted">Rate: {rate} XP per coin. You have {xp.toLocaleString()} XP.</p>
         <input type="range" min={1} max={Math.max(1, Math.floor(xp / rate))} value={coins} onChange={(e) => setCoins(Number(e.target.value))} className="w-full accent-[rgb(var(--accent))]" />
         <p className="text-center font-mono">{coins} 🪙 = {cost.toLocaleString()} XP</p>
-        <Button className="w-full justify-center" disabled={cost > xp} onClick={() => { if (convert(coins, rate)) { haptic('success'); onClose(); } }}>Convert</Button>
+        <Button className="w-full justify-center" disabled={cost > xp} onClick={() => { if (convert(coins, rate)) { celebrate(); toast(`Converted to 🪙${coins}`); onClose(); } }}>Convert</Button>
       </div>
     </Sheet>
   );
@@ -173,7 +175,7 @@ function QuestBoard() {
       </div>
 
       {claimable.length > 0 && (
-        <Button className="w-full justify-center gap-2" onClick={() => { claimAll(); haptic('success'); }}>
+        <Button className="w-full justify-center gap-2" onClick={() => { const r = claimAll(); if (r.count) { celebrate(); toast(`Claimed ${r.count} · +${r.xp.toLocaleString()} XP · 🪙${r.coins}`); } }}>
           <Trophy size={16} /> Claim all {claimable.length} · +{totalXp.toLocaleString()} XP · 🪙{totalCoins}
         </Button>
       )}
@@ -190,7 +192,7 @@ function QuestBoard() {
             <div className="h-2 rounded-full bg-surface-2 overflow-hidden"><div className="h-full bg-accent rounded-full" style={{ width: `${pct}%` }} /></div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-muted font-mono">{Math.round(uq.progress).toLocaleString()} / {def.target.toLocaleString()}</span>
-              {uq.completed && !uq.claimed && <Button className="py-1.5" onClick={() => { claim(def.id); haptic('success'); }}>Claim</Button>}
+              {uq.completed && !uq.claimed && <Button className="py-1.5" onClick={() => { claim(def.id); haptic('success'); toast(`+${def.xp} XP · 🪙${def.coins}`); }}>Claim</Button>}
               {uq.claimed && <Badge color="rgb(var(--success))">claimed</Badge>}
             </div>
           </Card>
