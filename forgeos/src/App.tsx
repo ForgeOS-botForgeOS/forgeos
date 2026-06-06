@@ -37,6 +37,7 @@ const Shop = lazy(() => import('./screens/Shop'));
 const WorkoutEdit = lazy(() => import('./screens/WorkoutEdit'));
 const PublicProfile = lazy(() => import('./screens/PublicProfile'));
 const Progress = lazy(() => import('./screens/Progress'));
+const Download = lazy(() => import('./screens/Download'));
 
 // Left→right order of the bottom tabs; swiping moves to the neighbour.
 const TAB_ORDER = ['/home', '/train', '/nutrition', '/social', '/quests', '/profile'];
@@ -140,6 +141,7 @@ export default function App() {
         <Suspense fallback={<ScreenSkeleton />}>
         <Routes>
           <Route path="/onboarding" element={<Onboarding />} />
+          <Route path="/download" element={<Download />} />
           <Route
             element={
               <RequireOnboarding>

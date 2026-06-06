@@ -157,6 +157,7 @@ export default function Onboarding() {
 
           {/* Big, obvious install CTA when opened in a browser */}
           <InstallButton variant="big" />
+          <button onClick={() => navigate('/download')} className="w-full text-center text-xs text-accent underline-offset-2 hover:underline">Download the app (Android APK / install) →</button>
 
           <div className="space-y-2 pt-2">
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" disabled={signingIn === 'google'} onClick={continueWithGoogle}>
