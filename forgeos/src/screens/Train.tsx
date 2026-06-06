@@ -6,12 +6,12 @@ import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } 
 import { CSS } from '@dnd-kit/utilities';
 import type { ReactNode } from 'react';
 import { Screen } from '../components/Screen';
-import { Card, Button, Sheet, Badge, SectionTitle } from '../components/ui';
+import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
 import { SetRow } from '../components/train/SetRow';
 import { RestTimer } from '../components/train/RestTimer';
 import { Tools } from '../components/train/Tools';
 import { Confetti } from '../components/Celebrate';
-import { toast } from '../lib/toast';
+import { toast, celebrate } from '../lib/toast';
 import { HeavyDrop, type Drop } from '../components/HeavyDrop';
 import { pickHeavyQuote, rollRarity } from '../data/heavyQuotes';
 import { useT } from '../lib/i18n';
@@ -119,13 +119,36 @@ export default function Train() {
   );
 }
 
+// XP reward for cardio — distance + time, like a lift earns from weight × reps.
+function cardioXp(distanceKm: number, durationMin: number, calories = 0) {
+  return Math.round(distanceKm * 15 + durationMin * 4 + calories / 8) + 20;
+}
+
 function CardioScanCard() {
   const fileRef = useRef<HTMLInputElement>(null);
-  const addManualWorkout = useWorkout((s) => s.addManualWorkout);
+  const logCardio = useWorkout((s) => s.logCardio);
   const registerSession = useGami((s) => s.registerSession);
   const addXp = useGami((s) => s.addXp);
+  const bumpMetric = useGami((s) => s.bumpMetric);
   const [busy, setBusy] = useState(false);
   const [scan, setScan] = useState<CardioScan | null>(null);
+  const [manualOpen, setManualOpen] = useState(false);
+
+  // Shared reward path for both photo-scan and manual logging.
+  function reward(machine: string, distanceKm: number, durationMin: number, calories?: number) {
+    const { distancePR, durationPR } = logCardio(machine, distanceKm, durationMin, calories);
+    registerSession();
+    bumpMetric('volume', Math.round(distanceKm * 1000)); // distance counts toward volume quests
+    const xp = cardioXp(distanceKm, durationMin, calories) + (distancePR ? 60 : 0) + (durationPR ? 40 : 0);
+    addXp(xp);
+    if (distancePR || durationPR) {
+      celebrate();
+      toast(`Cardio PR! ${distancePR ? `${distanceKm}km` : `${Math.round(durationMin)}min`} 🏃 +${xp} XP`);
+    } else {
+      haptic('success');
+      toast(`Cardio logged 🏃 ${distanceKm}km · ${Math.round(durationMin)}min · +${xp} XP`);
+    }
+  }
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -145,31 +168,24 @@ function CardioScanCard() {
 
   function logIt() {
     if (!scan) return;
-    const ex = EXERCISES.find((x) => x.category === 'Cardio' && scan.machine.toLowerCase().includes(x.name.split(' ')[0].toLowerCase()))
-      ?? EXERCISES.find((x) => x.category === 'Cardio')!;
-    const uid = () => Math.random().toString(36).slice(2, 10);
-    addManualWorkout({
-      id: uid(),
-      name: `${scan.machine} · ${scan.distanceKm}km · ${scan.calories}kcal`,
-      date: new Date().toISOString(),
-      exercises: [{ id: uid(), exerciseId: ex.id, sets: [{ id: uid(), weightKg: 0, reps: Math.round(scan.durationMin), completed: true }] }],
-      durationSec: Math.round(scan.durationMin * 60),
-      completed: true,
-      totalVolumeKg: 0,
-    });
-    registerSession();
-    addXp(Math.round(scan.calories / 5) + 40);
-    haptic('success');
+    reward(scan.machine, scan.distanceKm, scan.durationMin, scan.calories);
     setScan(null);
   }
 
   return (
     <Card className="space-y-2">
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
-      <Button variant="ghost" className="w-full justify-center" disabled={busy} onClick={() => fileRef.current?.click()}>
-        <span className="flex items-center gap-2"><Camera size={16} /> {busy ? 'Reading console…' : 'Log cardio from a photo'}</span>
-      </Button>
-      <p className="text-[11px] text-muted/70 text-center">Snap any cardio machine’s display — treadmill, rower, bike, ski-erg.</p>
+      <div className="flex gap-2">
+        <Button variant="ghost" className="flex-1 justify-center" disabled={busy} onClick={() => fileRef.current?.click()}>
+          <span className="flex items-center gap-2"><Camera size={16} /> {busy ? 'Reading…' : 'Cardio photo'}</span>
+        </Button>
+        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setManualOpen(true)}>
+          <span className="flex items-center gap-2"><Plus size={16} /> Log cardio</span>
+        </Button>
+      </div>
+      <p className="text-[11px] text-muted/70 text-center">Distance + time earn XP like a lift — beat your best for a cardio PR 🏃</p>
+
+      <ManualCardioSheet open={manualOpen} onClose={() => setManualOpen(false)} onLog={(m, d, t) => { reward(m, d, t); setManualOpen(false); }} />
 
       <Sheet open={!!scan} onClose={() => setScan(null)} title="Review cardio">
         {scan && (
@@ -198,6 +214,29 @@ function CRow({ label, v, step, onChange }: { label: string; v: number; step: nu
         <button onClick={() => onChange(Math.round((v + step) * 10) / 10)} className="w-8 h-8 rounded-md bg-surface-2">+</button>
       </div>
     </div>
+  );
+}
+
+const CARDIO_MACHINES = ['Run', 'Treadmill', 'Rower', 'Bike', 'Ski-erg', 'Elliptical', 'Stairmaster', 'Swim', 'Walk'];
+
+function ManualCardioSheet({ open, onClose, onLog }: { open: boolean; onClose: () => void; onLog: (machine: string, distanceKm: number, durationMin: number) => void }) {
+  const [machine, setMachine] = useState('Run');
+  const [distance, setDistance] = useState(5);
+  const [duration, setDuration] = useState(30);
+  const pace = distance > 0 ? duration / distance : 0;
+  return (
+    <Sheet open={open} onClose={onClose} title="Log cardio">
+      <div className="space-y-3">
+        <p className="text-[11px] text-muted">Distance and time both earn XP. Beat your longest distance or time for a cardio PR 🏃</p>
+        <div className="flex gap-2 flex-wrap">
+          {CARDIO_MACHINES.map((m) => <Pill key={m} active={machine === m} onClick={() => setMachine(m)}>{m}</Pill>)}
+        </div>
+        <CRow label="Distance (km)" v={distance} step={0.5} onChange={setDistance} />
+        <CRow label="Time (min)" v={duration} step={1} onChange={setDuration} />
+        {distance > 0 && duration > 0 && <p className="text-[11px] text-muted">Pace ≈ {Math.floor(pace)}:{String(Math.round((pace % 1) * 60)).padStart(2, '0')} /km · earns ~{cardioXp(distance, duration)} XP</p>}
+        <Button className="w-full justify-center" disabled={distance <= 0 && duration <= 0} onClick={() => onLog(machine, distance, duration)}>Log {machine}</Button>
+      </div>
+    </Sheet>
   );
 }
 
@@ -238,6 +277,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   const registerSession = useGami((s) => s.registerSession);
   const bumpMetric = useGami((s) => s.bumpMetric);
   const recordHeavyLift = useGami((s) => s.recordHeavyLift);
+  const heavyQuotesEnabled = useSettings((s) => s.heavyQuotesEnabled);
   const navigate = useNavigate();
 
   const [restOpen, setRestOpen] = useState(false);
@@ -262,10 +302,14 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
     bumpMetric('volume', volumeOf(set.weightKg, set.reps));
     // Heavy-set quote "drop" + achievement progress on 100kg+ lifts.
     if (set.weightKg >= 100) {
-      const ex = exerciseById(active.exercises.find((e) => e.id === weId)?.exerciseId ?? '');
-      setDrop({ quote: pickHeavyQuote(ex), rarity: rollRarity(), exercise: ex?.name ?? 'Lift', weightKg: set.weightKg });
       recordHeavyLift();
       addXp(50);
+      if (heavyQuotesEnabled) {
+        const ex = exerciseById(active.exercises.find((e) => e.id === weId)?.exerciseId ?? '');
+        setDrop({ quote: pickHeavyQuote(ex), rarity: rollRarity(), exercise: ex?.name ?? 'Lift', weightKg: set.weightKg });
+      } else {
+        setRestOpen(true);
+      }
     } else {
       setRestOpen(true);
     }

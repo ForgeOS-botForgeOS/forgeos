@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { PR, SetEntry, SpotifyTrack, Workout, WorkoutExercise } from '../types';
 import { e1rm, volumeOf, overloadSuggestion } from '../lib/fitness';
-import { exerciseById } from '../data/exercises';
+import { exerciseById, EXERCISES } from '../data/exercises';
 import { enqueue } from '../lib/offlineQueue';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -34,6 +34,9 @@ interface WorkoutState {
   updateHistoryWorkout: (id: string, w: Workout) => void;
   deleteHistoryWorkout: (id: string) => void;
   addManualWorkout: (w: Workout) => void;
+  // Log a cardio session (distance + time) as a first-class workout. Returns
+  // whether it set a new distance / duration personal best.
+  logCardio: (machine: string, distanceKm: number, durationMin: number, calories?: number) => { distancePR: boolean; durationPR: boolean };
 
   lastSetFor: (exerciseId: string, setIndex: number) => SetEntry | undefined;
   bestE1rm: (exerciseId: string) => number;
@@ -274,6 +277,26 @@ export const useWorkout = create<WorkoutState>()(
       },
       deleteHistoryWorkout: (id) => set({ history: get().history.filter((h) => h.id !== id) }),
       addManualWorkout: (w) => set({ history: [{ ...w, totalVolumeKg: computeVolume(w) }, ...get().history] }),
+
+      logCardio: (machine, distanceKm, durationMin, calories) => {
+        const cardioHistory = get().history.filter((w) => w.cardio);
+        const prevBestDist = Math.max(0, ...cardioHistory.map((w) => w.cardio!.distanceKm));
+        const prevBestDur = Math.max(0, ...cardioHistory.map((w) => w.cardio!.durationMin));
+        const ex = EXERCISES.find((x) => x.category === 'Cardio' && machine.toLowerCase().includes(x.name.split(' ')[0].toLowerCase()))
+          ?? EXERCISES.find((x) => x.category === 'Cardio');
+        const w: Workout = {
+          id: uid(),
+          name: `${machine}${distanceKm ? ` · ${distanceKm}km` : ''}${durationMin ? ` · ${Math.round(durationMin)}min` : ''}`,
+          date: new Date().toISOString(),
+          exercises: ex ? [{ id: uid(), exerciseId: ex.id, sets: [{ id: uid(), weightKg: 0, reps: Math.round(durationMin), completed: true }] }] : [],
+          durationSec: Math.round(durationMin * 60),
+          completed: true,
+          totalVolumeKg: 0,
+          cardio: { machine, distanceKm, durationMin, calories },
+        };
+        set({ history: [w, ...get().history] });
+        return { distancePR: distanceKm > prevBestDist && distanceKm > 0, durationPR: durationMin > prevBestDur && durationMin > 0 };
+      },
 
       lastSetFor: (exerciseId, setIndex) => {
         for (const w of get().history) {

@@ -23,7 +23,7 @@ export default function PublicProfile() {
           </div>
           <Card className="grid grid-cols-2 gap-3 text-center">
             <Stat v={p.xp.toLocaleString()} l="XP" />
-            <Stat v={`${p.streak}`} l="day streak" icon={<Flame size={14} className="text-accent" />} />
+            <Stat v={`${p.streak}`} l="week streak" icon={<Flame size={14} className="text-accent" />} />
             <Stat v={`${p.sessions}`} l="sessions" />
             <Stat v={`${p.achievements}`} l="achievements" icon={<Trophy size={14} className="text-accent-2" />} />
           </Card>

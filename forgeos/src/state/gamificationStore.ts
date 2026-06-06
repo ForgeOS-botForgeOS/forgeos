@@ -2,12 +2,17 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { StreakWager, UserQuest } from '../types';
 import { QUESTS } from '../data/quests';
+import { useSettings } from './settingsStore';
 
 interface GamiState {
   xp: number;
   coins: number;
   streakDays: number;
   lastSessionDate: string | null;
+  // Weekly streak: weeks where you hit your planned session goal (settings.weeklyGoal).
+  weekStreak: number;
+  weekStart: string | null; // Monday yyyy-mm-dd of the tracked week
+  weekSessions: number; // sessions logged so far this week
   quests: UserQuest[];
   wager: StreakWager | null;
 
@@ -31,6 +36,13 @@ const todayStr = () => new Date().toISOString().slice(0, 10);
 function daysBetween(a: string, b: string) {
   return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
 }
+// Monday (yyyy-mm-dd) of the week containing dateStr.
+function mondayOf(dateStr: string) {
+  const d = new Date(dateStr);
+  const dow = (d.getDay() + 6) % 7; // 0 = Monday
+  d.setDate(d.getDate() - dow);
+  return d.toISOString().slice(0, 10);
+}
 
 export const useGami = create<GamiState>()(
   persist(
@@ -40,6 +52,9 @@ export const useGami = create<GamiState>()(
       heavyLifts: 0,
       streakDays: 0,
       lastSessionDate: null,
+      weekStreak: 0,
+      weekStart: null,
+      weekSessions: 0,
       quests: [],
       wager: null,
 
@@ -82,6 +97,29 @@ export const useGami = create<GamiState>()(
           else streak = 1;
         }
         set({ lastSessionDate: today, streakDays: streak });
+
+        // ---- Weekly streak (planned-week completion, not gym-days) ----
+        const goal = Math.max(1, useSettings.getState().weeklyGoal || 4);
+        const monday = mondayOf(today);
+        let weekStart = get().weekStart;
+        let weekSessions = get().weekSessions;
+        let weekStreak = get().weekStreak;
+        if (!weekStart) {
+          weekStart = monday;
+          weekSessions = 0;
+        } else if (monday !== weekStart) {
+          // A new week began. Keep the streak only if last week hit goal and is the
+          // immediately preceding week; otherwise the streak is broken.
+          const gapWeeks = Math.round(daysBetween(weekStart, monday) / 7);
+          const prevCompleted = weekSessions >= goal;
+          if (!(prevCompleted && gapWeeks === 1)) weekStreak = 0;
+          weekStart = monday;
+          weekSessions = 0;
+        }
+        weekSessions += 1;
+        if (weekSessions === goal) weekStreak += 1; // week just completed
+        set({ weekStart, weekSessions, weekStreak });
+
         get().bumpMetric('sessions', 1);
         get().bumpMetric('streak', 0); // refresh streak-based quest progress below
         // update streak quests to current value

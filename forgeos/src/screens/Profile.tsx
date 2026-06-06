@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2 } from 'lucide-react';
+import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { useSettings } from '../state/settingsStore';
@@ -104,7 +104,7 @@ export default function Profile() {
     };
     const achievements = ACHIEVEMENTS.filter((a) => a.value(stats) >= a.goal).length;
     const bestLifts = [...w.prs].sort((a, b) => b.e1rm - a.e1rm).slice(0, 3).map((p) => ({ name: p.exerciseName, e1rm: p.e1rm }));
-    return { name: profile?.name ?? 'Athlete', rank: rankLabel(tier), xp: g.xp, streak: g.streakDays, sessions: w.history.length, achievements, title: title ?? undefined, bestLifts };
+    return { name: profile?.name ?? 'Athlete', rank: rankLabel(tier), xp: g.xp, streak: g.weekStreak, sessions: w.history.length, achievements, title: title ?? undefined, bestLifts };
   }
   async function shareMyProfile() {
     const r = await shareProfile(buildSummary());
@@ -280,6 +280,30 @@ export default function Profile() {
         <div className="flex items-center gap-2"><Trophy size={16} className="text-muted" /><span className="text-sm">Achievements</span></div>
         <Badge>{t('common.open')}</Badge>
       </Card>
+      <Card className="flex items-center justify-between" onClick={() => navigate('/progress')}>
+        <div className="flex items-center gap-2"><LineChart size={16} className="text-muted" /><span className="text-sm">Progress &amp; body</span></div>
+        <Badge>{t('common.open')}</Badge>
+      </Card>
+
+      {/* Training & rewards */}
+      <div>
+        <SectionTitle action={<Trophy size={14} className="text-muted" />}>Training &amp; rewards</SectionTitle>
+        <Card className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm">Weekly session goal</span>
+            <div className="flex items-center gap-1">
+              <button onClick={() => s.set('weeklyGoal', Math.max(1, s.weeklyGoal - 1))} className="w-8 h-8 rounded-md bg-surface-2">−</button>
+              <span className="w-8 text-center font-mono text-sm">{s.weeklyGoal}</span>
+              <button onClick={() => s.set('weeklyGoal', Math.min(7, s.weeklyGoal + 1))} className="w-8 h-8 rounded-md bg-surface-2">+</button>
+            </div>
+          </div>
+          <p className="text-[11px] text-muted -mt-1">Your streak counts <b>weeks</b> you hit this many planned sessions — not daily gym days.</p>
+          <div className="flex items-center justify-between">
+            <div><p className="text-sm">Heavy-set quote drops</p><p className="text-[11px] text-muted">Rare/legendary quotes past 100 kg</p></div>
+            <Toggle checked={s.heavyQuotesEnabled} onChange={(v) => s.set('heavyQuotesEnabled', v)} />
+          </div>
+        </Card>
+      </div>
       <Card className="flex items-center justify-between" onClick={() => openTutorial()}>
         <div className="flex items-center gap-2"><HelpCircle size={16} className="text-muted" /><span className="text-sm">Replay app tour</span></div>
         <Badge>{t('common.open')}</Badge>

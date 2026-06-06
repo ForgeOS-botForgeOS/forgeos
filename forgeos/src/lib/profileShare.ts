@@ -80,7 +80,7 @@ export function generateProfileCard(p: PublicProfile): string {
 
   const stats: [string, string][] = [
     [p.xp.toLocaleString(), 'XP'],
-    [`${p.streak}`, 'DAY STREAK'],
+    [`${p.streak}`, 'WEEK STREAK'],
     [`${p.sessions}`, 'SESSIONS'],
     [`${p.achievements}`, 'ACHIEVEMENTS'],
   ];

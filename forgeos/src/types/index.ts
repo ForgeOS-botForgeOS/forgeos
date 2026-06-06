@@ -74,6 +74,20 @@ export interface Workout {
   xpEarned?: number;
   spotifyTrack?: SpotifyTrack | null;
   synced?: boolean; // offline-queue status
+  cardio?: { machine: string; distanceKm: number; durationMin: number; calories?: number };
+}
+
+// A dated body snapshot for the Progress layer (weight + girths + optional photo).
+export interface BodyStat {
+  date: string; // yyyy-mm-dd
+  weightKg?: number;
+  waistCm?: number;
+  chestCm?: number;
+  armCm?: number;
+  thighCm?: number;
+  hipCm?: number;
+  bodyFatPct?: number;
+  photo?: string; // compressed data URL
 }
 
 export interface PR {
@@ -364,6 +378,9 @@ export interface Settings {
   gym: GymConfig;
   appLock: AppLock;
   publicProfile: boolean;
+  heavyQuotesEnabled: boolean; // heavy-set quote "drops"
+  weeklyGoal: number; // planned sessions per week (drives the week streak)
+  streakMode: 'weekly' | 'daily';
   reminder: ReminderConfig;
   theme: ThemeId;
   autoTheme: boolean; // day = light, night = dark

@@ -35,7 +35,7 @@ export default function Home() {
   }, [rawLog]);
   const history = useWorkout((s) => s.history);
   const xp = useGami((s) => s.xp);
-  const streak = useGami((s) => s.streakDays);
+  const streak = useGami((s) => s.weekStreak);
   const navigate = useNavigate();
 
   const dayIdx = Math.floor(
@@ -70,9 +70,9 @@ export default function Home() {
         title={`${t('home.hi')}, ${profile?.name ?? 'Athlete'}`}
         subtitle={`${rankLabel(tier)} · ${xp.toLocaleString()} XP`}
         right={
-          <div className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5">
+          <div className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5" title="Week streak — weeks you hit your planned sessions">
             <Flame size={16} className="text-accent" />
-            <CountUp value={streak} className="font-bold text-sm" />
+            <CountUp value={streak} className="font-bold text-sm" /><span className="text-[10px] text-muted">wk</span>
           </div>
         }
       >
@@ -101,6 +101,15 @@ export default function Home() {
             <p className="font-semibold">{history[0] && isToday(history[0].date) ? 'Session logged ✅' : 'Ready when you are'}</p>
           </div>
           <Badge>Open Train</Badge>
+        </Card>
+
+        {/* Progress shortcut */}
+        <Card onClick={() => navigate('/progress')} className="flex items-center justify-between">
+          <div>
+            <p className="text-sm text-muted">Progress &amp; body</p>
+            <p className="font-semibold">Measurements, cardio &amp; trends</p>
+          </div>
+          <Badge color="rgb(var(--accent-2))">Open</Badge>
         </Card>
 
         {/* Science tip */}

@@ -70,6 +70,71 @@ const QUOTES: HeavyQuote[] = [
   { theme: 'general', text: 'Three plates is not a number. It is months of mornings you did not skip.', source: 'Iron Wisdom' },
   { theme: 'general', text: 'The weight does not care about your mood, your excuses, or your past. It only answers to effort.', source: 'Strength Maxim' },
   { theme: 'general', text: 'Strength is the most honest currency: it cannot be borrowed, faked, or inherited. You earned this.', source: 'The Forge' },
+
+  // ---- Expanded vault (50) ----
+  // Squat
+  { theme: 'squat', text: 'The man who fears the bottom of the squat fears the bottom of himself. You went down and came back wiser.', source: 'Stoic Iron' },
+  { theme: 'squat', text: 'Legs are forged where the lungs beg to stop. Today you negotiated with neither.', source: 'The Anvil' },
+  { theme: 'squat', text: 'A heavy squat is a private war with the easiest version of you. You won the rematch.', source: 'Iron Wisdom' },
+  { theme: 'squat', text: 'Stand up. That is the oldest command in strength, and the hardest to obey under real weight.', source: 'On the Squat' },
+  { theme: 'squat', text: 'The spine learns courage one plate at a time. Yours just took a lesson.', source: 'The Forge' },
+  { theme: 'squat', text: 'Depth is humility; the drive up is defiance. Strength is both, in that order.', source: 'Strength Maxim' },
+  { theme: 'squat', text: 'They count your reps. The bar counts your character.', source: 'Stoic Iron' },
+
+  // Bench
+  { theme: 'bench', text: 'The bar comes to the chest to ask one question. Today your answer was: not yet, not today, not ever.', source: 'On the Bench' },
+  { theme: 'bench', text: 'Press the floor away through the bar. The strong move the world by first refusing to be moved.', source: 'The Anvil' },
+  { theme: 'bench', text: 'There is a man under every heavy bench who wants to quit. You have not met him in a while.', source: 'Iron Wisdom' },
+  { theme: 'bench', text: 'Tightness is the secret nobody applauds. You braced, and the weight obeyed.', source: 'The Forge' },
+  { theme: 'bench', text: 'A pause at the chest is patience under pressure — the rarest strength of all.', source: 'Strength Maxim' },
+  { theme: 'bench', text: 'The press rewards the calm. Panic adds no kilos.', source: 'Stoic Iron' },
+  { theme: 'bench', text: 'Lock it out and the doubt locks out with it.', source: 'On the Bench' },
+
+  // Deadlift
+  { theme: 'deadlift', text: 'The floor offers no excuses and accepts none. You met it on its own terms and walked away taller.', source: 'On the Deadlift' },
+  { theme: 'deadlift', text: 'A deadlift is a decision made with the whole body. Indecision is the only thing that drops the bar.', source: 'The Anvil' },
+  { theme: 'deadlift', text: 'Set your back like a man setting his mind. Then nothing on the ground stays on the ground.', source: 'Iron Wisdom' },
+  { theme: 'deadlift', text: 'Heavy pulls do not build the body alone — they build the man who refuses to let go.', source: 'The Forge' },
+  { theme: 'deadlift', text: 'Breath in, brace down, will up. The deadlift is a prayer answered by effort.', source: 'Strength Maxim' },
+  { theme: 'deadlift', text: 'What is heavy today is a warm-up for who you are becoming.', source: 'Stoic Iron' },
+  { theme: 'deadlift', text: 'The bar left the floor because you decided it would. That is power before it is muscle.', source: 'On the Deadlift' },
+
+  // Press
+  { theme: 'press', text: 'Overhead is the loneliest place in the gym — just you, the bar, and the sky you intend to push.', source: 'On the Press' },
+  { theme: 'press', text: 'A locked-out press is a small monument: built fast, earned slowly.', source: 'The Anvil' },
+  { theme: 'press', text: 'The shoulders carry what the heart commits to. Today the order was clear.', source: 'Iron Wisdom' },
+  { theme: 'press', text: 'Press as if raising your own standard — because you are.', source: 'The Forge' },
+  { theme: 'press', text: 'Nothing built overhead was built by a man looking down.', source: 'Strength Maxim' },
+  { theme: 'press', text: 'The overhead lift cannot be cheated with momentum of the soul. Only honest force goes up.', source: 'Stoic Iron' },
+
+  // Pull
+  { theme: 'pull', text: 'The back is a debt repaid in private — no mirror, no applause, just iron drawn home.', source: 'On the Pull' },
+  { theme: 'pull', text: 'Pull until the weak grip fails and the strong will continues. That gap is where you grow.', source: 'The Anvil' },
+  { theme: 'pull', text: 'Every heavy row is a small act of taking back ground you once gave to comfort.', source: 'Iron Wisdom' },
+  { theme: 'pull', text: 'A strong pull is humility in motion: you bow to the weight, then bring it to heel.', source: 'The Forge' },
+  { theme: 'pull', text: 'Lats like wings are earned by men who never expected to fly — only to pull.', source: 'Strength Maxim' },
+  { theme: 'pull', text: 'Draw the bar to your will. The body follows what the grip refuses to release.', source: 'Stoic Iron' },
+
+  // Olympic
+  { theme: 'olympic', text: 'In the split second under a snatch, hesitation weighs more than the bar.', source: 'On the Lifts' },
+  { theme: 'olympic', text: 'The clean is faith in fast-forward: you commit before you can be sure, and the bar rewards the brave.', source: 'The Anvil' },
+  { theme: 'olympic', text: 'Speed is strength that learned to dance. Today you led.', source: 'Iron Wisdom' },
+  { theme: 'olympic', text: 'To catch a heavy bar is to trust the thousand reps that no one saw.', source: 'The Forge' },
+  { theme: 'olympic', text: 'The jerk is decided overhead, in the silence before the legs believe.', source: 'Strength Maxim' },
+
+  // General
+  { theme: 'general', text: 'Comfort is a soft prison. Today you bent a bar of its bars.', source: 'Stoic Iron' },
+  { theme: 'general', text: 'The weight you fear is a teacher in disguise. You just passed the lesson.', source: 'Iron Wisdom' },
+  { theme: 'general', text: 'Discipline is choosing what you want most over what you want now. The iron remembers your choice.', source: 'The Forge' },
+  { theme: 'general', text: 'Nobody is coming to lift it for you. Nobody needs to — you are enough.', source: 'Strength Maxim' },
+  { theme: 'general', text: 'Motivation got you to the gym. Will got the bar off the ground. Know the difference; honour the second.', source: 'The Anvil' },
+  { theme: 'general', text: 'You did not rise to the level of your hopes today. You fell to the level of your training — and it held.', source: 'Stoic Iron' },
+  { theme: 'general', text: 'Iron does not lie, flatter, or forgive. It simply reveals. Today it revealed someone strong.', source: 'Iron Wisdom' },
+  { theme: 'general', text: 'Pain is the toll on the road to strong. You paid it without complaint.', source: 'The Forge' },
+  { theme: 'general', text: 'The body achieves what the mind survives. Yours survived plenty.', source: 'Strength Maxim' },
+  { theme: 'general', text: 'A heavy day is a conversation with your future self. Today you told him: I did not quit.', source: 'The Anvil' },
+  { theme: 'general', text: 'Strength is quiet on the way up and loud for a lifetime after.', source: 'Stoic Iron' },
+  { theme: 'general', text: 'Greatness is just ordinary effort repeated when no one is impressed yet. Keep going.', source: 'Iron Wisdom' },
 ];
 
 export function pickHeavyQuote(ex: Exercise | undefined): HeavyQuote {

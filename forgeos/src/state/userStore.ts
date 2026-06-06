@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { SavedPlan, UserProfile, WeekPlan, WeighIn } from '../types';
+import type { BodyStat, SavedPlan, UserProfile, WeekPlan, WeighIn } from '../types';
 import { macrosFor, mifflinStJeor, tdee } from '../lib/fitness';
 import { upsertProfile } from '../lib/repositories';
 
@@ -10,6 +10,7 @@ interface UserState {
   profile: UserProfile | null;
   weekPlan: WeekPlan | null;
   weighIns: WeighIn[];
+  bodyStats: BodyStat[];
   savedPlans: SavedPlan[];
   setProfile: (p: UserProfile) => void;
   updateProfile: (patch: Partial<UserProfile>) => void;
@@ -19,6 +20,7 @@ interface UserState {
   loadPlan: (id: string) => void;
   deletePlan: (id: string) => void;
   addWeighIn: (kg: number) => void;
+  addBodyStat: (patch: Partial<BodyStat>) => void;
   reset: () => void;
 }
 
@@ -28,6 +30,7 @@ export const useUser = create<UserState>()(
       profile: null,
       weekPlan: null,
       weighIns: [],
+      bodyStats: [],
       savedPlans: [],
       setProfile: (p) => {
         set({ profile: p });
@@ -65,7 +68,16 @@ export const useUser = create<UserState>()(
         set({ weighIns: [...rest, { date: today, weightKg: kg }].sort((a, b) => a.date.localeCompare(b.date)) });
         get().updateProfile({ weightKg: kg });
       },
-      reset: () => set({ profile: null, weekPlan: null, weighIns: [] }),
+      // Merge a body snapshot for today (weight + girths + optional photo).
+      addBodyStat: (patch) => {
+        const today = new Date().toISOString().slice(0, 10);
+        const existing = get().bodyStats.find((b) => b.date === today) ?? { date: today };
+        const rest = get().bodyStats.filter((b) => b.date !== today);
+        const merged: BodyStat = { ...existing, ...patch, date: today };
+        set({ bodyStats: [...rest, merged].sort((a, b) => a.date.localeCompare(b.date)) });
+        if (patch.weightKg) get().addWeighIn(patch.weightKg);
+      },
+      reset: () => set({ profile: null, weekPlan: null, weighIns: [], bodyStats: [] }),
     }),
     {
       name: 'forge-user',
