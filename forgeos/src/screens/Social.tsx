@@ -17,6 +17,7 @@ import { rankForXp, rankLabel } from '../data/ranks';
 import { generateShareCard, downloadDataUrl } from '../lib/shareCard';
 import { haptic } from '../lib/haptics';
 import { toast, celebrate } from '../lib/toast';
+import { friendActivity, whenLabel } from '../lib/friendActivity';
 import { useT } from '../lib/i18n';
 import type { DuelMetric, Friend } from '../types';
 
@@ -413,31 +414,88 @@ function Friends() {
 function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () => void }) {
   const removeFriend = useSocial((s) => s.removeFriend);
   const startDuel = useSocial((s) => s.startDuel);
-  const navigate = useNavigate();
-  if (!friend) return null;
+  const cheerFriend = useSocial((s) => s.cheerFriend);
+  const feed = useSocial((s) => s.feed);
+  const act = useMemo(() => (friend ? friendActivity(friend) : null), [friend]);
+  if (!friend || !act) return null;
+
+  const theirPosts = feed.filter((p) => p.authorName === friend.name).slice(0, 3);
+
   return (
     <Sheet open={!!friend} onClose={onClose} title={friend.name}>
       <div className="space-y-3">
+        {/* header */}
         <div className="flex items-center gap-3">
           <Avatar seed={friend.avatarSeed} large />
-          <div>
+          <div className="min-w-0">
             <p className="font-bold text-lg">{friend.name}</p>
             <p className="text-sm text-accent">{friend.rank} · {friend.xp.toLocaleString()} XP</p>
-            <p className="text-[11px] text-muted">{friend.trainingNow ? 'Training now 🟢' : friend.online ? 'Online' : `Last active ${friend.lastActiveISO ? timeAgo(friend.lastActiveISO) : 'recently'}`}{friend.streak ? ` · 🔥 ${friend.streak}-day streak` : ''}</p>
+            <p className="text-[11px] text-muted">{friend.trainingNow ? 'Training now 🟢' : friend.online ? 'Online' : `Last active ${friend.lastActiveISO ? timeAgo(friend.lastActiveISO) : 'recently'}`}{friend.streak ? ` · 🔥 ${friend.streak}` : ''}</p>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <Button className="justify-center" onClick={() => { startDuel(friend.name, friend.avatarSeed, 'volume', 20000, 7); haptic('success'); onClose(); navigate('/social'); }}>
-            <span className="flex items-center gap-1"><Swords size={15} /> Challenge</span>
+        <p className="text-[11px] text-muted italic">“{act.bio}”</p>
+
+        {/* stat strip */}
+        <div className="grid grid-cols-4 gap-2 text-center">
+          <MiniStat v={`${act.weeklySessions}`} l="this wk" />
+          <MiniStat v={`${Math.round(act.totalVolumeKg / 1000)}t`} l="volume" />
+          <MiniStat v={`${act.prs}`} l="PRs" />
+          <MiniStat v={friend.streak ? `${friend.streak}` : '—'} l="streak" />
+        </div>
+        <p className="text-[11px] text-muted text-center">Favourite lift: <span className="text-text font-medium">{act.favourite}</span></p>
+
+        {/* recent activity */}
+        <div>
+          <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Recent activity</p>
+          <div className="space-y-1.5">
+            {act.sessions.map((s, i) => (
+              <div key={i} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2">
+                <span className="text-base">{s.kind === 'cardio' ? '🏃' : '🏋️'}</span>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">{s.label}</p>
+                  <p className="text-[11px] text-muted">{s.detail}</p>
+                </div>
+                <span className="text-[11px] text-muted shrink-0">{whenLabel(s.daysAgo)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* their posts */}
+        {theirPosts.length > 0 && (
+          <div>
+            <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Latest posts</p>
+            <div className="space-y-1.5">
+              {theirPosts.map((p) => (
+                <div key={p.id} className="rounded-xl bg-surface-2 px-3 py-2">
+                  {p.flex && <span className="text-[11px] text-accent font-semibold">{p.flex.icon} {p.flex.label} · </span>}
+                  <span className="text-sm">{p.body}</span>
+                  <span className="text-[11px] text-muted"> · {timeAgo(p.createdAt)}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* actions */}
+        <div className="grid grid-cols-3 gap-2">
+          <Button className="justify-center" onClick={() => { startDuel(friend.name, friend.avatarSeed, 'volume', 20000, 7); haptic('success'); toast(`Challenge sent to ${friend.name} ⚔️`); onClose(); }}>
+            <span className="flex items-center gap-1"><Swords size={15} /> Duel</span>
+          </Button>
+          <Button variant="ghost" className="justify-center" onClick={() => { cheerFriend(friend.id); haptic('success'); toast(`Cheered ${friend.name} 👏`); }}>
+            <span className="flex items-center gap-1"><Heart size={15} /> Cheer</span>
           </Button>
           <Button variant="ghost" className="justify-center" onClick={() => { removeFriend(friend.id); haptic('tap'); onClose(); }}>
             <span className="flex items-center gap-1 text-danger"><Trash2 size={15} /> Remove</span>
           </Button>
         </div>
-        <p className="text-[11px] text-muted/70 text-center">Challenges run in the Race tab — first to the target wins.</p>
       </div>
     </Sheet>
   );
+}
+
+function MiniStat({ v, l }: { v: string; l: string }) {
+  return <div className="rounded-xl bg-surface-2 py-2"><p className="font-mono font-bold text-sm">{v}</p><p className="text-[10px] text-muted">{l}</p></div>;
 }
 
 /* ------------------------------- RACE -------------------------------- */
