@@ -2,9 +2,16 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Coins, Check } from 'lucide-react';
 import { Card, Button, Pill, Badge } from '../components/ui';
-import { COSMETICS } from '../data/cosmetics';
+import { COSMETICS, type Cosmetic } from '../data/cosmetics';
 import { useCosmetics } from '../state/cosmeticsStore';
 import { useGami } from '../state/gamificationStore';
+import { useSettings } from '../state/settingsStore';
+import type { ThemeId } from '../types';
+
+const THEME_SWATCH: Record<string, string> = {
+  'emerald-forge': '#10b981', 'cyber-lime': '#a3e635', 'obsidian-platinum': '#94a3b8',
+  'royal-amethyst': '#a855f7', 'synthwave': '#ec4899', 'blood-moon': '#ef4444', 'solar-flare': '#f59e0b',
+};
 import { haptic } from '../lib/haptics';
 import { toast, celebrate } from '../lib/toast';
 import { CountUp } from '../components/CountUp';
@@ -14,7 +21,9 @@ export default function Shop() {
   const coins = useGami((s) => s.coins);
   const spend = useGami((s) => s.spendCoins);
   const { owned, own, equippedTitle, equippedFrame, equipTitle, equipFrame } = useCosmetics();
-  const [tab, setTab] = useState<'title' | 'frame'>('title');
+  const setSetting = useSettings((s) => s.set);
+  const curTheme = useSettings((s) => s.theme);
+  const [tab, setTab] = useState<'title' | 'frame' | 'theme'>('title');
 
   const list = COSMETICS.filter((c) => c.type === tab);
 
@@ -23,12 +32,14 @@ export default function Shop() {
     const c = COSMETICS.find((x) => x.id === id);
     if (spend(price)) { own(id); celebrate(); toast(`Unlocked ${c?.name ?? 'item'} 🎉`); } else { haptic('warning'); toast(`Not enough coins — need 🪙${price}.`, 'error'); }
   }
-  function equip(id: string, type: 'title' | 'frame') {
-    const equipped = type === 'title' ? equippedTitle : equippedFrame;
-    const fn = type === 'title' ? equipTitle : equipFrame;
-    fn(equipped === id ? null : id); // toggle off if already equipped
+  function applyOrEquip(c: Cosmetic) {
+    if (c.type === 'theme') { setSetting('theme', c.value as ThemeId); haptic('success'); toast(`Applied ${c.name} 🎨`); return; }
+    const equipped = c.type === 'title' ? equippedTitle : equippedFrame;
+    const fn = c.type === 'title' ? equipTitle : equipFrame;
+    fn(equipped === c.id ? null : c.id); // toggle off if already equipped
     haptic('tap');
   }
+  const isEquipped = (c: Cosmetic) => c.type === 'theme' ? curTheme === c.value : (c.type === 'title' ? equippedTitle : equippedFrame) === c.id;
 
   return (
     <div className="px-4 pt-12 pb-8 space-y-4">
@@ -40,26 +51,29 @@ export default function Shop() {
 
       <div className="flex gap-2" data-noswipe>
         <Pill active={tab === 'title'} onClick={() => setTab('title')}>Titles</Pill>
-        <Pill active={tab === 'frame'} onClick={() => setTab('frame')}>Avatar frames</Pill>
+        <Pill active={tab === 'frame'} onClick={() => setTab('frame')}>Frames</Pill>
+        <Pill active={tab === 'theme'} onClick={() => setTab('theme')}>Themes</Pill>
       </div>
 
       <div className="grid grid-cols-2 gap-2">
         {list.map((c) => {
           const have = owned.includes(c.id);
-          const equipped = (c.type === 'title' ? equippedTitle : equippedFrame) === c.id;
+          const equipped = isEquipped(c);
           return (
             <Card key={c.id} className="space-y-2 text-center">
               {c.type === 'frame' ? (
                 <div className="mx-auto w-12 h-12 rounded-full p-[3px]" style={{ background: c.value }}>
                   <div className="w-full h-full rounded-full bg-surface flex items-center justify-center text-xs font-bold text-accent">ME</div>
                 </div>
+              ) : c.type === 'theme' ? (
+                <div className="mx-auto w-12 h-12 rounded-xl" style={{ background: THEME_SWATCH[c.value] ?? 'rgb(var(--accent))' }} />
               ) : (
                 <p className="text-sm font-bold text-accent-2 py-2">“{c.value}”</p>
               )}
               <p className="text-sm font-semibold">{c.name}</p>
               {have ? (
-                <Button variant={equipped ? 'primary' : 'ghost'} className="w-full justify-center py-1.5" onClick={() => equip(c.id, c.type)}>
-                  {equipped ? <span className="flex items-center gap-1"><Check size={14} /> Equipped</span> : 'Equip'}
+                <Button variant={equipped ? 'primary' : 'ghost'} className="w-full justify-center py-1.5" onClick={() => applyOrEquip(c)}>
+                  {equipped ? <span className="flex items-center gap-1"><Check size={14} /> {c.type === 'theme' ? 'Active' : 'Equipped'}</span> : (c.type === 'theme' ? 'Apply' : 'Equip')}
                 </Button>
               ) : (
                 <Button variant="outline" className="w-full justify-center py-1.5" disabled={coins < c.price} onClick={() => buy(c.id, c.price)}>🪙 {c.price}</Button>

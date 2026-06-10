@@ -36,6 +36,7 @@ export default function Train() {
   const startWorkout = useWorkout((s) => s.startWorkout);
 
   const [toolsOpen, setToolsOpen] = useState(false);
+  const [customOpen, setCustomOpen] = useState(false);
   const navigate = useNavigate();
   const t = useT();
 
@@ -72,7 +73,12 @@ export default function Train() {
             </Button>
           </>
         )}
+        <Button variant="ghost" className="w-full justify-center mt-2" onClick={() => setCustomOpen(true)}>
+          <span className="flex items-center gap-2"><Plus size={16} /> Start a custom workout</span>
+        </Button>
       </Card>
+
+      <CustomWorkoutSheet open={customOpen} onClose={() => setCustomOpen(false)} onStart={(name) => { startWorkout(name); setCustomOpen(false); haptic('success'); toast(`“${name}” started 💪`); }} />
 
       {/* Adaptive periodisation */}
       <Card className="flex gap-3 items-start">
@@ -214,6 +220,28 @@ function CRow({ label, v, step, onChange }: { label: string; v: number; step: nu
         <button onClick={() => onChange(Math.round((v + step) * 10) / 10)} className="w-8 h-8 rounded-md bg-surface-2">+</button>
       </div>
     </div>
+  );
+}
+
+function CustomWorkoutSheet({ open, onClose, onStart }: { open: boolean; onClose: () => void; onStart: (name: string) => void }) {
+  const [name, setName] = useState('');
+  const suggestions = ['Push', 'Pull', 'Legs', 'Upper', 'Lower', 'Full Body', 'Arms', 'Chest & Back', 'Conditioning'];
+  return (
+    <Sheet open={open} onClose={onClose} title="Custom workout">
+      <div className="space-y-3">
+        <p className="text-[11px] text-muted">Name your session — add exercises as you go.</p>
+        <input
+          autoFocus value={name} onChange={(e) => setName(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter' && name.trim()) onStart(name.trim()); }}
+          placeholder="e.g. Peter’s Power Hour"
+          className="w-full rounded-xl bg-surface-2 border border-line px-4 py-3 text-sm"
+        />
+        <div className="flex gap-2 flex-wrap">
+          {suggestions.map((s) => <Pill key={s} active={name === s} onClick={() => setName(s)}>{s}</Pill>)}
+        </div>
+        <Button className="w-full justify-center" disabled={!name.trim()} onClick={() => onStart(name.trim())}>Start workout</Button>
+      </div>
+    </Sheet>
   );
 }
 

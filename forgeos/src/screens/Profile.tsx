@@ -64,6 +64,7 @@ export default function Profile() {
   const backupFileRef = useRef<HTMLInputElement>(null);
   const equippedTitle = useCosmetics((c) => c.equippedTitle);
   const equippedFrame = useCosmetics((c) => c.equippedFrame);
+  const ownedCosmetics = useCosmetics((c) => c.owned);
 
   function setGymToHere() {
     if (!navigator.geolocation) {
@@ -101,6 +102,7 @@ export default function Profile() {
       coins: g.coins,
       rankIndex: index,
       heavyLifts: g.heavyLifts,
+      cardioKm: w.history.reduce((a, x) => a + (x.cardio?.distanceKm ?? 0), 0),
     };
     const achievements = ACHIEVEMENTS.filter((a) => a.value(stats) >= a.goal).length;
     const bestLifts = [...w.prs].sort((a, b) => b.e1rm - a.e1rm).slice(0, 3).map((p) => ({ name: p.exerciseName, e1rm: p.e1rm }));
@@ -132,7 +134,9 @@ export default function Profile() {
 
   function themeUnlocked(t: (typeof THEMES)[number]) {
     if (!t.locked) return true;
-    return rankIdx >= RANK_ORDER.indexOf(t.unlockRank);
+    if (rankIdx >= RANK_ORDER.indexOf(t.unlockRank)) return true;
+    // Or bought in the Forge Shop.
+    return ownedCosmetics.some((id) => cosmeticById(id)?.type === 'theme' && cosmeticById(id)?.value === t.id);
   }
 
   const title = equippedTitle ? cosmeticById(equippedTitle)?.value : null;
@@ -178,7 +182,7 @@ export default function Profile() {
                 <p className="text-sm font-medium flex items-center gap-1" style={{ color: 'rgb(var(--text))' }}>
                   {th.name} {!unlocked && <Lock size={12} />}
                 </p>
-                {!unlocked && <p className="text-[10px]" style={{ color: 'rgb(var(--muted))' }}>Unlocks at {th.unlockRank}</p>}
+                {!unlocked && <p className="text-[10px]" style={{ color: 'rgb(var(--muted))' }}>{th.unlockRank} rank · or buy in Shop</p>}
               </button>
             );
           })}

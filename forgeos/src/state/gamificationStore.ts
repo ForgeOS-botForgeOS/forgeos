@@ -28,6 +28,8 @@ interface GamiState {
   bumpMetric: (metric: 'sets' | 'sessions' | 'volume' | 'pr' | 'streak', amount: number) => void;
   claimQuest: (questId: string) => void;
   claimAllQuests: () => { count: number; xp: number; coins: number };
+  // Count a (possibly past-dated) session toward an active bet + this week's streak.
+  countSession: (dateISO: string) => void;
   startWager: (targetSessions: number, staked: number, days: number) => boolean;
   resolveWagerProgress: () => void;
 }
@@ -207,11 +209,36 @@ export const useGami = create<GamiState>()(
         return { count, xp, coins };
       },
 
+      // Count a session by its date (used for manual / past-dated workouts).
+      countSession: (dateISO) => {
+        const date = dateISO.slice(0, 10);
+        // Bet: a past workout dated within [startedAt, deadline] counts.
+        const w = get().wager;
+        if (w?.active) {
+          const start = (w.startedAt ?? '0000-01-01').slice(0, 10);
+          const end = w.deadline.slice(0, 10);
+          if (date >= start && date <= end) {
+            const progress = w.progress + 1;
+            if (progress >= w.targetSessions) set({ coins: get().coins + w.staked * 2, wager: { ...w, active: false, progress } });
+            else set({ wager: { ...w, progress } });
+          }
+        }
+        // Weekly streak: count it if the workout falls in the current tracked week.
+        if (get().weekStart && mondayOf(date) === get().weekStart) {
+          const goal = Math.max(1, useSettings.getState().weeklyGoal || 4);
+          const weekSessions = get().weekSessions + 1;
+          let weekStreak = get().weekStreak;
+          if (weekSessions === goal) weekStreak += 1;
+          set({ weekSessions, weekStreak });
+        }
+        get().bumpMetric('sessions', 1);
+      },
+
       startWager: (targetSessions, staked, days) => {
         if (get().wager?.active) return false;
         if (!get().spendCoins(staked)) return false;
         const deadline = new Date(Date.now() + days * 86400000).toISOString();
-        set({ wager: { active: true, targetSessions, staked, deadline, progress: 0 } });
+        set({ wager: { active: true, targetSessions, staked, deadline, startedAt: new Date().toISOString(), progress: 0 } });
         return true;
       },
 

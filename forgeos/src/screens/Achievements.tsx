@@ -26,6 +26,7 @@ export default function Achievements() {
     coins,
     rankIndex: rankForXp(xp).index,
     heavyLifts,
+    cardioKm: history.reduce((a, w) => a + (w.cardio?.distanceKm ?? 0), 0),
   };
 
   const evaluated = ACHIEVEMENTS.map((a) => {

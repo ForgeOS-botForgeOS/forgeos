@@ -86,6 +86,19 @@ export default function Nutrition() {
   function patchItem(idx: number, p: Partial<FoodItem>) {
     setItems((cur) => (cur ? cur.map((it, i) => (i === idx ? { ...it, ...p } : it)) : cur));
   }
+  // Scale a whole portion up/down — every macro moves together, so dialing in
+  // the real amount stays consistent (the practical path to an accurate log).
+  function scaleItem(idx: number, mult: number) {
+    setItems((cur) => (cur ? cur.map((it, i) => (i === idx ? {
+      ...it,
+      calories: Math.round(it.calories * mult),
+      proteinG: Math.round(it.proteinG * mult),
+      carbsG: Math.round(it.carbsG * mult),
+      fatG: Math.round(it.fatG * mult),
+      sugarG: Math.round(it.sugarG * mult),
+    } : it)) : cur));
+    haptic('tap');
+  }
   function addSelected() {
     if (!items) return;
     items.forEach((it, i) => {
@@ -223,6 +236,17 @@ export default function Nutrition() {
                       <MiniNum label="F" v={it.fatG} onChange={(v) => patchItem(idx, { fatG: v })} />
                       <MiniNum label="sug" v={it.sugarG} onChange={(v) => patchItem(idx, { sugarG: v })} />
                     </div>
+                    {on && (
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] text-muted">Portion</span>
+                        <div className="flex gap-1">
+                          <button onClick={() => scaleItem(idx, 0.9)} className="rounded-md bg-surface px-2 py-1 text-[11px] font-medium">−10%</button>
+                          <button onClick={() => scaleItem(idx, 0.5)} className="rounded-md bg-surface px-2 py-1 text-[11px] font-medium">½×</button>
+                          <button onClick={() => scaleItem(idx, 2)} className="rounded-md bg-surface px-2 py-1 text-[11px] font-medium">2×</button>
+                          <button onClick={() => scaleItem(idx, 1.1)} className="rounded-md bg-surface px-2 py-1 text-[11px] font-medium">+10%</button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

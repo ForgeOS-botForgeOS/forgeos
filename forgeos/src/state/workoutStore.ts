@@ -4,6 +4,7 @@ import type { PR, SetEntry, SpotifyTrack, Workout, WorkoutExercise } from '../ty
 import { e1rm, volumeOf, overloadSuggestion } from '../lib/fitness';
 import { exerciseById, EXERCISES } from '../data/exercises';
 import { enqueue } from '../lib/offlineQueue';
+import { useGami } from './gamificationStore';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -276,7 +277,12 @@ export const useWorkout = create<WorkoutState>()(
         set({ history: get().history.map((h) => (h.id === id ? updated : h)) });
       },
       deleteHistoryWorkout: (id) => set({ history: get().history.filter((h) => h.id !== id) }),
-      addManualWorkout: (w) => set({ history: [{ ...w, totalVolumeKg: computeVolume(w) }, ...get().history] }),
+      addManualWorkout: (w) => {
+        set({ history: [{ ...w, totalVolumeKg: computeVolume(w) }, ...get().history] });
+        // A manually-registered / past-dated workout counts toward an active bet
+        // (if within its window) and this week's streak — "count it as it is".
+        useGami.getState().countSession(w.date);
+      },
 
       logCardio: (machine, distanceKm, durationMin, calories) => {
         const cardioHistory = get().history.filter((w) => w.cardio);

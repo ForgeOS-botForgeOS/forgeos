@@ -199,6 +199,7 @@ export interface StreakWager {
   targetSessions: number;
   staked: number;
   deadline: string;
+  startedAt?: string; // window opens here — past workouts within [startedAt, deadline] count
   progress: number;
 }
 
