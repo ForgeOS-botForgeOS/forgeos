@@ -2,7 +2,6 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { StreakWager, UserQuest } from '../types';
 import { QUESTS } from '../data/quests';
-import { useSettings } from './settingsStore';
 
 interface GamiState {
   xp: number;
@@ -100,8 +99,7 @@ export const useGami = create<GamiState>()(
         }
         set({ lastSessionDate: today, streakDays: streak });
 
-        // ---- Weekly streak (planned-week completion, not gym-days) ----
-        const goal = Math.max(1, useSettings.getState().weeklyGoal || 4);
+        // ---- Weekly streak: consecutive weeks you SHOWED UP (>=1 session) ----
         const monday = mondayOf(today);
         let weekStart = get().weekStart;
         let weekSessions = get().weekSessions;
@@ -110,16 +108,15 @@ export const useGami = create<GamiState>()(
           weekStart = monday;
           weekSessions = 0;
         } else if (monday !== weekStart) {
-          // A new week began. Keep the streak only if last week hit goal and is the
-          // immediately preceding week; otherwise the streak is broken.
+          // New week. The previous tracked week always had >=1 session, so the
+          // streak only breaks if you skipped a whole week (gap > 1).
           const gapWeeks = Math.round(daysBetween(weekStart, monday) / 7);
-          const prevCompleted = weekSessions >= goal;
-          if (!(prevCompleted && gapWeeks === 1)) weekStreak = 0;
+          if (gapWeeks !== 1) weekStreak = 0;
           weekStart = monday;
           weekSessions = 0;
         }
         weekSessions += 1;
-        if (weekSessions === goal) weekStreak += 1; // week just completed
+        if (weekSessions === 1) weekStreak += 1; // showed up this week
         set({ weekStart, weekSessions, weekStreak });
 
         get().bumpMetric('sessions', 1);
@@ -225,10 +222,9 @@ export const useGami = create<GamiState>()(
         }
         // Weekly streak: count it if the workout falls in the current tracked week.
         if (get().weekStart && mondayOf(date) === get().weekStart) {
-          const goal = Math.max(1, useSettings.getState().weeklyGoal || 4);
           const weekSessions = get().weekSessions + 1;
           let weekStreak = get().weekStreak;
-          if (weekSessions === goal) weekStreak += 1;
+          if (weekSessions === 1) weekStreak += 1; // first show-up this week
           set({ weekSessions, weekStreak });
         }
         get().bumpMetric('sessions', 1);

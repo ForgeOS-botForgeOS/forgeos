@@ -42,6 +42,7 @@ function RankPanel() {
   const xp = useGami((s) => s.xp);
   const coins = useGami((s) => s.coins);
   const streak = useGami((s) => s.weekStreak);
+  const dayStreak = useGami((s) => s.streakDays);
   const convert = useGami((s) => s.convertXpToCoins);
   const buyFreeze = useGami((s) => s.buyStreakFreeze);
   const wager = useGami((s) => s.wager);
@@ -69,7 +70,7 @@ function RankPanel() {
       <div className="grid grid-cols-2 gap-3">
         <Card className="flex items-center gap-3">
           <Flame className="text-accent" />
-          <div><CountUp value={streak} className="font-mono font-bold text-lg block" /><p className="text-[11px] text-muted">week streak</p></div>
+          <div><CountUp value={streak} className="font-mono font-bold text-lg block" /><p className="text-[11px] text-muted">week streak · 🔥{dayStreak}d</p></div>
         </Card>
         <Card className="flex items-center gap-3">
           <Coins className="text-accent-2" />

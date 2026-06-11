@@ -29,6 +29,7 @@ export default function Progress() {
   const [tab, setTab] = useState<Tab>('body');
   const weekStreak = useGami((s) => s.weekStreak);
   const weekSessions = useGami((s) => s.weekSessions);
+  const dayStreak = useGami((s) => s.streakDays);
   const goal = useSettings((s) => s.weeklyGoal);
 
   const weekPct = Math.min(100, (weekSessions / Math.max(1, goal)) * 100);
@@ -52,7 +53,11 @@ export default function Progress() {
           </div>
           <span className="font-mono text-sm">{Math.min(weekSessions, goal)}/{goal}</span>
         </div>
-        <p className="text-[11px] text-muted">{weekSessions >= goal ? 'Week complete — streak secured 🔥' : `${goal - weekSessions} more planned session(s) to keep your week streak.`}</p>
+        <p className="text-[11px] text-muted">{weekSessions >= 1 ? 'You showed up this week — streak secured 🔥' : 'Train once this week to keep your streak going.'}</p>
+        <div className="flex gap-2 pt-1">
+          <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium flex items-center gap-1"><Flame size={12} className="text-accent" /> {weekStreak}-week streak</span>
+          <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium flex items-center gap-1"><Flame size={12} className="text-accent-2" /> {dayStreak}-day streak</span>
+        </div>
       </Card>
 
       <div className="flex gap-2">
