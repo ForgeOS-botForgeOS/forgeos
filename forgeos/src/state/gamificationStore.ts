@@ -12,6 +12,7 @@ interface GamiState {
   weekStreak: number;
   weekStart: string | null; // Monday yyyy-mm-dd of the tracked week
   weekSessions: number; // sessions logged so far this week
+  bestStreak: number; // longest day-streak ever reached (also set by imports)
   quests: UserQuest[];
   wager: StreakWager | null;
 
@@ -56,6 +57,7 @@ export const useGami = create<GamiState>()(
       weekStreak: 0,
       weekStart: null,
       weekSessions: 0,
+      bestStreak: 0,
       quests: [],
       wager: null,
 
@@ -97,7 +99,7 @@ export const useGami = create<GamiState>()(
           } else if (gap === 1) streak += 1;
           else streak = 1;
         }
-        set({ lastSessionDate: today, streakDays: streak });
+        set({ lastSessionDate: today, streakDays: streak, bestStreak: Math.max(get().bestStreak, streak) });
 
         // ---- Weekly streak: consecutive weeks you SHOWED UP (>=1 session) ----
         const monday = mondayOf(today);

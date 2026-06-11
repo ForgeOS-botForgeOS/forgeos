@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone } from 'lucide-react';
+import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { useSettings } from '../state/settingsStore';
@@ -291,6 +291,10 @@ export default function Profile() {
       <Card className="flex items-center justify-between" onClick={() => navigate('/download')}>
         <div className="flex items-center gap-2"><Smartphone size={16} className="text-muted" /><span className="text-sm">Get the app (install / APK)</span></div>
         <Badge color="rgb(var(--accent))">Open</Badge>
+      </Card>
+      <Card className="flex items-center justify-between" onClick={() => navigate('/import-progress')}>
+        <div className="flex items-center gap-2"><Download size={16} className="text-muted" /><span className="text-sm">Import progress from another app</span></div>
+        <Badge color="rgb(var(--accent-2))">Open</Badge>
       </Card>
 
       {/* Training & rewards */}

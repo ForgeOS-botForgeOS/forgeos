@@ -164,6 +164,7 @@ export interface UserProfile {
   specialRequest?: string;
   noWeekends?: boolean;
   onboarded: boolean;
+  joinedAt?: string; // "member since" — preserved across progress imports
 }
 
 // ---- Gamification ----
