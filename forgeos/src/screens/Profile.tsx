@@ -17,6 +17,7 @@ import { cosmeticById } from '../data/cosmetics';
 import { openTutorial } from '../components/Tutorial';
 import { ChangePasswordSheet, PasscodeSheet } from '../components/SecuritySheets';
 import { toast } from '../lib/toast';
+import { pushCloudBackup, pullCloudBackup, cloudSyncAvailable } from '../lib/cloudSync';
 import { useWorkout } from '../state/workoutStore';
 import { useQuotes } from '../state/quoteStore';
 import { ACHIEVEMENTS } from '../data/achievements';
@@ -61,6 +62,7 @@ export default function Profile() {
   const [gymMsg, setGymMsg] = useState<string | null>(null);
   const [pwSheet, setPwSheet] = useState(false);
   const [passcodeSheet, setPasscodeSheet] = useState<null | 'set' | 'change'>(null);
+  const [cloudConfirm, setCloudConfirm] = useState(false);
   const backupFileRef = useRef<HTMLInputElement>(null);
   const equippedTitle = useCosmetics((c) => c.equippedTitle);
   const equippedFrame = useCosmetics((c) => c.equippedFrame);
@@ -398,9 +400,25 @@ export default function Profile() {
       <div>
         <SectionTitle action={<Database size={14} className="text-muted" />}>Backup & restore</SectionTitle>
         <div className="flex gap-2">
-          <Button variant="ghost" className="flex-1 justify-center" onClick={exportData}>Export data</Button>
-          <Button variant="ghost" className="flex-1 justify-center" onClick={() => backupFileRef.current?.click()}>Import data</Button>
+          <Button variant="ghost" className="flex-1 justify-center" onClick={exportData}>Export file</Button>
+          <Button variant="ghost" className="flex-1 justify-center" onClick={() => backupFileRef.current?.click()}>Import file</Button>
         </div>
+        {cloudSyncAvailable() && (
+          <div className="flex gap-2 mt-2">
+            <Button variant="ghost" className="flex-1 justify-center" onClick={async () => {
+              const r = await pushCloudBackup();
+              toast(r === 'ok' ? 'Backed up to the cloud ☁️' : r === 'unauth' ? 'Log in with email to use cloud backup.' : 'Cloud backup failed — try again.', r === 'ok' ? 'success' : 'error');
+            }}>☁️ Back up to cloud</Button>
+            <Button variant="ghost" className="flex-1 justify-center" onClick={async () => {
+              if (cloudConfirm) {
+                const r = await pullCloudBackup();
+                if (r === 'restored') { toast('Restoring…'); setTimeout(() => location.reload(), 600); }
+                else toast(r === 'none' ? 'No cloud backup found.' : r === 'unauth' ? 'Log in to restore.' : 'Restore failed.', 'error');
+                setCloudConfirm(false);
+              } else { setCloudConfirm(true); toast('Tap again to replace local data with your cloud backup.', 'info'); }
+            }}>{cloudConfirm ? 'Confirm restore' : 'Restore from cloud'}</Button>
+          </div>
+        )}
         <input ref={backupFileRef} type="file" accept="application/json" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { try { await importData(f); toast('Backup restored ✅'); } catch { toast('That file is not a valid ForgeOS backup.', 'error'); } } }} />
       </div>
 

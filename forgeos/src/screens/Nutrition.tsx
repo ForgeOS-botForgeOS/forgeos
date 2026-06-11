@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Camera, Trash2, Sparkles, Calculator, ChefHat, Clock, Star, Check } from 'lucide-react';
+import { Camera, Trash2, Sparkles, Calculator, ChefHat, Clock, Star, Check, Barcode } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
 import { useNutrition } from '../state/nutritionStore';
@@ -11,6 +11,7 @@ import { useSettings } from '../state/settingsStore';
 import { useT } from '../lib/i18n';
 import { haptic } from '../lib/haptics';
 import { toast, celebrate } from '../lib/toast';
+import { BarcodeScanner } from '../components/BarcodeScanner';
 import type { ScanResult, FoodItem } from '../types';
 
 export default function Nutrition() {
@@ -49,6 +50,7 @@ export default function Nutrition() {
   const [recompOpen, setRecompOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [recipesOpen, setRecipesOpen] = useState(false);
+  const [barcodeOpen, setBarcodeOpen] = useState(false);
 
   const macros = profile?.macros ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 };
 
@@ -134,7 +136,10 @@ export default function Nutrition() {
             {scanning ? 'Analysing photo…' : 'Scan a meal photo'}
           </span>
         </Button>
-        <p className="text-[11px] text-muted/70">Wire a vision endpoint in <code>lib/vision.ts</code>. Without a key, realistic estimates are mocked.</p>
+        <Button variant="ghost" className="w-full justify-center" onClick={() => setBarcodeOpen(true)}>
+          <span className="flex items-center gap-2"><Barcode size={16} /> Scan a barcode (exact macros)</span>
+        </Button>
+        <p className="text-[11px] text-muted/70">Barcode = exact macros (Open Food Facts). Photo = AI estimate you can edit.</p>
       </Card>
 
       {/* Today's totals */}
@@ -257,6 +262,7 @@ export default function Nutrition() {
         )}
       </Sheet>
 
+      <BarcodeScanner open={barcodeOpen} onClose={() => setBarcodeOpen(false)} onAdd={(it) => { addEntry({ ...it, source: 'scan' }); learn(it); }} />
       <ManualEntry open={manualOpen} onClose={() => setManualOpen(false)} onAdd={(e) => { addEntry({ ...e, source: 'manual' }); setManualOpen(false); }} />
       <RecompCalc open={recompOpen} onClose={() => setRecompOpen(false)} />
       <RecipeBrowser

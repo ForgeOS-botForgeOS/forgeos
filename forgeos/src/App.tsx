@@ -7,6 +7,7 @@ import { Tutorial } from './components/Tutorial';
 import { LockScreen } from './components/LockScreen';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { Toaster } from './components/Toaster';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { ScreenSkeleton } from './components/Skeleton';
 import { useUser } from './state/userStore';
 import { useSettings } from './state/settingsStore';
@@ -15,6 +16,7 @@ import { useSocial } from './state/socialStore';
 import { initAuth } from './lib/auth';
 import { startReminderScheduler } from './lib/reminders';
 import { onReconnect, syncQueue } from './lib/offlineQueue';
+import { pushCloudBackup } from './lib/cloudSync';
 
 // Code-split every screen so the initial route loads a small chunk.
 const Onboarding = lazy(() => import('./screens/onboarding/Onboarding'));
@@ -119,10 +121,14 @@ export default function App() {
     const stopReminders = startReminderScheduler(() => useSettings.getState().reminder);
     // Offline sync engine: flush queued writes whenever we regain connectivity.
     const off = onReconnect(() => void syncQueue());
+    // Auto cloud-backup when the app is backgrounded (no-ops if signed out/offline).
+    const onHide = () => { if (document.visibilityState === 'hidden') void pushCloudBackup(); };
+    document.addEventListener('visibilitychange', onHide);
     return () => {
       stopAuth();
       stopReminders();
       off();
+      document.removeEventListener('visibilitychange', onHide);
     };
   }, [applyTheme, theme, autoTheme, ensureDailyQuests, seedFeed]);
 
@@ -138,6 +144,7 @@ export default function App() {
     <PhoneFrame>
       <UpdatePrompt />
       <Toaster />
+      <ErrorBoundary>
       <HashRouter>
         <Suspense fallback={<ScreenSkeleton />}>
         <Routes>
@@ -175,6 +182,7 @@ export default function App() {
         </Routes>
         </Suspense>
       </HashRouter>
+      </ErrorBoundary>
     </PhoneFrame>
   );
 }

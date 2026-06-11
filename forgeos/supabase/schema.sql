@@ -232,3 +232,20 @@ drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created
   after insert on auth.users
   for each row execute function public.handle_new_user();
+
+-- ---------------------------------------------------------------------------
+-- Cloud backup: the whole forge-* localStorage dump as one JSON blob per user
+-- (see src/lib/cloudSync.ts). Lets progress survive clearing the browser /
+-- switching devices. RLS scopes every row to its owner.
+-- ---------------------------------------------------------------------------
+create table if not exists public.user_backups (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  data jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+alter table public.user_backups enable row level security;
+
+drop policy if exists "own backup" on public.user_backups;
+create policy "own backup" on public.user_backups
+  for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
