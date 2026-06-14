@@ -1,15 +1,20 @@
 import { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Link2, FileUp, Camera, ShieldCheck, AlertTriangle, Sparkles, Undo2, Lock } from 'lucide-react';
+import { ChevronLeft, Link2, FileUp, Camera, ShieldCheck, AlertTriangle, Sparkles, Undo2, Lock, Wand2, Copy, Check } from 'lucide-react';
 import { Card, Button, Badge, SectionTitle } from '../components/ui';
 import { ForgeLogo } from '../components/ForgeLogo';
 import { haptic } from '../lib/haptics';
 import { toast, celebrate } from '../lib/toast';
-import { ingestApi, ingestFile, ingestScreenshots, ingestManual, type Ingested } from '../lib/import/lanes';
+import { ingestApi, ingestFile, ingestScreenshots, ingestManual, screenshotLaneLive as screenshotLive, type Ingested } from '../lib/import/lanes';
 import { buildPreview, type ImportPreview } from '../lib/import/pipeline';
 import { applyImport, undoImport } from '../lib/import/merge';
 import type { LaneId, TrustLevel } from '../lib/import/canonical';
+import { AI_CONVERT_PROMPT, EXAMPLE_EXPORT } from '../lib/import/aiBridge';
 import { useImports } from '../state/importStore';
+
+async function copyText(text: string): Promise<boolean> {
+  try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
+}
 
 const TRUST_COLOR: Record<TrustLevel, string> = { high: 'rgb(var(--success))', medium: 'rgb(var(--accent-2))', low: 'rgb(var(--warn))' };
 const LANES: { id: LaneId; title: string; trust: TrustLevel; icon: typeof Link2; blurb: string }[] = [
@@ -29,8 +34,17 @@ export default function ImportProgress() {
   const [preview, setPreview] = useState<ImportPreview | null>(null);
   const [result, setResult] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLInputElement>(null);
+
+  async function copyPrompt() {
+    const ok = await copyText(AI_CONVERT_PROMPT);
+    haptic(ok ? 'tap' : 'warning');
+    if (ok) { setCopied(true); toast('Prompt copied — paste it into any AI with your data', 'success'); setTimeout(() => setCopied(false), 2500); }
+    else toast('Couldn’t copy — select the text and copy it manually', 'error');
+  }
 
   async function analyze(ing: Ingested) {
     setBusy(true);
@@ -80,6 +94,31 @@ export default function ImportProgress() {
 
       {!result && (
         <>
+          {/* AI bridge — the easy universal path: any app → clean JSON via any AI */}
+          <Card className="border-accent/40 bg-accent/5 space-y-2">
+            <button onClick={() => setAiOpen((v) => !v)} className="w-full flex items-center gap-2 text-left">
+              <Wand2 size={18} className="text-accent shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold">Easiest: let an AI convert it</p>
+                <p className="text-[11px] text-muted">Works for any app — even from a screenshot. No export needed.</p>
+              </div>
+              <Badge color="rgb(var(--accent))">{aiOpen ? 'Hide' : 'How'}</Badge>
+            </button>
+            {aiOpen && (
+              <div className="space-y-2 pt-1">
+                <ol className="text-[12px] text-muted space-y-1 list-decimal list-inside marker:text-accent">
+                  <li>Copy the prompt below.</li>
+                  <li>Paste it into ChatGPT / Claude, then add your other app’s export <i>or</i> a screenshot of your stats.</li>
+                  <li>Copy the JSON it replies with into the <b>“Connect / paste export”</b> box and tap Analyze.</li>
+                </ol>
+                <Button className="w-full justify-center" onClick={copyPrompt}>
+                  <span className="flex items-center gap-1.5">{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? 'Copied!' : 'Copy the AI prompt'}</span>
+                </Button>
+                <p className="text-[11px] text-muted/70">The AI never sees your ForgeOS account — it only reformats the numbers you give it. We still verify everything before importing.</p>
+              </div>
+            )}
+          </Card>
+
           {/* lane picker */}
           <div className="space-y-2">
             {LANES.map((l) => {
@@ -101,12 +140,15 @@ export default function ImportProgress() {
           <input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Which app? (e.g. Strava, Duolingo)" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
 
           {lane === 'api' && (
-            <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder='{ "currentStreak": 247, "xp": 12400, "memberSince": "2023-01-04", ... }' className="w-full h-36 rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm font-mono" />
+            <div className="space-y-1.5">
+              <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder='Paste the JSON your other app exported (or the AI&apos;s reply):&#10;{ "currentStreak": 247, "xp": 12400, "memberSince": "2023-01-04" }' className="w-full h-36 rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm font-mono" />
+              <button onClick={() => setText(JSON.stringify(EXAMPLE_EXPORT, null, 2))} className="text-[11px] text-accent underline-offset-2 hover:underline">Don’t have it handy? Load an example →</button>
+            </div>
           )}
           {lane === 'file' && <p className="text-[11px] text-muted">Tap “Analyze” and choose your export file (.json / .csv / .xml).</p>}
           {lane === 'screenshot' && (
             <div className="space-y-2">
-              <p className="text-[11px] text-muted">Tap “Analyze” to pick a screenshot. The image is read, then discarded — never stored.</p>
+              <p className="text-[11px] text-muted">Tap “Analyze” to pick a screenshot. The image is read, then discarded — never stored. {!screenshotLive && <span className="text-warn">No image reader is configured here — use the AI bridge above or type your stats.</span>}</p>
               <button onClick={() => setShowManual((v) => !v)} className="text-xs text-accent underline-offset-2 hover:underline">Can’t auto-read? Type your stats →</button>
               {showManual && (
                 <Card className="grid grid-cols-2 gap-2">
@@ -185,6 +227,15 @@ function PreviewCard({ preview, onCancel, onConfirm }: { preview: ImportPreview;
       )}
 
       <p className="text-[11px] text-muted flex items-start gap-1.5"><ShieldCheck size={13} className="mt-0.5 shrink-0 text-success" /> {streak.reason}</p>
+
+      {/* Honest "is this true?" verdict */}
+      {!rejected && rows.length > 0 && (
+        report.warnings.length === 0 && report.quarantined.length === 0 ? (
+          <p className="text-[11px] text-success flex items-start gap-1.5"><Check size={13} className="mt-0.5 shrink-0" /> Cross-checked streak against account age and capped values by trust — everything looks consistent.</p>
+        ) : (
+          <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> We adjusted some values that didn’t add up (below) — only the verified amounts are imported.</p>
+        )
+      )}
 
       {report.warnings.filter((_, i) => !(rejected && i === 0)).map((w, i) => <p key={i} className="text-[11px] text-warn">⚠️ {w}</p>)}
       {report.quarantined.length > 0 && <p className="text-[11px] text-warn">Held back as unverified: {report.quarantined.join('; ')}.</p>}
