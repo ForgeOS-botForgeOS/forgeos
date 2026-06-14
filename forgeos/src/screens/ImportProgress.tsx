@@ -1,6 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Link2, FileUp, Camera, ShieldCheck, AlertTriangle, Sparkles, Undo2, Lock, Wand2, Copy, Check } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { ChevronLeft, Link2, FileUp, Camera, ShieldCheck, AlertTriangle, Sparkles, Undo2, Lock, Wand2, Copy, Check, HelpCircle, X, Rocket } from 'lucide-react';
 import { Card, Button, Badge, SectionTitle } from '../components/ui';
 import { ForgeLogo } from '../components/ForgeLogo';
 import { haptic } from '../lib/haptics';
@@ -15,6 +16,8 @@ import { useImports } from '../state/importStore';
 async function copyText(text: string): Promise<boolean> {
   try { await navigator.clipboard.writeText(text); return true; } catch { return false; }
 }
+
+const TUT_SEEN = 'forge-import-tutorial-seen';
 
 const TRUST_COLOR: Record<TrustLevel, string> = { high: 'rgb(var(--success))', medium: 'rgb(var(--accent-2))', low: 'rgb(var(--warn))' };
 const LANES: { id: LaneId; title: string; trust: TrustLevel; icon: typeof Link2; blurb: string }[] = [
@@ -36,8 +39,15 @@ export default function ImportProgress() {
   const [busy, setBusy] = useState(false);
   const [aiOpen, setAiOpen] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [showTut, setShowTut] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const imgRef = useRef<HTMLInputElement>(null);
+
+  // First-run, step-by-step tutorial — shown once, replayable from the header.
+  useEffect(() => {
+    if (!localStorage.getItem(TUT_SEEN)) setShowTut(true);
+  }, []);
+  function closeTut() { localStorage.setItem(TUT_SEEN, '1'); setShowTut(false); }
 
   async function copyPrompt() {
     const ok = await copyText(AI_CONVERT_PROMPT);
@@ -77,7 +87,11 @@ export default function ImportProgress() {
 
   return (
     <div className="px-4 pt-12 pb-10 space-y-4 max-w-md mx-auto">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+      {showTut && <ImportTutorial onClose={closeTut} />}
+      <div className="flex items-center justify-between">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+        <button onClick={() => setShowTut(true)} className="flex items-center gap-1 text-muted text-sm"><HelpCircle size={16} /> How it works</button>
+      </div>
       <div className="text-center space-y-1">
         <div className="mx-auto w-fit"><ForgeLogo size={48} tile /></div>
         <h1 className="text-2xl font-extrabold tracking-tight">Import your progress</h1>
@@ -247,6 +261,43 @@ function PreviewCard({ preview, onCancel, onConfirm }: { preview: ImportPreview;
         <Button className="flex-1 justify-center" disabled={rejected || rows.length === 0} onClick={onConfirm}>Import — keeps the better value</Button>
       </div>
     </Card>
+  );
+}
+
+const TUT_STEPS: { icon: typeof Wand2; title: string; text: string }[] = [
+  { icon: Sparkles, title: 'Bring everything across', text: 'Move your streak, XP, coins, history, PRs and body stats from any other app. Importing only ever ADDS — it keeps the better value and can never lower what you already have.' },
+  { icon: Wand2, title: '1 · Let an AI do the hard part', text: 'Tap “Easiest: let an AI convert it” and copy the prompt. Paste it into ChatGPT or Claude, then add your other app’s export — or just a screenshot of your stats. The AI turns it into clean data for you.' },
+  { icon: Link2, title: '2 · Paste it back & Analyze', text: 'Copy the JSON the AI replies with into the “Connect / paste export” box and tap Analyze. No export file? You can also upload one, read a screenshot, or just type your numbers by hand.' },
+  { icon: ShieldCheck, title: '3 · We check it’s real', text: 'Before anything changes, we cross-check it: a streak can’t be longer than your account has existed, and big XP/coin jumps are capped by how trustworthy the source is. You see exactly what was verified or adjusted.' },
+  { icon: Rocket, title: '4 · Review, import, relax', text: 'Confirm the preview and your progress is in. Made a mistake? Every import shows in the history below with a one-tap Undo that restores things exactly. Nothing leaves your device except a screenshot you choose to read.' },
+];
+
+function ImportTutorial({ onClose }: { onClose: () => void }) {
+  const [i, setI] = useState(0);
+  const s = TUT_STEPS[i];
+  const Icon = s.icon;
+  const last = i === TUT_STEPS.length - 1;
+  return (
+    <div className="absolute inset-0 z-[75] flex items-center justify-center p-6">
+      <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative w-full rounded-2xl bg-surface border border-line p-6">
+        <button className="absolute top-3 right-3 text-muted" onClick={onClose} aria-label="Close"><X size={18} /></button>
+        <div className="text-center space-y-3">
+          <div className="mx-auto w-14 h-14 rounded-2xl bg-accent/15 flex items-center justify-center"><Icon className="text-accent" size={26} /></div>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Step {i + 1} of {TUT_STEPS.length}</p>
+          <h3 className="text-lg font-bold">{s.title}</h3>
+          <p className="text-sm text-muted min-h-[96px]">{s.text}</p>
+          <div className="flex justify-center gap-1.5">
+            {TUT_STEPS.map((_, idx) => <span key={idx} className={`h-1.5 rounded-full transition-all ${idx === i ? 'w-5 bg-accent' : 'w-1.5 bg-surface-2'}`} />)}
+          </div>
+          <div className="flex gap-2 pt-1">
+            {i > 0 && <Button variant="outline" className="flex-1 justify-center" onClick={() => setI(i - 1)}>Back</Button>}
+            <Button className="flex-1 justify-center" onClick={() => (last ? onClose() : setI(i + 1))}>{last ? 'Got it 🔥' : 'Next'}</Button>
+          </div>
+          {!last && <button onClick={onClose} className="text-[11px] text-muted underline-offset-2 hover:underline">Skip</button>}
+        </div>
+      </motion.div>
+    </div>
   );
 }
 
