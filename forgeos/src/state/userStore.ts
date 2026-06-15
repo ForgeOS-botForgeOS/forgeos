@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { BodyStat, SavedPlan, UserProfile, WeekPlan, WeighIn } from '../types';
 import { macrosFor, mifflinStJeor, tdee } from '../lib/fitness';
 import { upsertProfile } from '../lib/repositories';
+import { generateFriendCode } from '../lib/friendCode';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -33,8 +34,10 @@ export const useUser = create<UserState>()(
       bodyStats: [],
       savedPlans: [],
       setProfile: (p) => {
-        set({ profile: p });
-        void upsertProfile(p); // no-op in mock mode
+        // Every profile carries its own unique friend code; mint one if absent.
+        const profile = { ...p, friendCode: p.friendCode || generateFriendCode() };
+        set({ profile });
+        void upsertProfile(profile); // no-op in mock mode
       },
       updateProfile: (patch) => {
         const cur = get().profile;
@@ -89,6 +92,10 @@ export const useUser = create<UserState>()(
           plan ? { ...plan, days: plan.days.map((d) => ({ ...d, day: (MAP[d.day] ?? d.day) as WeekPlan['days'][number]['day'] })) } : plan;
         if (state.weekPlan) state.weekPlan = fix(state.weekPlan)!;
         if (state.savedPlans?.length) state.savedPlans = state.savedPlans.map((sp) => ({ ...sp, plan: fix(sp.plan)! }));
+        // Reset: older installs derived the friend code from the profile id, so
+        // every offline user shared one code. Mint a unique one for anyone who
+        // doesn't have a real per-user code yet.
+        if (state.profile && !state.profile.friendCode) state.profile.friendCode = generateFriendCode();
       },
     },
   ),

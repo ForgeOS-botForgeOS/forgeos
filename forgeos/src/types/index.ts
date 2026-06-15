@@ -165,6 +165,7 @@ export interface UserProfile {
   noWeekends?: boolean;
   onboarded: boolean;
   joinedAt?: string; // "member since" — preserved across progress imports
+  friendCode?: string; // unique per-user code others use to add them
 }
 
 // ---- Gamification ----

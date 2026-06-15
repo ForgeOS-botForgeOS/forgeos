@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Swords, Store, Share2, Wifi, Circle, UserPlus, Check, X, Copy,
   MessageCircle, Send, Trash2, Crown, Zap, Heart, Dumbbell, Star, ChevronRight, Plus, UserMinus,
+  RotateCw, Search,
 } from 'lucide-react';
 import { joinRace } from '../lib/supabase';
 import { Screen } from '../components/Screen';
@@ -18,14 +19,13 @@ import { rankForXp, rankLabel } from '../data/ranks';
 import { generateShareCard, downloadDataUrl } from '../lib/shareCard';
 import { haptic } from '../lib/haptics';
 import { toast, celebrate } from '../lib/toast';
+import { generateFriendCode } from '../lib/friendCode';
 import { friendActivity, whenLabel } from '../lib/friendActivity';
 import { useT } from '../lib/i18n';
 import type { DuelMetric, FeedPost, Friend } from '../types';
 
 const REACTIONS = ['🔥', '💪', '👏', '🐐', '🧠'];
 type Tab = 'feed' | 'friends' | 'race' | 'market';
-
-const friendCode = (id?: string) => `FORGE-${(id ?? 'me').replace(/[^a-zA-Z0-9]/g, '').slice(0, 6).toUpperCase().padEnd(6, '0')}`;
 
 export default function Social() {
   const t = useT();
@@ -429,6 +429,16 @@ function StoryViewer({ groups, start, onClose }: { groups: StoryGroup[]; start: 
             <p className="text-sm text-white/80 mt-1">{slide.sub}</p>
           </motion.div>
         </div>
+
+        {/* quick reactions (Instagram-style story reactions) */}
+        {!group.mine && (
+          <div className="absolute bottom-6 inset-x-0 z-10 flex justify-center gap-2">
+            {['🔥', '💪', '👏', '🐐'].map((e) => (
+              <button key={e} onClick={() => { haptic('success'); toast(`Sent ${e} to ${group.name}`); }}
+                className="text-2xl rounded-full bg-white/15 backdrop-blur px-3 py-1.5 active:scale-90 transition-transform">{e}</button>
+            ))}
+          </div>
+        )}
       </div>
     </motion.div>
   );
@@ -445,12 +455,14 @@ function Friends() {
   const declineRequest = useSocial((s) => s.declineRequest);
   const cheerFriend = useSocial((s) => s.cheerFriend);
   const profile = useUser((s) => s.profile);
+  const updateProfile = useUser((s) => s.updateProfile);
   const myXp = useGami((s) => s.xp);
   const [name, setName] = useState('');
   const [copied, setCopied] = useState(false);
+  const [query, setQuery] = useState('');
   const [openFriend, setOpenFriend] = useState<Friend | null>(null);
 
-  const code = friendCode(profile?.id);
+  const code = profile?.friendCode ?? generateFriendCode();
   const incoming = requests.filter((r) => r.direction === 'incoming');
   const outgoing = requests.filter((r) => r.direction === 'outgoing');
   const suggested = MOCK_SUGGESTED.filter((s) => !friends.some((f) => f.name === s.name) && !requests.some((r) => r.name === s.name));
@@ -472,6 +484,15 @@ function Friends() {
     setCopied(true); setTimeout(() => setCopied(false), 1500);
   }
 
+  function regenCode() {
+    updateProfile({ friendCode: generateFriendCode() });
+    haptic('success');
+    toast('New friend code generated 🔁');
+  }
+
+  const q = query.trim().toLowerCase();
+  const shownFriends = q ? friends.filter((f) => f.name.toLowerCase().includes(q)) : friends;
+
   const board = [...friends.map((f) => ({ name: f.name, xp: f.xp, you: false })), { name: profile?.name ?? 'You', xp: myXp, you: true }]
     .sort((a, b) => b.xp - a.xp);
 
@@ -479,11 +500,14 @@ function Friends() {
     <div className="space-y-3">
       {/* Your code / invite */}
       <Card className="flex items-center justify-between">
-        <div>
+        <div className="min-w-0">
           <p className="text-[11px] uppercase tracking-wide text-muted">Your friend code</p>
           <p className="font-mono font-bold text-lg">{code}</p>
         </div>
-        <Button variant="ghost" onClick={shareCode}><span className="flex items-center gap-1 text-xs">{copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Invite'}</span></Button>
+        <div className="flex items-center gap-1 shrink-0">
+          <button onClick={regenCode} aria-label="Generate a new code" className="rounded-full p-2 text-muted hover:text-accent"><RotateCw size={15} /></button>
+          <Button variant="ghost" onClick={shareCode}><span className="flex items-center gap-1 text-xs">{copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Invite'}</span></Button>
+        </div>
       </Card>
 
       {/* Add by name or code */}
@@ -530,7 +554,14 @@ function Friends() {
 
       {/* Your circle */}
       <SectionTitle action={<span className="text-[11px] text-muted">{friends.length}</span>}>{t('s.yourCircle')}</SectionTitle>
-      {friends.map((f) => (
+      {friends.length > 4 && (
+        <div className="flex items-center gap-2 rounded-xl bg-surface-2 border border-line px-3">
+          <Search size={15} className="text-muted shrink-0" />
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search friends" className="flex-1 bg-transparent py-2.5 text-sm outline-none" />
+          {query && <button onClick={() => setQuery('')} aria-label="Clear search" className="text-muted"><X size={15} /></button>}
+        </div>
+      )}
+      {shownFriends.map((f) => (
         <Card key={f.id} className="flex items-center gap-3">
           <button onClick={() => setOpenFriend(f)}><Avatar seed={f.avatarSeed} /></button>
           <button className="flex-1 text-left" onClick={() => setOpenFriend(f)}>
@@ -548,6 +579,7 @@ function Friends() {
         </Card>
       ))}
       {friends.length === 0 && <p className="text-sm text-muted">No friends yet — add by code or pick a suggestion below.</p>}
+      {friends.length > 0 && shownFriends.length === 0 && <p className="text-sm text-muted">No friend matches “{query}”.</p>}
 
       {/* Suggested */}
       {suggested.length > 0 && (

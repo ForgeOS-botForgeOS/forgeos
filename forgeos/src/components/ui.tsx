@@ -1,5 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
 export function Card({
   children,
@@ -130,6 +130,10 @@ export function Sheet({
   title?: string;
   children: ReactNode;
 }) {
+  // Swipe-to-dismiss is driven only from the grab handle/header (via drag
+  // controls) so the body can scroll freely — putting `drag` on the scroll
+  // container itself swallows vertical scrolling.
+  const dragControls = useDragControls();
   return (
     <AnimatePresence>
       {open && (
@@ -146,15 +150,24 @@ export function Sheet({
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 360, damping: 34 }}
             drag="y"
+            dragListener={false}
+            dragControls={dragControls}
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}
             onDragEnd={(_, info) => { if (info.offset.y > 120) onClose(); }}
-            className="relative w-full max-h-[85%] overflow-y-auto no-scrollbar rounded-t-2xl bg-surface border-t border-line p-5 pb-8"
+            className="relative flex max-h-[85%] w-full flex-col rounded-t-2xl bg-surface border-t border-line"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="mx-auto mb-4 h-1 w-10 rounded-full bg-line" />
-            {title && <h3 className="text-lg font-bold mb-3">{title}</h3>}
-            {children}
+            <div
+              className="shrink-0 cursor-grab touch-none px-5 pt-3 active:cursor-grabbing"
+              onPointerDown={(e) => dragControls.start(e)}
+            >
+              <div className="mx-auto mb-3 h-1 w-10 rounded-full bg-line" />
+              {title && <h3 className="text-lg font-bold">{title}</h3>}
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto no-scrollbar px-5 pb-8 pt-3">
+              {children}
+            </div>
           </motion.div>
         </div>
       )}
