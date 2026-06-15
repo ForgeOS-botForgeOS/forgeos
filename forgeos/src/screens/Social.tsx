@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Swords, Store, Share2, Wifi, Circle, UserPlus, Check, X, Copy,
-  MessageCircle, Send, Trash2, Crown, Zap, Heart, Dumbbell, Star, ChevronRight,
+  MessageCircle, Send, Trash2, Crown, Zap, Heart, Dumbbell, Star, ChevronRight, Plus, UserMinus,
 } from 'lucide-react';
 import { joinRace } from '../lib/supabase';
 import { Screen } from '../components/Screen';
@@ -19,7 +20,7 @@ import { haptic } from '../lib/haptics';
 import { toast, celebrate } from '../lib/toast';
 import { friendActivity, whenLabel } from '../lib/friendActivity';
 import { useT } from '../lib/i18n';
-import type { DuelMetric, Friend } from '../types';
+import type { DuelMetric, FeedPost, Friend } from '../types';
 
 const REACTIONS = ['🔥', '💪', '👏', '🐐', '🧠'];
 type Tab = 'feed' | 'friends' | 'race' | 'market';
@@ -56,17 +57,15 @@ export default function Social() {
 
 function Feed() {
   const feed = useSocial((s) => s.feed);
-  const react = useSocial((s) => s.react);
-  const deletePost = useSocial((s) => s.deletePost);
   const refreshFeed = useSocial((s) => s.refreshFeed);
   const [filter, setFilter] = useState<'all' | 'friends' | 'mine'>('all');
   const [shareOpen, setShareOpen] = useState(false);
-  const [openComments, setOpenComments] = useState<string | null>(null);
 
   const shown = feed.filter((p) => (filter === 'mine' ? p.mine : filter === 'friends' ? !p.mine : true));
 
   return (
     <div className="space-y-3">
+      <StoriesRow />
       <Composer onShareCard={() => setShareOpen(true)} />
 
       <div className="flex items-center justify-between">
@@ -82,57 +81,100 @@ function Feed() {
 
       {shown.length === 0 && <p className="text-sm text-muted text-center py-6">Nothing here yet — flex something above 💪</p>}
 
-      {shown.map((p) => (
-        <Card key={p.id} className="space-y-2">
-          <div className="flex items-center gap-2">
-            <Avatar seed={p.avatarSeed} />
-            <div className="flex-1">
-              <p className="text-sm font-semibold">{p.authorName}{p.mine && <span className="ml-1 text-[10px] text-muted">· you</span>}</p>
-              <p className="text-[11px] text-muted">{timeAgo(p.createdAt)}</p>
-            </div>
-            {p.mine && (
-              <button onClick={() => { deletePost(p.id); haptic('tap'); }} aria-label="Delete post" className="text-muted hover:text-danger"><Trash2 size={15} /></button>
-            )}
-          </div>
-
-          {p.flex && (
-            <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-semibold text-accent">
-              <span>{p.flex.icon}</span> {p.flex.label}
-            </div>
-          )}
-
-          {p.body && <p className="text-sm">{p.body}</p>}
-          {p.imageUrl && <img src={p.imageUrl} alt="" className="w-40 rounded-xl border border-line" />}
-
-          {p.workoutSummary && (p.workoutSummary.volumeKg > 0 || p.workoutSummary.durationMin > 0) && (
-            <div className="flex gap-2 text-[11px] text-muted">
-              {p.workoutSummary.volumeKg > 0 && <><span>{p.workoutSummary.volumeKg.toLocaleString()} kg</span>·</>}
-              {p.workoutSummary.sets > 0 && <><span>{p.workoutSummary.sets} sets</span>·</>}
-              <span>{p.workoutSummary.durationMin} min</span>
-            </div>
-          )}
-
-          <div className="flex gap-1.5 flex-wrap items-center">
-            {REACTIONS.map((e) => {
-              const count = p.reactions[e] ?? 0;
-              return (
-                <button key={e} onClick={() => { react(p.id, e); haptic('tap'); }}
-                  className={`rounded-full px-2 py-1 text-xs ${p.myReaction === e ? 'bg-accent/20 ring-1 ring-accent' : 'bg-surface-2'}`}>
-                  {e} {count > 0 && <span className="text-muted">{count}</span>}
-                </button>
-              );
-            })}
-            <button onClick={() => setOpenComments(openComments === p.id ? null : p.id)} className="ml-auto rounded-full bg-surface-2 px-2 py-1 text-xs text-muted flex items-center gap-1">
-              <MessageCircle size={12} /> {p.comments?.length ?? 0}
-            </button>
-          </div>
-
-          {openComments === p.id && <Comments postId={p.id} />}
-        </Card>
-      ))}
+      {shown.map((p) => <PostCard key={p.id} post={p} />)}
 
       <ShareCardSheet open={shareOpen} onClose={() => setShareOpen(false)} />
     </div>
+  );
+}
+
+// Double-tap anywhere on a post to drop a 🔥 — Instagram's signature gesture,
+// reframed as a "spotter's cheer" for the gym.
+const DOUBLE_TAP_EMOJI = '🔥';
+
+function PostCard({ post: p }: { post: FeedPost }) {
+  const react = useSocial((s) => s.react);
+  const deletePost = useSocial((s) => s.deletePost);
+  const [openComments, setOpenComments] = useState(false);
+  const [burst, setBurst] = useState(0);
+  const lastTap = useRef(0);
+
+  function onMediaTap() {
+    const now = Date.now();
+    if (now - lastTap.current < 280) {
+      lastTap.current = 0;
+      if (p.myReaction !== DOUBLE_TAP_EMOJI) react(p.id, DOUBLE_TAP_EMOJI);
+      setBurst((n) => n + 1);
+      haptic('success');
+    } else {
+      lastTap.current = now;
+    }
+  }
+
+  return (
+    <Card className="space-y-2">
+      <div className="flex items-center gap-2">
+        <Avatar seed={p.avatarSeed} />
+        <div className="flex-1">
+          <p className="text-sm font-semibold">{p.authorName}{p.mine && <span className="ml-1 text-[10px] text-muted">· you</span>}</p>
+          <p className="text-[11px] text-muted">{timeAgo(p.createdAt)}</p>
+        </div>
+        {p.mine && (
+          <button onClick={() => { deletePost(p.id); haptic('tap'); }} aria-label="Delete post" className="text-muted hover:text-danger"><Trash2 size={15} /></button>
+        )}
+      </div>
+
+      <div className="relative" onClick={onMediaTap}>
+        {p.flex && (
+          <div className="inline-flex items-center gap-1.5 rounded-full bg-accent/15 px-2.5 py-1 text-xs font-semibold text-accent">
+            <span>{p.flex.icon}</span> {p.flex.label}
+          </div>
+        )}
+
+        {p.body && <p className="text-sm mt-1">{p.body}</p>}
+        {p.imageUrl && <img src={p.imageUrl} alt="" className="w-40 rounded-xl border border-line mt-1" />}
+
+        {p.workoutSummary && (p.workoutSummary.volumeKg > 0 || p.workoutSummary.durationMin > 0) && (
+          <div className="flex gap-2 text-[11px] text-muted mt-1">
+            {p.workoutSummary.volumeKg > 0 && <><span>{p.workoutSummary.volumeKg.toLocaleString()} kg</span>·</>}
+            {p.workoutSummary.sets > 0 && <><span>{p.workoutSummary.sets} sets</span>·</>}
+            <span>{p.workoutSummary.durationMin} min</span>
+          </div>
+        )}
+
+        <AnimatePresence>
+          {burst > 0 && (
+            <motion.div
+              key={burst}
+              initial={{ scale: 0.2, opacity: 0 }}
+              animate={{ scale: [0.2, 1.25, 1], opacity: [0, 1, 0] }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.8, times: [0, 0.4, 1] }}
+              className="pointer-events-none absolute inset-0 flex items-center justify-center text-5xl"
+            >
+              {DOUBLE_TAP_EMOJI}
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+
+      <div className="flex gap-1.5 flex-wrap items-center">
+        {REACTIONS.map((e) => {
+          const count = p.reactions[e] ?? 0;
+          return (
+            <button key={e} onClick={() => { react(p.id, e); haptic('tap'); }}
+              className={`rounded-full px-2 py-1 text-xs ${p.myReaction === e ? 'bg-accent/20 ring-1 ring-accent' : 'bg-surface-2'}`}>
+              {e} {count > 0 && <span className="text-muted">{count}</span>}
+            </button>
+          );
+        })}
+        <button onClick={() => setOpenComments((v) => !v)} className="ml-auto rounded-full bg-surface-2 px-2 py-1 text-xs text-muted flex items-center gap-1">
+          <MessageCircle size={12} /> {p.comments?.length ?? 0}
+        </button>
+      </div>
+
+      {openComments && <Comments postId={p.id} />}
+    </Card>
   );
 }
 
@@ -263,6 +305,135 @@ function ShareCardSheet({ open, onClose }: { open: boolean; onClose: () => void 
   );
 }
 
+/* ------------------------------ STORIES ------------------------------ */
+// Instagram-style stories, reframed for the gym: a ring of friends who are
+// training now or were recently active, each with a few auto-advancing "what
+// I'm doing" cards derived from their (deterministic) activity. Ephemeral and
+// fully client-side — no store changes, nothing to fake-persist.
+
+type Tint = 'accent' | 'accent-2' | 'success';
+interface StorySlide { icon: string; headline: string; sub: string; tint: Tint }
+interface StoryGroup { id: string; name: string; avatarSeed: string; mine: boolean; active: boolean; slides: StorySlide[] }
+
+function friendSlides(f: Friend): StorySlide[] {
+  const act = friendActivity(f);
+  const slides: StorySlide[] = [];
+  if (f.trainingNow) slides.push({ icon: '🏋️', headline: 'Training right now', sub: `${act.sessions[0]?.label ?? act.favourite} session`, tint: 'success' });
+  if (f.streak && f.streak > 0) slides.push({ icon: '🔥', headline: `${f.streak}-day streak`, sub: 'Still showing up', tint: 'accent' });
+  const last = act.sessions[0];
+  if (last && !f.trainingNow) slides.push({ icon: last.kind === 'cardio' ? '🏃' : '🏋️', headline: last.label, sub: last.detail, tint: 'accent-2' });
+  if (slides.length === 0) slides.push({ icon: '⭐', headline: f.rank, sub: `${f.xp.toLocaleString()} XP`, tint: 'accent' });
+  return slides.slice(0, 3);
+}
+
+function StoriesRow() {
+  const friends = useSocial((s) => s.friends);
+  const profile = useUser((s) => s.profile);
+  const xp = useGami((s) => s.xp);
+  const streak = useGami((s) => s.streakDays);
+  const last = useWorkout((s) => s.history)[0];
+  const [viewer, setViewer] = useState<number | null>(null);
+
+  const groups = useMemo<StoryGroup[]>(() => {
+    const mySlides: StorySlide[] = [];
+    const trainedToday = last && new Date(last.date).toDateString() === new Date().toDateString();
+    if (trainedToday) mySlides.push({ icon: '🏋️', headline: 'You trained today', sub: `${Math.round((last!.totalVolumeKg ?? 0)).toLocaleString()} kg moved`, tint: 'success' });
+    if (streak > 0) mySlides.push({ icon: '🔥', headline: `${streak}-day streak`, sub: 'Keep it alive', tint: 'accent' });
+    mySlides.push({ icon: '⭐', headline: rankLabel(rankForXp(xp).tier), sub: `${xp.toLocaleString()} XP`, tint: 'accent-2' });
+
+    const mine: StoryGroup = { id: 'me', name: 'Your story', avatarSeed: (profile?.name ?? 'You').slice(0, 2).toUpperCase(), mine: true, active: true, slides: mySlides.slice(0, 3) };
+
+    const friendGroups: StoryGroup[] = [...friends]
+      .sort((a, b) => Number(!!b.trainingNow) - Number(!!a.trainingNow) || Number(b.online) - Number(a.online) || b.xp - a.xp)
+      .map((f) => ({ id: f.id, name: f.name, avatarSeed: f.avatarSeed, mine: false, active: !!f.trainingNow || f.online || !!(f.streak && f.streak > 0), slides: friendSlides(f) }));
+
+    return [mine, ...friendGroups];
+  }, [friends, profile?.name, xp, streak, last]);
+
+  return (
+    <>
+      <div data-noswipe className="flex gap-3 overflow-x-auto no-scrollbar -mx-1 px-1 py-1">
+        {groups.map((g, i) => (
+          <button key={g.id} onClick={() => { haptic('tap'); setViewer(i); }} className="flex flex-col items-center gap-1 shrink-0 w-[60px]">
+            <span className={`relative rounded-full p-[2.5px] ${g.active ? 'bg-gradient-to-tr from-accent via-accent-2 to-accent' : 'bg-line'}`}>
+              <span className="block rounded-full p-[2px] bg-bg">
+                <Avatar seed={g.avatarSeed} />
+              </span>
+              {g.mine && <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-accent text-black p-0.5 ring-2 ring-bg"><Plus size={11} strokeWidth={3} /></span>}
+            </span>
+            <span className="text-[10px] text-muted truncate w-full text-center">{g.mine ? 'You' : g.name}</span>
+          </button>
+        ))}
+      </div>
+      {viewer !== null && <StoryViewer groups={groups} start={viewer} onClose={() => setViewer(null)} />}
+    </>
+  );
+}
+
+function StoryViewer({ groups, start, onClose }: { groups: StoryGroup[]; start: number; onClose: () => void }) {
+  const [gi, setGi] = useState(start);
+  const [si, setSi] = useState(0);
+  const group = groups[gi];
+  const slide = group?.slides[si];
+
+  function next() {
+    if (!group) return;
+    if (si < group.slides.length - 1) setSi(si + 1);
+    else if (gi < groups.length - 1) { setGi(gi + 1); setSi(0); }
+    else onClose();
+  }
+  function prev() {
+    if (si > 0) setSi(si - 1);
+    else if (gi > 0) { setGi(gi - 1); setSi(0); }
+  }
+
+  // auto-advance each slide
+  useEffect(() => {
+    const t = setTimeout(next, 4200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gi, si]);
+
+  if (!group || !slide) return null;
+  const tint = `rgb(var(--${slide.tint}))`;
+
+  return (
+    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 z-[80] bg-black">
+      <div className="relative h-full w-full overflow-hidden" style={{ background: `radial-gradient(120% 80% at 50% 0%, ${tint}, rgb(var(--bg)) 70%)` }}>
+        {/* progress segments */}
+        <div className="absolute top-2 inset-x-3 flex gap-1 z-10">
+          {group.slides.map((_, i) => (
+            <span key={i} className="h-1 flex-1 rounded-full bg-white/25 overflow-hidden">
+              {i < si && <span className="block h-full bg-white" />}
+              {i === si && <motion.span key={`${gi}-${si}`} className="block h-full bg-white" initial={{ width: '0%' }} animate={{ width: '100%' }} transition={{ duration: 4.2, ease: 'linear' }} />}
+            </span>
+          ))}
+        </div>
+
+        {/* header */}
+        <div className="absolute top-6 inset-x-3 flex items-center gap-2 z-10">
+          <Avatar seed={group.avatarSeed} small />
+          <span className="text-sm font-semibold text-white drop-shadow">{group.mine ? 'Your story' : group.name}</span>
+          <button onClick={onClose} className="ml-auto text-white/90 p-1"><X size={20} /></button>
+        </div>
+
+        {/* tap zones */}
+        <button aria-label="Previous" onClick={prev} className="absolute inset-y-0 left-0 w-1/3 z-[5]" />
+        <button aria-label="Next" onClick={next} className="absolute inset-y-0 right-0 w-2/3 z-[5]" />
+
+        {/* content */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 pointer-events-none">
+          <motion.div key={`${gi}-${si}`} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ type: 'spring', stiffness: 220, damping: 18 }}>
+            <div className="text-7xl mb-4">{slide.icon}</div>
+            <p className="text-2xl font-extrabold text-white drop-shadow">{slide.headline}</p>
+            <p className="text-sm text-white/80 mt-1">{slide.sub}</p>
+          </motion.div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 /* ------------------------------ FRIENDS ------------------------------ */
 
 function Friends() {
@@ -332,12 +503,12 @@ function Friends() {
           {incoming.map((r) => (
             <Card key={r.id} className="flex items-center gap-3">
               <Avatar seed={r.avatarSeed} />
-              <div className="flex-1">
-                <p className="text-sm font-semibold">{r.name}</p>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate">{r.name}</p>
                 <p className="text-xs text-muted">{r.rank} · {r.xp.toLocaleString()} XP{r.mutuals ? ` · ${r.mutuals} mutual` : ''}</p>
               </div>
-              <button onClick={() => { acceptRequest(r.id); haptic('success'); toast(`${r.name} is now your friend 🤝`); }} className="rounded-full bg-accent p-1.5 text-black"><Check size={16} /></button>
-              <button onClick={() => { declineRequest(r.id); haptic('tap'); }} className="rounded-full bg-surface-2 p-1.5 text-muted"><X size={16} /></button>
+              <button onClick={() => { acceptRequest(r.id); haptic('success'); toast(`${r.name} is now your friend 🤝`); }} className="rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-black flex items-center gap-1 shrink-0"><Check size={14} /> Confirm</button>
+              <button onClick={() => { declineRequest(r.id); haptic('tap'); }} aria-label={`Delete request from ${r.name}`} className="rounded-full bg-surface-2 p-1.5 text-muted shrink-0"><X size={16} /></button>
             </Card>
           ))}
         </div>
@@ -416,7 +587,9 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
   const startDuel = useSocial((s) => s.startDuel);
   const cheerFriend = useSocial((s) => s.cheerFriend);
   const feed = useSocial((s) => s.feed);
+  const [confirmRemove, setConfirmRemove] = useState(false);
   const act = useMemo(() => (friend ? friendActivity(friend) : null), [friend]);
+  useEffect(() => { setConfirmRemove(false); }, [friend]);
   if (!friend || !act) return null;
 
   const theirPosts = feed.filter((p) => p.authorName === friend.name).slice(0, 3);
@@ -485,10 +658,15 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
           <Button variant="ghost" className="justify-center" onClick={() => { cheerFriend(friend.id); haptic('success'); toast(`Cheered ${friend.name} 👏`); }}>
             <span className="flex items-center gap-1"><Heart size={15} /> Cheer</span>
           </Button>
-          <Button variant="ghost" className="justify-center" onClick={() => { removeFriend(friend.id); haptic('tap'); onClose(); }}>
-            <span className="flex items-center gap-1 text-danger"><Trash2 size={15} /> Remove</span>
+          <Button variant="ghost" className="justify-center" onClick={() => {
+            if (!confirmRemove) { setConfirmRemove(true); haptic('warning'); return; }
+            const name = friend.name;
+            removeFriend(friend.id); haptic('tap'); toast(`Unfriended ${name}`); onClose();
+          }}>
+            <span className="flex items-center gap-1 text-danger"><UserMinus size={15} /> {confirmRemove ? 'Confirm?' : 'Unfriend'}</span>
           </Button>
         </div>
+        {confirmRemove && <p className="text-[11px] text-muted text-center">Tap “Confirm?” again to remove {friend.name} from your circle.</p>}
       </div>
     </Sheet>
   );
