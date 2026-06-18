@@ -55,7 +55,7 @@ export interface RaceUpdate {
 // Live multiplayer race over a Supabase Realtime channel using presence +
 // broadcast. Each athlete broadcasts their running volume; everyone receives it.
 export function joinRace(raceId: string, me: RaceUpdate, onUpdate: (all: RaceUpdate[]) => void) {
-  if (!supabase) return { broadcast: (_: number) => {}, leave: () => {} };
+  if (!supabase) return { broadcast: () => {}, leave: () => {} };
   const channel = supabase.channel(`race:${raceId}`, { config: { presence: { key: me.userId } } });
   const state = new Map<string, RaceUpdate>([[me.userId, me]]);
 

@@ -1,6 +1,6 @@
 import { useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera } from 'lucide-react';
+import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -22,7 +22,8 @@ import { useGami } from '../state/gamificationStore';
 import { EXERCISES, exerciseById, substitutesFor, EXERCISE_CATEGORIES } from '../data/exercises';
 import { detectPlateaus, recommendBlock } from '../lib/analytics';
 import { overloadSuggestion, volumeOf } from '../lib/fitness';
-import { scanCardio } from '../lib/vision';
+import { scanCardio, type CardioSource } from '../lib/vision';
+import { speedKmh, paceLabel } from '../lib/cardio';
 import type { CardioScan } from '../types';
 import { xpForSet } from '../data/ranks';
 import { haptic } from '../lib/haptics';
@@ -138,6 +139,7 @@ function CardioScanCard() {
   const bumpMetric = useGami((s) => s.bumpMetric);
   const [busy, setBusy] = useState(false);
   const [scan, setScan] = useState<CardioScan | null>(null);
+  const [source, setSource] = useState<CardioSource>('watch');
   const [manualOpen, setManualOpen] = useState(false);
 
   // Shared reward path for both photo-scan and manual logging.
@@ -156,15 +158,20 @@ function CardioScanCard() {
     }
   }
 
+  function pick(src: CardioSource) {
+    setSource(src);
+    fileRef.current?.click();
+  }
+
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     setBusy(true);
     try {
-      setScan(await scanCardio(file));
+      setScan(await scanCardio(file, source));
       haptic('success');
     } catch {
-      setScan({ machine: 'Cardio', durationMin: 0, distanceKm: 0, calories: 0, avgPace: '', confidence: 0, tip: 'Could not read it — enter the numbers manually.' });
+      setScan({ machine: source === 'watch' ? 'Run' : 'Cardio', durationMin: 0, distanceKm: 0, calories: 0, avgPace: '', confidence: 0, tip: 'Could not read it — enter the numbers manually.' });
       haptic('warning');
     } finally {
       setBusy(false);
@@ -182,25 +189,39 @@ function CardioScanCard() {
     <Card className="space-y-2">
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
       <div className="flex gap-2">
-        <Button variant="ghost" className="flex-1 justify-center" disabled={busy} onClick={() => fileRef.current?.click()}>
-          <span className="flex items-center gap-2"><Camera size={16} /> {busy ? 'Reading…' : 'Cardio photo'}</span>
+        <Button variant="ghost" className="flex-1 justify-center" disabled={busy} onClick={() => pick('watch')}>
+          <span className="flex items-center gap-2"><Watch size={16} /> {busy && source === 'watch' ? 'Reading…' : 'From watch'}</span>
         </Button>
-        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setManualOpen(true)}>
-          <span className="flex items-center gap-2"><Plus size={16} /> Log cardio</span>
+        <Button variant="ghost" className="flex-1 justify-center" disabled={busy} onClick={() => pick('machine')}>
+          <span className="flex items-center gap-2"><Camera size={16} /> {busy && source === 'machine' ? 'Reading…' : 'Machine'}</span>
         </Button>
       </div>
-      <p className="text-[11px] text-muted/70 text-center">Distance + time earn XP like a lift — beat your best for a cardio PR 🏃</p>
+      <Button variant="ghost" className="w-full justify-center" onClick={() => setManualOpen(true)}>
+        <span className="flex items-center gap-2"><Plus size={16} /> Log manually</span>
+      </Button>
+      <p className="text-[11px] text-muted/70 text-center">Snap your watch or a machine console — we read distance, time & speed. Distance + time earn XP; beat your best for a cardio PR 🏃</p>
 
       <ManualCardioSheet open={manualOpen} onClose={() => setManualOpen(false)} onLog={(m, d, t) => { reward(m, d, t); setManualOpen(false); }} />
 
-      <Sheet open={!!scan} onClose={() => setScan(null)} title="Review cardio">
+      <Sheet open={!!scan} onClose={() => setScan(null)} title={source === 'watch' ? 'Review watch session' : 'Review cardio'}>
         {scan && (
           <div className="space-y-3">
-            <p className="text-[11px] text-muted">Read from the console — adjust anything. Confidence {Math.round(scan.confidence * 100)}%.</p>
+            <p className="text-[11px] text-muted">Read from your {source === 'watch' ? 'watch' : 'console'} — adjust anything. Confidence {Math.round(scan.confidence * 100)}%.</p>
             <input value={scan.machine} onChange={(e) => setScan({ ...scan, machine: e.target.value })} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm font-semibold" />
             <CRow label="Duration (min)" v={scan.durationMin} step={1} onChange={(v) => setScan({ ...scan, durationMin: v })} />
             <CRow label="Distance (km)" v={scan.distanceKm} step={0.1} onChange={(v) => setScan({ ...scan, distanceKm: v })} />
             <CRow label="Calories" v={scan.calories} step={10} onChange={(v) => setScan({ ...scan, calories: v })} />
+            {/* Speed + pace are always derived from distance & time, so they stay in sync as you edit. */}
+            <div className="flex gap-2">
+              <div className="flex-1 rounded-xl bg-surface-2 py-2 text-center">
+                <p className="font-mono font-bold text-sm">{speedKmh(scan.distanceKm, scan.durationMin) || '—'}<span className="text-[10px] text-muted font-sans"> km/h</span></p>
+                <p className="text-[10px] text-muted">avg speed</p>
+              </div>
+              <div className="flex-1 rounded-xl bg-surface-2 py-2 text-center">
+                <p className="font-mono font-bold text-sm">{paceLabel(scan.distanceKm, scan.durationMin)}</p>
+                <p className="text-[10px] text-muted">pace</p>
+              </div>
+            </div>
             {scan.tip && <p className="text-xs text-muted">💡 {scan.tip}</p>}
             <Button className="w-full justify-center" onClick={logIt}>Log session</Button>
           </div>
@@ -251,7 +272,6 @@ function ManualCardioSheet({ open, onClose, onLog }: { open: boolean; onClose: (
   const [machine, setMachine] = useState('Run');
   const [distance, setDistance] = useState(5);
   const [duration, setDuration] = useState(30);
-  const pace = distance > 0 ? duration / distance : 0;
   return (
     <Sheet open={open} onClose={onClose} title="Log cardio">
       <div className="space-y-3">
@@ -261,7 +281,7 @@ function ManualCardioSheet({ open, onClose, onLog }: { open: boolean; onClose: (
         </div>
         <CRow label="Distance (km)" v={distance} step={0.5} onChange={setDistance} />
         <CRow label="Time (min)" v={duration} step={1} onChange={setDuration} />
-        {distance > 0 && duration > 0 && <p className="text-[11px] text-muted">Pace ≈ {Math.floor(pace)}:{String(Math.round((pace % 1) * 60)).padStart(2, '0')} /km · earns ~{cardioXp(distance, duration)} XP</p>}
+        {distance > 0 && duration > 0 && <p className="text-[11px] text-muted">{speedKmh(distance, duration)} km/h · {paceLabel(distance, duration)} · earns ~{cardioXp(distance, duration)} XP</p>}
         <Button className="w-full justify-center" disabled={distance <= 0 && duration <= 0} onClick={() => onLog(machine, distance, duration)}>Log {machine}</Button>
       </div>
     </Sheet>

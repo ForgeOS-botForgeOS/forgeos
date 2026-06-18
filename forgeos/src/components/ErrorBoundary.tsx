@@ -11,7 +11,6 @@ export class ErrorBoundary extends Component<{ children: ReactNode }, { error: E
   }
 
   componentDidCatch(error: Error) {
-    // eslint-disable-next-line no-console
     console.error('ForgeOS crashed:', error);
   }
 

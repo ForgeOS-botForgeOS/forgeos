@@ -80,7 +80,7 @@ export function parsePastedWorkout(text: string): BuiltDay {
     const setsReps = line.match(/(\d+)\s*[x×]\s*(\d+)/i);
     const weight = line.match(/(\d+(?:\.\d+)?)\s*(?:kg|@)/i) || line.match(/@\s*(\d+(?:\.\d+)?)/);
     // strip numbers/markup to isolate the exercise name
-    const namePart = line.replace(/(\d+)\s*[x×]\s*(\d+)/gi, '').replace(/@?\s*\d+(?:\.\d+)?\s*(kg)?/gi, '').replace(/^[\-*•\d.\s]+/, '').trim();
+    const namePart = line.replace(/(\d+)\s*[x×]\s*(\d+)/gi, '').replace(/@?\s*\d+(?:\.\d+)?\s*(kg)?/gi, '').replace(/^[-*•\d.\s]+/, '').trim();
     if (!namePart) continue;
     const match = bestExerciseMatch(namePart);
     if (!match || exerciseIds.includes(match)) continue;
@@ -141,7 +141,7 @@ export function parsePastedWeek(text: string): { days: PlannedDay[]; matchedDays
   const byDay = new Map<Weekday, Section>();
   const free = () => WEEKDAYS.find((d) => !byDay.has(d));
   for (const sec of sections) {
-    let day = sec.day ?? (sec.dayIndex != null ? WEEKDAYS[sec.dayIndex] : undefined) ?? free();
+    const day = sec.day ?? (sec.dayIndex != null ? WEEKDAYS[sec.dayIndex] : undefined) ?? free();
     if (!day) continue;
     byDay.set(day, sec);
   }

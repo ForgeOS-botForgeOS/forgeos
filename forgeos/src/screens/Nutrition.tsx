@@ -231,7 +231,7 @@ export default function Nutrition() {
                 return (
                   <div key={idx} className={`rounded-xl border p-3 space-y-2 ${on ? 'border-accent/50 bg-surface-2' : 'border-line opacity-60'}`}>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setSelected((s) => { const n = new Set(s); n.has(idx) ? n.delete(idx) : n.add(idx); return n; })} className={`w-5 h-5 shrink-0 rounded-md border flex items-center justify-center ${on ? 'bg-accent border-accent text-black' : 'border-line'}`}>{on && <Check size={13} strokeWidth={3} />}</button>
+                      <button onClick={() => setSelected((s) => { const n = new Set(s); if (n.has(idx)) n.delete(idx); else n.add(idx); return n; })} className={`w-5 h-5 shrink-0 rounded-md border flex items-center justify-center ${on ? 'bg-accent border-accent text-black' : 'border-line'}`}>{on && <Check size={13} strokeWidth={3} />}</button>
                       <input value={it.name} onChange={(e) => patchItem(idx, { name: e.target.value })} className="flex-1 bg-transparent text-sm font-semibold outline-none" />
                     </div>
                     <div className="grid grid-cols-5 gap-1.5">

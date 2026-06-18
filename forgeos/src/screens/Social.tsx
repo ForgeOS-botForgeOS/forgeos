@@ -75,7 +75,7 @@ function Feed() {
             <Pill key={f} active={filter === f} onClick={() => setFilter(f)}>{f}</Pill>
           ))}
         </div>
-        <button className="text-xs text-muted flex items-center gap-1" onClick={() => { refreshFeed() ? haptic('tap') : haptic('warning'); }}>
+        <button className="text-xs text-muted flex items-center gap-1" onClick={() => { haptic(refreshFeed() ? 'tap' : 'warning'); }}>
           <Zap size={13} /> Refresh
         </button>
       </div>
@@ -945,7 +945,7 @@ function Marketplace() {
     if (owned.includes(id)) return;
     if (spend(price)) { buy(id); celebrate(); toast(`Unlocked “${title}” 🎉`); } else { haptic('warning'); toast(`Not enough coins — need 🪙${price}.`, 'error'); }
   }
-  function usePlan(r: typeof all[number]) {
+  function applyPlan(r: typeof all[number]) {
     if (!r.plan) return;
     setWeekPlan(r.plan); savePlanAs(r.title); haptic('success'); toast(`“${r.title}” loaded into your plan`); navigate('/plan');
   }
@@ -967,7 +967,7 @@ function Marketplace() {
             </div>
             <p className="text-xs text-muted">by {r.author} ({r.authorRank}) · {r.weeks}wk · {r.daysPerWeek}d/wk · <Star size={10} className="inline" /> {r.rating}</p>
             {isOwned && r.plan ? (
-              <Button className="w-full justify-center" onClick={() => usePlan(r)}>Use this plan</Button>
+              <Button className="w-full justify-center" onClick={() => applyPlan(r)}>Use this plan</Button>
             ) : (
               <Button variant={isOwned ? 'ghost' : 'primary'} className="w-full justify-center" disabled={isOwned} onClick={() => purchase(r.id, r.priceCoins, r.title)}>
                 {isOwned ? 'Owned ✓' : `Buy · 🪙 ${r.priceCoins}`}

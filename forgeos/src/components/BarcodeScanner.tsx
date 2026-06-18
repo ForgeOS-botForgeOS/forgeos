@@ -58,6 +58,9 @@ export function BarcodeScanner({ open, onClose, onAdd }: { open: boolean; onClos
       } catch { /* camera denied — manual entry still works */ }
     })();
     return () => { cancelled = true; cancelAnimationFrame(raf); stopCamera(); };
+    // `resolve` is intentionally omitted: it's re-created each render, so adding
+    // it would needlessly tear down and restart the camera on every render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, product, liveSupported]);
 
   useEffect(() => { if (!open) { setProduct(null); setManual(''); stopCamera(); } }, [open]);

@@ -10,17 +10,23 @@ const MODEL = 'gemini-2.0-flash';
 export const visionIsLive = Boolean(WORKER_URL || GEMINI_KEY);
 export const cardioScanIsLive = Boolean(WORKER_URL);
 
-// Read a cardio machine console from a photo (needs the Worker).
-export async function scanCardio(file: File): Promise<CardioScan> {
+export type CardioSource = 'machine' | 'watch';
+
+// Read a cardio session from a photo — either a gym-machine console or a
+// fitness watch / phone activity screen. Needs the Worker for real reads;
+// returns a believable sample otherwise.
+export async function scanCardio(file: File, source: CardioSource = 'machine'): Promise<CardioScan> {
   const { data, mime } = await fileToBase64(file);
   if (!WORKER_URL) {
     await new Promise((r) => setTimeout(r, 700));
-    return { machine: 'Treadmill', durationMin: 30, distanceKm: 5, calories: 320, avgPace: '6:00 /km', confidence: 0.3, tip: 'Sample — add a vision Worker to read real consoles.' };
+    return source === 'watch'
+      ? { machine: 'Run', durationMin: 28, distanceKm: 5.2, calories: 340, avgPace: '5:23 /km', confidence: 0.3, tip: 'Sample — add a vision Worker to read your watch for real.' }
+      : { machine: 'Treadmill', durationMin: 30, distanceKm: 5, calories: 320, avgPace: '6:00 /km', confidence: 0.3, tip: 'Sample — add a vision Worker to read real consoles.' };
   }
   const res = await fetch(WORKER_URL, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ image: data, mime, mode: 'cardio' }),
+    body: JSON.stringify({ image: data, mime, mode: 'cardio', source }),
   });
   if (!res.ok) throw new VisionError(`Vision worker error ${res.status}.`, res.status);
   const out = await res.json();
