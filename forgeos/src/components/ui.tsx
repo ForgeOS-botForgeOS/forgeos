@@ -1,4 +1,5 @@
 import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
 export function Card({
@@ -134,7 +135,11 @@ export function Sheet({
   // controls) so the body can scroll freely — putting `drag` on the scroll
   // container itself swallows vertical scrolling.
   const dragControls = useDragControls();
-  return (
+  // Portal to the phone root so the sheet always covers the FULL frame. Screen
+  // wrappers animate `y` (a CSS transform), which would otherwise trap this
+  // `absolute` sheet inside the screen's (often short) box and cut it off.
+  const root = (typeof document !== 'undefined' && document.getElementById('phone-root')) || null;
+  const tree = (
     <AnimatePresence>
       {open && (
         <div className="absolute inset-0 z-50 flex items-end" onClick={onClose}>
@@ -173,6 +178,7 @@ export function Sheet({
       )}
     </AnimatePresence>
   );
+  return root ? createPortal(tree, root) : tree;
 }
 
 export function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
