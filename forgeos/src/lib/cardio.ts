@@ -1,3 +1,20 @@
+import type { CardioMetric } from '../types';
+
+export const CARDIO_MACHINES = ['Run', 'Treadmill', 'Rower', 'Bike', 'Ski-erg', 'Elliptical', 'Stairmaster', 'Swim', 'Walk'];
+
+// One editable cardio session: the core numbers plus any metrics you define.
+export interface CardioData {
+  machine: string;
+  distanceKm: number;
+  durationMin: number;
+  calories: number;
+  metrics: CardioMetric[];
+}
+
+export function newCardioData(partial: Partial<CardioData> = {}): CardioData {
+  return { machine: 'Run', distanceKm: 5, durationMin: 30, calories: 0, metrics: [], ...partial };
+}
+
 // Pure conversions between the three things a watch/console shows: distance,
 // time and speed. Distance + time are the source of truth; speed and pace are
 // always derived so they stay consistent no matter which fields a photo read.

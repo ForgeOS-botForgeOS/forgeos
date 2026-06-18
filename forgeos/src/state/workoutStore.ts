@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { PR, SetEntry, SpotifyTrack, Workout, WorkoutExercise } from '../types';
+import type { CardioLog, CardioMetric, PR, SetEntry, SpotifyTrack, Workout, WorkoutExercise } from '../types';
 import { e1rm, volumeOf, overloadSuggestion } from '../lib/fitness';
 import { exerciseById, EXERCISES } from '../data/exercises';
 import { enqueue } from '../lib/offlineQueue';
@@ -35,12 +35,33 @@ interface WorkoutState {
   updateHistoryWorkout: (id: string, w: Workout) => void;
   deleteHistoryWorkout: (id: string) => void;
   addManualWorkout: (w: Workout) => void;
-  // Log a cardio session (distance + time) as a first-class workout. Returns
-  // whether it set a new distance / duration personal best.
-  logCardio: (machine: string, distanceKm: number, durationMin: number, calories?: number) => { distancePR: boolean; durationPR: boolean };
+  // Log a cardio session (distance + time + any custom metrics) as a first-class
+  // workout. Returns whether it set a new distance / duration personal best.
+  logCardio: (machine: string, distanceKm: number, durationMin: number, calories?: number, metrics?: CardioMetric[]) => { distancePR: boolean; durationPR: boolean };
+  // Edit an existing cardio log in place (everything is editable after the fact).
+  updateCardio: (id: string, fields: CardioLog & { date?: string }) => void;
 
   lastSetFor: (exerciseId: string, setIndex: number) => SetEntry | undefined;
   bestE1rm: (exerciseId: string) => number;
+}
+
+// Build a cardio workout from its log fields, keeping the derived bits (name,
+// duration, the placeholder set whose reps mirror the minutes) consistent — so
+// both logging and later editing produce identical, well-formed records.
+function buildCardioWorkout(id: string, cardio: CardioLog, date: string): Workout {
+  const { machine, distanceKm, durationMin } = cardio;
+  const ex = EXERCISES.find((x) => x.category === 'Cardio' && machine.toLowerCase().includes(x.name.split(' ')[0].toLowerCase()))
+    ?? EXERCISES.find((x) => x.category === 'Cardio');
+  return {
+    id,
+    name: `${machine}${distanceKm ? ` · ${distanceKm}km` : ''}${durationMin ? ` · ${Math.round(durationMin)}min` : ''}`,
+    date,
+    exercises: ex ? [{ id: uid(), exerciseId: ex.id, sets: [{ id: uid(), weightKg: 0, reps: Math.round(durationMin), completed: true }] }] : [],
+    durationSec: Math.round(durationMin * 60),
+    completed: true,
+    totalVolumeKg: 0,
+    cardio,
+  };
 }
 
 export function computeVolume(w: Workout): number {
@@ -284,24 +305,29 @@ export const useWorkout = create<WorkoutState>()(
         useGami.getState().countSession(w.date);
       },
 
-      logCardio: (machine, distanceKm, durationMin, calories) => {
+      logCardio: (machine, distanceKm, durationMin, calories, metrics) => {
         const cardioHistory = get().history.filter((w) => w.cardio);
         const prevBestDist = Math.max(0, ...cardioHistory.map((w) => w.cardio!.distanceKm));
         const prevBestDur = Math.max(0, ...cardioHistory.map((w) => w.cardio!.durationMin));
-        const ex = EXERCISES.find((x) => x.category === 'Cardio' && machine.toLowerCase().includes(x.name.split(' ')[0].toLowerCase()))
-          ?? EXERCISES.find((x) => x.category === 'Cardio');
-        const w: Workout = {
-          id: uid(),
-          name: `${machine}${distanceKm ? ` · ${distanceKm}km` : ''}${durationMin ? ` · ${Math.round(durationMin)}min` : ''}`,
-          date: new Date().toISOString(),
-          exercises: ex ? [{ id: uid(), exerciseId: ex.id, sets: [{ id: uid(), weightKg: 0, reps: Math.round(durationMin), completed: true }] }] : [],
-          durationSec: Math.round(durationMin * 60),
-          completed: true,
-          totalVolumeKg: 0,
-          cardio: { machine, distanceKm, durationMin, calories },
-        };
-        set({ history: [w, ...get().history] });
+        const cardio: CardioLog = { machine, distanceKm, durationMin, calories, metrics: metrics?.length ? metrics : undefined };
+        set({ history: [buildCardioWorkout(uid(), cardio, new Date().toISOString()), ...get().history] });
         return { distancePR: distanceKm > prevBestDist && distanceKm > 0, durationPR: durationMin > prevBestDur && durationMin > 0 };
+      },
+
+      updateCardio: (id, fields) => {
+        set({
+          history: get().history.map((h) => {
+            if (h.id !== id) return h;
+            const cardio: CardioLog = {
+              machine: fields.machine,
+              distanceKm: fields.distanceKm,
+              durationMin: fields.durationMin,
+              calories: fields.calories,
+              metrics: fields.metrics?.length ? fields.metrics : undefined,
+            };
+            return buildCardioWorkout(id, cardio, fields.date ?? h.date);
+          }),
+        });
       },
 
       lastSetFor: (exerciseId, setIndex) => {

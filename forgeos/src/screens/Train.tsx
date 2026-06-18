@@ -1,4 +1,4 @@
-import { useMemo, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
@@ -23,8 +23,8 @@ import { EXERCISES, exerciseById, substitutesFor, EXERCISE_CATEGORIES } from '..
 import { detectPlateaus, recommendBlock } from '../lib/analytics';
 import { overloadSuggestion, volumeOf } from '../lib/fitness';
 import { scanCardio, type CardioSource } from '../lib/vision';
-import { speedKmh, paceLabel } from '../lib/cardio';
-import type { CardioScan } from '../types';
+import { CardioFields } from '../components/CardioForm';
+import { newCardioData, type CardioData } from '../lib/cardio';
 import { xpForSet } from '../data/ranks';
 import { haptic } from '../lib/haptics';
 import type { SetEntry } from '../types';
@@ -138,13 +138,15 @@ function CardioScanCard() {
   const addXp = useGami((s) => s.addXp);
   const bumpMetric = useGami((s) => s.bumpMetric);
   const [busy, setBusy] = useState(false);
-  const [scan, setScan] = useState<CardioScan | null>(null);
+  const [draft, setDraft] = useState<CardioData | null>(null);
+  const [scanMeta, setScanMeta] = useState<{ confidence: number; tip: string } | null>(null);
   const [source, setSource] = useState<CardioSource>('watch');
   const [manualOpen, setManualOpen] = useState(false);
 
   // Shared reward path for both photo-scan and manual logging.
-  function reward(machine: string, distanceKm: number, durationMin: number, calories?: number) {
-    const { distancePR, durationPR } = logCardio(machine, distanceKm, durationMin, calories);
+  function reward(d: CardioData) {
+    const { machine, distanceKm, durationMin, calories, metrics } = d;
+    const { distancePR, durationPR } = logCardio(machine, distanceKm, durationMin, calories, metrics);
     registerSession();
     bumpMetric('volume', Math.round(distanceKm * 1000)); // distance counts toward volume quests
     const xp = cardioXp(distanceKm, durationMin, calories) + (distancePR ? 60 : 0) + (durationPR ? 40 : 0);
@@ -168,10 +170,17 @@ function CardioScanCard() {
     if (!file) return;
     setBusy(true);
     try {
-      setScan(await scanCardio(file, source));
+      const c = await scanCardio(file, source);
+      // Carry any extra reading (e.g. heart rate) straight into an editable metric.
+      const metrics = c.avgHr && c.avgHr > 0
+        ? [{ id: Math.random().toString(36).slice(2, 10), label: 'Avg HR', value: `${Math.round(c.avgHr)} bpm` }]
+        : [];
+      setDraft(newCardioData({ machine: c.machine || (source === 'watch' ? 'Run' : 'Cardio'), distanceKm: c.distanceKm, durationMin: c.durationMin, calories: c.calories, metrics }));
+      setScanMeta({ confidence: c.confidence, tip: c.tip });
       haptic('success');
     } catch {
-      setScan({ machine: source === 'watch' ? 'Run' : 'Cardio', durationMin: 0, distanceKm: 0, calories: 0, avgPace: '', confidence: 0, tip: 'Could not read it — enter the numbers manually.' });
+      setDraft(newCardioData({ machine: source === 'watch' ? 'Run' : 'Cardio', distanceKm: 0, durationMin: 0, calories: 0 }));
+      setScanMeta({ confidence: 0, tip: 'Could not read it — enter the numbers manually.' });
       haptic('warning');
     } finally {
       setBusy(false);
@@ -180,9 +189,10 @@ function CardioScanCard() {
   }
 
   function logIt() {
-    if (!scan) return;
-    reward(scan.machine, scan.distanceKm, scan.durationMin, scan.calories);
-    setScan(null);
+    if (!draft) return;
+    reward(draft);
+    setDraft(null);
+    setScanMeta(null);
   }
 
   return (
@@ -199,48 +209,21 @@ function CardioScanCard() {
       <Button variant="ghost" className="w-full justify-center" onClick={() => setManualOpen(true)}>
         <span className="flex items-center gap-2"><Plus size={16} /> Log manually</span>
       </Button>
-      <p className="text-[11px] text-muted/70 text-center">Snap your watch or a machine console — we read distance, time & speed. Distance + time earn XP; beat your best for a cardio PR 🏃</p>
+      <p className="text-[11px] text-muted/70 text-center">Snap your watch or a machine console — we read distance, time & speed, and you can add your own metrics. Distance + time earn XP; beat your best for a cardio PR 🏃</p>
 
-      <ManualCardioSheet open={manualOpen} onClose={() => setManualOpen(false)} onLog={(m, d, t) => { reward(m, d, t); setManualOpen(false); }} />
+      <ManualCardioSheet open={manualOpen} onClose={() => setManualOpen(false)} onLog={(d) => { reward(d); setManualOpen(false); }} />
 
-      <Sheet open={!!scan} onClose={() => setScan(null)} title={source === 'watch' ? 'Review watch session' : 'Review cardio'}>
-        {scan && (
+      <Sheet open={!!draft} onClose={() => { setDraft(null); setScanMeta(null); }} title={source === 'watch' ? 'Review watch session' : 'Review cardio'}>
+        {draft && (
           <div className="space-y-3">
-            <p className="text-[11px] text-muted">Read from your {source === 'watch' ? 'watch' : 'console'} — adjust anything. Confidence {Math.round(scan.confidence * 100)}%.</p>
-            <input value={scan.machine} onChange={(e) => setScan({ ...scan, machine: e.target.value })} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm font-semibold" />
-            <CRow label="Duration (min)" v={scan.durationMin} step={1} onChange={(v) => setScan({ ...scan, durationMin: v })} />
-            <CRow label="Distance (km)" v={scan.distanceKm} step={0.1} onChange={(v) => setScan({ ...scan, distanceKm: v })} />
-            <CRow label="Calories" v={scan.calories} step={10} onChange={(v) => setScan({ ...scan, calories: v })} />
-            {/* Speed + pace are always derived from distance & time, so they stay in sync as you edit. */}
-            <div className="flex gap-2">
-              <div className="flex-1 rounded-xl bg-surface-2 py-2 text-center">
-                <p className="font-mono font-bold text-sm">{speedKmh(scan.distanceKm, scan.durationMin) || '—'}<span className="text-[10px] text-muted font-sans"> km/h</span></p>
-                <p className="text-[10px] text-muted">avg speed</p>
-              </div>
-              <div className="flex-1 rounded-xl bg-surface-2 py-2 text-center">
-                <p className="font-mono font-bold text-sm">{paceLabel(scan.distanceKm, scan.durationMin)}</p>
-                <p className="text-[10px] text-muted">pace</p>
-              </div>
-            </div>
-            {scan.tip && <p className="text-xs text-muted">💡 {scan.tip}</p>}
+            {scanMeta && <p className="text-[11px] text-muted">Read from your {source === 'watch' ? 'watch' : 'console'} — adjust anything. Confidence {Math.round(scanMeta.confidence * 100)}%.</p>}
+            <CardioFields data={draft} onChange={setDraft} />
+            {scanMeta?.tip && <p className="text-xs text-muted">💡 {scanMeta.tip}</p>}
             <Button className="w-full justify-center" onClick={logIt}>Log session</Button>
           </div>
         )}
       </Sheet>
     </Card>
-  );
-}
-
-function CRow({ label, v, step, onChange }: { label: string; v: number; step: number; onChange: (v: number) => void }) {
-  return (
-    <div className="flex items-center justify-between gap-2">
-      <span className="text-sm text-muted">{label}</span>
-      <div className="flex items-center gap-1">
-        <button onClick={() => onChange(Math.max(0, Math.round((v - step) * 10) / 10))} className="w-8 h-8 rounded-md bg-surface-2">−</button>
-        <input type="number" value={v} onChange={(e) => onChange(Math.max(0, Number(e.target.value) || 0))} className="w-16 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-center font-mono text-text" />
-        <button onClick={() => onChange(Math.round((v + step) * 10) / 10)} className="w-8 h-8 rounded-md bg-surface-2">+</button>
-      </div>
-    </div>
   );
 }
 
@@ -266,23 +249,16 @@ function CustomWorkoutSheet({ open, onClose, onStart }: { open: boolean; onClose
   );
 }
 
-const CARDIO_MACHINES = ['Run', 'Treadmill', 'Rower', 'Bike', 'Ski-erg', 'Elliptical', 'Stairmaster', 'Swim', 'Walk'];
-
-function ManualCardioSheet({ open, onClose, onLog }: { open: boolean; onClose: () => void; onLog: (machine: string, distanceKm: number, durationMin: number) => void }) {
-  const [machine, setMachine] = useState('Run');
-  const [distance, setDistance] = useState(5);
-  const [duration, setDuration] = useState(30);
+function ManualCardioSheet({ open, onClose, onLog }: { open: boolean; onClose: () => void; onLog: (d: CardioData) => void }) {
+  const [data, setData] = useState<CardioData>(newCardioData());
+  useEffect(() => { if (open) setData(newCardioData()); }, [open]); // fresh defaults each open
+  const valid = data.distanceKm > 0 || data.durationMin > 0;
   return (
     <Sheet open={open} onClose={onClose} title="Log cardio">
       <div className="space-y-3">
-        <p className="text-[11px] text-muted">Distance and time both earn XP. Beat your longest distance or time for a cardio PR 🏃</p>
-        <div className="flex gap-2 flex-wrap">
-          {CARDIO_MACHINES.map((m) => <Pill key={m} active={machine === m} onClick={() => setMachine(m)}>{m}</Pill>)}
-        </div>
-        <CRow label="Distance (km)" v={distance} step={0.5} onChange={setDistance} />
-        <CRow label="Time (min)" v={duration} step={1} onChange={setDuration} />
-        {distance > 0 && duration > 0 && <p className="text-[11px] text-muted">{speedKmh(distance, duration)} km/h · {paceLabel(distance, duration)} · earns ~{cardioXp(distance, duration)} XP</p>}
-        <Button className="w-full justify-center" disabled={distance <= 0 && duration <= 0} onClick={() => onLog(machine, distance, duration)}>Log {machine}</Button>
+        <p className="text-[11px] text-muted">Distance and time both earn XP. Add your own metrics — HR, elevation, splits, whatever you track. Beat your longest distance or time for a cardio PR 🏃</p>
+        <CardioFields data={data} onChange={setData} />
+        <Button className="w-full justify-center" disabled={!valid} onClick={() => onLog(data)}>Log {data.machine || 'cardio'}</Button>
       </div>
     </Sheet>
   );

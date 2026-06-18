@@ -13,11 +13,20 @@ const FOOD_PROMPT =
   'number}], "confidence": number (0-1), "tip": string}. Be specific (e.g. "grilled ' +
   'chicken breast", "white rice, cooked", "olive oil").';
 
-const CARDIO_PROMPT =
-  'You are reading a cardio machine console. Read the numbers and identify the machine. ' +
-  'Respond with ONLY JSON: {"machine": string, "durationMin": number, "distanceKm": ' +
-  'number, "calories": number, "avgPace": string, "confidence": number (0-1), "tip": ' +
-  'string}. Use 0 (or "" for avgPace) for anything not visible.';
+function cardioPrompt(source) {
+  const where = source === 'watch'
+    ? 'a fitness watch face or a phone running/cycling app summary screen'
+    : 'a gym cardio machine console (treadmill, rower, bike, elliptical, stair climber)';
+  return (
+    `You are reading ${where}. Read every visible stat carefully and identify the activity. ` +
+    'UNITS: distanceKm MUST be kilometres — if the screen shows miles (mi), convert with km = miles * 1.60934. ' +
+    'durationMin is the TOTAL time in minutes — convert h:mm:ss or mm:ss to minutes (e.g. 1:05:30 → 65.5). ' +
+    'Respond with ONLY JSON, no prose: {"machine": string (e.g. "Run","Treadmill","Cycling","Row"), ' +
+    '"durationMin": number, "distanceKm": number, "calories": number, "avgPace": string (e.g. "5:30 /km"), ' +
+    '"avgHr": number (average heart rate in bpm, 0 if absent), "confidence": number (0-1), "tip": string (one short coaching note)}. ' +
+    'Use 0 (or "" for avgPace) for anything not visible. Read the actual digits — never invent values that are not shown.'
+  );
+}
 
 // Per-100g (or 100ml) macros: [kcal, protein, carbs, fat, sugar].
 const TABLE = {
@@ -261,13 +270,13 @@ export default {
     if (request.method !== 'POST') return json({ error: 'POST only' }, 405);
 
     try {
-      const { image, mode } = await request.json();
+      const { image, mode, source } = await request.json();
       if (!image) return json({ error: 'no image' }, 400);
       const bytes = Uint8Array.from(atob(image), (c) => c.charCodeAt(0));
       const isCardio = mode === 'cardio';
 
       const ai = await env.AI.run('@cf/llava-hf/llava-1.5-7b-hf', {
-        prompt: isCardio ? CARDIO_PROMPT : FOOD_PROMPT,
+        prompt: isCardio ? cardioPrompt(source) : FOOD_PROMPT,
         image: [...bytes],
         max_tokens: 512,
         temperature: 0.1,
@@ -278,7 +287,21 @@ export default {
       if (match) { try { data = JSON.parse(match[0]); } catch { /* fall through */ } }
 
       if (isCardio) {
-        if (!data) return json({ machine: 'Cardio', durationMin: 0, distanceKm: 0, calories: 0, avgPace: '', confidence: 0.2, tip: (text || 'Could not read the console.').slice(0, 160) });
+        if (!data) return json({ machine: 'Cardio', durationMin: 0, distanceKm: 0, calories: 0, avgPace: '', avgHr: 0, confidence: 0.2, tip: (text || 'Could not read it — enter the numbers manually.').slice(0, 160) });
+        // Sanitise + derive so the app always gets clean, consistent numbers.
+        const num = (v) => { const n = Number(v); return isFinite(n) && n >= 0 ? n : 0; };
+        data.durationMin = Math.round(num(data.durationMin) * 10) / 10;
+        data.distanceKm = Math.round(num(data.distanceKm) * 100) / 100;
+        data.calories = Math.round(num(data.calories));
+        data.avgHr = Math.round(num(data.avgHr));
+        // Backfill pace from distance + time when the model didn't read one.
+        if ((!data.avgPace || data.avgPace === '') && data.distanceKm > 0 && data.durationMin > 0) {
+          const pace = data.durationMin / data.distanceKm;
+          let m = Math.floor(pace);
+          let s = Math.round((pace - m) * 60);
+          if (s === 60) { m += 1; s = 0; }
+          data.avgPace = `${m}:${String(s).padStart(2, '0')} /km`;
+        }
         data.confidence = Math.max(0, Math.min(1, Number(data.confidence) || 0.5));
         return json(data);
       }

@@ -20,7 +20,7 @@ export async function scanCardio(file: File, source: CardioSource = 'machine'): 
   if (!WORKER_URL) {
     await new Promise((r) => setTimeout(r, 700));
     return source === 'watch'
-      ? { machine: 'Run', durationMin: 28, distanceKm: 5.2, calories: 340, avgPace: '5:23 /km', confidence: 0.3, tip: 'Sample — add a vision Worker to read your watch for real.' }
+      ? { machine: 'Run', durationMin: 28, distanceKm: 5.2, calories: 340, avgPace: '5:23 /km', avgHr: 148, confidence: 0.3, tip: 'Sample — add a vision Worker to read your watch for real.' }
       : { machine: 'Treadmill', durationMin: 30, distanceKm: 5, calories: 320, avgPace: '6:00 /km', confidence: 0.3, tip: 'Sample — add a vision Worker to read real consoles.' };
   }
   const res = await fetch(WORKER_URL, {

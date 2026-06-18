@@ -74,7 +74,23 @@ export interface Workout {
   xpEarned?: number;
   spotifyTrack?: SpotifyTrack | null;
   synced?: boolean; // offline-queue status
-  cardio?: { machine: string; distanceKm: number; durationMin: number; calories?: number };
+  cardio?: CardioLog;
+}
+
+// A user-defined extra metric on a cardio log (e.g. "Avg HR" → "152 bpm").
+// Value is free text so you can log whatever you want, in your own units.
+export interface CardioMetric {
+  id: string;
+  label: string;
+  value: string;
+}
+
+export interface CardioLog {
+  machine: string;
+  distanceKm: number;
+  durationMin: number;
+  calories?: number;
+  metrics?: CardioMetric[];
 }
 
 // A dated body snapshot for the Progress layer (weight + girths + optional photo).
@@ -320,6 +336,7 @@ export interface CardioScan {
   distanceKm: number;
   calories: number;
   avgPace: string;
+  avgHr?: number; // average heart rate (bpm) when the watch/console shows it
   confidence: number;
   tip: string;
 }

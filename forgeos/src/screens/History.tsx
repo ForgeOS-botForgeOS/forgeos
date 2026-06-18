@@ -1,14 +1,18 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Dumbbell, TrendingUp, Plus, Copy } from 'lucide-react';
+import { ChevronLeft, Dumbbell, TrendingUp, Plus, Copy, Activity, Trash2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
-import { Card, Badge, Pill, Button } from '../components/ui';
+import { Card, Badge, Pill, Button, Sheet } from '../components/ui';
 import { useWorkout } from '../state/workoutStore';
 import { useUser } from '../state/userStore';
 import { exerciseById } from '../data/exercises';
 import { e1rmSeries } from '../lib/analytics';
 import { liftBadge } from '../data/ranks';
+import { speedKmh, paceLabel, newCardioData, type CardioData } from '../lib/cardio';
+import { CardioFields } from '../components/CardioForm';
 import { haptic } from '../lib/haptics';
+import { toast } from '../lib/toast';
+import type { Workout } from '../types';
 
 export default function History() {
   const navigate = useNavigate();
@@ -33,6 +37,7 @@ function Sessions() {
   const history = useWorkout((s) => s.history);
   const addManualWorkout = useWorkout((s) => s.addManualWorkout);
   const navigate = useNavigate();
+  const [editCardio, setEditCardio] = useState<Workout | null>(null);
   const uid = () => Math.random().toString(36).slice(2, 10);
 
   function duplicate(w: typeof history[number]) {
@@ -53,6 +58,33 @@ function Sessions() {
       </Button>
       {history.length > 0 && <p className="text-[11px] text-muted">Tap a session to edit · ⧉ to duplicate.</p>}
       {history.map((w) => {
+        if (w.cardio) {
+          const c = w.cardio;
+          const derived = c.distanceKm > 0 && c.durationMin > 0;
+          return (
+            <Card key={w.id} className="space-y-1">
+              <div className="flex items-center justify-between">
+                <button onClick={() => setEditCardio(w)} className="font-semibold text-sm flex items-center gap-2 text-left flex-1"><Activity size={14} className="text-accent-2" /> {c.machine}</button>
+                <div className="flex items-center gap-2">
+                  <button onClick={() => duplicate(w)} title="Duplicate" className="text-muted"><Copy size={14} /></button>
+                  <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString()}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted">
+                {c.distanceKm ? `${c.distanceKm} km · ` : ''}{Math.round(c.durationMin)} min
+                {derived ? ` · ${speedKmh(c.distanceKm, c.durationMin)} km/h · ${paceLabel(c.distanceKm, c.durationMin)}` : ''}
+                {c.calories ? ` · ${c.calories} kcal` : ''}
+              </p>
+              {c.metrics && c.metrics.length > 0 && (
+                <div className="flex flex-wrap gap-1 pt-1">
+                  {c.metrics.map((m) => (
+                    <span key={m.id} className="text-[10px] rounded-full bg-surface-2 px-2 py-0.5 text-muted">{m.label}{m.value ? `: ${m.value}` : ''}</span>
+                  ))}
+                </div>
+              )}
+            </Card>
+          );
+        }
         const sets = w.exercises.reduce((a, e) => a + e.sets.filter((s) => s.completed).length, 0);
         return (
           <Card key={w.id} className="space-y-1">
@@ -72,7 +104,61 @@ function Sessions() {
           </Card>
         );
       })}
+      <CardioEditSheet workout={editCardio} onClose={() => setEditCardio(null)} />
     </div>
+  );
+}
+
+function CardioEditSheet({ workout, onClose }: { workout: Workout | null; onClose: () => void }) {
+  const updateCardio = useWorkout((s) => s.updateCardio);
+  const deleteHistoryWorkout = useWorkout((s) => s.deleteHistoryWorkout);
+  const [data, setData] = useState<CardioData>(newCardioData());
+  const [date, setDate] = useState('');
+  const [confirmDel, setConfirmDel] = useState(false);
+
+  useEffect(() => {
+    if (!workout?.cardio) return;
+    const c = workout.cardio;
+    setData({ machine: c.machine, distanceKm: c.distanceKm, durationMin: c.durationMin, calories: c.calories ?? 0, metrics: c.metrics ?? [] });
+    setDate(workout.date.slice(0, 10));
+    setConfirmDel(false);
+  }, [workout]);
+
+  if (!workout) return null;
+
+  function save() {
+    if (!workout) return;
+    const iso = date ? new Date(`${date}T12:00:00`).toISOString() : workout.date;
+    updateCardio(workout.id, { ...data, date: iso });
+    haptic('success');
+    toast('Cardio updated');
+    onClose();
+  }
+  function del() {
+    if (!workout) return;
+    if (!confirmDel) { setConfirmDel(true); haptic('warning'); return; }
+    deleteHistoryWorkout(workout.id);
+    haptic('tap');
+    toast('Cardio deleted');
+    onClose();
+  }
+
+  return (
+    <Sheet open={!!workout} onClose={onClose} title="Edit cardio">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <span className="text-sm text-muted">Date</span>
+          <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="rounded-lg bg-surface-2 border border-line px-3 py-1.5 text-sm text-text" />
+        </div>
+        <CardioFields data={data} onChange={setData} />
+        <div className="flex gap-2">
+          <Button className="flex-1 justify-center" onClick={save}>Save changes</Button>
+          <Button variant="ghost" className="justify-center" onClick={del}>
+            <span className="flex items-center gap-1 text-danger"><Trash2 size={15} /> {confirmDel ? 'Confirm?' : 'Delete'}</span>
+          </Button>
+        </div>
+      </div>
+    </Sheet>
   );
 }
 
