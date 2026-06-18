@@ -1,5 +1,7 @@
 import { supabase, isBackendLive } from './supabase';
-import type { FeedPost, UserProfile, Workout } from '../types';
+import type { FeedPost, Friend, UserProfile, Workout } from '../types';
+import type { FriendActivity, FriendSession } from './friendActivity';
+import { rankForXp, rankLabel } from '../data/ranks';
 
 // A thin repository layer mapping domain objects <-> Supabase rows. Every
 // function degrades gracefully to a no-op / null in mock mode, so the stores
@@ -86,6 +88,109 @@ export async function reactRemote(postId: string, userId: string, emoji: string)
   await supabase.from('reactions').upsert({ post_id: postId, user_id: userId, emoji });
 }
 
+// ---- Friends (live graph + real activity) ----
+
+// Resolve a friend code to a real user and create the mutual friendship.
+// Returns the new friend (real profile) or null if not found / no backend.
+export async function addFriendByCodeRemote(code: string): Promise<Friend | null> {
+  if (!isBackendLive || !supabase) return null;
+  const { data: fid, error } = await supabase.rpc('add_friend_by_code', { code });
+  if (error || !fid) return null;
+  const { data: rows } = await supabase
+    .from('profiles')
+    .select('id, name, xp, streak_days, last_active, training_now')
+    .eq('id', String(fid))
+    .limit(1);
+  return rows && rows[0] ? rowToFriend(rows[0] as Row) : null;
+}
+
+// Everyone you're accepted friends with, as Friend rows.
+export async function fetchFriendsRemote(): Promise<Friend[] | null> {
+  if (!isBackendLive || !supabase) return null;
+  const me = (await supabase.auth.getUser()).data.user?.id;
+  if (!me) return null;
+  const { data: links, error } = await supabase.from('friendships').select('friend_id').eq('user_id', me).eq('status', 'accepted');
+  if (error || !links) return null;
+  const ids = links.map((l) => String((l as { friend_id: string }).friend_id));
+  if (ids.length === 0) return [];
+  const { data: profs } = await supabase.from('profiles').select('id, name, xp, streak_days, last_active, training_now').in('id', ids);
+  return (profs ?? []).map((p) => rowToFriend(p as Row));
+}
+
+export async function removeFriendRemote(friendId: string): Promise<void> {
+  if (!isBackendLive || !supabase) return;
+  const me = (await supabase.auth.getUser()).data.user?.id;
+  if (!me) return;
+  // Drop both directions of the friendship.
+  await supabase.from('friendships').delete().eq('user_id', me).eq('friend_id', friendId);
+  await supabase.from('friendships').delete().eq('user_id', friendId).eq('friend_id', me);
+}
+
+// A friend's REAL activity, derived from their synced workouts/PRs. Honest about
+// privacy: when they've turned sharing off we return only the private flag.
+export async function fetchFriendActivityRemote(friendId: string): Promise<FriendActivity | null> {
+  if (!isBackendLive || !supabase) return null;
+  const { data: prof } = await supabase.from('profiles').select('share_activity').eq('id', friendId).single();
+  if (prof && prof.share_activity === false) {
+    return { weeklySessions: 0, totalVolumeKg: 0, prs: 0, favourite: '', sessions: [], bio: '', real: true, private: true };
+  }
+  const since = new Date(Date.now() - 60 * 86400000).toISOString();
+  const [wsRes, prCountRes, topPrRes] = await Promise.all([
+    supabase.from('workouts').select('name, date, total_volume_kg, duration_sec').eq('user_id', friendId).gte('date', since).order('date', { ascending: false }).limit(50),
+    supabase.from('prs').select('id', { count: 'exact', head: true }).eq('user_id', friendId),
+    supabase.from('prs').select('exercise_name, e1rm').eq('user_id', friendId).order('e1rm', { ascending: false }).limit(1),
+  ]);
+  const workouts = (wsRes.data ?? []) as { name: string; date: string; total_volume_kg: number; duration_sec: number }[];
+  const now = Date.now();
+  const weeklySessions = workouts.filter((w) => now - new Date(w.date).getTime() < 7 * 86400000).length;
+  const totalVolumeKg = Math.round(workouts.reduce((a, w) => a + (Number(w.total_volume_kg) || 0), 0));
+  const sessions: FriendSession[] = workouts.slice(0, 6).map((w) => {
+    const daysAgo = Math.max(0, Math.floor((now - new Date(w.date).getTime()) / 86400000));
+    const vol = Math.round(Number(w.total_volume_kg) || 0);
+    const mins = Math.round((Number(w.duration_sec) || 0) / 60);
+    return { kind: vol > 0 ? 'lift' : 'cardio', label: w.name ?? 'Session', detail: vol > 0 ? `${vol.toLocaleString()} kg` : `${mins} min`, daysAgo };
+  });
+  const topPr = (topPrRes.data ?? [])[0] as { exercise_name?: string } | undefined;
+  return { weeklySessions, totalVolumeKg, prs: prCountRes.count ?? 0, favourite: topPr?.exercise_name ?? '', sessions, bio: '', real: true };
+}
+
+// Push my own status so friends see accurate rank/XP/streak/presence.
+export async function syncMyActivityRemote(opts: { friendCode?: string; xp: number; streakDays: number; shareActivity: boolean; trainingNow?: boolean }): Promise<void> {
+  if (!isBackendLive || !supabase) return;
+  const me = (await supabase.auth.getUser()).data.user?.id;
+  if (!me) return;
+  const rankTier = rankLabel(rankForXp(opts.xp).tier);
+  await supabase.from('profiles').update({
+    friend_code: opts.friendCode ?? null,
+    xp: opts.xp,
+    streak_days: opts.streakDays,
+    rank_tier: rankTier,
+    share_activity: opts.shareActivity,
+    training_now: opts.trainingNow ?? false,
+    last_active: new Date().toISOString(),
+  }).eq('id', me);
+  await supabase.from('leaderboard_entries').upsert({ user_id: me, xp: opts.xp, rank_tier: rankTier, public: true, updated_at: new Date().toISOString() });
+}
+
+function rowToFriend(p: Row): Friend {
+  const name = (p.name as string) ?? 'Athlete';
+  const xp = Number(p.xp) || 0;
+  const lastIso = (p.last_active as string) || undefined;
+  const online = lastIso ? Date.now() - new Date(lastIso).getTime() < 5 * 60000 : false;
+  return {
+    id: String(p.id),
+    name,
+    rank: rankLabel(rankForXp(xp).tier),
+    xp,
+    online,
+    avatarSeed: name.slice(0, 2).toUpperCase(),
+    trainingNow: Boolean(p.training_now) && online,
+    streak: Number(p.streak_days) || 0,
+    lastActiveISO: lastIso,
+    friendCode: (p.friend_code as string) || undefined,
+  };
+}
+
 // ---- Leaderboard ----
 export async function upsertLeaderboard(userId: string, xp: number, rankTier: string, isPublic: boolean): Promise<void> {
   if (!isBackendLive || !supabase) return;
@@ -112,6 +217,7 @@ function rowToProfile(r: Row): UserProfile {
     macros: (r.macros as UserProfile['macros']) ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 },
     quizAnswers: (r.quiz_answers as Record<string, string>) ?? {},
     onboarded: Boolean(r.onboarded),
+    friendCode: (r.friend_code as string) ?? undefined,
   };
 }
 
@@ -133,5 +239,6 @@ function profileToRow(p: UserProfile): Row {
     macros: p.macros,
     quiz_answers: p.quizAnswers,
     onboarded: p.onboarded,
+    friend_code: p.friendCode ?? null,
   };
 }

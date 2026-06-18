@@ -22,6 +22,7 @@ import { toast, celebrate } from '../lib/toast';
 import { generateFriendCode } from '../lib/friendCode';
 import { buildInviteLink, tryExtractInvite } from '../lib/invite';
 import { friendActivity, whenLabel } from '../lib/friendActivity';
+import { useFriendActivity } from '../lib/friendData';
 import { useT } from '../lib/i18n';
 import type { DuelMetric, FeedPost, Friend } from '../types';
 
@@ -455,6 +456,7 @@ function Friends() {
   const acceptRequest = useSocial((s) => s.acceptRequest);
   const declineRequest = useSocial((s) => s.declineRequest);
   const addFriendByInvite = useSocial((s) => s.addFriendByInvite);
+  const syncFriends = useSocial((s) => s.syncFriends);
   const cheerFriend = useSocial((s) => s.cheerFriend);
   const profile = useUser((s) => s.profile);
   const updateProfile = useUser((s) => s.updateProfile);
@@ -464,6 +466,8 @@ function Friends() {
   const [copied, setCopied] = useState(false);
   const [query, setQuery] = useState('');
   const [openFriend, setOpenFriend] = useState<Friend | null>(null);
+
+  useEffect(() => { void syncFriends(); }, [syncFriends]); // pull the real graph (live backend)
 
   const code = profile?.friendCode ?? generateFriendCode();
   const inviteLink = useMemo(() => buildInviteLink({
@@ -648,7 +652,7 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
   const cheerFriend = useSocial((s) => s.cheerFriend);
   const feed = useSocial((s) => s.feed);
   const [confirmRemove, setConfirmRemove] = useState(false);
-  const act = useMemo(() => (friend ? friendActivity(friend) : null), [friend]);
+  const { activity: act } = useFriendActivity(friend);
   useEffect(() => { setConfirmRemove(false); }, [friend]);
   if (!friend || !act) return null;
 
@@ -666,48 +670,67 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
             <p className="text-[11px] text-muted">{friend.trainingNow ? 'Training now 🟢' : friend.online ? 'Online' : `Last active ${friend.lastActiveISO ? timeAgo(friend.lastActiveISO) : 'recently'}`}{friend.streak ? ` · 🔥 ${friend.streak}` : ''}</p>
           </div>
         </div>
-        <p className="text-[11px] text-muted italic">“{act.bio}”</p>
+        {/* honesty tag: is this data live & real, or a local sample? */}
+        <p className="text-[10px] text-muted flex items-center gap-1">
+          {act.real
+            ? <><Circle size={7} className="fill-success text-success" /> Live activity</>
+            : <>✦ Sample activity (no backend connected)</>}
+        </p>
 
-        {/* stat strip */}
-        <div className="grid grid-cols-4 gap-2 text-center">
-          <MiniStat v={`${act.weeklySessions}`} l="this wk" />
-          <MiniStat v={`${Math.round(act.totalVolumeKg / 1000)}t`} l="volume" />
-          <MiniStat v={`${act.prs}`} l="PRs" />
-          <MiniStat v={friend.streak ? `${friend.streak}` : '—'} l="streak" />
-        </div>
-        <p className="text-[11px] text-muted text-center">Favourite lift: <span className="text-text font-medium">{act.favourite}</span></p>
-
-        {/* recent activity */}
-        <div>
-          <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Recent activity</p>
-          <div className="space-y-1.5">
-            {act.sessions.map((s, i) => (
-              <div key={i} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2">
-                <span className="text-base">{s.kind === 'cardio' ? '🏃' : '🏋️'}</span>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{s.label}</p>
-                  <p className="text-[11px] text-muted">{s.detail}</p>
-                </div>
-                <span className="text-[11px] text-muted shrink-0">{whenLabel(s.daysAgo)}</span>
-              </div>
-            ))}
+        {act.private ? (
+          <div className="rounded-xl bg-surface-2 px-4 py-6 text-center">
+            <p className="text-2xl mb-1">🔒</p>
+            <p className="text-sm font-medium">{friend.name} keeps their activity private</p>
+            <p className="text-[11px] text-muted mt-1">You can still see their rank and XP.</p>
           </div>
-        </div>
+        ) : (
+          <>
+            {act.bio && <p className="text-[11px] text-muted italic">“{act.bio}”</p>}
 
-        {/* their posts */}
-        {theirPosts.length > 0 && (
-          <div>
-            <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Latest posts</p>
-            <div className="space-y-1.5">
-              {theirPosts.map((p) => (
-                <div key={p.id} className="rounded-xl bg-surface-2 px-3 py-2">
-                  {p.flex && <span className="text-[11px] text-accent font-semibold">{p.flex.icon} {p.flex.label} · </span>}
-                  <span className="text-sm">{p.body}</span>
-                  <span className="text-[11px] text-muted"> · {timeAgo(p.createdAt)}</span>
-                </div>
-              ))}
+            {/* stat strip */}
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <MiniStat v={`${act.weeklySessions}`} l="this wk" />
+              <MiniStat v={`${Math.round(act.totalVolumeKg / 1000)}t`} l="volume" />
+              <MiniStat v={`${act.prs}`} l="PRs" />
+              <MiniStat v={friend.streak ? `${friend.streak}` : '—'} l="streak" />
             </div>
-          </div>
+            {act.favourite && <p className="text-[11px] text-muted text-center">Favourite lift: <span className="text-text font-medium">{act.favourite}</span></p>}
+
+            {/* recent activity */}
+            {act.sessions.length > 0 && (
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Recent activity</p>
+                <div className="space-y-1.5">
+                  {act.sessions.map((s, i) => (
+                    <div key={i} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2">
+                      <span className="text-base">{s.kind === 'cardio' ? '🏃' : '🏋️'}</span>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium truncate">{s.label}</p>
+                        <p className="text-[11px] text-muted">{s.detail}</p>
+                      </div>
+                      <span className="text-[11px] text-muted shrink-0">{whenLabel(s.daysAgo)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* their posts */}
+            {theirPosts.length > 0 && (
+              <div>
+                <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Latest posts</p>
+                <div className="space-y-1.5">
+                  {theirPosts.map((p) => (
+                    <div key={p.id} className="rounded-xl bg-surface-2 px-3 py-2">
+                      {p.flex && <span className="text-[11px] text-accent font-semibold">{p.flex.icon} {p.flex.label} · </span>}
+                      <span className="text-sm">{p.body}</span>
+                      <span className="text-[11px] text-muted"> · {timeAgo(p.createdAt)}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </>
         )}
 
         {/* actions */}

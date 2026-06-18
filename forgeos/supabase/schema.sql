@@ -249,3 +249,65 @@ alter table public.user_backups enable row level security;
 drop policy if exists "own backup" on public.user_backups;
 create policy "own backup" on public.user_backups
   for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+-- ===========================================================================
+-- Real friend activity (live social). Apply on top of everything above; every
+-- statement is idempotent so it's safe to re-run. See src/lib/repositories.ts.
+-- ===========================================================================
+
+-- A profile is reachable by a unique friend code, can be flagged private
+-- (share_activity = false hides everything but name/rank), and tracks light
+-- presence so friends see an accurate status.
+alter table profiles add column if not exists friend_code text;
+alter table profiles add column if not exists share_activity boolean default true;
+alter table profiles add column if not exists last_active timestamptz;
+alter table profiles add column if not exists training_now boolean default false;
+alter table profiles add column if not exists rank_tier text;
+create unique index if not exists profiles_friend_code_key on profiles (upper(friend_code)) where friend_code is not null;
+
+-- Resolve a friend code → user id and create the friendship BOTH ways, so the
+-- graph is mutual immediately. Security definer writes the reciprocal row that
+-- RLS would otherwise block.
+create or replace function public.add_friend_by_code(code text)
+returns uuid language plpgsql security definer set search_path = public as $$
+declare fid uuid;
+begin
+  select id into fid from profiles where upper(friend_code) = upper(code) limit 1;
+  if fid is null or fid = auth.uid() then return null; end if;
+  insert into friendships (user_id, friend_id, status) values (auth.uid(), fid, 'accepted')
+    on conflict (user_id, friend_id) do update set status = 'accepted';
+  insert into friendships (user_id, friend_id, status) values (fid, auth.uid(), 'accepted')
+    on conflict (user_id, friend_id) do update set status = 'accepted';
+  return fid;
+end; $$;
+grant execute on function public.add_friend_by_code(text) to authenticated;
+
+-- Accepted friends may read each other's workouts / sets / prs — but only while
+-- the owner is sharing activity. RLS combines these with the owner policies via
+-- OR, so self-access is unaffected.
+drop policy if exists "workouts friends read" on workouts;
+create policy "workouts friends read" on workouts for select using (
+  exists (
+    select 1 from friendships f join profiles p on p.id = workouts.user_id
+    where f.user_id = auth.uid() and f.friend_id = workouts.user_id
+      and f.status = 'accepted' and coalesce(p.share_activity, true)
+  )
+);
+drop policy if exists "sets friends read" on sets;
+create policy "sets friends read" on sets for select using (
+  exists (
+    select 1 from workouts w
+    join friendships f on f.friend_id = w.user_id
+    join profiles p on p.id = w.user_id
+    where w.id = sets.workout_id and f.user_id = auth.uid()
+      and f.status = 'accepted' and coalesce(p.share_activity, true)
+  )
+);
+drop policy if exists "prs friends read" on prs;
+create policy "prs friends read" on prs for select using (
+  exists (
+    select 1 from friendships f join profiles p on p.id = prs.user_id
+    where f.user_id = auth.uid() and f.friend_id = prs.user_id
+      and f.status = 'accepted' and coalesce(p.share_activity, true)
+  )
+);

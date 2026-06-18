@@ -18,6 +18,7 @@ import { startReminderScheduler } from './lib/reminders';
 import { onReconnect, syncQueue } from './lib/offlineQueue';
 import { pushCloudBackup } from './lib/cloudSync';
 import { takePendingInvite } from './lib/invite';
+import { pushMyActivity } from './lib/activitySync';
 import { toast, celebrate } from './lib/toast';
 
 // Code-split every screen so the initial route loads a small chunk.
@@ -130,6 +131,9 @@ export default function App() {
     }
     ensureDailyQuests();
     seedFeed();
+    // Live social: pull the real friend graph and publish my own status.
+    void useSocial.getState().syncFriends();
+    void pushMyActivity();
     // Restore any live Supabase session and keep stores in sync.
     const stopAuth = initAuth();
     // Best-effort workout reminders while the app is open.
@@ -137,7 +141,7 @@ export default function App() {
     // Offline sync engine: flush queued writes whenever we regain connectivity.
     const off = onReconnect(() => void syncQueue());
     // Auto cloud-backup when the app is backgrounded (no-ops if signed out/offline).
-    const onHide = () => { if (document.visibilityState === 'hidden') void pushCloudBackup(); };
+    const onHide = () => { if (document.visibilityState === 'hidden') { void pushCloudBackup(); void pushMyActivity(); } };
     document.addEventListener('visibilitychange', onHide);
     return () => {
       stopAuth();

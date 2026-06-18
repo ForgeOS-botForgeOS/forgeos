@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
+import { pushMyActivity } from '../lib/activitySync';
 import { useSettings } from '../state/settingsStore';
 import { useUser } from '../state/userStore';
 import { useGami } from '../state/gamificationStore';
@@ -228,6 +229,9 @@ export default function Profile() {
         <Card className="divide-y divide-line">
           <Row label={t('p.publicLeaderboard')} desc="Show your rank to others">
             <Toggle checked={s.leaderboardPublic} onChange={(v) => s.set('leaderboardPublic', v)} />
+          </Row>
+          <Row label="Share activity" desc="Let friends see your real sessions & PRs">
+            <Toggle checked={s.shareActivity} onChange={(v) => { s.set('shareActivity', v); void pushMyActivity(); }} />
           </Row>
           <Row label={t('p.streakGambling')} desc="Wager coins on session targets">
             <Toggle checked={s.streakGambling} onChange={(v) => s.set('streakGambling', v)} />

@@ -21,6 +21,7 @@ const DEFAULTS: Settings = {
   autoTheme: false,
   quoteGenre: 'stoic',
   leaderboardPublic: true,
+  shareActivity: true,
   streakGambling: false,
   marketplaceEnabled: true,
   xpToCoinRate: 100, // 100 XP -> 1 Forge Coin (expensive on purpose)

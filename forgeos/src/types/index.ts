@@ -407,6 +407,7 @@ export interface Settings {
   autoTheme: boolean; // day = light, night = dark
   quoteGenre: QuoteGenrePref;
   leaderboardPublic: boolean;
+  shareActivity: boolean; // let friends see your real workout activity (live backend)
   streakGambling: boolean;
   marketplaceEnabled: boolean;
   xpToCoinRate: number; // XP per 1 coin

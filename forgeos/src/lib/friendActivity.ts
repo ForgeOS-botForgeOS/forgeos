@@ -19,6 +19,8 @@ export interface FriendActivity {
   favourite: string;
   sessions: FriendSession[];
   bio: string;
+  real?: boolean; // true when sourced from the live backend (not generated)
+  private?: boolean; // friend is sharing activity off — only name/rank is known
 }
 
 function seeded(seedStr: string) {

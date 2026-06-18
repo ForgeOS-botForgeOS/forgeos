@@ -2,7 +2,8 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Duel, DuelMetric, FeedComment, FeedPost, Friend, FriendRequest, MarketplaceRoutine, WeekPlan } from '../types';
 import { MOCK_FEED, MOCK_FEED_DRIP, MOCK_FRIENDS, MOCK_REQUESTS } from '../lib/mockData';
-import { publishPostRemote, reactRemote } from '../lib/repositories';
+import { publishPostRemote, reactRemote, fetchFriendsRemote, addFriendByCodeRemote, removeFriendRemote } from '../lib/repositories';
+import { isBackendLive } from '../lib/supabase';
 import { friendFromInvite, type InvitePayload } from '../lib/invite';
 import { useUser } from './userStore';
 
@@ -38,6 +39,8 @@ interface SocialState {
   declineRequest: (id: string) => void;
   addFriendByInvite: (p: InvitePayload) => 'added' | 'duplicate' | 'self';
   removeFriend: (id: string) => void;
+  // Pull the real friend graph from the backend (no-op without one).
+  syncFriends: () => Promise<void>;
   cheerFriend: (id: string) => void;
   // duels
   startDuel: (opponentName: string, opponentAvatar: string, metric: DuelMetric, target: number, days: number) => void;
@@ -183,10 +186,22 @@ export const useSocial = create<SocialState>()(
           friends: [friendFromInvite(p), ...friends],
           requests: get().requests.filter((r) => r.name.toLowerCase() !== p.name.toLowerCase()),
         });
+        // With a live backend, create the real mutual friendship and reconcile
+        // the list with the server (real id + real activity).
+        if (isBackendLive) void addFriendByCodeRemote(p.code).then((real) => { if (real) void get().syncFriends(); });
         return 'added';
       },
 
-      removeFriend: (id) => set({ friends: get().friends.filter((f) => f.id !== id) }),
+      removeFriend: (id) => {
+        if (isBackendLive) void removeFriendRemote(id);
+        set({ friends: get().friends.filter((f) => f.id !== id) });
+      },
+
+      syncFriends: async () => {
+        if (!isBackendLive) return;
+        const friends = await fetchFriendsRemote();
+        if (friends) set({ friends });
+      },
 
       cheerFriend: (id) => set({ friends: get().friends.map((f) => (f.id === id ? { ...f, cheeredAt: new Date().toISOString() } : f)) }),
 

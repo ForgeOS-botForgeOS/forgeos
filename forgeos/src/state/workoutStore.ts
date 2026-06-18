@@ -310,7 +310,9 @@ export const useWorkout = create<WorkoutState>()(
         const prevBestDist = Math.max(0, ...cardioHistory.map((w) => w.cardio!.distanceKm));
         const prevBestDur = Math.max(0, ...cardioHistory.map((w) => w.cardio!.durationMin));
         const cardio: CardioLog = { machine, distanceKm, durationMin, calories, metrics: metrics?.length ? metrics : undefined };
-        set({ history: [buildCardioWorkout(uid(), cardio, new Date().toISOString()), ...get().history] });
+        const w = buildCardioWorkout(uid(), cardio, new Date().toISOString());
+        set({ history: [w, ...get().history] });
+        void enqueue('workouts', w); // sync so friends' feeds/activity reflect it
         return { distancePR: distanceKm > prevBestDist && distanceKm > 0, durationPR: durationMin > prevBestDur && durationMin > 0 };
       },
 
@@ -328,6 +330,8 @@ export const useWorkout = create<WorkoutState>()(
             return buildCardioWorkout(id, cardio, fields.date ?? h.date);
           }),
         });
+        const updated = get().history.find((h) => h.id === id);
+        if (updated) void enqueue('workouts', updated);
       },
 
       lastSetFor: (exerciseId, setIndex) => {
