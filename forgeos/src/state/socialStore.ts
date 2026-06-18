@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware';
 import type { Duel, DuelMetric, FeedComment, FeedPost, Friend, FriendRequest, MarketplaceRoutine, WeekPlan } from '../types';
 import { MOCK_FEED, MOCK_FEED_DRIP, MOCK_FRIENDS, MOCK_REQUESTS } from '../lib/mockData';
 import { publishPostRemote, reactRemote } from '../lib/repositories';
+import { friendFromInvite, type InvitePayload } from '../lib/invite';
 import { useUser } from './userStore';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -35,6 +36,7 @@ interface SocialState {
   sendFriendRequest: (name: string, meta?: Partial<Friend>) => void;
   acceptRequest: (id: string) => void;
   declineRequest: (id: string) => void;
+  addFriendByInvite: (p: InvitePayload) => 'added' | 'duplicate' | 'self';
   removeFriend: (id: string) => void;
   cheerFriend: (id: string) => void;
   // duels
@@ -168,6 +170,21 @@ export const useSocial = create<SocialState>()(
       },
 
       declineRequest: (id) => set({ requests: get().requests.filter((x) => x.id !== id) }),
+
+      // Add a friend from a real invite link. Uses the inviter's actual profile
+      // snapshot (no random stats), dedups by friend code or name, and clears
+      // any pending request to/from the same person.
+      addFriendByInvite: (p) => {
+        const myCode = me()?.friendCode;
+        if (myCode && p.code === myCode) return 'self';
+        const friends = get().friends;
+        if (friends.some((f) => (f.friendCode && f.friendCode === p.code) || f.name.toLowerCase() === p.name.toLowerCase())) return 'duplicate';
+        set({
+          friends: [friendFromInvite(p), ...friends],
+          requests: get().requests.filter((r) => r.name.toLowerCase() !== p.name.toLowerCase()),
+        });
+        return 'added';
+      },
 
       removeFriend: (id) => set({ friends: get().friends.filter((f) => f.id !== id) }),
 

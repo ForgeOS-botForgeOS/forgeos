@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  Swords, Store, Share2, Wifi, Circle, UserPlus, Check, X, Copy,
+  Swords, Store, Share2, Wifi, Circle, UserPlus, Check, X,
   MessageCircle, Send, Trash2, Crown, Zap, Heart, Dumbbell, Star, ChevronRight, Plus, UserMinus,
   RotateCw, Search,
 } from 'lucide-react';
@@ -20,6 +20,7 @@ import { generateShareCard, downloadDataUrl } from '../lib/shareCard';
 import { haptic } from '../lib/haptics';
 import { toast, celebrate } from '../lib/toast';
 import { generateFriendCode } from '../lib/friendCode';
+import { buildInviteLink, tryExtractInvite } from '../lib/invite';
 import { friendActivity, whenLabel } from '../lib/friendActivity';
 import { useT } from '../lib/i18n';
 import type { DuelMetric, FeedPost, Friend } from '../types';
@@ -453,16 +454,27 @@ function Friends() {
   const sendFriendRequest = useSocial((s) => s.sendFriendRequest);
   const acceptRequest = useSocial((s) => s.acceptRequest);
   const declineRequest = useSocial((s) => s.declineRequest);
+  const addFriendByInvite = useSocial((s) => s.addFriendByInvite);
   const cheerFriend = useSocial((s) => s.cheerFriend);
   const profile = useUser((s) => s.profile);
   const updateProfile = useUser((s) => s.updateProfile);
   const myXp = useGami((s) => s.xp);
+  const myStreak = useGami((s) => s.streakDays);
   const [name, setName] = useState('');
   const [copied, setCopied] = useState(false);
   const [query, setQuery] = useState('');
   const [openFriend, setOpenFriend] = useState<Friend | null>(null);
 
   const code = profile?.friendCode ?? generateFriendCode();
+  const inviteLink = useMemo(() => buildInviteLink({
+    v: 1,
+    code,
+    name: profile?.name ?? 'Athlete',
+    rank: rankLabel(rankForXp(myXp).tier),
+    xp: myXp,
+    seed: (profile?.name ?? 'You').slice(0, 2).toUpperCase(),
+    streak: myStreak,
+  }), [code, profile?.name, myXp, myStreak]);
   const incoming = requests.filter((r) => r.direction === 'incoming');
   const outgoing = requests.filter((r) => r.direction === 'outgoing');
   const suggested = MOCK_SUGGESTED.filter((s) => !friends.some((f) => f.name === s.name) && !requests.some((r) => r.name === s.name));
@@ -470,6 +482,17 @@ function Friends() {
   function add() {
     const clean = name.trim();
     if (!clean) return;
+    // Pasted an invite link / payload? Add the real person instantly.
+    const invite = tryExtractInvite(clean);
+    if (invite) {
+      const res = addFriendByInvite(invite);
+      if (res === 'self') toast("That's your own invite link 🙂", 'info');
+      else if (res === 'duplicate') toast(`${invite.name} is already in your circle`);
+      else { haptic('success'); toast(`${invite.name} is now your gym partner 🤝`); }
+      setName('');
+      return;
+    }
+    // Otherwise treat it as a name (a request that can't be verified offline).
     sendFriendRequest(clean);
     setName('');
     haptic('success');
@@ -477,11 +500,12 @@ function Friends() {
   }
 
   async function shareCode() {
-    const text = `Add me on ForgeOS — my code is ${code}`;
-    const nav = navigator as Navigator & { share?: (d: { text: string }) => Promise<void> };
-    if (nav.share) { try { await nav.share({ text }); return; } catch { /* cancelled */ } }
-    await navigator.clipboard.writeText(code);
+    const text = `Train with me on ForgeOS 💪 Tap to add me as your gym partner:`;
+    const nav = navigator as Navigator & { share?: (d: { title?: string; text?: string; url?: string }) => Promise<void> };
+    if (nav.share) { try { await nav.share({ title: 'ForgeOS', text, url: inviteLink }); return; } catch { /* cancelled */ } }
+    await navigator.clipboard.writeText(inviteLink);
     setCopied(true); setTimeout(() => setCopied(false), 1500);
+    toast('Invite link copied — paste it to a friend');
   }
 
   function regenCode() {
@@ -499,15 +523,18 @@ function Friends() {
   return (
     <div className="space-y-3">
       {/* Your code / invite */}
-      <Card className="flex items-center justify-between">
-        <div className="min-w-0">
-          <p className="text-[11px] uppercase tracking-wide text-muted">Your friend code</p>
-          <p className="font-mono font-bold text-lg">{code}</p>
+      <Card className="space-y-2">
+        <div className="flex items-center justify-between">
+          <div className="min-w-0">
+            <p className="text-[11px] uppercase tracking-wide text-muted">Your friend code</p>
+            <p className="font-mono font-bold text-lg">{code}</p>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            <button onClick={regenCode} aria-label="Generate a new code" className="rounded-full p-2 text-muted hover:text-accent"><RotateCw size={15} /></button>
+            <Button onClick={shareCode}><span className="flex items-center gap-1 text-xs">{copied ? <Check size={14} /> : <Share2 size={14} />} {copied ? 'Copied' : 'Invite link'}</span></Button>
+          </div>
         </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <button onClick={regenCode} aria-label="Generate a new code" className="rounded-full p-2 text-muted hover:text-accent"><RotateCw size={15} /></button>
-          <Button variant="ghost" onClick={shareCode}><span className="flex items-center gap-1 text-xs">{copied ? <Check size={14} /> : <Copy size={14} />} {copied ? 'Copied' : 'Invite'}</span></Button>
-        </div>
+        <p className="text-[11px] text-muted">Share your invite link — when a friend taps it, you're added to each other instantly. No code typing needed.</p>
       </Card>
 
       {/* Add by name or code */}
@@ -515,7 +542,7 @@ function Friends() {
         <SectionTitle>{t('s.addFriend')}</SectionTitle>
         <div className="flex gap-2">
           <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') add(); }}
-            placeholder="Name or FORGE- code" className="flex-1 rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+            placeholder="Paste an invite link, or a name" className="flex-1 rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
           <Button disabled={!name.trim()} onClick={add}><span className="flex items-center gap-1"><UserPlus size={15} /> {t('s.add')}</span></Button>
         </div>
       </Card>
@@ -567,6 +594,7 @@ function Friends() {
           <button className="flex-1 text-left" onClick={() => setOpenFriend(f)}>
             <p className="text-sm font-semibold flex items-center gap-2">
               {f.name}
+              {f.friendCode && <Check size={12} className="text-accent" aria-label="Added via invite link" />}
               {f.trainingNow ? <span className="text-[10px] text-success flex items-center gap-0.5"><Circle size={7} className="fill-success" /> training</span>
                 : <Circle size={8} className={f.online ? 'text-success fill-success' : 'text-muted fill-muted'} />}
             </p>

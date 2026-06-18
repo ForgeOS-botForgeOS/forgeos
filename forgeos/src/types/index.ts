@@ -217,6 +217,7 @@ export interface Friend {
   streak?: number;
   lastActiveISO?: string;
   cheeredAt?: string; // last time you cheered them
+  friendCode?: string; // set when added via a real invite link (dedup + "real" badge)
 }
 
 export interface FriendRequest {

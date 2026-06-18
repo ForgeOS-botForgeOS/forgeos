@@ -17,6 +17,8 @@ import { initAuth } from './lib/auth';
 import { startReminderScheduler } from './lib/reminders';
 import { onReconnect, syncQueue } from './lib/offlineQueue';
 import { pushCloudBackup } from './lib/cloudSync';
+import { takePendingInvite } from './lib/invite';
+import { toast, celebrate } from './lib/toast';
 
 // Code-split every screen so the initial route loads a small chunk.
 const Onboarding = lazy(() => import('./screens/onboarding/Onboarding'));
@@ -41,6 +43,7 @@ const PublicProfile = lazy(() => import('./screens/PublicProfile'));
 const Progress = lazy(() => import('./screens/Progress'));
 const Download = lazy(() => import('./screens/Download'));
 const ImportProgress = lazy(() => import('./screens/ImportProgress'));
+const AddFriend = lazy(() => import('./screens/AddFriend'));
 
 // Left→right order of the bottom tabs; swiping moves to the neighbour.
 const TAB_ORDER = ['/home', '/train', '/nutrition', '/social', '/quests', '/profile'];
@@ -103,7 +106,19 @@ export default function App() {
   const appLock = useSettings((s) => s.appLock);
   const ensureDailyQuests = useGami((s) => s.ensureDailyQuests);
   const seedFeed = useSocial((s) => s.seedIfEmpty);
+  const onboarded = useUser((s) => s.profile?.onboarded);
   const [locked, setLocked] = useState(() => appLock.enabled && !!appLock.code);
+
+  // A friend invite opened before sign-up is stashed; apply it once onboarded.
+  useEffect(() => {
+    if (!onboarded) return;
+    const pending = takePendingInvite();
+    if (!pending) return;
+    if (useSocial.getState().addFriendByInvite(pending) === 'added') {
+      celebrate();
+      toast(`${pending.name} is now your gym partner 🤝`);
+    }
+  }, [onboarded]);
 
   useEffect(() => {
     // Auto day/night overrides the chosen theme when enabled.
@@ -150,6 +165,7 @@ export default function App() {
         <Routes>
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/download" element={<Download />} />
+          <Route path="/add-friend" element={<AddFriend />} />
           <Route
             element={
               <RequireOnboarding>
