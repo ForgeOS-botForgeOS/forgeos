@@ -694,7 +694,7 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
               <MiniStat v={`${act.prs}`} l="PRs" />
               <MiniStat v={friend.streak ? `${friend.streak}` : '—'} l="streak" />
             </div>
-            {act.favourite && <p className="text-[11px] text-muted text-center">Favourite lift: <span className="text-text font-medium">{act.favourite}</span></p>}
+            {act.favourite && <p className="text-[11px] text-muted text-center">Top lift: <span className="text-text font-medium">{act.favourite}</span></p>}
 
             {/* recent activity */}
             {act.sessions.length > 0 && (

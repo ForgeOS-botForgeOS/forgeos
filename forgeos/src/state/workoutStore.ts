@@ -4,6 +4,8 @@ import type { CardioLog, CardioMetric, PR, SetEntry, SpotifyTrack, Workout, Work
 import { e1rm, volumeOf, overloadSuggestion } from '../lib/fitness';
 import { exerciseById, EXERCISES } from '../data/exercises';
 import { enqueue } from '../lib/offlineQueue';
+import { pushPRsRemote } from '../lib/repositories';
+import { pushMyActivity } from '../lib/activitySync';
 import { useGami } from './gamificationStore';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
@@ -124,6 +126,7 @@ export const useWorkout = create<WorkoutState>()(
         set({
           active: { id: uid(), name, date: new Date().toISOString(), exercises, completed: false, synced: false },
         });
+        void pushMyActivity(true); // friends see "training now" while a session is live
       },
 
       addExercise: (exerciseId) => {
@@ -288,10 +291,12 @@ export const useWorkout = create<WorkoutState>()(
         void enqueue('workouts', done);
 
         set({ history: [done, ...get().history], active: null, prs: newPrs });
+        void pushMyActivity(false); // session ended → clear "training now", stamp last-active
+        void pushPRsRemote(newPrs); // keep friends' PR count / top lift accurate
         return done;
       },
 
-      discardWorkout: () => set({ active: null }),
+      discardWorkout: () => { set({ active: null }); void pushMyActivity(false); },
 
       updateHistoryWorkout: (id, w) => {
         const updated = { ...w, totalVolumeKg: computeVolume(w) };
@@ -313,6 +318,7 @@ export const useWorkout = create<WorkoutState>()(
         const w = buildCardioWorkout(uid(), cardio, new Date().toISOString());
         set({ history: [w, ...get().history] });
         void enqueue('workouts', w); // sync so friends' feeds/activity reflect it
+        void pushMyActivity(false); // stamp last-active from this session
         return { distancePR: distanceKm > prevBestDist && distanceKm > 0, durationPR: durationMin > prevBestDur && durationMin > 0 };
       },
 

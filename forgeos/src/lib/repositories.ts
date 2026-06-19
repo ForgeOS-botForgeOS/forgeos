@@ -1,5 +1,5 @@
 import { supabase, isBackendLive } from './supabase';
-import type { FeedPost, Friend, UserProfile, Workout } from '../types';
+import type { FeedPost, Friend, PR, UserProfile, Workout } from '../types';
 import type { FriendActivity, FriendSession } from './friendActivity';
 import { rankForXp, rankLabel } from '../data/ranks';
 
@@ -134,9 +134,10 @@ export async function fetchFriendActivityRemote(friendId: string): Promise<Frien
   if (prof && prof.share_activity === false) {
     return { weeklySessions: 0, totalVolumeKg: 0, prs: 0, favourite: '', sessions: [], bio: '', real: true, private: true };
   }
-  const since = new Date(Date.now() - 60 * 86400000).toISOString();
   const [wsRes, prCountRes, topPrRes] = await Promise.all([
-    supabase.from('workouts').select('name, date, total_volume_kg, duration_sec').eq('user_id', friendId).gte('date', since).order('date', { ascending: false }).limit(50),
+    // All workouts (newest first) so volume is a true lifetime total and the
+    // weekly count is exact — capped at 1000 rows, ample for a personal log.
+    supabase.from('workouts').select('name, date, total_volume_kg, duration_sec').eq('user_id', friendId).order('date', { ascending: false }).limit(1000),
     supabase.from('prs').select('id', { count: 'exact', head: true }).eq('user_id', friendId),
     supabase.from('prs').select('exercise_name, e1rm').eq('user_id', friendId).order('e1rm', { ascending: false }).limit(1),
   ]);
@@ -170,6 +171,25 @@ export async function syncMyActivityRemote(opts: { friendCode?: string; xp: numb
     last_active: new Date().toISOString(),
   }).eq('id', me);
   await supabase.from('leaderboard_entries').upsert({ user_id: me, xp: opts.xp, rank_tier: rankTier, public: true, updated_at: new Date().toISOString() });
+}
+
+// Mirror my PRs (one per exercise — the local source of truth) so friends see
+// an accurate PR count and top lift. Replace-all keeps it exact and idempotent.
+export async function pushPRsRemote(prs: PR[]): Promise<void> {
+  if (!isBackendLive || !supabase) return;
+  const me = (await supabase.auth.getUser()).data.user?.id;
+  if (!me) return;
+  await supabase.from('prs').delete().eq('user_id', me);
+  if (prs.length === 0) return;
+  await supabase.from('prs').insert(prs.map((p) => ({
+    user_id: me,
+    exercise_id: p.exerciseId,
+    exercise_name: p.exerciseName,
+    weight_kg: p.weightKg,
+    reps: p.reps,
+    e1rm: p.e1rm,
+    date: p.date,
+  })));
 }
 
 function rowToFriend(p: Row): Friend {
