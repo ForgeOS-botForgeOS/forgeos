@@ -3,7 +3,7 @@ import { Cloud, CloudOff, RefreshCw, Check, X, Loader2 } from 'lucide-react';
 import { Card, Button } from './ui';
 import { isBackendLive, currentAuthUser } from '../lib/supabase';
 import { useSocial } from '../state/socialStore';
-import { pushMyActivity } from '../lib/activitySync';
+import { ensureCloudAccount } from '../lib/activitySync';
 import { toast } from '../lib/toast';
 import { haptic } from '../lib/haptics';
 
@@ -38,10 +38,12 @@ export function CloudStatus() {
     setBusy(true);
     haptic('tap');
     try {
-      await pushMyActivity();
+      const connected = await ensureCloudAccount(); // creates an anon session if needed
       await syncFriends();
       await refresh();
-      toast(isBackendLive ? 'Synced with the cloud ✅' : 'No cloud backend connected', isBackendLive ? 'success' : 'info');
+      if (!isBackendLive) toast('No cloud backend connected', 'info');
+      else if (connected) toast('Connected & synced ✅', 'success');
+      else toast('Backend reachable but no session — enable Anonymous sign-ins in Supabase.', 'error');
     } catch {
       toast('Sync failed — check your connection / backend.', 'error');
     } finally {
@@ -57,7 +59,7 @@ export function CloudStatus() {
       : auth === 'error'
         ? "Couldn't reach your Supabase backend. Free projects pause after inactivity — open your Supabase dashboard and Restore it (or check the URL/anon key). Then tap Sync now."
         : !signedIn
-          ? 'Signed in on this device only. Sign in with Google (or email) to get a real cloud session — friends & activity then sync for real.'
+          ? 'No cloud session yet. Tap Sync now — it connects you automatically (no signup). If this stays ✗, enable "Anonymous sign-ins" in your Supabase dashboard (Authentication → Providers).'
           : `Connected as ${email ?? 'your account'}. ${friends.length} friend${friends.length === 1 ? '' : 's'} synced. Add friends by invite link to see real activity.`;
 
   return (

@@ -1,8 +1,27 @@
-import { isBackendLive } from './supabase';
-import { syncMyActivityRemote } from './repositories';
+import { isBackendLive, ensureSession } from './supabase';
+import { syncMyActivityRemote, upsertProfile } from './repositories';
 import { useUser } from '../state/userStore';
 import { useGami } from '../state/gamificationStore';
 import { useSettings } from '../state/settingsStore';
+
+// Make the current device a real cloud account with zero signup: ensure a
+// Supabase session (anonymous if needed), re-point the local profile at that
+// auth id, and push it up. After this, friends/activity sync work for users who
+// never registered. Returns true if a cloud session is active.
+export async function ensureCloudAccount(): Promise<boolean> {
+  if (!isBackendLive) return false;
+  const session = await ensureSession();
+  if (!session) return false; // e.g. anonymous sign-ins not enabled in Supabase
+  const store = useUser.getState();
+  if (store.profile && store.profile.id !== session.id) {
+    // Adopt the real auth id so every write targets the right cloud row.
+    store.updateProfile({ id: session.id, email: store.profile.email ?? session.email });
+  }
+  const profile = useUser.getState().profile;
+  if (profile) await upsertProfile(profile); // create/update the cloud profile row
+  await pushMyActivity();
+  return true;
+}
 
 // Push my own rank/XP/streak/presence + share-preference so friends see an
 // accurate snapshot. No-ops without a backend or when signed out. Workouts

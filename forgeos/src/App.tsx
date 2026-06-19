@@ -18,7 +18,7 @@ import { startReminderScheduler } from './lib/reminders';
 import { onReconnect, syncQueue } from './lib/offlineQueue';
 import { pushCloudBackup } from './lib/cloudSync';
 import { takePendingInvite } from './lib/invite';
-import { pushMyActivity } from './lib/activitySync';
+import { ensureCloudAccount, pushMyActivity } from './lib/activitySync';
 import { toast, celebrate } from './lib/toast';
 
 // Code-split every screen so the initial route loads a small chunk.
@@ -131,9 +131,9 @@ export default function App() {
     }
     ensureDailyQuests();
     seedFeed();
-    // Live social: pull the real friend graph and publish my own status.
-    void useSocial.getState().syncFriends();
-    void pushMyActivity();
+    // Live social: ensure a cloud session (anonymous if needed, no signup),
+    // then pull the real friend graph.
+    void ensureCloudAccount().then(() => void useSocial.getState().syncFriends());
     // Restore any live Supabase session and keep stores in sync.
     const stopAuth = initAuth();
     // Best-effort workout reminders while the app is open.

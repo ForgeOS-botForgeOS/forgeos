@@ -50,6 +50,20 @@ export async function currentAuthUser(): Promise<{ id: string; email?: string } 
   return data.user ? { id: data.user.id, email: data.user.email ?? undefined } : null;
 }
 
+// Guarantee a real Supabase session WITHOUT making the user register: if none
+// exists, sign in anonymously. This turns every existing local/guest/Google
+// profile into a working cloud account automatically. Requires "Anonymous
+// sign-ins" enabled in the Supabase dashboard. They can later attach an
+// email/Google to keep it across devices.
+export async function ensureSession(): Promise<{ id: string; email?: string } | null> {
+  if (!supabase) return null;
+  const { data } = await supabase.auth.getUser();
+  if (data.user) return { id: data.user.id, email: data.user.email ?? undefined };
+  const { data: anon, error } = await supabase.auth.signInAnonymously();
+  if (error || !anon.user) return null;
+  return { id: anon.user.id, email: anon.user.email ?? undefined };
+}
+
 // ---- Realtime ----
 export interface RaceUpdate {
   userId: string;
