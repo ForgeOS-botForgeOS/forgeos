@@ -182,37 +182,55 @@ alter table marketplace_routines enable row level security;
 alter table purchases enable row level security;
 
 -- Profiles: owner read/write; everyone can read basic public fields.
+drop policy if exists "profiles self" on profiles;
 create policy "profiles self" on profiles for all using (auth.uid() = id) with check (auth.uid() = id);
+drop policy if exists "profiles read" on profiles;
 create policy "profiles read" on profiles for select using (true);
 
 -- Owner-only tables.
+drop policy if exists "workouts owner" on workouts;
 create policy "workouts owner" on workouts for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "sets owner" on sets;
 create policy "sets owner" on sets for all
   using (exists (select 1 from workouts w where w.id = workout_id and w.user_id = auth.uid()))
   with check (exists (select 1 from workouts w where w.id = workout_id and w.user_id = auth.uid()));
+drop policy if exists "prs owner" on prs;
 create policy "prs owner" on prs for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "weigh_ins owner" on weigh_ins;
 create policy "weigh_ins owner" on weigh_ins for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "user_quests owner" on user_quests;
 create policy "user_quests owner" on user_quests for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "purchases owner" on purchases;
 create policy "purchases owner" on purchases for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Friendships: either side may read; only owner writes their own row.
+drop policy if exists "friendships read" on friendships;
 create policy "friendships read" on friendships for select using (auth.uid() = user_id or auth.uid() = friend_id);
+drop policy if exists "friendships write" on friendships;
 create policy "friendships write" on friendships for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Feed: anyone authenticated reads; author writes.
+drop policy if exists "feed read" on feed_posts;
 create policy "feed read" on feed_posts for select using (auth.role() = 'authenticated');
+drop policy if exists "feed author" on feed_posts;
 create policy "feed author" on feed_posts for all using (auth.uid() = author_id) with check (auth.uid() = author_id);
 
 -- Reactions: read by all authenticated; users manage their own.
+drop policy if exists "reactions read" on reactions;
 create policy "reactions read" on reactions for select using (auth.role() = 'authenticated');
+drop policy if exists "reactions self" on reactions;
 create policy "reactions self" on reactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Leaderboard: public rows readable by all; owner writes own.
+drop policy if exists "leaderboard read" on leaderboard_entries;
 create policy "leaderboard read" on leaderboard_entries for select using (public = true or auth.uid() = user_id);
+drop policy if exists "leaderboard self" on leaderboard_entries;
 create policy "leaderboard self" on leaderboard_entries for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 -- Marketplace: readable by all authenticated; author manages own listings.
+drop policy if exists "market read" on marketplace_routines;
 create policy "market read" on marketplace_routines for select using (auth.role() = 'authenticated');
+drop policy if exists "market author" on marketplace_routines;
 create policy "market author" on marketplace_routines for all using (auth.uid() = author_id) with check (auth.uid() = author_id);
 
 -- Exercises & quests are shared read-only catalogues (no RLS needed; grant select).
