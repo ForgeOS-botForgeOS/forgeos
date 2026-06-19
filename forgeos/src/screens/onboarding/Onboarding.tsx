@@ -5,7 +5,7 @@ import { Mail, Globe, Loader2, Check, Eye, EyeOff, Download } from 'lucide-react
 import { Button, Card, Pill, Sheet, Toggle } from '../../components/ui';
 import { ForgeLogo } from '../../components/ForgeLogo';
 import { InstallButton } from '../../components/InstallButton';
-import { isBackendLive, signInWithEmail, signUpWithEmail, currentAuthUser, sendPasswordReset } from '../../lib/supabase';
+import { isBackendLive, signInWithEmail, signUpWithEmail, signInWithOAuth, currentAuthUser, sendPasswordReset } from '../../lib/supabase';
 import { fetchProfile } from '../../lib/repositories';
 import { ICE_BREAKER } from '../../data/quests';
 import { useUser } from '../../state/userStore';
@@ -59,8 +59,26 @@ export default function Onboarding() {
 
   async function continueWithGoogle() {
     setSignInErr(null);
+    // Real cloud account: route Google through Supabase OAuth (redirect). This
+    // is the only Google path that creates a real session, so friends/activity
+    // actually sync. Needs the Google provider enabled in Supabase; if it isn't,
+    // signInWithOAuth returns an error before redirecting and we fall back to the
+    // client-side profile-only flow below (no regression).
+    if (isBackendLive) {
+      setSigningIn('google');
+      try {
+        const res = await signInWithOAuth('google');
+        if (!('error' in res) || !res.error) return; // redirecting to Google…
+      } catch { /* fall through to local flow */ }
+      setSigningIn(null);
+    }
+    await continueWithGoogleLocal();
+  }
+
+  // Client-side Google (no Supabase session) — fills name/email only. Used when
+  // there's no backend or the Supabase Google provider isn't configured.
+  async function continueWithGoogleLocal() {
     if (!googleIsLive) {
-      // No Client ID configured yet — proceed in demo mode.
       setProvider('google');
       setStep('quiz');
       return;
@@ -110,6 +128,14 @@ export default function Onboarding() {
     }
     return false;
   }
+
+  // Back from a Supabase OAuth redirect we're already authenticated — pull the
+  // saved account (returning user → home), or just keep onboarding with the live
+  // session so finish() writes under the real cloud id.
+  useEffect(() => {
+    if (isBackendLive) void restoreExistingAccount();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function finish() {
     const user = await currentAuthUser();

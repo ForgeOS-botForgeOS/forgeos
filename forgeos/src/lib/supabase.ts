@@ -9,14 +9,19 @@ export const isBackendLive = Boolean(url && anon);
 
 export const supabase: SupabaseClient | null = isBackendLive
   ? createClient(url as string, anon as string, {
-      auth: { persistSession: true, autoRefreshToken: true },
+      // PKCE puts the auth code in the query string (?code=), which survives our
+      // HashRouter URLs — implicit-flow hash tokens would collide with the route.
+      auth: { persistSession: true, autoRefreshToken: true, flowType: 'pkce', detectSessionInUrl: true },
     })
   : null;
 
 // Pluggable auth — Google + Apple OAuth + email/password.
 export async function signInWithOAuth(provider: 'google' | 'apple') {
   if (!supabase) return { error: 'mock-mode' } as const;
-  return supabase.auth.signInWithOAuth({ provider });
+  // Return to the app root (no hash) so the ?code= lands cleanly before
+  // HashRouter takes over. Add this URL to Supabase Auth → URL Configuration.
+  const redirectTo = window.location.origin + window.location.pathname;
+  return supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
 }
 
 export async function signInWithEmail(email: string, password: string) {
