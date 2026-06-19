@@ -14,14 +14,23 @@ import { haptic } from '../lib/haptics';
 export function CloudStatus() {
   const friends = useSocial((s) => s.friends);
   const syncFriends = useSocial((s) => s.syncFriends);
-  const [auth, setAuth] = useState<'checking' | 'in' | 'out'>('checking');
+  const [auth, setAuth] = useState<'checking' | 'in' | 'out' | 'error'>('checking');
   const [email, setEmail] = useState<string | undefined>();
   const [busy, setBusy] = useState(false);
 
   async function refresh() {
-    const u = await currentAuthUser();
-    setAuth(u ? 'in' : 'out');
-    setEmail(u?.email);
+    if (!isBackendLive) { setAuth('out'); return; }
+    try {
+      // Time-box it so a paused/unreachable project can't leave us spinning.
+      const u = await Promise.race([
+        currentAuthUser(),
+        new Promise<null>((_, reject) => setTimeout(() => reject(new Error('timeout')), 6000)),
+      ]);
+      setAuth(u ? 'in' : 'out');
+      setEmail(u?.email);
+    } catch {
+      setAuth('error');
+    }
   }
   useEffect(() => { void refresh(); }, []);
 
@@ -45,9 +54,11 @@ export function CloudStatus() {
     ? 'No cloud backend connected on this build — social runs locally. Set VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.'
     : auth === 'checking'
       ? 'Checking your cloud session…'
-      : !signedIn
-        ? 'Signed in on this device only. Create an account with EMAIL to get a real cloud session — friends & activity then sync for real. (Google currently signs in for profile only.)'
-        : `Connected as ${email ?? 'your account'}. ${friends.length} friend${friends.length === 1 ? '' : 's'} synced. Add friends by invite link to see real activity.`;
+      : auth === 'error'
+        ? "Couldn't reach your Supabase backend. Free projects pause after inactivity — open your Supabase dashboard and Restore it (or check the URL/anon key). Then tap Sync now."
+        : !signedIn
+          ? 'Signed in on this device only. Sign in with Google (or email) to get a real cloud session — friends & activity then sync for real.'
+          : `Connected as ${email ?? 'your account'}. ${friends.length} friend${friends.length === 1 ? '' : 's'} synced. Add friends by invite link to see real activity.`;
 
   return (
     <Card className="space-y-3">
