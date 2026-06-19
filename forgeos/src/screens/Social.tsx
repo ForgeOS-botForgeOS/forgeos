@@ -9,6 +9,7 @@ import {
 import { joinRace } from '../lib/supabase';
 import { Screen } from '../components/Screen';
 import { Card, Button, Pill, Badge, SectionTitle, Sheet } from '../components/ui';
+import { CloudStatus } from '../components/CloudStatus';
 import { useSocial } from '../state/socialStore';
 import { useSettings } from '../state/settingsStore';
 import { useGami } from '../state/gamificationStore';
@@ -526,6 +527,8 @@ function Friends() {
 
   return (
     <div className="space-y-3">
+      <CloudStatus />
+
       {/* Your code / invite */}
       <Card className="space-y-2">
         <div className="flex items-center justify-between">
