@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Globe, Loader2, Check, Eye, EyeOff } from 'lucide-react';
+import { Mail, Globe, Loader2, Check, Eye, EyeOff, Download } from 'lucide-react';
 import { Button, Card, Pill, Sheet, Toggle } from '../../components/ui';
 import { ForgeLogo } from '../../components/ForgeLogo';
 import { InstallButton } from '../../components/InstallButton';
@@ -157,7 +157,9 @@ export default function Onboarding() {
 
           {/* Big, obvious install CTA when opened in a browser */}
           <InstallButton variant="big" />
-          <button onClick={() => navigate('/download')} className="w-full text-center text-xs text-accent underline-offset-2 hover:underline">Download the app (Android APK / install) →</button>
+          <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => navigate('/download')}>
+            <Download size={16} /> Download the Android app
+          </Button>
 
           <div className="space-y-2 pt-2">
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" disabled={signingIn === 'google'} onClick={continueWithGoogle}>

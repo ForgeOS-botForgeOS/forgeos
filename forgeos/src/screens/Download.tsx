@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Smartphone, Download as DownloadIcon, ShieldCheck, Apple, Share } from 'lucide-react';
+import { ChevronLeft, Smartphone, Download as DownloadIcon, ShieldCheck, Apple, Share, Copy, Check } from 'lucide-react';
 import { Card, Button, Badge } from '../components/ui';
 import { ForgeLogo } from '../components/ForgeLogo';
 import { InstallButton } from '../components/InstallButton';
@@ -12,6 +12,14 @@ const APK_URL = 'https://github.com/ForgeOS-botForgeOS/forgeos/releases/download
 export default function Download() {
   const navigate = useNavigate();
   const [qr, setQr] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  async function shareLink() {
+    const nav = navigator as Navigator & { share?: (d: { title?: string; text?: string; url?: string }) => Promise<void> };
+    if (nav.share) { try { await nav.share({ title: 'ForgeOS', text: 'Download the ForgeOS Android app', url: APK_URL }); return; } catch { /* cancelled */ } }
+    await navigator.clipboard.writeText(APK_URL);
+    setCopied(true); setTimeout(() => setCopied(false), 1600);
+  }
 
   useEffect(() => {
     // Lazy-load the QR generator so it never weighs down the main bundle.
@@ -49,6 +57,11 @@ export default function Download() {
         <a href={APK_URL}>
           <Button className="w-full justify-center gap-2"><DownloadIcon size={16} /> Download Android app</Button>
         </a>
+        {/* The direct download link, shown so you can copy/share it anywhere. */}
+        <button onClick={shareLink} className="w-full flex items-center justify-between gap-2 rounded-xl bg-surface-2 border border-line px-3 py-2.5 text-left active:scale-[0.99] transition">
+          <span className="text-[11px] text-muted truncate font-mono">{APK_URL}</span>
+          <span className="text-[11px] text-accent flex items-center gap-1 shrink-0">{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? 'Copied' : 'Copy link'}</span>
+        </button>
         <p className="text-[11px] text-muted/80 flex items-start gap-1.5">
           <ShieldCheck size={13} className="mt-0.5 shrink-0 text-success" />
           When Android asks, allow “Install unknown apps” for your browser — the app is distributed directly, not via Google Play.
