@@ -101,7 +101,7 @@ export const useSocial = create<SocialState>()(
         };
         set({ feed: [post, ...get().feed] });
         const id = me()?.id;
-        if (id) void publishPostRemote(id, body, opts.summary);
+        if (id) void publishPostRemote(id, myName(), body, opts.summary);
       },
 
       addComment: (postId, body) => {

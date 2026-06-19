@@ -62,25 +62,28 @@ export async function fetchFeed(): Promise<FeedPost[] | null> {
   if (!isBackendLive || !supabase) return null;
   const { data, error } = await supabase
     .from('feed_posts')
-    .select('id, author_id, body, workout_summary, created_at, profiles(name)')
+    .select('id, author_id, author_name, body, workout_summary, created_at')
     .order('created_at', { ascending: false })
     .limit(50);
   if (error || !data) return null;
-  return data.map((r) => ({
-    id: r.id,
-    authorId: r.author_id,
-    authorName: (r as { profiles?: { name?: string } }).profiles?.name ?? 'Athlete',
-    avatarSeed: ((r as { profiles?: { name?: string } }).profiles?.name ?? 'A').slice(0, 2).toUpperCase(),
-    body: r.body ?? '',
-    workoutSummary: r.workout_summary ?? undefined,
-    createdAt: r.created_at,
-    reactions: {},
-  }));
+  return data.map((r) => {
+    const name = (r as { author_name?: string }).author_name ?? 'Athlete';
+    return {
+      id: r.id,
+      authorId: r.author_id,
+      authorName: name,
+      avatarSeed: name.slice(0, 2).toUpperCase(),
+      body: r.body ?? '',
+      workoutSummary: r.workout_summary ?? undefined,
+      createdAt: r.created_at,
+      reactions: {},
+    };
+  });
 }
 
-export async function publishPostRemote(authorId: string, body: string, summary?: FeedPost['workoutSummary']): Promise<void> {
+export async function publishPostRemote(authorId: string, authorName: string, body: string, summary?: FeedPost['workoutSummary']): Promise<void> {
   if (!isBackendLive || !supabase) return;
-  await supabase.from('feed_posts').insert({ author_id: authorId, body, workout_summary: summary ?? null });
+  await supabase.from('feed_posts').insert({ author_id: authorId, author_name: authorName, body, workout_summary: summary ?? null });
 }
 
 export async function reactRemote(postId: string, userId: string, emoji: string): Promise<void> {

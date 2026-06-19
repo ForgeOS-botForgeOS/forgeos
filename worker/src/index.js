@@ -1,11 +1,26 @@
 // ForgeOS vision Worker — free Cloudflare Workers AI (LLaVA, EU-permitted).
 // Food: the model identifies items + portion grams; macros are computed from a
 // built-in per-100g nutrition table for accuracy. Cardio: reads the console.
-const CORS = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type',
-};
+// Only ForgeOS origins may call this Worker from a browser — stops other sites
+// embedding it to burn your free AI quota. Native app / curl ignore CORS, but
+// they aren't the at-scale abuse vector; add a Cloudflare rate-limit rule for
+// that (free). Add your custom domain here if you set one.
+const ALLOWED_ORIGINS = [
+  'https://forgeos-botforgeos.github.io',
+  'http://localhost:5173',
+  'https://localhost',
+  'capacitor://localhost',
+];
+function corsHeaders(request) {
+  const origin = request.headers.get('Origin') || '';
+  const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
+  return {
+    'Access-Control-Allow-Origin': allow,
+    'Vary': 'Origin',
+    'Access-Control-Allow-Methods': 'POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type',
+  };
+}
 
 const FOOD_PROMPT =
   'Identify EACH distinct food/drink in the photo and estimate its weight in grams ' +
@@ -187,8 +202,8 @@ const TABLE = {
   'frappuccino': [140, 3, 26, 3, 25], 'acai bowl': [120, 2, 22, 4, 14], 'overnight oats': [130, 5, 20, 4, 6],
 };
 
-function json(body, status = 200) {
-  return new Response(JSON.stringify(body), { status, headers: { ...CORS, 'Content-Type': 'application/json' } });
+function json(body, status = 200, cors = {}) {
+  return new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 }
 
 function bestMatch(name) {
@@ -266,12 +281,15 @@ async function offLookup(name) {
 
 export default {
   async fetch(request, env) {
-    if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
-    if (request.method !== 'POST') return json({ error: 'POST only' }, 405);
+    const cors = corsHeaders(request);
+    if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
+    if (request.method !== 'POST') return json({ error: 'POST only' }, 405, cors);
 
     try {
       const { image, mode, source } = await request.json();
-      if (!image) return json({ error: 'no image' }, 400);
+      if (!image) return json({ error: 'no image' }, 400, cors);
+      // Reject oversized payloads (base64 ≈ 4/3 of raw bytes) — protects the free tier.
+      if (typeof image !== 'string' || image.length > 9_000_000) return json({ error: 'image too large' }, 413, cors);
       const bytes = Uint8Array.from(atob(image), (c) => c.charCodeAt(0));
       const isCardio = mode === 'cardio';
 
@@ -287,7 +305,7 @@ export default {
       if (match) { try { data = JSON.parse(match[0]); } catch { /* fall through */ } }
 
       if (isCardio) {
-        if (!data) return json({ machine: 'Cardio', durationMin: 0, distanceKm: 0, calories: 0, avgPace: '', avgHr: 0, confidence: 0.2, tip: (text || 'Could not read it — enter the numbers manually.').slice(0, 160) });
+        if (!data) return json({ machine: 'Cardio', durationMin: 0, distanceKm: 0, calories: 0, avgPace: '', avgHr: 0, confidence: 0.2, tip: (text || 'Could not read it — enter the numbers manually.').slice(0, 160) }, 200, cors);
         // Sanitise + derive so the app always gets clean, consistent numbers.
         const num = (v) => { const n = Number(v); return isFinite(n) && n >= 0 ? n : 0; };
         data.durationMin = Math.round(num(data.durationMin) * 10) / 10;
@@ -303,13 +321,13 @@ export default {
           data.avgPace = `${m}:${String(s).padStart(2, '0')} /km`;
         }
         data.confidence = Math.max(0, Math.min(1, Number(data.confidence) || 0.5));
-        return json(data);
+        return json(data, 200, cors);
       }
 
       // FOOD: compute macros from the table using AI-estimated grams.
       const rawItems = Array.isArray(data?.items) && data.items.length ? data.items : null;
       if (!rawItems) {
-        return json({ name: 'Meal (estimate)', calories: 500, proteinG: 30, carbsG: 50, fatG: 18, sugarG: 8, confidence: 0.25, tip: (text || 'Could not identify items — edit manually.').slice(0, 160), items: [{ name: 'Meal', calories: 500, proteinG: 30, carbsG: 50, fatG: 18, sugarG: 8 }] });
+        return json({ name: 'Meal (estimate)', calories: 500, proteinG: 30, carbsG: 50, fatG: 18, sugarG: 8, confidence: 0.25, tip: (text || 'Could not identify items — edit manually.').slice(0, 160), items: [{ name: 'Meal', calories: 500, proteinG: 30, carbsG: 50, fatG: 18, sugarG: 8 }] }, 200, cors);
       }
 
       // Table first (fast/curated), then Open Food Facts (millions of foods), then estimate.
@@ -340,9 +358,9 @@ export default {
         items: cleanItems,
         confidence: Math.max(0.3, Math.min(0.95, matchedCount / items.length)),
         tip: `${matchedCount}/${items.length} items matched a nutrition database (built-in + Open Food Facts). Edit anything if needed.`,
-      });
+      }, 200, cors);
     } catch (e) {
-      return json({ error: String(e && e.message ? e.message : e) }, 500);
+      return json({ error: String(e && e.message ? e.message : e) }, 500, cors);
     }
   },
 };

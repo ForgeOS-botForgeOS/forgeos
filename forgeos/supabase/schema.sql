@@ -311,3 +311,39 @@ create policy "prs friends read" on prs for select using (
       and f.status = 'accepted' and coalesce(p.share_activity, true)
   )
 );
+
+-- ===========================================================================
+-- Security hardening. Apply on top of everything above (idempotent).
+-- ===========================================================================
+
+-- CRITICAL: the original "profiles read using (true)" exposed EVERY column —
+-- email, weight, age, body fat, quiz answers — to anyone with the public anon
+-- key. Lock profile rows to the owner and their accepted friends only.
+drop policy if exists "profiles read" on profiles;
+create policy "profiles read" on profiles for select using (
+  auth.uid() = id
+  or exists (
+    select 1 from friendships f
+    where f.user_id = auth.uid() and f.friend_id = profiles.id and f.status = 'accepted'
+  )
+);
+
+-- Feed is friends-only (your posts + accepted friends'), not all-authenticated.
+-- author_name is denormalised so reading a post never needs a cross-profile read.
+alter table feed_posts add column if not exists author_name text;
+drop policy if exists "feed read" on feed_posts;
+create policy "feed read" on feed_posts for select using (
+  auth.uid() = author_id
+  or exists (
+    select 1 from friendships f
+    where f.user_id = auth.uid() and f.friend_id = feed_posts.author_id and f.status = 'accepted'
+  )
+);
+
+-- Reactions and leaderboard: require an authenticated session (no anon scraping).
+drop policy if exists "reactions read" on reactions;
+create policy "reactions read" on reactions for select using (auth.role() = 'authenticated');
+drop policy if exists "leaderboard read" on leaderboard_entries;
+create policy "leaderboard read" on leaderboard_entries for select using (
+  auth.role() = 'authenticated' and (public = true or auth.uid() = user_id)
+);
