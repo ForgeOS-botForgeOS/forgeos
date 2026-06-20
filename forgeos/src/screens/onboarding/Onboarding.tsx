@@ -12,6 +12,7 @@ import { useUser } from '../../state/userStore';
 import { macrosFor, mifflinStJeor, tdee, bodyFatBand } from '../../lib/fitness';
 import { signInWithGoogle, googleIsLive } from '../../lib/googleAuth';
 import { ensureCloudAccount } from '../../lib/activitySync';
+import { pullCloudBackup } from '../../lib/cloudSync';
 import { useT } from '../../lib/i18n';
 import { haptic } from '../../lib/haptics';
 import type { ActivityLevel, ExperienceLevel, Goal, Sex, UserProfile } from '../../types';
@@ -120,6 +121,17 @@ export default function Onboarding() {
   async function restoreExistingAccount(): Promise<boolean> {
     const user = await currentAuthUser();
     if (!user) return false;
+    // 1) Full cloud progress (workouts, XP, PRs, streaks — everything under
+    // forge-*). Reload so every store re-hydrates from it, landing on Home and
+    // skipping the first-time quiz entirely.
+    const pulled = await pullCloudBackup();
+    if (pulled === 'restored') {
+      haptic('success');
+      window.location.hash = '#/home';
+      location.reload();
+      return true;
+    }
+    // 2) No full backup yet, but a saved profile exists → still skip the quiz.
     const remote = await fetchProfile(user.id);
     if (remote && remote.onboarded) {
       setProfile({ ...remote, id: user.id, email: remote.email ?? user.email });
