@@ -13,7 +13,7 @@ import { useUser } from '../../state/userStore';
 import { macrosFor, mifflinStJeor, tdee, bodyFatBand } from '../../lib/fitness';
 import { signInWithGoogle, googleIsLive } from '../../lib/googleAuth';
 import { ensureCloudAccount } from '../../lib/activitySync';
-import { pullCloudBackup } from '../../lib/cloudSync';
+import { pullCloudBackup, pushCloudBackup } from '../../lib/cloudSync';
 import { useT } from '../../lib/i18n';
 import { haptic } from '../../lib/haptics';
 import type { ActivityLevel, ExperienceLevel, Goal, Sex, UserProfile } from '../../types';
@@ -147,19 +147,32 @@ export default function Onboarding() {
       navigate('/home', { replace: true });
       return true;
     }
+    // 3) Pre-backend account: nothing in the cloud, but an onboarded profile
+    // already exists ON THIS DEVICE. Keep it — attach it to this cloud session,
+    // push it (and all local progress) up, and skip the quiz. Don't restart.
+    const local = useUser.getState().profile;
+    if (local?.onboarded) {
+      await ensureCloudAccount(); // adopts the auth id onto the local profile + upserts it
+      void pushCloudBackup(); // send all local progress to the cloud for next time
+      haptic('success');
+      navigate('/home', { replace: true });
+      return true;
+    }
     return false;
   }
 
-  // Back from a Supabase OAuth redirect we're already authenticated — pull the
-  // saved account (returning user → home), or just keep onboarding with the live
-  // session so finish() writes under the real cloud id.
   useEffect(() => {
-    if (!isBackendLive) return;
-    // Attempt the auto-restore at most once per browser session so it can never
-    // reload-loop, even on a half-set-up account.
-    if (sessionStorage.getItem('forge-restore-tried')) return;
-    sessionStorage.setItem('forge-restore-tried', '1');
-    void restoreExistingAccount();
+    // Already set up on THIS device → never show the first-time quiz. Go
+    // straight in and link this profile to a cloud session in the background.
+    if (useUser.getState().profile?.onboarded) {
+      if (isBackendLive) void ensureCloudAccount();
+      navigate('/home', { replace: true });
+      return;
+    }
+    // Otherwise (fresh device / back from a Google OAuth redirect) try to restore
+    // an existing account from the cloud. The reload in step 1 only fires for an
+    // onboarded backup, so this can't loop.
+    if (isBackendLive) void restoreExistingAccount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
