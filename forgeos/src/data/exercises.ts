@@ -612,6 +612,43 @@ export const EXERCISES: Exercise[] = [
   ex('Seated Dumbbell Shoulder Press', 'Bodybuilding', 'Shoulders', ['Triceps'], 'Dumbbell'),
   ex('Behind-the-Neck Press', 'Bodybuilding', 'Shoulders', ['Triceps'], 'Barbell'),
   ex('Landmine Press', 'Bodybuilding', 'Shoulders', ['Chest'], 'Landmine'),
+
+  // ---------------- Hyperextensions / posterior chain ----------------
+  // Appended at the end so existing exercise ids never shift.
+  ex('45° Back Extension', 'Bodybuilding', 'Hamstrings', ['Glutes', 'Back'], 'Hyper Bench'),
+  ex('Weighted Back Extension', 'Bodybuilding', 'Hamstrings', ['Glutes', 'Back'], 'Hyper Bench'),
+  ex('Reverse Hyperextension', 'Bodybuilding', 'Glutes', ['Hamstrings', 'Back'], 'Reverse Hyper'),
+  ex('Bodyweight Hyperextension', 'Calisthenics', 'Glutes', ['Back', 'Hamstrings'], 'Bodyweight'),
+  ex('GHD Back Extension', 'CrossFit', 'Hamstrings', ['Glutes', 'Back'], 'GHD'),
+  ex('Superman Hold', 'Calisthenics', 'Back', ['Glutes', 'Hamstrings'], 'Bodyweight'),
+
+  // ---------------- Hamstrings (more variety) ----------------
+  ex('Single-Leg Romanian Deadlift', 'Bodybuilding', 'Hamstrings', ['Glutes'], 'Dumbbell'),
+  ex('Stability Ball Leg Curl', 'Bodybuilding', 'Hamstrings', ['Glutes'], 'Stability Ball'),
+  ex('Cable Pull-Through', 'Bodybuilding', 'Glutes', ['Hamstrings'], 'Cable'),
+  ex('Glute-Ham Raise', 'Calisthenics', 'Hamstrings', ['Glutes'], 'GHD'),
+
+  // ---------------- Biceps (more variety) ----------------
+  ex('Incline Dumbbell Curl', 'Bodybuilding', 'Biceps', [], 'Dumbbell'),
+  ex('Preacher Curl', 'Bodybuilding', 'Biceps', [], 'EZ Bar'),
+  ex('Hammer Curl', 'Bodybuilding', 'Biceps', [], 'Dumbbell'),
+  ex('Concentration Curl', 'Bodybuilding', 'Biceps', [], 'Dumbbell'),
+  ex('Cable Curl', 'Bodybuilding', 'Biceps', [], 'Cable'),
+  ex('Chin-Up', 'Calisthenics', 'Biceps', ['Back'], 'Bodyweight'),
+
+  // ---------------- Triceps (more variety) ----------------
+  ex('Overhead Cable Extension', 'Bodybuilding', 'Triceps', [], 'Cable'),
+  ex('Skull Crusher', 'Bodybuilding', 'Triceps', [], 'EZ Bar'),
+  ex('Triceps Pushdown', 'Bodybuilding', 'Triceps', [], 'Cable'),
+  ex('Overhead Dumbbell Extension', 'Bodybuilding', 'Triceps', [], 'Dumbbell'),
+  ex('Diamond Push-Up', 'Calisthenics', 'Triceps', ['Chest'], 'Bodyweight'),
+  ex('Bench Dip', 'Calisthenics', 'Triceps', ['Shoulders'], 'Bodyweight'),
+
+  // ---------------- Calves & core (more variety) ----------------
+  ex('Standing Calf Raise', 'Bodybuilding', 'Calves', [], 'Machine'),
+  ex('Seated Calf Raise', 'Bodybuilding', 'Calves', [], 'Machine'),
+  ex('Hanging Leg Raise', 'Calisthenics', 'Core', [], 'Pull-up Bar'),
+  ex('Cable Crunch', 'Bodybuilding', 'Core', [], 'Cable'),
 ];
 
 export const EXERCISE_CATEGORIES: ExerciseCategory[] = [

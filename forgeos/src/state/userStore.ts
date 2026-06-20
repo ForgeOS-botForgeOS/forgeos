@@ -96,6 +96,19 @@ export const useUser = create<UserState>()(
         // every offline user shared one code. Mint a unique one for anyone who
         // doesn't have a real per-user code yet.
         if (state.profile && !state.profile.friendCode) state.profile.friendCode = generateFriendCode();
+        // Recover accounts whose `onboarded` flag got wiped by an empty
+        // cloud-profile overwrite on sign-in: if there's a plan / weigh-ins /
+        // body stats / saved plans — or any workout history — they're clearly a
+        // returning user, so don't force them back through the first-time quiz.
+        if (state.profile && !state.profile.onboarded) {
+          let hasWorkouts = false;
+          try {
+            hasWorkouts = (JSON.parse(localStorage.getItem('forge-workouts') ?? '{}')?.state?.history?.length ?? 0) > 0;
+          } catch { /* ignore */ }
+          if (state.weekPlan || (state.weighIns?.length ?? 0) > 0 || (state.bodyStats?.length ?? 0) > 0 || (state.savedPlans?.length ?? 0) > 0 || hasWorkouts) {
+            state.profile.onboarded = true;
+          }
+        }
       },
     },
   ),
