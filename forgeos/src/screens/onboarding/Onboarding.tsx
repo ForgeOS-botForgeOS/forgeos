@@ -83,7 +83,7 @@ export default function Onboarding() {
   async function continueWithGoogleLocal() {
     if (!googleIsLive) {
       setProvider('google');
-      setStep('quiz');
+      if (!(await restoreExistingAccount())) setStep('quiz');
       return;
     }
     setSigningIn('google');
@@ -93,7 +93,8 @@ export default function Onboarding() {
       setName((prev) => prev || u.name || '');
       setGoogleEmail(u.email);
       haptic('success');
-      setStep('quiz');
+      // If they already have an account/profile, skip the quiz.
+      if (!(await restoreExistingAccount())) setStep('quiz');
     } catch {
       setSignInErr('Google sign-in was cancelled or failed. Try again.');
     } finally {
@@ -121,39 +122,39 @@ export default function Onboarding() {
   // whole onboarding quiz. Returns true if a saved profile was restored.
   async function restoreExistingAccount(): Promise<boolean> {
     const user = await currentAuthUser();
-    if (!user) return false;
-    // 1) Full cloud progress (workouts, XP, PRs, streaks — everything under
-    // forge-*). Reload so every store re-hydrates from it, landing on Home and
-    // skipping the first-time quiz entirely — but ONLY if the restored account
-    // is actually onboarded, otherwise we'd bounce back here and reload-loop.
-    const pulled = await pullCloudBackup();
-    if (pulled === 'restored') {
-      let restoredOnboarded = false;
-      try {
-        restoredOnboarded = !!JSON.parse(localStorage.getItem('forge-user') ?? '{}')?.state?.profile?.onboarded;
-      } catch { /* malformed dump — fall through to profile restore */ }
-      if (restoredOnboarded) {
+    if (user) {
+      // 1) Full cloud progress (workouts, XP, PRs — everything under forge-*).
+      // Reload so every store re-hydrates; only when the backup is onboarded, so
+      // it can't reload-loop on a half-set-up account.
+      const pulled = await pullCloudBackup();
+      if (pulled === 'restored') {
+        let restoredOnboarded = false;
+        try {
+          restoredOnboarded = !!JSON.parse(localStorage.getItem('forge-user') ?? '{}')?.state?.profile?.onboarded;
+        } catch { /* malformed dump — fall through */ }
+        if (restoredOnboarded) {
+          haptic('success');
+          window.location.hash = '#/home';
+          location.reload();
+          return true;
+        }
+      }
+      // 2) A finished profile row in the cloud → restore it.
+      const remote = await fetchProfile(user.id);
+      if (remote && remote.onboarded) {
+        setProfile({ ...remote, id: user.id, email: remote.email ?? user.email });
         haptic('success');
-        window.location.hash = '#/home';
-        location.reload();
+        navigate('/home', { replace: true });
         return true;
       }
     }
-    // 2) No full backup yet, but a saved profile exists → still skip the quiz.
-    const remote = await fetchProfile(user.id);
-    if (remote && remote.onboarded) {
-      setProfile({ ...remote, id: user.id, email: remote.email ?? user.email });
-      haptic('success');
-      navigate('/home', { replace: true });
-      return true;
-    }
-    // 3) Pre-backend account: nothing in the cloud, but an onboarded profile
-    // already exists ON THIS DEVICE. Keep it — attach it to this cloud session,
-    // push it (and all local progress) up, and skip the quiz. Don't restart.
+    // 3) Already set up ON THIS DEVICE (e.g. a pre-backend account, or a guest):
+    // keep that profile, link it to the cloud + push progress up, and skip the
+    // quiz. Works with or without a session.
     const local = useUser.getState().profile;
     if (local?.onboarded) {
-      await ensureCloudAccount(); // adopts the auth id onto the local profile + upserts it
-      void pushCloudBackup(); // send all local progress to the cloud for next time
+      if (isBackendLive) void ensureCloudAccount();
+      void pushCloudBackup();
       haptic('success');
       navigate('/home', { replace: true });
       return true;
@@ -242,7 +243,7 @@ export default function Onboarding() {
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={emailContinue}>
               <Mail size={18} /> {t('ob.email')}
             </Button>
-            <button className="w-full text-sm text-muted pt-2" onClick={() => { setProvider('guest'); setStep('quiz'); }}>
+            <button className="w-full text-sm text-muted pt-2" onClick={async () => { setProvider('guest'); if (!(await restoreExistingAccount())) setStep('quiz'); }}>
               {t('ob.guest')}
             </button>
           </div>

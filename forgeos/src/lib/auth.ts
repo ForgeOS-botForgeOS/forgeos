@@ -24,12 +24,16 @@ export function initAuth(): () => void {
 async function hydrateProfile(id: string, email?: string) {
   const remote = await fetchProfile(id);
   const store = useUser.getState();
-  if (remote) {
-    store.setProfile(remote);
-  } else if (!store.profile) {
-    // New auth user with no local profile yet — leave onboarding to create it,
-    // but stamp the id/email so the write targets the right row.
-    store.updateProfile?.({});
+  if (remote?.onboarded) {
+    // A real, finished account exists in the cloud → adopt it.
+    store.setProfile({ ...remote, id, email: remote.email ?? email });
+  } else if (store.profile) {
+    // We already have a local profile (possibly set up BEFORE the backend
+    // existed). Keep it — never let an empty/stub remote row (onboarded=false,
+    // auto-created by the new-user trigger) overwrite a real account. Just bind
+    // it to this auth id so future writes target the right cloud row.
+    if (store.profile.id !== id) store.updateProfile({ id });
+    if (email && !store.profile.email) store.updateProfile({ email });
   }
-  if (email && store.profile) store.updateProfile({ email });
+  // else: brand-new user, no local profile — onboarding will create it.
 }
