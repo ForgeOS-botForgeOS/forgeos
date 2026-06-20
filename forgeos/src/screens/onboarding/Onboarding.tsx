@@ -123,13 +123,20 @@ export default function Onboarding() {
     if (!user) return false;
     // 1) Full cloud progress (workouts, XP, PRs, streaks — everything under
     // forge-*). Reload so every store re-hydrates from it, landing on Home and
-    // skipping the first-time quiz entirely.
+    // skipping the first-time quiz entirely — but ONLY if the restored account
+    // is actually onboarded, otherwise we'd bounce back here and reload-loop.
     const pulled = await pullCloudBackup();
     if (pulled === 'restored') {
-      haptic('success');
-      window.location.hash = '#/home';
-      location.reload();
-      return true;
+      let restoredOnboarded = false;
+      try {
+        restoredOnboarded = !!JSON.parse(localStorage.getItem('forge-user') ?? '{}')?.state?.profile?.onboarded;
+      } catch { /* malformed dump — fall through to profile restore */ }
+      if (restoredOnboarded) {
+        haptic('success');
+        window.location.hash = '#/home';
+        location.reload();
+        return true;
+      }
     }
     // 2) No full backup yet, but a saved profile exists → still skip the quiz.
     const remote = await fetchProfile(user.id);
@@ -146,7 +153,12 @@ export default function Onboarding() {
   // saved account (returning user → home), or just keep onboarding with the live
   // session so finish() writes under the real cloud id.
   useEffect(() => {
-    if (isBackendLive) void restoreExistingAccount();
+    if (!isBackendLive) return;
+    // Attempt the auto-restore at most once per browser session so it can never
+    // reload-loop, even on a half-set-up account.
+    if (sessionStorage.getItem('forge-restore-tried')) return;
+    sessionStorage.setItem('forge-restore-tried', '1');
+    void restoreExistingAccount();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
