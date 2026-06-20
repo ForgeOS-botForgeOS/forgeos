@@ -11,6 +11,7 @@ import { ICE_BREAKER } from '../../data/quests';
 import { useUser } from '../../state/userStore';
 import { macrosFor, mifflinStJeor, tdee, bodyFatBand } from '../../lib/fitness';
 import { signInWithGoogle, googleIsLive } from '../../lib/googleAuth';
+import { ensureCloudAccount } from '../../lib/activitySync';
 import { useT } from '../../lib/i18n';
 import { haptic } from '../../lib/haptics';
 import type { ActivityLevel, ExperienceLevel, Goal, Sex, UserProfile } from '../../types';
@@ -138,6 +139,10 @@ export default function Onboarding() {
   }, []);
 
   async function finish() {
+    // Guarantee a real cloud session (anonymous if needed) BEFORE stamping the
+    // profile id, so Google/guest accounts become synced cloud accounts exactly
+    // like email ones — everything works the same.
+    await ensureCloudAccount();
     const user = await currentAuthUser();
     const profile: UserProfile = {
       id: user?.id ?? 'me',

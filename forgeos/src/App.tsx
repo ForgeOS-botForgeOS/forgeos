@@ -7,6 +7,7 @@ import { Tutorial } from './components/Tutorial';
 import { LockScreen } from './components/LockScreen';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { Toaster } from './components/Toaster';
+import { PasswordReset } from './components/PasswordReset';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ScreenSkeleton } from './components/Skeleton';
 import { useUser } from './state/userStore';
@@ -163,6 +164,7 @@ export default function App() {
     <PhoneFrame>
       <UpdatePrompt />
       <Toaster />
+      <PasswordReset />
       <ErrorBoundary>
       <HashRouter>
         <Suspense fallback={<ScreenSkeleton />}>

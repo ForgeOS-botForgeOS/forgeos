@@ -35,10 +35,32 @@ export async function signUpWithEmail(email: string, password: string) {
 }
 
 // Email a password-reset link. Can't reveal an existing password (it's only
-// stored hashed), so this is the recovery path when one is forgotten.
+// stored hashed), so this is the recovery path when one is forgotten. The link
+// returns to the app root, where the PASSWORD_RECOVERY handler (PasswordReset
+// overlay) lets the user set a new password.
 export async function sendPasswordReset(email: string) {
   if (!supabase) return { error: 'mock-mode' } as const;
-  return supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.href.split('#')[0] });
+  const redirectTo = window.location.origin + window.location.pathname;
+  return supabase.auth.resetPasswordForEmail(email, { redirectTo });
+}
+
+// Set a new password — valid right after a recovery link establishes a session.
+export async function updatePassword(password: string) {
+  if (!supabase) return { error: 'mock-mode' } as const;
+  return supabase.auth.updateUser({ password });
+}
+
+// Capture the password-recovery event at module load (before the UI mounts) so
+// the "set a new password" overlay never misses it. PasswordReset reads the flag
+// on mount and also listens for the event.
+export const recovery = { requested: false };
+if (supabase) {
+  supabase.auth.onAuthStateChange((event) => {
+    if (event === 'PASSWORD_RECOVERY') {
+      recovery.requested = true;
+      window.dispatchEvent(new Event('forge:password-recovery'));
+    }
+  });
 }
 
 // The currently authenticated user (or null in mock mode / signed out). Used so
