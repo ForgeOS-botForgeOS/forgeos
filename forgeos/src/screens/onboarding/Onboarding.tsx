@@ -5,6 +5,7 @@ import { Mail, Globe, Loader2, Check, Eye, EyeOff, Download } from 'lucide-react
 import { Button, Card, Pill, Sheet, Toggle } from '../../components/ui';
 import { ForgeLogo } from '../../components/ForgeLogo';
 import { InstallButton } from '../../components/InstallButton';
+import { isStandalone } from '../../lib/pwaInstall';
 import { isBackendLive, signInWithEmail, signUpWithEmail, signInWithOAuth, currentAuthUser, sendPasswordReset } from '../../lib/supabase';
 import { fetchProfile } from '../../lib/repositories';
 import { ICE_BREAKER } from '../../data/quests';
@@ -210,11 +211,15 @@ export default function Onboarding() {
           <h1 className="text-3xl font-extrabold leading-tight">{t('ob.tagline')}</h1>
           <p className="text-muted">{t('ob.sub')}</p>
 
-          {/* Big, obvious install CTA when opened in a browser */}
-          <InstallButton variant="big" />
-          <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => navigate('/download')}>
-            <Download size={16} /> Download the Android app
-          </Button>
+          {/* Install / download CTAs — only in a browser, never inside the app. */}
+          {!isStandalone() && (
+            <>
+              <InstallButton variant="big" />
+              <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => navigate('/download')}>
+                <Download size={16} /> Download the Android app
+              </Button>
+            </>
+          )}
 
           <div className="space-y-2 pt-2">
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" disabled={signingIn === 'google'} onClick={continueWithGoogle}>

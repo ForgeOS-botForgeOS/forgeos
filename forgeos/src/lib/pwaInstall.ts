@@ -25,6 +25,9 @@ if (typeof window !== 'undefined') {
 
 export function isStandalone(): boolean {
   if (typeof window === 'undefined') return false;
+  // Native Capacitor app (the Android APK) is always "installed".
+  const cap = (window as unknown as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor;
+  if (cap?.isNativePlatform?.() || cap) return true;
   return (
     window.matchMedia?.('(display-mode: standalone)').matches ||
     (navigator as unknown as { standalone?: boolean }).standalone === true
