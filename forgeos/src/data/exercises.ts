@@ -649,6 +649,26 @@ export const EXERCISES: Exercise[] = [
   ex('Seated Calf Raise', 'Bodybuilding', 'Calves', [], 'Machine'),
   ex('Hanging Leg Raise', 'Calisthenics', 'Core', [], 'Pull-up Bar'),
   ex('Cable Crunch', 'Bodybuilding', 'Core', [], 'Cable'),
+
+  // ---------------- More variety (round out to 600) ----------------
+  ex('Cable Fly', 'Bodybuilding', 'Chest', [], 'Cable'),
+  ex('Incline Cable Fly', 'Bodybuilding', 'Chest', ['Shoulders'], 'Cable'),
+  ex('Chest-Supported Row', 'Bodybuilding', 'Back', ['Biceps'], 'Machine'),
+  ex('Meadows Row', 'Bodybuilding', 'Back', ['Biceps'], 'Landmine'),
+  ex('Straight-Arm Pulldown', 'Bodybuilding', 'Back', [], 'Cable'),
+  ex('Cable Lateral Raise', 'Bodybuilding', 'Shoulders', [], 'Cable'),
+  ex('Reverse Pec Deck', 'Bodybuilding', 'Shoulders', ['Back'], 'Machine'),
+  ex('Sissy Squat', 'Calisthenics', 'Quads', [], 'Bodyweight'),
+  ex('Walking Lunge', 'Bodybuilding', 'Quads', ['Glutes'], 'Dumbbell'),
+  ex('Cable Glute Kickback', 'Bodybuilding', 'Glutes', ['Hamstrings'], 'Cable'),
+  ex('Curtsy Lunge', 'Bodybuilding', 'Glutes', ['Quads'], 'Dumbbell'),
+  ex('Spider Curl', 'Bodybuilding', 'Biceps', [], 'Dumbbell'),
+  ex('Tate Press', 'Bodybuilding', 'Triceps', [], 'Dumbbell'),
+  ex('Pallof Press', 'Bodybuilding', 'Core', [], 'Cable'),
+  ex('Ab Wheel Rollout', 'Calisthenics', 'Core', [], 'Ab Wheel'),
+  ex('Dead Bug', 'Calisthenics', 'Core', [], 'Bodyweight'),
+  ex('Donkey Calf Raise', 'Bodybuilding', 'Calves', [], 'Machine'),
+  ex('Copenhagen Plank', 'Calisthenics', 'Core', ['Glutes'], 'Bodyweight'),
 ];
 
 export const EXERCISE_CATEGORIES: ExerciseCategory[] = [
