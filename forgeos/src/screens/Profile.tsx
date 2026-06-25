@@ -25,7 +25,6 @@ import { useQuotes } from '../state/quoteStore';
 import { ACHIEVEMENTS } from '../data/achievements';
 import { shareProfile, generateProfileCard, type PublicProfile } from '../lib/profileShare';
 import { downloadDataUrl } from '../lib/shareCard';
-import { watchGym } from '../lib/geo';
 import { EXERCISES } from '../data/exercises';
 import type { ThemeId } from '../types';
 import { haptic } from '../lib/haptics';
@@ -137,17 +136,6 @@ export default function Profile() {
   useEffect(() => {
     void pendingCount().then(setPending);
   }, []);
-
-  // Geofenced check-in watcher — only while enabled, uses your saved gym.
-  useEffect(() => {
-    if (!s.geofenceEnabled) return;
-    const stop = watchGym(s.gym, () => {
-      haptic('success');
-      toast('🔥 Welcome to the Forge — opening today’s workout.', 'info');
-      navigate('/train');
-    });
-    return stop;
-  }, [s.geofenceEnabled, s.gym, navigate]);
 
   function themeUnlocked(t: (typeof THEMES)[number]) {
     if (!t.locked) return true;

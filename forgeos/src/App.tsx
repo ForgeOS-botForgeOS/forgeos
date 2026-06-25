@@ -14,6 +14,9 @@ import { useUser } from './state/userStore';
 import { useSettings } from './state/settingsStore';
 import { useGami } from './state/gamificationStore';
 import { useSocial } from './state/socialStore';
+import { useWorkout } from './state/workoutStore';
+import { watchGym } from './lib/geo';
+import { haptic } from './lib/haptics';
 import { initAuth } from './lib/auth';
 import { startReminderScheduler } from './lib/reminders';
 import { onReconnect, syncQueue } from './lib/offlineQueue';
@@ -54,6 +57,25 @@ function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const touch = useRef<{ x: number; y: number; ok: boolean } | null>(null);
+  const geofenceEnabled = useSettings((s) => s.geofenceEnabled);
+  const gym = useSettings((s) => s.gym);
+
+  // Geofenced "Welcome to the Forge" check-in. Lives here (not on a screen) so
+  // a single watch persists across tab navigation and never re-arms — opening a
+  // screen while standing in the gym must not yank you to the workout. Only a
+  // real arrival fires, and a 3h cooldown stops GPS jitter from re-triggering.
+  useEffect(() => {
+    if (!geofenceEnabled) return;
+    return watchGym(gym, () => {
+      const last = Number(localStorage.getItem('forge-geofence-last') ?? 0);
+      if (Date.now() - last < 3 * 60 * 60 * 1000) return; // already welcomed recently
+      if (useWorkout.getState().active) return; // already training — don't interrupt
+      localStorage.setItem('forge-geofence-last', String(Date.now()));
+      haptic('success');
+      toast('🔥 Welcome to the Forge — opening today’s workout.', 'info');
+      navigate('/train');
+    });
+  }, [geofenceEnabled, gym, navigate]);
 
   function onTouchStart(e: React.TouchEvent) {
     if (e.touches.length !== 1) {

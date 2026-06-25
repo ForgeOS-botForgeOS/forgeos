@@ -24,12 +24,17 @@ function distanceM(aLat: number, aLng: number, bLat: number, bLng: number): numb
 export function watchGym(fence: GymGeofence, onEnter: () => void): () => void {
   if (typeof navigator === 'undefined' || !navigator.geolocation) return () => {};
   let inside = false;
+  let primed = false; // the first fix only establishes a baseline — never fires
   const id = navigator.geolocation.watchPosition(
     (pos) => {
       const d = distanceM(pos.coords.latitude, pos.coords.longitude, fence.lat, fence.lng);
       const nowInside = d <= fence.radiusM;
-      if (nowInside && !inside) onEnter(); // "Welcome to the Forge"
+      // Only a genuine outside -> inside *transition* is an arrival. Being
+      // already inside when the watch starts (e.g. opening a screen at the gym)
+      // must NOT fire, or it would yank you to the workout on every mount.
+      if (primed && nowInside && !inside) onEnter(); // "Welcome to the Forge"
       inside = nowInside;
+      primed = true;
     },
     () => {
       /* permission denied — silently stop */
