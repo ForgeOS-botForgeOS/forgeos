@@ -19,6 +19,7 @@ import { openTutorial } from '../components/Tutorial';
 import { ChangePasswordSheet, PasscodeSheet } from '../components/SecuritySheets';
 import { toast } from '../lib/toast';
 import { pushCloudBackup, pullCloudBackup, cloudSyncAvailable } from '../lib/cloudSync';
+import { signOutEverywhere } from '../lib/supabase';
 import { useWorkout } from '../state/workoutStore';
 import { useQuotes } from '../state/quoteStore';
 import { ACHIEVEMENTS } from '../data/achievements';
@@ -456,8 +457,13 @@ export default function Profile() {
         </Card>
       </div>
 
-      <Button variant="outline" className="w-full justify-center text-danger" onClick={() => { if (confirm('Reset profile and onboarding?')) { reset(); navigate('/onboarding'); } }}>
-        <span className="flex items-center gap-2"><LogOut size={16} /> Reset / sign out</span>
+      <Button variant="outline" className="w-full justify-center text-danger" onClick={async () => {
+        if (!confirm('Sign out and reset this device’s profile? Your cloud account stays saved.')) return;
+        await signOutEverywhere(); // kill the Supabase session + block auto re-sign-in
+        reset();
+        navigate('/onboarding', { replace: true });
+      }}>
+        <span className="flex items-center gap-2"><LogOut size={16} /> Sign out</span>
       </Button>
     </Screen>
   );

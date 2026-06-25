@@ -6,7 +6,7 @@ import { Button, Card, Pill, Sheet, Toggle } from '../../components/ui';
 import { ForgeLogo } from '../../components/ForgeLogo';
 import { InstallButton } from '../../components/InstallButton';
 import { isStandalone } from '../../lib/pwaInstall';
-import { isBackendLive, signInWithEmail, signUpWithEmail, signInWithOAuth, currentAuthUser, sendPasswordReset } from '../../lib/supabase';
+import { isBackendLive, signInWithEmail, signUpWithEmail, signInWithOAuth, currentAuthUser, sendPasswordReset, clearSignedOut } from '../../lib/supabase';
 import { fetchProfile } from '../../lib/repositories';
 import { ICE_BREAKER } from '../../data/quests';
 import { useUser } from '../../state/userStore';
@@ -62,6 +62,7 @@ export default function Onboarding() {
 
   async function continueWithGoogle() {
     setSignInErr(null);
+    clearSignedOut(); // explicit sign-in → allow sessions again
     // Real cloud account: route Google through Supabase OAuth (redirect). This
     // is the only Google path that creates a real session, so friends/activity
     // actually sync. Needs the Google provider enabled in Supabase; if it isn't,
@@ -181,6 +182,7 @@ export default function Onboarding() {
     // Guarantee a real cloud session (anonymous if needed) BEFORE stamping the
     // profile id, so Google/guest accounts become synced cloud accounts exactly
     // like email ones — everything works the same.
+    clearSignedOut();
     await ensureCloudAccount();
     const user = await currentAuthUser();
     const profile: UserProfile = {
@@ -243,7 +245,7 @@ export default function Onboarding() {
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={emailContinue}>
               <Mail size={18} /> {t('ob.email')}
             </Button>
-            <button className="w-full text-sm text-muted pt-2" onClick={async () => { setProvider('guest'); if (!(await restoreExistingAccount())) setStep('quiz'); }}>
+            <button className="w-full text-sm text-muted pt-2" onClick={async () => { clearSignedOut(); setProvider('guest'); if (!(await restoreExistingAccount())) setStep('quiz'); }}>
               {t('ob.guest')}
             </button>
           </div>
@@ -369,6 +371,7 @@ export default function Onboarding() {
         initialMode={authMode}
         onClose={() => setEmailOpen(false)}
         onAuthed={async (email, mode) => {
+          clearSignedOut();
           setProvider('email');
           setGoogleEmail(email);
           setEmailOpen(false);

@@ -77,13 +77,32 @@ export async function currentAuthUser(): Promise<{ id: string; email?: string } 
 // profile into a working cloud account automatically. Requires "Anonymous
 // sign-ins" enabled in the Supabase dashboard. They can later attach an
 // email/Google to keep it across devices.
+// A user who explicitly logged out should NOT be auto-signed-in again. We flag
+// it locally and check it before creating an anonymous session.
+const SIGNED_OUT = 'forge-signed-out';
+export function isSignedOut(): boolean {
+  try { return localStorage.getItem(SIGNED_OUT) === '1'; } catch { return false; }
+}
+export function clearSignedOut(): void {
+  try { localStorage.removeItem(SIGNED_OUT); } catch { /* ignore */ }
+}
+
 export async function ensureSession(): Promise<{ id: string; email?: string } | null> {
   if (!supabase) return null;
   const { data } = await supabase.auth.getUser();
   if (data.user) return { id: data.user.id, email: data.user.email ?? undefined };
+  if (isSignedOut()) return null; // don't auto-create a session after a logout
   const { data: anon, error } = await supabase.auth.signInAnonymously();
   if (error || !anon.user) return null;
   return { id: anon.user.id, email: anon.user.email ?? undefined };
+}
+
+// Real sign-out: kill the Supabase session AND set the guard so nothing signs
+// the user back in. Cleared the moment they explicitly sign in / onboard again.
+export async function signOutEverywhere(): Promise<void> {
+  try { localStorage.setItem(SIGNED_OUT, '1'); } catch { /* ignore */ }
+  try { sessionStorage.removeItem('forge-restore-tried'); } catch { /* ignore */ }
+  if (supabase) { try { await supabase.auth.signOut(); } catch { /* ignore */ } }
 }
 
 // ---- Realtime ----
