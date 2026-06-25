@@ -47,6 +47,25 @@ export const useSettings = create<SettingsState>()(
     }),
     {
       name: 'forge-settings',
+      // Deep-merge persisted state over DEFAULTS so nested objects (gym,
+      // reminder, appLock) always carry every default key. Without this, an
+      // older saved blob missing a nested field (e.g. reminder.days) would
+      // surface as `undefined` and crash a screen that reads it — this is what
+      // made the "You" tab appear dead for early users.
+      merge: (persisted, current) => {
+        const p = (persisted ?? {}) as Partial<Settings>;
+        const deep = <T,>(def: T, saved: unknown): T => {
+          if (def && typeof def === 'object' && !Array.isArray(def) && saved && typeof saved === 'object') {
+            const out = { ...(def as object) } as Record<string, unknown>;
+            for (const k of Object.keys(out)) {
+              out[k] = deep((def as Record<string, unknown>)[k], (saved as Record<string, unknown>)[k]);
+            }
+            return out as T;
+          }
+          return (saved === undefined ? def : saved) as T;
+        };
+        return { ...current, ...deep(DEFAULTS, p) } as SettingsState;
+      },
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.applyTheme(state.theme);

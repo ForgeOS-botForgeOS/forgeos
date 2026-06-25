@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download } from 'lucide-react';
+import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { pushMyActivity } from '../lib/activitySync';
@@ -57,6 +57,9 @@ export default function Profile() {
   const s = useSettings();
   const profile = useUser((u) => u.profile);
   const reset = useUser((u) => u.reset);
+  const updateProfile = useUser((u) => u.updateProfile);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState('');
   const xp = useGami((g) => g.xp);
   const navigate = useNavigate();
   const [pending, setPending] = useState(0);
@@ -69,6 +72,16 @@ export default function Profile() {
   const equippedTitle = useCosmetics((c) => c.equippedTitle);
   const equippedFrame = useCosmetics((c) => c.equippedFrame);
   const ownedCosmetics = useCosmetics((c) => c.owned);
+
+  function saveName() {
+    const next = nameDraft.trim();
+    setEditingName(false);
+    if (!next || next === profile?.name) return;
+    updateProfile({ name: next });
+    void pushMyActivity(); // let friends see the new name
+    haptic('success');
+    toast('Name updated ✅');
+  }
 
   function setGymToHere() {
     if (!navigator.geolocation) {
@@ -155,8 +168,27 @@ export default function Profile() {
             {(profile?.name ?? 'Y').slice(0, 2).toUpperCase()}
           </div>
         </div>
-        <div className="flex-1">
-          <p className="font-bold">{profile?.name ?? 'You'}</p>
+        <div className="flex-1 min-w-0">
+          {editingName ? (
+            <input
+              autoFocus
+              value={nameDraft}
+              maxLength={24}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
+              onBlur={saveName}
+              placeholder="Your name"
+              className="w-full rounded-lg bg-surface-2 border border-line px-2 py-1 text-sm font-bold"
+            />
+          ) : (
+            <button
+              onClick={() => { setNameDraft(profile?.name ?? ''); setEditingName(true); haptic('tap'); }}
+              className="flex items-center gap-1.5 font-bold text-left"
+            >
+              <span className="truncate">{profile?.name ?? 'You'}</span>
+              <Pencil size={13} className="text-muted shrink-0" />
+            </button>
+          )}
           {title && <p className="text-xs text-accent-2 font-semibold">“{title}”</p>}
         </div>
         <Button variant="ghost" className="py-1.5" onClick={() => navigate('/shop')}>Shop</Button>

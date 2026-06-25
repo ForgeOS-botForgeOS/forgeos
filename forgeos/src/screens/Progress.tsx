@@ -10,6 +10,8 @@ import { useGami } from '../state/gamificationStore';
 import { useSettings } from '../state/settingsStore';
 import { haptic } from '../lib/haptics';
 import { toast } from '../lib/toast';
+import { e1rmSeries } from '../lib/analytics';
+import { exerciseById } from '../data/exercises';
 import type { BodyStat } from '../types';
 
 const MEASURES: { key: keyof BodyStat; label: string; unit: string; step: number }[] = [
@@ -59,6 +61,8 @@ export default function Progress() {
           <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium flex items-center gap-1"><Flame size={12} className="text-accent-2" /> {dayStreak}-day streak</span>
         </div>
       </Card>
+
+      <ConsistencyHeatmap />
 
       <div className="flex gap-2">
         <Pill active={tab === 'body'} onClick={() => setTab('body')}>Body</Pill>
@@ -281,8 +285,52 @@ function StrengthPanel() {
   );
   const topPrs = useMemo(() => [...prs].sort((a, b) => b.e1rm - a.e1rm).slice(0, 6), [prs]);
 
+  // Exercises with at least 2 logged data points — candidates for a strength
+  // progression line. Sorted by how often they've been trained.
+  const trained = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const w of history) for (const we of w.exercises) {
+      if (we.sets.some((s) => s.completed)) counts.set(we.exerciseId, (counts.get(we.exerciseId) ?? 0) + 1);
+    }
+    return [...counts.entries()].filter(([, n]) => n >= 2).sort((a, b) => b[1] - a[1])
+      .map(([id]) => ({ id, name: exerciseById(id)?.name ?? 'Exercise' }));
+  }, [history]);
+
+  const [selEx, setSelEx] = useState<string>('');
+  const activeEx = selEx || trained[0]?.id || '';
+  const e1Series = useMemo(
+    () => activeEx ? e1rmSeries(history, activeEx).slice(-20).map((p) => ({ d: p.date, kg: p.e1rm })) : [],
+    [history, activeEx],
+  );
+
   return (
     <div className="space-y-3">
+      {/* Strength progression — estimated 1RM over time, per lift */}
+      {trained.length > 0 && (
+        <Card>
+          <SectionTitle action={<TrendingUp size={14} className="text-accent-2" />}>Strength progression</SectionTitle>
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 mb-1" data-noswipe>
+            {trained.slice(0, 12).map((e) => (
+              <button key={e.id} onClick={() => setSelEx(e.id)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${activeEx === e.id ? 'bg-accent-2 text-black' : 'bg-surface-2 text-muted'}`}>{e.name}</button>
+            ))}
+          </div>
+          {e1Series.length > 1 ? (
+            <div className="h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={e1Series} margin={{ left: -20, right: 6, top: 6 }}>
+                  <XAxis dataKey="d" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} interval="preserveStartEnd" />
+                  <YAxis domain={['dataMin - 5', 'dataMax + 5']} tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} />
+                  <Tooltip contentStyle={{ background: 'rgb(var(--surface))', border: '1px solid rgb(var(--line))', borderRadius: 12, fontSize: 12 }} formatter={(v) => [`${v} kg`, 'est. 1RM']} />
+                  <Line type="monotone" dataKey="kg" stroke="rgb(var(--accent-2))" strokeWidth={2.5} dot={{ r: 2 }} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (
+            <p className="text-sm text-muted text-center py-6">Log this lift a couple more times to see the trend.</p>
+          )}
+        </Card>
+      )}
+
       {volSeries.length > 1 ? (
         <Card>
           <SectionTitle action={<Dumbbell size={14} className="text-accent" />}>Volume per session</SectionTitle>
@@ -312,6 +360,83 @@ function StrengthPanel() {
         ))}
       </Card>
     </div>
+  );
+}
+
+/* --------------------------- CONSISTENCY ---------------------------- */
+
+// A GitHub-style 16-week grid: one cell per day, brighter the more you trained.
+// The single most motivating view in a fitness app — "don't break the chain".
+function ConsistencyHeatmap() {
+  const history = useWorkout((s) => s.history);
+  const WEEKS = 16;
+
+  const { columns, total, activeDays } = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const w of history) {
+      const key = w.date.slice(0, 10);
+      counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    // Start from the Monday of the week WEEKS-1 weeks ago.
+    const today = new Date();
+    const start = new Date(today);
+    start.setDate(today.getDate() - ((today.getDay() + 6) % 7) - (WEEKS - 1) * 7);
+    const cols: { key: string; count: number; future: boolean }[][] = [];
+    let total = 0;
+    let activeDays = 0;
+    for (let wk = 0; wk < WEEKS; wk++) {
+      const col: { key: string; count: number; future: boolean }[] = [];
+      for (let d = 0; d < 7; d++) {
+        const cell = new Date(start);
+        cell.setDate(start.getDate() + wk * 7 + d);
+        const key = cell.toISOString().slice(0, 10);
+        const count = counts.get(key) ?? 0;
+        total += count;
+        if (count > 0) activeDays += 1;
+        col.push({ key, count, future: cell > today });
+      }
+      cols.push(col);
+    }
+    return { columns: cols, total, activeDays };
+  }, [history]);
+
+  const shade = (count: number, future: boolean) => {
+    if (future) return 'transparent';
+    if (count <= 0) return 'rgb(var(--surface-2))';
+    if (count === 1) return 'rgb(var(--accent) / 0.45)';
+    if (count === 2) return 'rgb(var(--accent) / 0.7)';
+    return 'rgb(var(--accent))';
+  };
+
+  return (
+    <Card className="space-y-2">
+      <div className="flex items-center justify-between">
+        <SectionTitle>Consistency</SectionTitle>
+        <span className="text-[11px] text-muted">{activeDays} active days · {total} sessions · {WEEKS} wks</span>
+      </div>
+      <div className="flex gap-[3px] overflow-x-auto no-scrollbar" data-noswipe>
+        {columns.map((col, i) => (
+          <div key={i} className="flex flex-col gap-[3px]">
+            {col.map((cell) => (
+              <div
+                key={cell.key}
+                title={cell.future ? '' : `${cell.key}: ${cell.count} session${cell.count === 1 ? '' : 's'}`}
+                className="w-3 h-3 rounded-[3px]"
+                style={{ background: shade(cell.count, cell.future) }}
+              />
+            ))}
+          </div>
+        ))}
+      </div>
+      <div className="flex items-center gap-1.5 justify-end text-[10px] text-muted">
+        <span>less</span>
+        <span className="w-2.5 h-2.5 rounded-[2px]" style={{ background: 'rgb(var(--surface-2))' }} />
+        <span className="w-2.5 h-2.5 rounded-[2px]" style={{ background: 'rgb(var(--accent) / 0.45)' }} />
+        <span className="w-2.5 h-2.5 rounded-[2px]" style={{ background: 'rgb(var(--accent) / 0.7)' }} />
+        <span className="w-2.5 h-2.5 rounded-[2px]" style={{ background: 'rgb(var(--accent))' }} />
+        <span>more</span>
+      </div>
+    </Card>
   );
 }
 

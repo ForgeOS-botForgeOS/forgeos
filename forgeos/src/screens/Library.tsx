@@ -4,6 +4,7 @@ import { ChevronLeft, Search, Nfc, Play } from 'lucide-react';
 import { Card, Sheet, Badge, Button } from '../components/ui';
 import { EXERCISES, EXERCISE_CATEGORIES } from '../data/exercises';
 import { MUSCLE_CUES } from '../data/tips';
+import { cuesFor } from '../data/cues';
 import { useWorkout } from '../state/workoutStore';
 import { e1rm, warmupSets } from '../lib/fitness';
 import type { Exercise, MuscleGroup } from '../types';
@@ -142,10 +143,28 @@ export default function Library() {
             </div>
             <p className="text-sm text-muted">Equipment: {detail.equipment}</p>
             <ExerciseStats exercise={detail} />
-            <div className="rounded-xl bg-surface-2 p-3">
-              <p className="text-[11px] uppercase tracking-wide text-accent-2 mb-1">Form cue</p>
-              <p className="text-sm">{MUSCLE_CUES[detail.primary] ?? 'Control the weight through a full range of motion.'}</p>
-            </div>
+            {(() => {
+              const c = cuesFor(detail);
+              return (
+                <div className="rounded-xl bg-surface-2 p-3 space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[11px] uppercase tracking-wide text-accent-2">How to do it</p>
+                    <Badge color="rgb(var(--muted))">{c.pattern}</Badge>
+                  </div>
+                  <ol className="space-y-1.5">
+                    {c.steps.map((step, i) => (
+                      <li key={i} className="flex gap-2 text-sm">
+                        <span className="shrink-0 w-5 h-5 rounded-full bg-accent/20 text-accent text-[11px] font-bold flex items-center justify-center">{i + 1}</span>
+                        <span>{step}</span>
+                      </li>
+                    ))}
+                  </ol>
+                  <p className="text-xs"><span className="text-accent">🫁 Breathing.</span> {c.breathing}</p>
+                  <p className="text-xs"><span className="text-warn">⚠️ Common mistake.</span> {c.mistake}</p>
+                  <p className="text-xs text-muted border-t border-line pt-2"><span className="text-accent-2">🎯 {detail.primary}.</span> {MUSCLE_CUES[detail.primary] ?? 'Control the weight through a full range of motion.'}</p>
+                </div>
+              );
+            })()}
             <Button variant="outline" className="w-full justify-center" onClick={() => window.open(detail.videoUrl, '_blank')}>
               <span className="flex items-center gap-2"><Play size={16} /> Watch form video</span>
             </Button>

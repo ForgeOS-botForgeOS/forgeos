@@ -21,6 +21,10 @@ interface WorkoutState {
     exerciseIds?: string[],
     opts?: { targets?: Record<string, { sets: number; reps: number; weightKg?: number }>; maxWeightKg?: number },
   ) => void;
+  // Start a fresh session that mirrors a past workout — same exercises and
+  // structure, prior weights/reps pre-filled but uncompleted. Pass nothing to
+  // repeat the most recent strength session.
+  repeatWorkout: (id?: string) => boolean;
   addExercise: (exerciseId: string) => void;
   addCardioToActive: (exerciseId: string, durationMin: number, note: string) => void;
   removeExercise: (workoutExerciseId: string) => void;
@@ -31,7 +35,9 @@ interface WorkoutState {
   completeSet: (workoutExerciseId: string, setId: string) => void;
   linkSuperset: (idsInOrder: string[]) => void;
   reorderExercises: (orderedIds: string[]) => void;
-  finishWorkout: (track?: SpotifyTrack | null) => Workout | null;
+  // Returns the saved workout plus any exercises that set a new all-time e1RM
+  // best this session, so the UI can celebrate them by name.
+  finishWorkout: (track?: SpotifyTrack | null) => { workout: Workout; newPrs: PR[] } | null;
   discardWorkout: () => void;
 
   updateHistoryWorkout: (id: string, w: Workout) => void;
@@ -127,6 +133,30 @@ export const useWorkout = create<WorkoutState>()(
           active: { id: uid(), name, date: new Date().toISOString(), exercises, completed: false, synced: false },
         });
         void pushMyActivity(true); // friends see "training now" while a session is live
+      },
+
+      repeatWorkout: (id) => {
+        const history = get().history;
+        // Most recent non-cardio session, or a specific one by id.
+        const src = id ? history.find((w) => w.id === id) : history.find((w) => !w.cardio && w.exercises.length > 0);
+        if (!src || src.exercises.length === 0) return false;
+        const exercises: WorkoutExercise[] = src.exercises.map((we) => ({
+          id: uid(),
+          exerciseId: we.exerciseId,
+          supersetGroup: we.supersetGroup ? `g-${uid()}` : undefined,
+          restPresetSec: we.restPresetSec ?? 90,
+          sets: we.sets.map((s) => ({
+            id: uid(),
+            weightKg: s.weightKg,
+            reps: s.reps,
+            rpe: s.rpe ?? 7,
+            subKind: s.subKind ?? 'none',
+            completed: false,
+          })),
+        }));
+        set({ active: { id: uid(), name: src.name, date: new Date().toISOString(), exercises, completed: false, synced: false } });
+        void pushMyActivity(true);
+        return true;
       },
 
       addExercise: (exerciseId) => {
@@ -264,6 +294,7 @@ export const useWorkout = create<WorkoutState>()(
 
         // PR detection — best e1RM per exercise from completed sets.
         const newPrs: PR[] = [...get().prs];
+        const beaten: PR[] = []; // PRs actually set this session (for celebration)
         for (const we of a.exercises) {
           const ex = exerciseById(we.exerciseId);
           for (const s of we.sets.filter((x) => x.completed)) {
@@ -283,6 +314,10 @@ export const useWorkout = create<WorkoutState>()(
               const i = newPrs.findIndex((p) => p.exerciseId === we.exerciseId);
               if (i >= 0) newPrs[i] = pr;
               else newPrs.push(pr);
+              // Only count it as a celebration-worthy PR if there was a prior
+              // best to beat (a first-ever lift isn't really a "new record").
+              const bi = beaten.findIndex((p) => p.exerciseId === we.exerciseId);
+              if (existing) { if (bi >= 0) beaten[bi] = pr; else beaten.push(pr); }
             }
           }
         }
@@ -293,7 +328,7 @@ export const useWorkout = create<WorkoutState>()(
         set({ history: [done, ...get().history], active: null, prs: newPrs });
         void pushMyActivity(false); // session ended → clear "training now", stamp last-active
         void pushPRsRemote(newPrs); // keep friends' PR count / top lift accurate
-        return done;
+        return { workout: done, newPrs: beaten };
       },
 
       discardWorkout: () => { set({ active: null }); void pushMyActivity(false); },

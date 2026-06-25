@@ -19,8 +19,9 @@ import { useWorkout } from '../state/workoutStore';
 import { useUser } from '../state/userStore';
 import { useSettings } from '../state/settingsStore';
 import { useGami } from '../state/gamificationStore';
+import { useSocial } from '../state/socialStore';
 import { EXERCISES, exerciseById, substitutesFor, EXERCISE_CATEGORIES } from '../data/exercises';
-import { detectPlateaus, recommendBlock } from '../lib/analytics';
+import { detectPlateaus, recommendBlock, trainingLoadWarning } from '../lib/analytics';
 import { overloadSuggestion, volumeOf } from '../lib/fitness';
 import { scanCardio, type CardioSource } from '../lib/vision';
 import { CardioFields } from '../components/CardioForm';
@@ -35,6 +36,9 @@ export default function Train() {
   const weekPlan = useUser((s) => s.weekPlan);
   const gymMax = useSettings((s) => s.gym.maxWeightKg);
   const startWorkout = useWorkout((s) => s.startWorkout);
+  const repeatWorkout = useWorkout((s) => s.repeatWorkout);
+
+  const lastStrength = useMemo(() => history.find((w) => !w.cardio && w.exercises.length > 0), [history]);
 
   const [toolsOpen, setToolsOpen] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
@@ -43,6 +47,7 @@ export default function Train() {
 
   const plateaus = useMemo(() => detectPlateaus(history), [history]);
   const rec = useMemo(() => recommendBlock(history), [history]);
+  const loadWarning = useMemo(() => trainingLoadWarning(history), [history]);
 
   const todayPlan = useMemo(() => {
     if (!weekPlan) return null;
@@ -80,6 +85,31 @@ export default function Train() {
       </Card>
 
       <CustomWorkoutSheet open={customOpen} onClose={() => setCustomOpen(false)} onStart={(name) => { startWorkout(name); setCustomOpen(false); haptic('success'); toast(`“${name}” started 💪`); }} />
+
+      {/* Repeat your last session — same lifts, last weights pre-filled */}
+      {lastStrength && (
+        <Card className="flex items-center justify-between">
+          <div className="min-w-0">
+            <p className="text-xs uppercase tracking-wide text-muted">Do it again</p>
+            <p className="font-semibold truncate">{lastStrength.name}</p>
+            <p className="text-[11px] text-muted">{lastStrength.exercises.length} exercises · weights pre-filled</p>
+          </div>
+          <Button variant="outline" className="py-1.5 shrink-0" onClick={() => { if (repeatWorkout(lastStrength.id)) { haptic('success'); toast('Repeating your last session 💪'); } }}>
+            <span className="flex items-center gap-1.5"><Repeat size={15} /> Repeat</span>
+          </Button>
+        </Card>
+      )}
+
+      {/* Deload / overtraining watch */}
+      {loadWarning && (
+        <Card className={`flex gap-3 items-start ${loadWarning.level === 'spike' ? 'border-danger/50' : 'border-warn/50'}`}>
+          <AlertTriangle size={18} className={`mt-0.5 shrink-0 ${loadWarning.level === 'spike' ? 'text-danger' : 'text-warn'}`} />
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted">{loadWarning.level === 'spike' ? 'Load spike' : 'Fatigue building'}</p>
+            <p className="text-sm mt-1">{loadWarning.message}</p>
+          </div>
+        </Card>
+      )}
 
       {/* Adaptive periodisation */}
       <Card className="flex gap-3 items-start">
@@ -305,6 +335,8 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   const navigate = useNavigate();
 
   const [restOpen, setRestOpen] = useState(false);
+  const [restSeed, setRestSeed] = useState(0);
+  const [restNonce, setRestNonce] = useState(0);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [subFor, setSubFor] = useState<string | null>(null);
   const [noteFor, setNoteFor] = useState<{ weId: string; setId: string } | null>(null);
@@ -318,12 +350,21 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   );
   const completedSets = active.exercises.reduce((a, we) => a + we.sets.filter((s) => s.completed).length, 0);
 
+  // Open the rest timer and (optionally) auto-start a countdown. Bumping the
+  // nonce makes the timer restart even on back-to-back sets.
+  function openRest(seconds = 0) {
+    setRestSeed(seconds);
+    setRestNonce((n) => n + 1);
+    setRestOpen(true);
+  }
+
   function handleComplete(weId: string, set: SetEntry) {
     if (set.completed) return;
     completeSet(weId, set.id);
     addXp(xpForSet(set.weightKg, set.reps, set.rpe ?? 7));
     bumpMetric('sets', 1);
     bumpMetric('volume', volumeOf(set.weightKg, set.reps));
+    const restSec = active.exercises.find((e) => e.id === weId)?.restPresetSec ?? 90;
     // Heavy-set quote "drop" + achievement progress on 100kg+ lifts.
     if (set.weightKg >= 100) {
       recordHeavyLift();
@@ -332,22 +373,40 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
         const ex = exerciseById(active.exercises.find((e) => e.id === weId)?.exerciseId ?? '');
         setDrop({ quote: pickHeavyQuote(ex), rarity: rollRarity(), exercise: ex?.name ?? 'Lift', weightKg: set.weightKg });
       } else {
-        setRestOpen(true);
+        openRest(restSec);
       }
     } else {
-      setRestOpen(true);
+      openRest(restSec);
     }
   }
 
   function finish() {
-    const done = finishWorkout();
-    if (!done) return;
+    const res = finishWorkout();
+    if (!res) return;
+    const { newPrs } = res;
     registerSession();
-    bumpMetric('pr', 0);
+    bumpMetric('pr', newPrs.length);
     haptic('success');
-    toast(`Session forged 🔥 ${completedSets} sets · ${Math.round(totalVolume).toLocaleString()} kg`);
     setCelebrating(true);
-    setTimeout(() => navigate('/quests'), 1500);
+    if (newPrs.length > 0) {
+      // A real record beat — make it a moment.
+      addXp(newPrs.length * 75);
+      const headline = newPrs.length === 1
+        ? `New PR! ${newPrs[0].exerciseName} ${Math.round(newPrs[0].e1rm)}kg 🏆`
+        : `${newPrs.length} new PRs this session 🏆`;
+      celebrate();
+      toast(`${headline} · +${newPrs.length * 75} XP`);
+      // Share the win with friends (respects the Share-activity preference).
+      if (useSettings.getState().shareActivity) {
+        const body = newPrs.length === 1
+          ? `🏆 New PR: ${newPrs[0].exerciseName} — ${newPrs[0].weightKg}kg × ${newPrs[0].reps} (e1RM ${Math.round(newPrs[0].e1rm)}kg)`
+          : `🏆 Smashed ${newPrs.length} PRs: ${newPrs.map((p) => p.exerciseName).join(', ')}`;
+        useSocial.getState().publishPost(body);
+      }
+    } else {
+      toast(`Session forged 🔥 ${completedSets} sets · ${Math.round(totalVolume).toLocaleString()} kg`);
+    }
+    setTimeout(() => navigate('/quests'), newPrs.length ? 2200 : 1500);
   }
 
   return (
@@ -413,7 +472,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
               <Button variant="ghost" className="flex-1 justify-center py-2" onClick={() => addSet(we.id)}>
                 <span className="flex items-center gap-1 text-xs"><Plus size={14} /> Set</span>
               </Button>
-              <Button variant="ghost" className="justify-center py-2" onClick={() => setRestOpen(true)}>
+              <Button variant="ghost" className="justify-center py-2" onClick={() => openRest(we.restPresetSec ?? 90)}>
                 <span className="text-xs">Rest</span>
               </Button>
             </div>
@@ -447,8 +506,8 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
         <Button className="flex-1 justify-center" onClick={finish}>Finish 🔥</Button>
       </div>
 
-      <RestTimer open={restOpen} onClose={() => setRestOpen(false)} />
-      <HeavyDrop drop={drop} onClose={() => { setDrop(null); setRestOpen(true); }} />
+      <RestTimer open={restOpen} onClose={() => setRestOpen(false)} autoStartSec={restSeed} nonce={restNonce} />
+      <HeavyDrop drop={drop} onClose={() => { setDrop(null); openRest(90); }} />
 
       {/* Exercise picker */}
       <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="Add exercise">

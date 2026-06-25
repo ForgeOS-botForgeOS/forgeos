@@ -60,6 +60,58 @@ export function e1rmSeries(history: Workout[], exerciseId: string): { date: stri
   return points;
 }
 
+// ---- Deload / overtraining watch ----
+// An acute:chronic workload ratio (ACWR) style check. Compares this week's
+// training volume against the trailing 4-week weekly average. A sharp spike is
+// the strongest predictor of overuse injury; a sustained high ratio plus high
+// RPE signals it's time to back off.
+export interface LoadWarning {
+  level: 'spike' | 'fatigue';
+  ratioPct: number; // this week vs recent average, as a percentage (e.g. 145)
+  message: string;
+}
+
+function weekKey(d: Date): string {
+  // ISO-ish year-week bucket (Monday start) for grouping sessions by week.
+  const t = new Date(d);
+  const day = (t.getDay() + 6) % 7;
+  t.setDate(t.getDate() - day);
+  return t.toISOString().slice(0, 10);
+}
+
+export function trainingLoadWarning(history: Workout[]): LoadWarning | null {
+  if (history.length < 4) return null;
+  const byWeek = new Map<string, { vol: number; rpeSum: number; rpeN: number }>();
+  for (const w of history) {
+    const k = weekKey(new Date(w.date));
+    const cur = byWeek.get(k) ?? { vol: 0, rpeSum: 0, rpeN: 0 };
+    for (const we of w.exercises) {
+      for (const s of we.sets.filter((x) => x.completed)) {
+        cur.vol += volumeOf(s.weightKg, s.reps);
+        if (s.rpe) { cur.rpeSum += s.rpe; cur.rpeN++; }
+      }
+    }
+    byWeek.set(k, cur);
+  }
+  const weeks = [...byWeek.entries()].sort((a, b) => b[0].localeCompare(a[0])); // newest first
+  if (weeks.length < 3) return null;
+  const thisWeek = weeks[0][1];
+  const prior = weeks.slice(1, 5); // up to 4 prior weeks
+  const chronic = prior.reduce((a, [, v]) => a + v.vol, 0) / prior.length;
+  if (chronic <= 0 || thisWeek.vol <= 0) return null;
+  const ratio = thisWeek.vol / chronic;
+  const ratioPct = Math.round(ratio * 100);
+  const avgRpe = thisWeek.rpeN ? thisWeek.rpeSum / thisWeek.rpeN : 0;
+
+  if (ratio >= 1.5) {
+    return { level: 'spike', ratioPct, message: `Your training volume jumped ${ratioPct - 100}% above your recent average this week. Big spikes are the top driver of overuse injuries — add load more gradually (aim for under +10%/week).` };
+  }
+  if (ratio >= 1.3 && avgRpe >= 8.5) {
+    return { level: 'fatigue', ratioPct, message: `High volume (${ratioPct - 100}% over average) and high effort (RPE ${avgRpe.toFixed(1)}) — consider a lighter day or a deload week so your body can adapt.` };
+  }
+  return null;
+}
+
 // ---- Adaptive periodisation engine ----
 // Reads recent volume + average RPE and recommends the next block.
 export interface PeriodisationRec {
