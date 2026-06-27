@@ -8,8 +8,9 @@ import {
 import { Card, Button, Badge, SectionTitle } from '../components/ui';
 import { useHealth, sortedDays } from '../state/healthStore';
 import { parseHealthText, HEALTH_CSV_TEMPLATE, sleepToMinutes } from '../lib/health';
-import { readinessFromDays } from '../lib/readiness';
+import { readinessFromDays, recoveryTrend } from '../lib/readiness';
 import { ReadinessHero } from '../components/Readiness';
+import { Sparkline } from '../components/Sparkline';
 import {
   platformSupportsHealthConnect, healthConnectAvailable,
   requestHealthConnectPermissions, readHealthConnect,
@@ -26,6 +27,19 @@ function todayKey(): string {
   const d = new Date();
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
+function relTime(ts: number): string {
+  const mins = Math.round((Date.now() - ts) / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const h = Math.round(mins / 60);
+  if (h < 24) return `${h}h ago`;
+  return `${Math.round(h / 24)}d ago`;
+}
+function fmtDur(min: number): string {
+  const h = Math.floor(min / 60);
+  const m = Math.round(min % 60);
+  return h ? `${h}h ${m}m` : `${m}m`;
+}
 
 export default function Health() {
   const navigate = useNavigate();
@@ -38,6 +52,7 @@ export default function Health() {
   const list = useMemo(() => sortedDays(days), [days]);
   const latest = list[0];
   const readiness = useMemo(() => readinessFromDays(list), [list]);
+  const trend = useMemo(() => recoveryTrend(list), [list]);
 
   const [hcStatus, setHcStatus] = useState<'checking' | 'ready' | 'unavailable' | 'web'>('checking');
   const [syncing, setSyncing] = useState(false);
@@ -53,6 +68,16 @@ export default function Health() {
       }
     });
   }, [ingest]);
+
+  // Keep data fresh while the screen stays open (no-op without permission).
+  useEffect(() => {
+    if (hcStatus !== 'ready') return;
+    const id = setInterval(async () => {
+      const rows = await readHealthConnect(21);
+      if (rows.length) ingest(rows, 'healthconnect');
+    }, 5 * 60 * 1000);
+    return () => clearInterval(id);
+  }, [hcStatus, ingest]);
 
   async function autoSync() {
     setSyncing(true);
@@ -72,7 +97,11 @@ export default function Health() {
     <div className="px-4 pt-12 pb-10 space-y-4 max-w-md mx-auto">
       <div className="flex items-center justify-between">
         <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
-        {lastSyncAt && <span className="text-[11px] text-muted">Updated {new Date(lastSyncAt).toLocaleDateString()}</span>}
+        {lastSyncAt && (
+          <span className={`text-[11px] ${Date.now() - lastSyncAt > 12 * 3600 * 1000 ? 'text-warn' : 'text-muted'}`}>
+            Synced {relTime(lastSyncAt)}
+          </span>
+        )}
       </div>
 
       <div className="text-center space-y-1">
@@ -91,6 +120,29 @@ export default function Health() {
         <Stat icon={HeartPulse} label="Resting HR" value={latest?.restingHr != null ? `${latest.restingHr} bpm` : '—'} />
         <Stat icon={Flame} label="Active kcal" value={latest?.activeCalories != null ? latest.activeCalories.toLocaleString() : '—'} sub={latest?.bodyBattery != null ? `Body Battery ${latest.bodyBattery}` : undefined} />
       </div>
+
+      {/* 7-day recovery trends */}
+      {trend.scores.length >= 2 && (
+        <Card className="space-y-2">
+          <div className="flex items-center justify-between">
+            <p className="text-sm font-semibold">7-day recovery</p>
+            {trend.avgScore != null && <Badge color={readiness?.color ?? 'rgb(var(--accent))'}>avg {trend.avgScore}</Badge>}
+          </div>
+          <div className="flex items-center gap-3">
+            <Sparkline values={trend.scores} color={readiness?.color ?? 'rgb(var(--accent))'} />
+            <div className="flex-1 grid grid-cols-3 gap-2 text-center">
+              <TrendStat label="Avg sleep" value={trend.avgSleepMin != null ? fmtDur(trend.avgSleepMin) : '—'} />
+              <TrendStat label="Sleep debt" value={trend.sleepDebtMin > 0 ? `-${fmtDur(trend.sleepDebtMin)}` : 'none'} warn={trend.sleepDebtMin >= 240} />
+              <TrendStat
+                label="Rest HR"
+                value={trend.rhrAvg != null ? `${trend.rhrAvg}` : '—'}
+                sub={trend.rhrDrift != null && trend.rhrDrift !== 0 ? `${trend.rhrDrift > 0 ? '▲' : '▼'}${Math.abs(trend.rhrDrift)}` : undefined}
+                warn={(trend.rhrDrift ?? 0) >= 3}
+              />
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Auto-sync via Health Connect */}
       <Card className="border-accent/40 bg-accent/5 space-y-2">
@@ -157,6 +209,17 @@ function Stat({ icon: Icon, label, value, sub }: { icon: typeof Moon; label: str
       <p className="text-lg font-bold">{value}</p>
       {sub && <p className="text-[11px] text-muted truncate">{sub}</p>}
     </Card>
+  );
+}
+
+function TrendStat({ label, value, sub, warn }: { label: string; value: string; sub?: string; warn?: boolean }) {
+  return (
+    <div>
+      <p className="text-[10px] uppercase tracking-wide text-muted">{label}</p>
+      <p className={`text-sm font-bold ${warn ? 'text-warn' : ''}`}>
+        {value}{sub && <span className="text-[10px] font-normal text-muted ml-0.5">{sub}</span>}
+      </p>
+    </div>
   );
 }
 

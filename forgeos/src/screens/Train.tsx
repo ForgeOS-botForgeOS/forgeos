@@ -22,7 +22,7 @@ import { useGami } from '../state/gamificationStore';
 import { useSocial } from '../state/socialStore';
 import { EXERCISES, exerciseById, substitutesFor, EXERCISE_CATEGORIES } from '../data/exercises';
 import { detectPlateaus, recommendBlock, trainingLoadWarning } from '../lib/analytics';
-import { readinessFromDays } from '../lib/readiness';
+import { readinessFromDays, trainingGuidance } from '../lib/readiness';
 import { ReadinessChip } from '../components/Readiness';
 import { useHealth, sortedDays } from '../state/healthStore';
 import { overloadSuggestion, volumeOf } from '../lib/fitness';
@@ -107,18 +107,25 @@ export default function Train() {
       )}
 
       {/* Recovery readiness — last night's data steering today's effort */}
-      {readiness && (
-        <Card className="flex items-start gap-3" style={{ borderColor: readiness.color }}>
-          <Moon size={18} className="mt-0.5 shrink-0" style={{ color: readiness.color }} />
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-xs uppercase tracking-wide text-muted">Today’s readiness</span>
-              <ReadinessChip r={readiness} />
+      {readiness && (() => {
+        const guide = trainingGuidance(readiness.level);
+        const pct = Math.round((guide.multiplier - 1) * 100);
+        const loadLabel = guide.multiplier === 0 ? 'rest day' : pct === 0 ? 'load: as planned' : `load: ${pct > 0 ? '+' : ''}${pct}%`;
+        return (
+          <Card className="flex items-start gap-3" style={{ borderColor: readiness.color }}>
+            <Moon size={18} className="mt-0.5 shrink-0" style={{ color: readiness.color }} />
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="text-xs uppercase tracking-wide text-muted">Today’s readiness</span>
+                <ReadinessChip r={readiness} />
+                <Badge color={readiness.color}>{loadLabel}</Badge>
+              </div>
+              <p className="text-sm mt-1 font-semibold" style={{ color: readiness.color }}>{guide.headline}</p>
+              <p className="text-[12px] text-muted">{guide.detail}</p>
             </div>
-            <p className="text-sm mt-1">{readiness.advice}</p>
-          </div>
-        </Card>
-      )}
+          </Card>
+        );
+      })()}
 
       {/* Deload / overtraining watch */}
       {loadWarning && (
