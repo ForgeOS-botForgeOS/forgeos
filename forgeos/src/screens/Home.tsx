@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, TrendingUp, Lightbulb, ChevronRight } from 'lucide-react';
+import { Flame, TrendingUp, Lightbulb, ChevronRight, Watch } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Screen } from '../components/Screen';
 import { Card, Ring, SectionTitle, Badge } from '../components/ui';
@@ -112,8 +112,21 @@ export default function Home() {
           <Badge>Open Train</Badge>
         </Card>
 
-        {/* Recovery readiness — surfaces only when health data exists */}
-        {readiness && <ReadinessCard r={readiness} onClick={() => navigate('/health')} />}
+        {/* Recovery readiness — card when there's data, a one-time nudge otherwise */}
+        {readiness ? (
+          <ReadinessCard r={readiness} onClick={() => navigate('/health')} />
+        ) : recoveryEnabled && Object.keys(healthDays).length === 0 ? (
+          <Card onClick={() => navigate('/health')} className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Watch size={16} className="text-accent shrink-0" />
+              <div>
+                <p className="text-sm font-semibold">Track recovery</p>
+                <p className="text-[12px] text-muted">Connect Garmin or log sleep to unlock readiness</p>
+              </div>
+            </div>
+            <Badge color="rgb(var(--accent))">Set up</Badge>
+          </Card>
+        ) : null}
 
         {/* Progress shortcut */}
         <Card onClick={() => navigate('/progress')} className="flex items-center justify-between">
