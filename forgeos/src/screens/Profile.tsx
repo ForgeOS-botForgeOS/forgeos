@@ -266,6 +266,9 @@ export default function Profile() {
           <Row label={t('p.geofence')} desc="“Welcome to the Forge” check-in">
             <Toggle checked={s.geofenceEnabled} onChange={(v) => s.set('geofenceEnabled', v)} />
           </Row>
+          <Row label="Health & recovery" desc="Sleep, readiness & Garmin sync">
+            <Toggle checked={s.recoveryEnabled} onChange={(v) => s.set('recoveryEnabled', v)} />
+          </Row>
         </Card>
       </div>
 
@@ -315,10 +318,12 @@ export default function Profile() {
         <div className="flex items-center gap-2"><LineChart size={16} className="text-muted" /><span className="text-sm">Progress &amp; body</span></div>
         <Badge>{t('common.open')}</Badge>
       </Card>
-      <Card className="flex items-center justify-between" onClick={() => navigate('/health')}>
-        <div className="flex items-center gap-2"><Watch size={16} className="text-muted" /><span className="text-sm">Health &amp; recovery (Garmin sync)</span></div>
-        <Badge color="rgb(var(--accent))">Open</Badge>
-      </Card>
+      {s.recoveryEnabled && (
+        <Card className="flex items-center justify-between" onClick={() => navigate('/health')}>
+          <div className="flex items-center gap-2"><Watch size={16} className="text-muted" /><span className="text-sm">Health &amp; recovery (Garmin sync)</span></div>
+          <Badge color="rgb(var(--accent))">Open</Badge>
+        </Card>
+      )}
       <Card className="flex items-center justify-between" onClick={() => navigate('/download')}>
         <div className="flex items-center gap-2"><Smartphone size={16} className="text-muted" /><span className="text-sm">Get the app (install / APK)</span></div>
         <Badge color="rgb(var(--accent))">Open</Badge>

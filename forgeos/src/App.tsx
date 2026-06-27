@@ -16,6 +16,8 @@ import { useGami } from './state/gamificationStore';
 import { useSocial } from './state/socialStore';
 import { useWorkout } from './state/workoutStore';
 import { watchGym } from './lib/geo';
+import { readHealthConnect } from './lib/healthConnect';
+import { useHealth } from './state/healthStore';
 import { haptic } from './lib/haptics';
 import { initAuth } from './lib/auth';
 import { startReminderScheduler } from './lib/reminders';
@@ -155,6 +157,11 @@ export default function App() {
     }
     ensureDailyQuests();
     seedFeed();
+    // Seamless wearable refresh on launch — no-ops off-device, without Health
+    // Connect permission, or when the user has switched recovery off.
+    if (useSettings.getState().recoveryEnabled) {
+      void readHealthConnect(21).then((rows) => { if (rows.length) useHealth.getState().ingest(rows, 'healthconnect'); });
+    }
     // Live social: ensure a cloud session (anonymous if needed, no signup),
     // then pull the real friend graph.
     void ensureCloudAccount().then(() => void useSocial.getState().syncFriends());

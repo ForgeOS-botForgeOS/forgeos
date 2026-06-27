@@ -17,6 +17,10 @@ import { tipOfTheDay } from '../data/tips';
 import { rankForXp, rankLabel, progressToNext } from '../data/ranks';
 import { WeighInTracker } from '../components/WeighInTracker';
 import { Heatmap } from '../components/Heatmap';
+import { useHealth, sortedDays } from '../state/healthStore';
+import { useSettings } from '../state/settingsStore';
+import { readinessFromDays } from '../lib/readiness';
+import { ReadinessCard } from '../components/Readiness';
 
 export default function Home() {
   const t = useT();
@@ -63,6 +67,11 @@ export default function Home() {
 
   const macros = profile?.macros ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 };
 
+  // Recovery readiness — only when the feature is on and there's actual data.
+  const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
+  const healthDays = useHealth((s) => s.days);
+  const readiness = useMemo(() => (recoveryEnabled ? readinessFromDays(sortedDays(healthDays)) : null), [recoveryEnabled, healthDays]);
+
   return (
     <>
       <DailyQuote />
@@ -102,6 +111,9 @@ export default function Home() {
           </div>
           <Badge>Open Train</Badge>
         </Card>
+
+        {/* Recovery readiness — surfaces only when health data exists */}
+        {readiness && <ReadinessCard r={readiness} onClick={() => navigate('/health')} />}
 
         {/* Progress shortcut */}
         <Card onClick={() => navigate('/progress')} className="flex items-center justify-between">
