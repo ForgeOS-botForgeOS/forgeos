@@ -431,6 +431,7 @@ export interface Settings {
   xpToCoinRate: number; // XP per 1 coin
   geofenceEnabled: boolean;
   hapticsEnabled: boolean;
+  recoveryEnabled: boolean; // show Health & recovery (sleep/readiness) across the app
   units: 'metric';
 }
 

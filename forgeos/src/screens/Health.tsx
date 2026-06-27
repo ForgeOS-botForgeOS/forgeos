@@ -8,6 +8,8 @@ import {
 import { Card, Button, Badge, SectionTitle } from '../components/ui';
 import { useHealth, sortedDays } from '../state/healthStore';
 import { parseHealthText, HEALTH_CSV_TEMPLATE, sleepToMinutes } from '../lib/health';
+import { readinessFromDays } from '../lib/readiness';
+import { ReadinessHero } from '../components/Readiness';
 import {
   platformSupportsHealthConnect, healthConnectAvailable,
   requestHealthConnectPermissions, readHealthConnect,
@@ -35,14 +37,22 @@ export default function Health() {
 
   const list = useMemo(() => sortedDays(days), [days]);
   const latest = list[0];
+  const readiness = useMemo(() => readinessFromDays(list), [list]);
 
   const [hcStatus, setHcStatus] = useState<'checking' | 'ready' | 'unavailable' | 'web'>('checking');
   const [syncing, setSyncing] = useState(false);
 
   useEffect(() => {
     if (!platformSupportsHealthConnect()) { setHcStatus('web'); return; }
-    healthConnectAvailable().then((ok) => setHcStatus(ok ? 'ready' : 'unavailable'));
-  }, []);
+    healthConnectAvailable().then(async (ok) => {
+      setHcStatus(ok ? 'ready' : 'unavailable');
+      // Seamless: if we already have permission, silently refresh on open.
+      if (ok) {
+        const rows = await readHealthConnect(21); // returns [] without permission
+        if (rows.length) ingest(rows, 'healthconnect');
+      }
+    });
+  }, [ingest]);
 
   async function autoSync() {
     setSyncing(true);
@@ -71,6 +81,9 @@ export default function Health() {
         <p className="text-sm text-muted">Pull in sleep and daily activity from Garmin — automatically on the app, or by import anywhere.</p>
       </div>
 
+      {/* Recovery readiness hero */}
+      {readiness && <ReadinessHero r={readiness} />}
+
       {/* Today / last-night summary */}
       <div className="grid grid-cols-2 gap-2">
         <Stat icon={Moon} label="Sleep" value={fmtSleep(latest?.sleepMinutes)} sub={latest?.sleepScore ? `Score ${latest.sleepScore}` : latest?.date} />
@@ -93,7 +106,7 @@ export default function Health() {
 
         {hcStatus === 'ready' && (
           <Button className="w-full justify-center" disabled={syncing} onClick={autoSync}>
-            <span className="flex items-center gap-1.5"><RefreshCw size={15} className={syncing ? 'animate-spin' : ''} />{syncing ? 'Syncing…' : 'Sync now'}</span>
+            <span className="flex items-center gap-1.5"><RefreshCw size={15} className={syncing ? 'animate-spin' : ''} />{syncing ? 'Syncing…' : latest ? 'Sync now' : 'Connect Garmin & sync'}</span>
           </Button>
         )}
         {hcStatus === 'unavailable' && (

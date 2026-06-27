@@ -27,6 +27,7 @@ const DEFAULTS: Settings = {
   xpToCoinRate: 100, // 100 XP -> 1 Forge Coin (expensive on purpose)
   geofenceEnabled: false,
   hapticsEnabled: true,
+  recoveryEnabled: true,
   units: 'metric',
 };
 

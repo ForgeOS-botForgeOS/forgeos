@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch } from 'lucide-react';
+import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -22,6 +22,9 @@ import { useGami } from '../state/gamificationStore';
 import { useSocial } from '../state/socialStore';
 import { EXERCISES, exerciseById, substitutesFor, EXERCISE_CATEGORIES } from '../data/exercises';
 import { detectPlateaus, recommendBlock, trainingLoadWarning } from '../lib/analytics';
+import { readinessFromDays } from '../lib/readiness';
+import { ReadinessChip } from '../components/Readiness';
+import { useHealth, sortedDays } from '../state/healthStore';
 import { overloadSuggestion, volumeOf } from '../lib/fitness';
 import { scanCardio, type CardioSource } from '../lib/vision';
 import { CardioFields } from '../components/CardioForm';
@@ -48,6 +51,9 @@ export default function Train() {
   const plateaus = useMemo(() => detectPlateaus(history), [history]);
   const rec = useMemo(() => recommendBlock(history), [history]);
   const loadWarning = useMemo(() => trainingLoadWarning(history), [history]);
+  const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
+  const healthDays = useHealth((s) => s.days);
+  const readiness = useMemo(() => (recoveryEnabled ? readinessFromDays(sortedDays(healthDays)) : null), [recoveryEnabled, healthDays]);
 
   const todayPlan = useMemo(() => {
     if (!weekPlan) return null;
@@ -97,6 +103,20 @@ export default function Train() {
           <Button variant="outline" className="py-1.5 shrink-0" onClick={() => { if (repeatWorkout(lastStrength.id)) { haptic('success'); toast('Repeating your last session 💪'); } }}>
             <span className="flex items-center gap-1.5"><Repeat size={15} /> Repeat</span>
           </Button>
+        </Card>
+      )}
+
+      {/* Recovery readiness — last night's data steering today's effort */}
+      {readiness && (
+        <Card className="flex items-start gap-3" style={{ borderColor: readiness.color }}>
+          <Moon size={18} className="mt-0.5 shrink-0" style={{ color: readiness.color }} />
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <span className="text-xs uppercase tracking-wide text-muted">Today’s readiness</span>
+              <ReadinessChip r={readiness} />
+            </div>
+            <p className="text-sm mt-1">{readiness.advice}</p>
+          </div>
         </Card>
       )}
 

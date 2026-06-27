@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from 'react';
+import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 
@@ -6,14 +6,17 @@ export function Card({
   children,
   className = '',
   onClick,
+  style,
 }: {
   children: ReactNode;
   className?: string;
   onClick?: () => void;
+  style?: CSSProperties;
 }) {
   return (
     <div
       onClick={onClick}
+      style={style}
       className={`rounded-2xl bg-surface border border-line p-4 animate-fade-in-up ${onClick ? 'cursor-pointer active:scale-[0.99] transition hover:border-line/80' : ''} ${className}`}
     >
       {children}
