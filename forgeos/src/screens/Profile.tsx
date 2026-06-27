@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil } from 'lucide-react';
+import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { pushMyActivity } from '../lib/activitySync';
@@ -314,6 +314,10 @@ export default function Profile() {
       <Card className="flex items-center justify-between" onClick={() => navigate('/progress')}>
         <div className="flex items-center gap-2"><LineChart size={16} className="text-muted" /><span className="text-sm">Progress &amp; body</span></div>
         <Badge>{t('common.open')}</Badge>
+      </Card>
+      <Card className="flex items-center justify-between" onClick={() => navigate('/health')}>
+        <div className="flex items-center gap-2"><Watch size={16} className="text-muted" /><span className="text-sm">Health &amp; recovery (Garmin sync)</span></div>
+        <Badge color="rgb(var(--accent))">Open</Badge>
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/download')}>
         <div className="flex items-center gap-2"><Smartphone size={16} className="text-muted" /><span className="text-sm">Get the app (install / APK)</span></div>

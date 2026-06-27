@@ -351,6 +351,24 @@ export interface SpotifyTrack {
 }
 
 // ---- Settings ----
+export type HealthSource = 'garmin' | 'healthconnect' | 'manual' | 'import';
+
+// One calendar day of wearable / wellness data. Every field is optional because
+// different sources (Garmin export, Health Connect, manual entry) fill in
+// different subsets — we merge them per day rather than overwrite wholesale.
+export interface HealthDay {
+  date: string; // local 'YYYY-MM-DD'
+  sleepMinutes?: number; // total time asleep
+  sleepScore?: number; // 0–100 (Garmin sleep score) if available
+  steps?: number;
+  restingHr?: number; // bpm
+  activeCalories?: number; // kcal burned in activity
+  bodyBattery?: number; // 0–100 (Garmin)
+  stress?: number; // 0–100 (Garmin)
+  source: HealthSource;
+  updatedAt: number;
+}
+
 export type Language = 'en' | 'sk';
 
 export type QuoteGenrePref = QuoteGenre | 'all';

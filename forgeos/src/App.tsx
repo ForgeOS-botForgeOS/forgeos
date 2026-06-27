@@ -46,6 +46,7 @@ const Shop = lazy(() => import('./screens/Shop'));
 const WorkoutEdit = lazy(() => import('./screens/WorkoutEdit'));
 const PublicProfile = lazy(() => import('./screens/PublicProfile'));
 const Progress = lazy(() => import('./screens/Progress'));
+const Health = lazy(() => import('./screens/Health'));
 const Download = lazy(() => import('./screens/Download'));
 const ImportProgress = lazy(() => import('./screens/ImportProgress'));
 const AddFriend = lazy(() => import('./screens/AddFriend'));
@@ -218,6 +219,7 @@ export default function App() {
             <Route path="/shop" element={<Shop />} />
             <Route path="/workout/:id" element={<WorkoutEdit />} />
             <Route path="/progress" element={<Progress />} />
+            <Route path="/health" element={<Health />} />
             <Route path="/import-progress" element={<ImportProgress />} />
             <Route path="/u" element={<PublicProfile />} />
             <Route path="/quote/:id" element={<QuoteDeepDive />} />

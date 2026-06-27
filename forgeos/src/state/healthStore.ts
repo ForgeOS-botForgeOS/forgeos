@@ -1,0 +1,82 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import type { HealthDay, HealthSource } from '../types';
+
+// Wearable / wellness data (sleep, steps, recovery). Source-agnostic: Garmin
+// export, Android Health Connect and manual entry all land here, merged per day.
+// Client-only and offline-first like the rest of the app — nothing leaves the
+// device unless the user explicitly imports.
+
+interface HealthState {
+  days: Record<string, HealthDay>; // keyed by 'YYYY-MM-DD'
+  lastSyncAt: number | null;
+  lastSource: HealthSource | null;
+  /** Merge one day in, field-by-field (a later source never blanks an earlier value). */
+  upsertDay: (day: HealthDay) => void;
+  /** Bulk merge (import / auto-sync). Returns how many distinct days were touched. */
+  ingest: (days: HealthDay[], source: HealthSource) => number;
+  removeDay: (date: string) => void;
+  clearAll: () => void;
+}
+
+const NUMERIC: (keyof HealthDay)[] = [
+  'sleepMinutes', 'sleepScore', 'steps', 'restingHr', 'activeCalories', 'bodyBattery', 'stress',
+];
+
+// Merge `incoming` onto `base`: keep every existing number, only fill blanks or
+// take the incoming value when present. This way importing a CSV that only has
+// steps never wipes a sleep figure synced earlier the same day.
+function mergeDay(base: HealthDay | undefined, incoming: HealthDay): HealthDay {
+  if (!base) return incoming;
+  const out: HealthDay = { ...base, source: incoming.source, updatedAt: incoming.updatedAt };
+  for (const k of NUMERIC) {
+    const v = incoming[k] as number | undefined;
+    if (typeof v === 'number' && !Number.isNaN(v)) (out[k] as number) = v;
+  }
+  return out;
+}
+
+export const useHealth = create<HealthState>()(
+  persist(
+    (set, get) => ({
+      days: {},
+      lastSyncAt: null,
+      lastSource: null,
+
+      upsertDay: (day) =>
+        set((s) => ({
+          days: { ...s.days, [day.date]: mergeDay(s.days[day.date], day) },
+          lastSyncAt: Date.now(),
+          lastSource: day.source,
+        })),
+
+      ingest: (incoming, source) => {
+        if (!incoming.length) return 0;
+        const days = { ...get().days };
+        const seen = new Set<string>();
+        for (const d of incoming) {
+          if (!d.date) continue;
+          days[d.date] = mergeDay(days[d.date], d);
+          seen.add(d.date);
+        }
+        set({ days, lastSyncAt: Date.now(), lastSource: source });
+        return seen.size;
+      },
+
+      removeDay: (date) =>
+        set((s) => {
+          const days = { ...s.days };
+          delete days[date];
+          return { days };
+        }),
+
+      clearAll: () => set({ days: {}, lastSyncAt: null, lastSource: null }),
+    }),
+    { name: 'forge-health' },
+  ),
+);
+
+/** Days newest-first, as a plain array (selectors should derive with useMemo). */
+export function sortedDays(days: Record<string, HealthDay>): HealthDay[] {
+  return Object.values(days).sort((a, b) => (a.date < b.date ? 1 : -1));
+}

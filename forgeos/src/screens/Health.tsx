@@ -1,0 +1,236 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import {
+  ChevronLeft, Moon, Footprints, HeartPulse, Flame, Watch, RefreshCw, FileUp,
+  Copy, Check, Trash2, Plus, BatteryCharging, ShieldCheck, AlertTriangle,
+} from 'lucide-react';
+import { Card, Button, Badge, SectionTitle } from '../components/ui';
+import { useHealth, sortedDays } from '../state/healthStore';
+import { parseHealthText, HEALTH_CSV_TEMPLATE, sleepToMinutes } from '../lib/health';
+import {
+  platformSupportsHealthConnect, healthConnectAvailable,
+  requestHealthConnectPermissions, readHealthConnect,
+} from '../lib/healthConnect';
+import { haptic } from '../lib/haptics';
+import { toast, celebrate } from '../lib/toast';
+import type { HealthDay } from '../types';
+
+function fmtSleep(min?: number): string {
+  if (!min) return '—';
+  return `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`;
+}
+function todayKey(): string {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
+
+export default function Health() {
+  const navigate = useNavigate();
+  const days = useHealth((s) => s.days);
+  const lastSyncAt = useHealth((s) => s.lastSyncAt);
+  const ingest = useHealth((s) => s.ingest);
+  const upsertDay = useHealth((s) => s.upsertDay);
+  const removeDay = useHealth((s) => s.removeDay);
+
+  const list = useMemo(() => sortedDays(days), [days]);
+  const latest = list[0];
+
+  const [hcStatus, setHcStatus] = useState<'checking' | 'ready' | 'unavailable' | 'web'>('checking');
+  const [syncing, setSyncing] = useState(false);
+
+  useEffect(() => {
+    if (!platformSupportsHealthConnect()) { setHcStatus('web'); return; }
+    healthConnectAvailable().then((ok) => setHcStatus(ok ? 'ready' : 'unavailable'));
+  }, []);
+
+  async function autoSync() {
+    setSyncing(true);
+    haptic('tap');
+    try {
+      const granted = await requestHealthConnectPermissions();
+      if (!granted) { toast('Health Connect permission was not granted.', 'info'); return; }
+      const rows = await readHealthConnect(21);
+      if (!rows.length) { toast('Connected, but no data came back yet. Make sure Garmin Connect is syncing to Health Connect.', 'info'); return; }
+      const n = ingest(rows, 'healthconnect');
+      celebrate();
+      toast(`Synced ${n} day(s) from Health Connect 🔥`, 'success');
+    } finally { setSyncing(false); }
+  }
+
+  return (
+    <div className="px-4 pt-12 pb-10 space-y-4 max-w-md mx-auto">
+      <div className="flex items-center justify-between">
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+        {lastSyncAt && <span className="text-[11px] text-muted">Updated {new Date(lastSyncAt).toLocaleDateString()}</span>}
+      </div>
+
+      <div className="text-center space-y-1">
+        <div className="mx-auto w-12 h-12 rounded-2xl bg-accent/15 flex items-center justify-center"><Watch className="text-accent" size={24} /></div>
+        <h1 className="text-2xl font-extrabold tracking-tight">Health &amp; recovery</h1>
+        <p className="text-sm text-muted">Pull in sleep and daily activity from Garmin — automatically on the app, or by import anywhere.</p>
+      </div>
+
+      {/* Today / last-night summary */}
+      <div className="grid grid-cols-2 gap-2">
+        <Stat icon={Moon} label="Sleep" value={fmtSleep(latest?.sleepMinutes)} sub={latest?.sleepScore ? `Score ${latest.sleepScore}` : latest?.date} />
+        <Stat icon={Footprints} label="Steps" value={latest?.steps != null ? latest.steps.toLocaleString() : '—'} sub={latest?.date} />
+        <Stat icon={HeartPulse} label="Resting HR" value={latest?.restingHr != null ? `${latest.restingHr} bpm` : '—'} />
+        <Stat icon={Flame} label="Active kcal" value={latest?.activeCalories != null ? latest.activeCalories.toLocaleString() : '—'} sub={latest?.bodyBattery != null ? `Body Battery ${latest.bodyBattery}` : undefined} />
+      </div>
+
+      {/* Auto-sync via Health Connect */}
+      <Card className="border-accent/40 bg-accent/5 space-y-2">
+        <div className="flex items-center gap-2">
+          <BatteryCharging size={18} className="text-accent shrink-0" />
+          <div className="flex-1">
+            <p className="text-sm font-semibold">Auto-sync (Garmin → Health Connect)</p>
+            <p className="text-[11px] text-muted">Garmin Connect feeds Android Health Connect; ForgeOS reads it for you.</p>
+          </div>
+          {hcStatus === 'ready' && <Badge color="rgb(var(--success))">Ready</Badge>}
+          {hcStatus === 'checking' && <Badge>…</Badge>}
+        </div>
+
+        {hcStatus === 'ready' && (
+          <Button className="w-full justify-center" disabled={syncing} onClick={autoSync}>
+            <span className="flex items-center gap-1.5"><RefreshCw size={15} className={syncing ? 'animate-spin' : ''} />{syncing ? 'Syncing…' : 'Sync now'}</span>
+          </Button>
+        )}
+        {hcStatus === 'unavailable' && (
+          <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> Health Connect isn’t set up on this phone. Install <b>Health Connect</b> + <b>Garmin Connect</b>, open Garmin Connect → Settings → Health Connect and allow it to write sleep & activity, then come back.</p>
+        )}
+        {hcStatus === 'web' && (
+          <p className="text-[11px] text-muted flex items-start gap-1.5"><ShieldCheck size={13} className="mt-0.5 shrink-0 text-accent-2" /> Auto-sync runs in the <b>Android app</b>. On the website, use the import below — it works everywhere.</p>
+        )}
+      </Card>
+
+      <ManualImport onImport={(rows) => { const n = ingest(rows, 'import'); if (n) { celebrate(); toast(`Imported ${n} day(s) 🎉`, 'success'); } else toast('No usable days found in that file.', 'info'); }} />
+
+      <QuickLog onSave={(d) => { upsertDay(d); haptic('success'); toast('Logged today’s recovery.'); }} />
+
+      {/* Recent days */}
+      {list.length > 0 && (
+        <div>
+          <SectionTitle>Recent days</SectionTitle>
+          <div className="space-y-1.5">
+            {list.slice(0, 14).map((d) => (
+              <Card key={d.date} className="flex items-center gap-3 py-2.5">
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">{new Date(d.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</p>
+                  <p className="text-[11px] text-muted flex flex-wrap gap-x-2">
+                    {d.sleepMinutes != null && <span>{fmtSleep(d.sleepMinutes)} sleep</span>}
+                    {d.steps != null && <span>{d.steps.toLocaleString()} steps</span>}
+                    {d.restingHr != null && <span>{d.restingHr} bpm</span>}
+                    {d.activeCalories != null && <span>{d.activeCalories} kcal</span>}
+                  </p>
+                </div>
+                <Badge>{d.source === 'healthconnect' ? 'auto' : d.source}</Badge>
+                <button onClick={() => { removeDay(d.date); haptic('warning'); }} className="text-muted hover:text-warn p-1" aria-label="Delete day"><Trash2 size={15} /></button>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <p className="text-[11px] text-muted/60 text-center">Your health data stays on your device. Nothing is uploaded.</p>
+    </div>
+  );
+}
+
+function Stat({ icon: Icon, label, value, sub }: { icon: typeof Moon; label: string; value: string; sub?: string }) {
+  return (
+    <Card className="space-y-0.5 py-3">
+      <div className="flex items-center gap-1.5 text-muted text-[11px] uppercase tracking-wide"><Icon size={13} /> {label}</div>
+      <p className="text-lg font-bold">{value}</p>
+      {sub && <p className="text-[11px] text-muted truncate">{sub}</p>}
+    </Card>
+  );
+}
+
+function ManualImport({ onImport }: { onImport: (rows: HealthDay[]) => void }) {
+  const [text, setText] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [count, setCount] = useState<number | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  function analyze(input: string) {
+    const { days, notes, format } = parseHealthText(input);
+    setCount(days.length);
+    if (days.length) { haptic('tap'); onImport(days); setText(''); setCount(null); }
+    else { haptic('warning'); toast(`${notes[0] ?? 'Nothing recognised'} (${format})`, 'info'); }
+  }
+
+  return (
+    <Card className="space-y-2">
+      <div className="flex items-center gap-2">
+        <FileUp size={18} className="text-accent-2 shrink-0" />
+        <div className="flex-1">
+          <p className="text-sm font-semibold">Import from a file or paste</p>
+          <p className="text-[11px] text-muted">Garmin export, a CSV, or JSON — we match the columns for you.</p>
+        </div>
+      </div>
+      <textarea
+        value={text}
+        onChange={(e) => { setText(e.target.value); setCount(null); }}
+        placeholder={'Paste CSV or JSON here, e.g.\n' + HEALTH_CSV_TEMPLATE}
+        className="w-full h-28 rounded-xl bg-surface-2 border border-line px-3 py-2 text-xs font-mono"
+      />
+      {count === 0 && <p className="text-[11px] text-warn">No rows matched a date + a metric.</p>}
+      <div className="flex gap-2">
+        <Button variant="ghost" className="flex-1 justify-center" onClick={() => fileRef.current?.click()}>
+          <span className="flex items-center gap-1.5 text-sm"><FileUp size={14} /> File</span>
+        </Button>
+        <Button className="flex-1 justify-center" disabled={!text.trim()} onClick={() => analyze(text)}>Import paste</Button>
+      </div>
+      <button
+        onClick={async () => { try { await navigator.clipboard.writeText(HEALTH_CSV_TEMPLATE); setCopied(true); toast('Template copied — fill it in a notes/Sheets app.'); setTimeout(() => setCopied(false), 2000); } catch { toast('Could not copy — select the placeholder text.', 'error'); } }}
+        className="text-[11px] text-accent flex items-center gap-1 mx-auto"
+      >
+        {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? 'Copied' : 'Copy the CSV template'}
+      </button>
+      <input ref={fileRef} type="file" accept=".csv,.json,.txt,text/csv,application/json,text/plain" className="hidden"
+        onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) analyze(await f.text()); }} />
+    </Card>
+  );
+}
+
+function QuickLog({ onSave }: { onSave: (d: HealthDay) => void }) {
+  const [open, setOpen] = useState(false);
+  const [sleep, setSleep] = useState('');
+  const [steps, setSteps] = useState('');
+  const [rhr, setRhr] = useState('');
+
+  function save() {
+    const day: HealthDay = { date: todayKey(), source: 'manual', updatedAt: Date.now() };
+    const sm = sleepToMinutes(sleep);
+    if (sm) day.sleepMinutes = sm;
+    if (steps) day.steps = parseInt(steps, 10) || undefined;
+    if (rhr) day.restingHr = parseInt(rhr, 10) || undefined;
+    if (day.sleepMinutes == null && day.steps == null && day.restingHr == null) { toast('Fill in at least one field.', 'info'); return; }
+    onSave(day);
+    setSleep(''); setSteps(''); setRhr(''); setOpen(false);
+  }
+
+  if (!open) return (
+    <Button variant="outline" className="w-full justify-center" onClick={() => setOpen(true)}>
+      <span className="flex items-center gap-1.5"><Plus size={15} /> Log today by hand</span>
+    </Button>
+  );
+
+  return (
+    <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+      <Card className="space-y-2">
+        <p className="text-sm font-semibold">Today’s recovery</p>
+        <div className="grid grid-cols-3 gap-2">
+          <label className="text-[11px] text-muted">Sleep<input value={sleep} onChange={(e) => setSleep(e.target.value)} placeholder="7h 30m" className="w-full mt-0.5 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-text" /></label>
+          <label className="text-[11px] text-muted">Steps<input value={steps} onChange={(e) => setSteps(e.target.value)} inputMode="numeric" placeholder="9000" className="w-full mt-0.5 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-text" /></label>
+          <label className="text-[11px] text-muted">Rest HR<input value={rhr} onChange={(e) => setRhr(e.target.value)} inputMode="numeric" placeholder="52" className="w-full mt-0.5 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-text" /></label>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="ghost" className="flex-1 justify-center" onClick={() => setOpen(false)}>Cancel</Button>
+          <Button className="flex-1 justify-center" onClick={save}>Save</Button>
+        </div>
+      </Card>
+    </motion.div>
+  );
+}
