@@ -1,9 +1,9 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ChevronLeft, Moon, Footprints, HeartPulse, Flame, Watch, RefreshCw, FileUp,
-  Copy, Check, Trash2, Plus, BatteryCharging, ShieldCheck, AlertTriangle,
+  Copy, Check, Trash2, Plus, BatteryCharging, AlertTriangle, Smartphone,
 } from 'lucide-react';
 import { Card, Button, Badge, SectionTitle } from '../components/ui';
 import { useHealth, sortedDays } from '../state/healthStore';
@@ -17,6 +17,7 @@ import {
 } from '../lib/healthConnect';
 import { haptic } from '../lib/haptics';
 import { toast, celebrate } from '../lib/toast';
+import { openTutorial } from '../components/Tutorial';
 import type { HealthDay } from '../types';
 
 function fmtSleep(min?: number): string {
@@ -56,6 +57,9 @@ export default function Health() {
 
   const [hcStatus, setHcStatus] = useState<'checking' | 'ready' | 'unavailable' | 'web'>('checking');
   const [syncing, setSyncing] = useState(false);
+  // "Connected" once auto-synced data has actually arrived on this device.
+  const hasAutoData = useMemo(() => list.some((d) => d.source === 'healthconnect'), [list]);
+  const connected = hcStatus === 'ready' && hasAutoData;
 
   useEffect(() => {
     if (!platformSupportsHealthConnect()) { setHcStatus('web'); return; }
@@ -147,29 +151,61 @@ export default function Health() {
         </Card>
       )}
 
-      {/* Auto-sync via Health Connect */}
-      <Card className="border-accent/40 bg-accent/5 space-y-2">
-        <div className="flex items-center gap-2">
-          <BatteryCharging size={18} className="text-accent shrink-0" />
-          <div className="flex-1">
-            <p className="text-sm font-semibold">Auto-sync (Garmin → Health Connect)</p>
-            <p className="text-[11px] text-muted">Garmin Connect feeds Android Health Connect; ForgeOS reads it for you.</p>
+      {/* Garmin connection — one clear card with one clear action, in every state */}
+      <Card className="border-accent/40 bg-accent/5 space-y-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center shrink-0"><Watch size={18} className="text-accent" /></div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold">Garmin auto-sync</p>
+            <p className="text-[11px] text-muted">Sleep &amp; activity flow in on their own — even with the app closed.</p>
           </div>
-          {hcStatus === 'ready' && <Badge color="rgb(var(--success))">Ready</Badge>}
-          {hcStatus === 'checking' && <Badge>…</Badge>}
+          {connected && <Badge color="rgb(var(--success))">Connected</Badge>}
         </div>
 
-        {hcStatus === 'ready' && (
-          <Button className="w-full justify-center" disabled={syncing} onClick={autoSync}>
-            <span className="flex items-center gap-1.5"><RefreshCw size={15} className={syncing ? 'animate-spin' : ''} />{syncing ? 'Syncing…' : latest ? 'Sync now' : 'Connect Garmin & sync'}</span>
-          </Button>
+        {connected ? (
+          <>
+            <p className="text-[11px] text-muted flex items-start gap-1.5">
+              <Check size={13} className="mt-0.5 shrink-0 text-success" /> All set — nothing else to do. New data shows up here by itself.
+            </p>
+            <Button variant="ghost" className="w-full justify-center" disabled={syncing} onClick={autoSync}>
+              <span className="flex items-center gap-1.5"><RefreshCw size={15} className={syncing ? 'animate-spin' : ''} />{syncing ? 'Syncing…' : 'Sync now'}</span>
+            </Button>
+          </>
+        ) : (
+          <>
+            <div className="space-y-1.5">
+              <SetupStep n={1} done={hcStatus === 'ready' || hcStatus === 'unavailable'}>Install the <b>ForgeOS Android app</b></SetupStep>
+              <SetupStep n={2} done={hcStatus === 'ready'}>In <b>Garmin Connect</b>: profile picture → Settings → <b>Health Connect</b> → allow sleep &amp; activity</SetupStep>
+              <SetupStep n={3}>Tap the button — one permission screen, then it’s automatic forever</SetupStep>
+            </div>
+            {hcStatus === 'ready' && (
+              <Button className="w-full justify-center" disabled={syncing} onClick={autoSync}>
+                <span className="flex items-center gap-1.5"><Watch size={15} className={syncing ? 'animate-pulse' : ''} />{syncing ? 'Connecting…' : 'Connect Garmin'}</span>
+              </Button>
+            )}
+            {hcStatus === 'web' && (
+              <Button className="w-full justify-center" onClick={() => navigate('/download')}>
+                <span className="flex items-center gap-1.5"><Smartphone size={15} /> Get the Android app</span>
+              </Button>
+            )}
+            {hcStatus === 'unavailable' && (
+              <>
+                <Button className="w-full justify-center" onClick={() => window.open('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata', '_blank')}>
+                  <span className="flex items-center gap-1.5"><BatteryCharging size={15} /> Get Health Connect</span>
+                </Button>
+                <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> Health Connect isn’t ready on this phone yet. It’s built into Android 14+; on older Android install it from Play. Also grab the newest ForgeOS APK from the download page — older ones can’t auto-sync.</p>
+              </>
+            )}
+            {hcStatus === 'checking' && (
+              <Button className="w-full justify-center" disabled>
+                <span className="flex items-center gap-1.5"><RefreshCw size={15} className="animate-spin" /> Checking this phone…</span>
+              </Button>
+            )}
+          </>
         )}
-        {hcStatus === 'unavailable' && (
-          <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> Health Connect isn’t set up on this phone. Install <b>Health Connect</b> + <b>Garmin Connect</b>, open Garmin Connect → Settings → Health Connect and allow it to write sleep & activity, then come back.</p>
-        )}
-        {hcStatus === 'web' && (
-          <p className="text-[11px] text-muted flex items-start gap-1.5"><ShieldCheck size={13} className="mt-0.5 shrink-0 text-accent-2" /> Auto-sync runs in the <b>Android app</b>. On the website, use the import below — it works everywhere.</p>
-        )}
+        <button onClick={() => openTutorial('garmin')} className="w-full text-center text-[11px] text-accent">
+          How does Garmin sync work?
+        </button>
       </Card>
 
       <ManualImport onImport={(rows) => { const n = ingest(rows, 'import'); if (n) { celebrate(); toast(`Imported ${n} day(s) 🎉`, 'success'); } else toast('No usable days found in that file.', 'info'); }} />
@@ -201,6 +237,17 @@ export default function Health() {
       )}
 
       <p className="text-[11px] text-muted/60 text-center">Your health data stays on your device. Nothing is uploaded.</p>
+    </div>
+  );
+}
+
+function SetupStep({ n, done, children }: { n: number; done?: boolean; children: ReactNode }) {
+  return (
+    <div className="flex items-start gap-2">
+      <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 ${done ? 'bg-success/20 text-success' : 'bg-surface-2 text-muted'}`}>
+        {done ? <Check size={11} /> : n}
+      </span>
+      <p className={`text-[11px] leading-snug ${done ? 'text-muted' : ''}`}>{children}</p>
     </div>
   );
 }
