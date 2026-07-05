@@ -21,6 +21,8 @@ interface HealthConnectPlugin {
   isAvailable(): Promise<{ available: boolean }>;
   requestAuthorization(options: { read: string[] }): Promise<{ granted: boolean }>;
   readDays(options: { days: number }): Promise<{ days: NativeDay[] }>;
+  configureBackgroundSync(options: { enabled: boolean; notify: boolean; interactive: boolean }): Promise<void>;
+  drainCache(): Promise<{ days: NativeDay[]; cachedAt: number }>;
 }
 
 // registerPlugin returns a proxy even when no native side exists; calls reject
@@ -56,23 +58,60 @@ export async function requestHealthConnectPermissions(): Promise<boolean> {
   }
 }
 
+function toHealthDays(rows: NativeDay[] | undefined): HealthDay[] {
+  const now = Date.now();
+  return (rows ?? [])
+    .filter((d) => d.date)
+    .map((d) => ({
+      date: d.date,
+      sleepMinutes: d.sleepMinutes,
+      steps: d.steps,
+      restingHr: d.restingHr,
+      activeCalories: d.activeCalories,
+      source: 'healthconnect' as const,
+      updatedAt: now,
+    }));
+}
+
 /** Pull the last `days` of data and map to HealthDay rows. Empty on any failure. */
 export async function readHealthConnect(days = 14): Promise<HealthDay[]> {
   if (!platformSupportsHealthConnect()) return [];
   try {
     const r = await Native.readDays({ days });
-    const now = Date.now();
-    return (r.days ?? [])
-      .filter((d) => d.date)
-      .map((d) => ({
-        date: d.date,
-        sleepMinutes: d.sleepMinutes,
-        steps: d.steps,
-        restingHr: d.restingHr,
-        activeCalories: d.activeCalories,
-        source: 'healthconnect' as const,
-        updatedAt: now,
-      }));
+    return toHealthDays(r.days);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * Schedule (enabled=true) or cancel the native background sync worker, which
+ * keeps Garmin data flowing while the app stays closed and can post a morning
+ * readiness notification. `interactive` marks a user-initiated call where
+ * prompting for the Android 13+ notification permission is okay.
+ */
+export async function configureBackgroundSync(
+  enabled: boolean,
+  opts: { notify?: boolean; interactive?: boolean } = {},
+): Promise<void> {
+  if (!platformSupportsHealthConnect()) return;
+  try {
+    await Native.configureBackgroundSync({
+      enabled,
+      notify: opts.notify ?? true,
+      interactive: opts.interactive ?? false,
+    });
+  } catch {
+    // APKs older than this method just no-op.
+  }
+}
+
+/** Days the background worker cached while the app was closed. Empty on any failure. */
+export async function drainHealthCache(): Promise<HealthDay[]> {
+  if (!platformSupportsHealthConnect()) return [];
+  try {
+    const r = await Native.drainCache();
+    return toHealthDays(r.days);
   } catch {
     return [];
   }

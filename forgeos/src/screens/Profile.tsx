@@ -4,6 +4,8 @@ import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { pushMyActivity } from '../lib/activitySync';
+import { configureBackgroundSync } from '../lib/healthConnect';
+import { checkForApkUpdate } from '../lib/appUpdate';
 import { useSettings } from '../state/settingsStore';
 import { useUser } from '../state/userStore';
 import { useGami } from '../state/gamificationStore';
@@ -68,6 +70,8 @@ export default function Profile() {
   const [passcodeSheet, setPasscodeSheet] = useState<null | 'set' | 'change'>(null);
   const [cloudConfirm, setCloudConfirm] = useState(false);
   const backupFileRef = useRef<HTMLInputElement>(null);
+  const [updateReady, setUpdateReady] = useState(false);
+  useEffect(() => { void checkForApkUpdate().then((u) => setUpdateReady(u.available)); }, []);
   const equippedTitle = useCosmetics((c) => c.equippedTitle);
   const equippedFrame = useCosmetics((c) => c.equippedFrame);
   const ownedCosmetics = useCosmetics((c) => c.owned);
@@ -149,6 +153,18 @@ export default function Profile() {
 
   return (
     <Screen title={profile?.name ?? 'You'} subtitle={title ?? (profile?.email ?? `${profile?.authProvider ?? 'guest'} account`)}>
+      {/* APK update nudge — only appears when a newer build is published */}
+      {updateReady && (
+        <Card className="border-accent/40 bg-accent/5 flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center shrink-0"><Download size={18} className="text-accent" /></div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold">Update available</p>
+            <p className="text-[11px] text-muted">A newer ForgeOS build is out — grab it in a tap.</p>
+          </div>
+          <Button onClick={() => navigate('/download')}>Update</Button>
+        </Card>
+      )}
+
       {/* Identity card with equipped cosmetics */}
       <Card className="flex items-center gap-3">
         <div className="w-14 h-14 rounded-full p-[3px]" style={{ background: frame ?? 'rgb(var(--line))' }}>
@@ -267,7 +283,7 @@ export default function Profile() {
             <Toggle checked={s.geofenceEnabled} onChange={(v) => s.set('geofenceEnabled', v)} />
           </Row>
           <Row label="Health & recovery" desc="Sleep, readiness & Garmin sync">
-            <Toggle checked={s.recoveryEnabled} onChange={(v) => s.set('recoveryEnabled', v)} />
+            <Toggle checked={s.recoveryEnabled} onChange={(v) => { s.set('recoveryEnabled', v); void configureBackgroundSync(v); }} />
           </Row>
         </Card>
       </div>

@@ -44,6 +44,8 @@ dependencies {
     // pushes into Android Health Connect. See HealthConnectPlugin.kt.
     implementation "androidx.health.connect:connect-client:1.1.0-alpha07"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3"
+    // Background sync while the app is closed (HealthSyncWorker).
+    implementation "androidx.work:work-runtime-ktx:2.9.0"
     testImplementation "junit:junit:$junitVersion"
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"

@@ -1,15 +1,16 @@
 package com.forgeos.app
 
+import android.Manifest
+import android.content.Context
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.activity.result.ActivityResult
-import androidx.health.connect.client.HealthConnectClient
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.health.connect.client.PermissionController
-import androidx.health.connect.client.permission.HealthPermission
-import androidx.health.connect.client.records.ActiveCaloriesBurnedRecord
-import androidx.health.connect.client.records.RestingHeartRateRecord
-import androidx.health.connect.client.records.SleepSessionRecord
-import androidx.health.connect.client.records.StepsRecord
-import androidx.health.connect.client.request.ReadRecordsRequest
-import androidx.health.connect.client.time.TimeRangeFilter
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
 import com.getcapacitor.JSArray
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -21,45 +22,30 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.time.Duration
-import java.time.Instant
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.temporal.ChronoUnit
+import java.util.concurrent.TimeUnit
 
 /**
  * Reads wearable data from Android Health Connect — the hub that the Garmin
  * Connect app writes sleep, steps, heart rate and calories into. The JS side
- * (src/lib/healthConnect.ts) calls isAvailable → requestAuthorization → readDays.
+ * (src/lib/healthConnect.ts) calls isAvailable → requestAuthorization → readDays,
+ * plus configureBackgroundSync/drainCache for the closed-app sync path.
  *
  * Read-only: we never write to Health Connect, and nothing leaves the device.
+ * The heavy lifting lives in HealthReader so HealthSyncWorker can reuse it.
  */
 @CapacitorPlugin(name = "HealthConnect")
 class HealthConnectPlugin : Plugin() {
 
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
-    private val readPerms = setOf(
-        HealthPermission.getReadPermission(SleepSessionRecord::class),
-        HealthPermission.getReadPermission(StepsRecord::class),
-        HealthPermission.getReadPermission(RestingHeartRateRecord::class),
-        HealthPermission.getReadPermission(ActiveCaloriesBurnedRecord::class),
-    )
-
-    private fun sdkAvailable(): Boolean =
-        HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE
-
-    private fun client(): HealthConnectClient? =
-        if (sdkAvailable()) HealthConnectClient.getOrCreate(context) else null
-
     @PluginMethod
     fun isAvailable(call: PluginCall) {
-        call.resolve(JSObject().put("available", sdkAvailable()))
+        call.resolve(JSObject().put("available", HealthReader.sdkAvailable(context)))
     }
 
     @PluginMethod
     fun requestAuthorization(call: PluginCall) {
-        val hc = client()
+        val hc = HealthReader.client(context)
         if (hc == null) {
             call.resolve(JSObject().put("granted", false))
             return
@@ -67,12 +53,15 @@ class HealthConnectPlugin : Plugin() {
         scope.launch {
             try {
                 val granted = hc.permissionController.getGrantedPermissions()
-                if (granted.containsAll(readPerms)) {
+                if (granted.containsAll(HealthReader.readPerms)) {
                     call.resolve(JSObject().put("granted", true))
                 } else {
+                    // Also ask for background reads so the periodic worker can run
+                    // with the app closed; optional — grant check below ignores it.
+                    val wanted = HealthReader.readPerms + HealthReader.BACKGROUND_READ_PERMISSION
                     val intent = PermissionController
                         .createRequestPermissionResultContract()
-                        .createIntent(context, readPerms)
+                        .createIntent(context, wanted)
                     startActivityForResult(call, intent, "permsResult")
                 }
             } catch (e: Exception) {
@@ -86,73 +75,71 @@ class HealthConnectPlugin : Plugin() {
         if (call == null) return
         scope.launch {
             val granted = try {
-                client()?.permissionController?.getGrantedPermissions() ?: emptySet()
+                HealthReader.client(context)?.permissionController?.getGrantedPermissions() ?: emptySet()
             } catch (e: Exception) {
                 emptySet()
             }
-            call.resolve(JSObject().put("granted", granted.containsAll(readPerms)))
+            call.resolve(JSObject().put("granted", granted.containsAll(HealthReader.readPerms)))
         }
     }
 
     @PluginMethod
     fun readDays(call: PluginCall) {
         val days = call.getInt("days") ?: 14
-        val hc = client()
+        val hc = HealthReader.client(context)
         if (hc == null) {
             call.reject("Health Connect unavailable")
             return
         }
         scope.launch {
             try {
-                val end = Instant.now()
-                val start = end.minus(days.toLong(), ChronoUnit.DAYS)
-                val range = TimeRangeFilter.between(start, end)
-                val zone = ZoneId.systemDefault()
-                fun key(i: Instant): String = LocalDate.ofInstant(i, zone).toString()
-
-                val sleep = HashMap<String, Long>()
-                val steps = HashMap<String, Long>()
-                val cals = HashMap<String, Double>()
-                val hrSum = HashMap<String, Long>()
-                val hrCount = HashMap<String, Int>()
-
-                // Sleep is bucketed by the morning it ended (matches how trackers label a night).
-                hc.readRecords(ReadRecordsRequest(SleepSessionRecord::class, range)).records.forEach { r ->
-                    val k = key(r.endTime)
-                    sleep[k] = (sleep[k] ?: 0L) + Duration.between(r.startTime, r.endTime).toMinutes()
-                }
-                hc.readRecords(ReadRecordsRequest(StepsRecord::class, range)).records.forEach { r ->
-                    val k = key(r.startTime)
-                    steps[k] = (steps[k] ?: 0L) + r.count
-                }
-                hc.readRecords(ReadRecordsRequest(ActiveCaloriesBurnedRecord::class, range)).records.forEach { r ->
-                    val k = key(r.startTime)
-                    cals[k] = (cals[k] ?: 0.0) + r.energy.inKilocalories
-                }
-                hc.readRecords(ReadRecordsRequest(RestingHeartRateRecord::class, range)).records.forEach { r ->
-                    val k = key(r.time)
-                    hrSum[k] = (hrSum[k] ?: 0L) + r.beatsPerMinute
-                    hrCount[k] = (hrCount[k] ?: 0) + 1
-                }
-
-                val keys = HashSet<String>().apply {
-                    addAll(sleep.keys); addAll(steps.keys); addAll(cals.keys); addAll(hrSum.keys)
-                }
-                val arr = JSArray()
-                for (k in keys) {
-                    val o = JSObject()
-                    o.put("date", k)
-                    sleep[k]?.let { o.put("sleepMinutes", it) }
-                    steps[k]?.let { o.put("steps", it) }
-                    cals[k]?.let { o.put("activeCalories", Math.round(it)) }
-                    val n = hrCount[k]
-                    if (n != null && n > 0) o.put("restingHr", Math.round(hrSum[k]!!.toDouble() / n))
-                    arr.put(o)
-                }
-                call.resolve(JSObject().put("days", arr))
+                val arr = HealthReader.readDays(hc, days)
+                call.resolve(JSObject().put("days", JSArray(arr.toString())))
             } catch (e: Exception) {
                 call.reject(e.message ?: "read failed")
             }
         }
+    }
+
+    /**
+     * Schedule (or cancel) the periodic background sync worker. `interactive`
+     * marks a user-initiated call (the Connect button / settings toggle) where
+     * prompting for the Android 13+ notification permission is acceptable.
+     */
+    @PluginMethod
+    fun configureBackgroundSync(call: PluginCall) {
+        val enabled = call.getBoolean("enabled") ?: true
+        val notify = call.getBoolean("notify") ?: true
+        val interactive = call.getBoolean("interactive") ?: false
+        context.getSharedPreferences(HealthReader.PREFS, Context.MODE_PRIVATE)
+            .edit().putBoolean(HealthReader.KEY_NOTIFY, notify).apply()
+        val wm = WorkManager.getInstance(context)
+        if (enabled) {
+            val req = PeriodicWorkRequestBuilder<HealthSyncWorker>(6, TimeUnit.HOURS)
+                .setInitialDelay(30, TimeUnit.MINUTES)
+                .build()
+            wm.enqueueUniquePeriodicWork("forgeos-health-sync", ExistingPeriodicWorkPolicy.UPDATE, req)
+            if (interactive && notify && Build.VERSION.SDK_INT >= 33 &&
+                ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(activity, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 9377)
+            }
+        } else {
+            wm.cancelUniqueWork("forgeos-health-sync")
+        }
+        call.resolve()
+    }
+
+    /** Return whatever the background worker cached while the app was closed. */
+    @PluginMethod
+    fun drainCache(call: PluginCall) {
+        val prefs = context.getSharedPreferences(HealthReader.PREFS, Context.MODE_PRIVATE)
+        val raw = prefs.getString(HealthReader.KEY_CACHE, null)
+        val days = if (raw == null) JSArray() else try { JSArray(raw) } catch (e: Exception) { JSArray() }
+        call.resolve(
+            JSObject()
+                .put("days", days)
+                .put("cachedAt", prefs.getLong(HealthReader.KEY_CACHED_AT, 0L))
+        )
     }
 }
