@@ -21,7 +21,7 @@ interface HealthConnectPlugin {
   isAvailable(): Promise<{ available: boolean }>;
   requestAuthorization(options: { read: string[] }): Promise<{ granted: boolean }>;
   readDays(options: { days: number }): Promise<{ days: NativeDay[] }>;
-  configureBackgroundSync(options: { enabled: boolean; notify: boolean; interactive: boolean }): Promise<void>;
+  configureBackgroundSync(options: { enabled: boolean; notify: boolean; interactive: boolean; bedtime: boolean }): Promise<void>;
   drainCache(): Promise<{ days: NativeDay[]; cachedAt: number }>;
 }
 
@@ -92,7 +92,7 @@ export async function readHealthConnect(days = 14): Promise<HealthDay[]> {
  */
 export async function configureBackgroundSync(
   enabled: boolean,
-  opts: { notify?: boolean; interactive?: boolean } = {},
+  opts: { notify?: boolean; interactive?: boolean; bedtime?: boolean } = {},
 ): Promise<void> {
   if (!platformSupportsHealthConnect()) return;
   try {
@@ -100,6 +100,7 @@ export async function configureBackgroundSync(
       enabled,
       notify: opts.notify ?? true,
       interactive: opts.interactive ?? false,
+      bedtime: opts.bedtime ?? true,
     });
   } catch {
     // APKs older than this method just no-op.

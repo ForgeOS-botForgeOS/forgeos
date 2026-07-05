@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon } from 'lucide-react';
+import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon, HeartPulse } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -22,7 +22,7 @@ import { useGami } from '../state/gamificationStore';
 import { useSocial } from '../state/socialStore';
 import { EXERCISES, exerciseById, substitutesFor, EXERCISE_CATEGORIES } from '../data/exercises';
 import { detectPlateaus, recommendBlock, trainingLoadWarning } from '../lib/analytics';
-import { readinessFromDays, trainingGuidance } from '../lib/readiness';
+import { readinessFromDays, trainingGuidance, recoveryTrend, overtrainingRisk } from '../lib/readiness';
 import { ReadinessChip } from '../components/Readiness';
 import { useHealth, sortedDays } from '../state/healthStore';
 import { overloadSuggestion, volumeOf } from '../lib/fitness';
@@ -54,6 +54,15 @@ export default function Train() {
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
   const healthDays = useHealth((s) => s.days);
   const readiness = useMemo(() => (recoveryEnabled ? readinessFromDays(sortedDays(healthDays)) : null), [recoveryEnabled, healthDays]);
+  const otRisk = useMemo(
+    () => (recoveryEnabled ? overtrainingRisk(recoveryTrend(sortedDays(healthDays))) : null),
+    [recoveryEnabled, healthDays],
+  );
+  // The week's lightest non-rest session (fewest exercises) — swap target on bad days.
+  const lightDay = useMemo(() => {
+    const days = weekPlan?.days.filter((d) => !d.rest && d.exerciseIds.length > 0) ?? [];
+    return days.length ? [...days].sort((a, b) => a.exerciseIds.length - b.exerciseIds.length)[0] : null;
+  }, [weekPlan]);
 
   const todayPlan = useMemo(() => {
     if (!weekPlan) return null;
@@ -122,10 +131,28 @@ export default function Train() {
               </div>
               <p className="text-sm mt-1 font-semibold" style={{ color: readiness.color }}>{guide.headline}</p>
               <p className="text-[12px] text-muted">{guide.detail}</p>
+              {/* Smart swap: when run down, offer the week's lightest session instead */}
+              {(readiness.level === 'rundown' || readiness.level === 'rest') && lightDay && todayPlan && !todayPlan.rest && lightDay.label !== todayPlan.label && (
+                <Button variant="outline" className="w-full justify-center mt-2 py-1.5" onClick={() => { startWorkout(`${lightDay.label} (light)`, lightDay.exerciseIds, { targets: lightDay.targets, maxWeightKg: gymMax }); haptic('success'); toast(`Swapped to ${lightDay.label} — listen to your body 🙏`); }}>
+                  Swap today for {lightDay.label} ({lightDay.exerciseIds.length} lifts)
+                </Button>
+              )}
             </div>
           </Card>
         );
       })()}
+
+      {/* Overtraining alarm — sustained recovery red flags, not one bad night */}
+      {otRisk && otRisk.level !== 'ok' && (
+        <Card className={`flex gap-3 items-start ${otRisk.level === 'high' ? 'border-danger/60' : 'border-warn/50'}`}>
+          <HeartPulse size={18} className={`mt-0.5 shrink-0 ${otRisk.level === 'high' ? 'text-danger' : 'text-warn'}`} />
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted">{otRisk.level === 'high' ? 'Take a deload week' : 'Recovery watch'}</p>
+            {otRisk.reasons.map((r) => <p key={r} className="text-sm mt-1">{r}</p>)}
+            <p className="text-[11px] text-muted mt-1">{otRisk.level === 'high' ? 'Drop weights ~40% for a few sessions — you’ll come back stronger.' : 'Nothing drastic — just keep an eye on sleep this week.'}</p>
+          </div>
+        </Card>
+      )}
 
       {/* Deload / overtraining watch */}
       {loadWarning && (

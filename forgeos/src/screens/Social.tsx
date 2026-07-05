@@ -4,13 +4,14 @@ import { motion, AnimatePresence } from 'framer-motion';
 import {
   Swords, Store, Share2, Wifi, Circle, UserPlus, Check, X,
   MessageCircle, Send, Trash2, Crown, Zap, Heart, Dumbbell, Star, ChevronRight, Plus, UserMinus,
-  RotateCw, Search,
+  RotateCw, Search, Footprints,
 } from 'lucide-react';
 import { joinRace } from '../lib/supabase';
 import { Screen } from '../components/Screen';
 import { Card, Button, Pill, Badge, SectionTitle, Sheet } from '../components/ui';
 import { CloudStatus } from '../components/CloudStatus';
 import { useSocial } from '../state/socialStore';
+import { useHealth } from '../state/healthStore';
 import { useSettings } from '../state/settingsStore';
 import { useGami } from '../state/gamificationStore';
 import { useUser } from '../state/userStore';
@@ -463,6 +464,7 @@ function Friends() {
   const updateProfile = useUser((s) => s.updateProfile);
   const myXp = useGami((s) => s.xp);
   const myStreak = useGami((s) => s.streakDays);
+  const healthDays = useHealth((s) => s.days);
   const [name, setName] = useState('');
   const [copied, setCopied] = useState(false);
   const [query, setQuery] = useState('');
@@ -524,6 +526,14 @@ function Friends() {
 
   const board = [...friends.map((f) => ({ name: f.name, xp: f.xp, you: false })), { name: profile?.name ?? 'You', xp: myXp, you: true }]
     .sort((a, b) => b.xp - a.xp);
+
+  // Step race: only people with synced steps this week take part.
+  const monday = (() => { const n = new Date(); n.setDate(n.getDate() - ((n.getDay() + 6) % 7)); return n.toISOString().slice(0, 10); })();
+  const mySteps = Object.values(healthDays).filter((d) => d.date >= monday).reduce((a, d) => a + (d.steps ?? 0), 0);
+  const stepBoard = [
+    ...friends.filter((f) => (f.weeklySteps ?? 0) > 0).map((f) => ({ name: f.name, steps: f.weeklySteps ?? 0, you: false })),
+    ...(mySteps > 0 ? [{ name: profile?.name ?? 'You', steps: mySteps, you: true }] : []),
+  ].sort((a, b) => b.steps - a.steps).slice(0, 8);
 
   return (
     <div className="space-y-3">
@@ -643,6 +653,23 @@ function Friends() {
           ))}
         </Card>
       </div>
+
+      {/* Step race — friendly competition for recovery, resets every Monday */}
+      {stepBoard.length > 1 && (
+        <div>
+          <SectionTitle action={<Footprints size={14} className="text-success" />}>Step race (this week)</SectionTitle>
+          <Card className="space-y-1.5">
+            {stepBoard.map((r, i) => (
+              <div key={i} className={`flex items-center gap-3 rounded-lg px-2 py-1.5 ${r.you ? 'bg-accent/15' : ''}`}>
+                <span className="font-mono w-5 text-center text-muted">{['🥇', '🥈', '🥉'][i] ?? i + 1}</span>
+                <span className={`flex-1 text-sm ${r.you ? 'text-accent font-semibold' : ''}`}>{r.name}</span>
+                <span className="font-mono text-xs text-muted">{r.steps.toLocaleString()} steps</span>
+              </div>
+            ))}
+            <p className="text-[10px] text-muted/70">Synced from Garmin · friends without a tracker aren’t shown</p>
+          </Card>
+        </div>
+      )}
 
       <FriendSheet friend={openFriend} onClose={() => setOpenFriend(null)} />
     </div>

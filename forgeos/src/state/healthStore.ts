@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { HealthDay, HealthSource } from '../types';
+import { useGami } from './gamificationStore';
 
 // Wearable / wellness data (sleep, steps, recovery). Source-agnostic: Garmin
 // export, Android Health Connect and manual entry all land here, merged per day.
@@ -43,12 +44,14 @@ export const useHealth = create<HealthState>()(
       lastSyncAt: null,
       lastSource: null,
 
-      upsertDay: (day) =>
+      upsertDay: (day) => {
         set((s) => ({
           days: { ...s.days, [day.date]: mergeDay(s.days[day.date], day) },
           lastSyncAt: Date.now(),
           lastSource: day.source,
-        })),
+        }));
+        useGami.getState().syncHealthQuests(sortedDays(get().days));
+      },
 
       ingest: (incoming, source) => {
         if (!incoming.length) return 0;
@@ -60,6 +63,7 @@ export const useHealth = create<HealthState>()(
           seen.add(d.date);
         }
         set({ days, lastSyncAt: Date.now(), lastSource: source });
+        useGami.getState().syncHealthQuests(sortedDays(days));
         return seen.size;
       },
 

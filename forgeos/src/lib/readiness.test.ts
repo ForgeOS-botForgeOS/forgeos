@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { computeReadiness, readinessFromDays, median, trainingGuidance, recoveryTrend } from './readiness';
+import { computeReadiness, readinessFromDays, median, trainingGuidance, recoveryTrend, overtrainingRisk } from './readiness';
 import type { HealthDay } from '../types';
 
 const day = (over: Partial<HealthDay>): HealthDay => ({ date: '2026-06-26', source: 'manual', updatedAt: 0, ...over });
@@ -81,5 +81,25 @@ describe('readinessFromDays', () => {
     const r = readinessFromDays(days)!;
     expect(r.date).toBe('2026-06-26');
     expect(r.score).toBeGreaterThan(0);
+  });
+});
+
+describe('overtrainingRisk', () => {
+  it('is ok on a clean week', () => {
+    const r = overtrainingRisk({ scores: [80, 82], avgScore: 81, avgSleepMin: 480, sleepDebtMin: 0, rhrAvg: 52, rhrDrift: 0 });
+    expect(r.level).toBe('ok');
+    expect(r.reasons).toHaveLength(0);
+  });
+
+  it('watches a single red flag', () => {
+    const r = overtrainingRisk({ scores: [], avgScore: 75, avgSleepMin: 420, sleepDebtMin: 300, rhrAvg: 52, rhrDrift: 0 });
+    expect(r.level).toBe('watch');
+    expect(r.reasons).toHaveLength(1);
+  });
+
+  it('flags high risk when RHR drift and sleep debt combine', () => {
+    const r = overtrainingRisk({ scores: [], avgScore: 45, avgSleepMin: 380, sleepDebtMin: 500, rhrAvg: 58, rhrDrift: 4 });
+    expect(r.level).toBe('high');
+    expect(r.reasons.length).toBeGreaterThanOrEqual(2);
   });
 });

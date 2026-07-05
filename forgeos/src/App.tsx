@@ -170,7 +170,7 @@ export default function App() {
     // Keep the closed-app background worker in step with the toggle, and ingest
     // anything it cached overnight (instant — no Health Connect round-trip).
     const rec = useSettings.getState().recoveryEnabled;
-    void configureBackgroundSync(rec);
+    void configureBackgroundSync(rec, { bedtime: useSettings.getState().bedtimeNudge });
     if (rec) void drainHealthCache().then((rows) => { if (rows.length) useHealth.getState().ingest(rows, 'healthconnect'); });
     syncHealth();
     // APK self-update nudge (no-op on the website — the SW prompt covers that).

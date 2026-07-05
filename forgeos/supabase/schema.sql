@@ -280,6 +280,7 @@ alter table profiles add column if not exists friend_code text;
 alter table profiles add column if not exists share_activity boolean default true;
 alter table profiles add column if not exists last_active timestamptz;
 alter table profiles add column if not exists training_now boolean default false;
+alter table profiles add column if not exists weekly_steps int default 0; -- Garmin step race (shared only when share_activity is on)
 alter table profiles add column if not exists rank_tier text;
 create unique index if not exists profiles_friend_code_key on profiles (upper(friend_code)) where friend_code is not null;
 

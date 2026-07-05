@@ -41,6 +41,8 @@ object HealthReader {
     const val KEY_CACHED_AT = "cachedAt"
     const val KEY_NOTIFY = "notify"
     const val KEY_LAST_NOTIFY_DATE = "lastNotifyDate"
+    const val KEY_BEDTIME = "bedtimeNudge"
+    const val KEY_LAST_BEDTIME_DATE = "lastBedtimeDate"
 
     fun sdkAvailable(context: Context): Boolean =
         HealthConnectClient.getSdkStatus(context) == HealthConnectClient.SDK_AVAILABLE

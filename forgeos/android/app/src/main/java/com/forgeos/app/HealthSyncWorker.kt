@@ -45,6 +45,7 @@ class HealthSyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
                     .apply()
             }
             maybeNotifyReadiness(ctx, prefs, arr)
+            maybeBedtimeNudge(ctx, prefs, arr)
         } catch (e: Exception) {
             // e.g. SecurityException when background reads aren't permitted.
         }
@@ -96,6 +97,63 @@ class HealthSyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
         prefs.edit().putString(HealthReader.KEY_LAST_NOTIFY_DATE, today).apply()
     }
 
+    /**
+     * Evening nudge (20:00–22:59, once per day, toggleable): if the week's
+     * sleep debt is building or last night was short, remind before bed —
+     * the one moment the advice can still change tonight's outcome.
+     */
+    private fun maybeBedtimeNudge(ctx: Context, prefs: SharedPreferences, arr: JSONArray) {
+        if (!prefs.getBoolean(HealthReader.KEY_BEDTIME, true)) return
+        if (!prefs.getBoolean(HealthReader.KEY_NOTIFY, true)) return
+        val hour = LocalTime.now().hour
+        if (hour < 20 || hour > 22) return
+        val today = LocalDate.now().toString()
+        if (prefs.getString(HealthReader.KEY_LAST_BEDTIME_DATE, "") == today) return
+        if (!NotificationManagerCompat.from(ctx).areNotificationsEnabled()) return
+        if (Build.VERSION.SDK_INT >= 33 &&
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) return
+
+        // Sleep debt vs 8h across the last 7 nights + last night's duration.
+        var debtMin = 0L
+        var lastNight = -1L
+        val weekAgo = LocalDate.now().minusDays(7).toString()
+        for (i in 0 until arr.length()) {
+            val o = arr.getJSONObject(i)
+            val date = o.optString("date")
+            if (date < weekAgo || !o.has("sleepMinutes")) continue
+            val m = o.getLong("sleepMinutes")
+            debtMin += maxOf(0L, 480L - m)
+            if (date >= today) lastNight = m
+        }
+        val text = when {
+            debtMin >= 120 -> "You're carrying ${debtMin / 60}h of sleep debt this week. Tonight is the comeback — aim for 8h+ 😴"
+            lastNight in 1 until 420 -> "Last night was short (${lastNight / 60}h ${lastNight % 60}m). An early night = a better readiness score tomorrow 🔥"
+            else -> return // sleeping fine — don't nag
+        }
+
+        val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        if (Build.VERSION.SDK_INT >= 26) {
+            nm.createNotificationChannel(
+                NotificationChannel(CHANNEL_ID, "Recovery readiness", NotificationManager.IMPORTANCE_DEFAULT)
+            )
+        }
+        val open = PendingIntent.getActivity(
+            ctx, 0, Intent(ctx, MainActivity::class.java),
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+        val notification = NotificationCompat.Builder(ctx, CHANNEL_ID)
+            .setSmallIcon(ctx.applicationInfo.icon)
+            .setContentTitle("Bedtime check-in")
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
+            .setContentIntent(open)
+            .setAutoCancel(true)
+            .build()
+        NotificationManagerCompat.from(ctx).notify(BEDTIME_NOTIFICATION_ID, notification)
+        prefs.edit().putString(HealthReader.KEY_LAST_BEDTIME_DATE, today).apply()
+    }
+
     /** Weighted average over available signals; mirrors computeReadiness in readiness.ts. */
     private fun readinessScore(day: JSONObject, baselineRhr: Double?): Int? {
         var total = 0.0
@@ -138,5 +196,6 @@ class HealthSyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
     companion object {
         private const val CHANNEL_ID = "recovery"
         private const val NOTIFICATION_ID = 4177
+        private const val BEDTIME_NOTIFICATION_ID = 4178
     }
 }

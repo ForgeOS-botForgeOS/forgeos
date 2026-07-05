@@ -5,6 +5,7 @@ import { ACHIEVEMENTS, type AchievementStats } from '../data/achievements';
 import { useWorkout } from '../state/workoutStore';
 import { useGami } from '../state/gamificationStore';
 import { useQuotes } from '../state/quoteStore';
+import { useHealth } from '../state/healthStore';
 import { rankForXp } from '../data/ranks';
 
 export default function Achievements() {
@@ -16,6 +17,8 @@ export default function Achievements() {
   const streak = useGami((s) => s.streakDays);
   const heavyLifts = useGami((s) => s.heavyLifts);
   const quotes = useQuotes((s) => s.collected);
+  const healthDays = useHealth((s) => s.days);
+  const healthList = Object.values(healthDays);
 
   const stats: AchievementStats = {
     sessions: history.length,
@@ -27,6 +30,8 @@ export default function Achievements() {
     rankIndex: rankForXp(xp).index,
     heavyLifts,
     cardioKm: history.reduce((a, w) => a + (w.cardio?.distanceKm ?? 0), 0),
+    sleepNights8h: healthList.filter((d) => (d.sleepMinutes ?? 0) >= 480).length,
+    totalSteps: healthList.reduce((a, d) => a + (d.steps ?? 0), 0),
   };
 
   const evaluated = ACHIEVEMENTS.map((a) => {

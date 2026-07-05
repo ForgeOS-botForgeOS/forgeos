@@ -111,8 +111,12 @@ class HealthConnectPlugin : Plugin() {
         val enabled = call.getBoolean("enabled") ?: true
         val notify = call.getBoolean("notify") ?: true
         val interactive = call.getBoolean("interactive") ?: false
+        val bedtime = call.getBoolean("bedtime") ?: true
         context.getSharedPreferences(HealthReader.PREFS, Context.MODE_PRIVATE)
-            .edit().putBoolean(HealthReader.KEY_NOTIFY, notify).apply()
+            .edit()
+            .putBoolean(HealthReader.KEY_NOTIFY, notify)
+            .putBoolean(HealthReader.KEY_BEDTIME, bedtime)
+            .apply()
         val wm = WorkManager.getInstance(context)
         if (enabled) {
             val req = PeriodicWorkRequestBuilder<HealthSyncWorker>(6, TimeUnit.HOURS)

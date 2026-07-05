@@ -1,7 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { StreakWager, UserQuest } from '../types';
+import type { HealthDay, StreakWager, UserQuest } from '../types';
 import { QUESTS } from '../data/quests';
+import { useSettings } from './settingsStore';
+import { useUser } from './userStore';
+
+// Quests whose progress is an absolute value synced from health data,
+// not an increment (see syncHealthQuests).
+const HEALTH_METRICS = new Set(['sleepMin', 'steps', 'weekSteps', 'sleepNights']);
 
 interface GamiState {
   xp: number;
@@ -26,6 +32,8 @@ interface GamiState {
   spendCoins: (amount: number) => boolean;
   ensureDailyQuests: () => void;
   bumpMetric: (metric: 'sets' | 'sessions' | 'volume' | 'pr' | 'streak', amount: number) => void;
+  // Sync recovery-quest progress to absolute values from health data.
+  syncHealthQuests: (days: HealthDay[]) => void;
   claimQuest: (questId: string) => void;
   claimAllQuests: () => { count: number; xp: number; coins: number };
   // Count a (possibly past-dated) session toward an active bet + this week's streak.
@@ -139,7 +147,10 @@ export const useGami = create<GamiState>()(
 
       ensureDailyQuests: () => {
         const have = get().quests;
-        const dailyPool = QUESTS.filter((q) => q.scope === 'daily');
+        // Recovery quests only make sense with health data flowing in.
+        const recovery = useSettings.getState().recoveryEnabled;
+        const eligible = QUESTS.filter((q) => recovery || !HEALTH_METRICS.has(q.metric));
+        const dailyPool = eligible.filter((q) => q.scope === 'daily');
         const today = todayStr();
         // Rotate a fresh subset of the daily pool each day so the board stays
         // varied even though the pool is large.
@@ -147,6 +158,14 @@ export const useGami = create<GamiState>()(
         const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(), 0, 0).getTime()) / 86400000);
         const start = (dayOfYear * DAILY_COUNT) % dailyPool.length;
         const daily = Array.from({ length: Math.min(DAILY_COUNT, dailyPool.length) }, (_, i) => dailyPool[(start + i) % dailyPool.length]);
+        // Planned rest day → active recovery: guarantee the step goal is on
+        // today's board instead of a lifting quest that can't be done.
+        if (recovery) {
+          const dow = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date().getDay()];
+          const restToday = !!useUser.getState().weekPlan?.days.find((d) => d.day === dow)?.rest;
+          const stepQ = dailyPool.find((q) => q.id === 'd-steps-8k');
+          if (restToday && stepQ && !daily.some((q) => q.id === stepQ.id)) daily[0] = stepQ;
+        }
         // Reset daily quests if any assigned daily quest is from a previous day.
         const staleDaily = have.some(
           (uq) => dailyPool.find((d) => d.id === uq.questId) && uq.assignedAt.slice(0, 10) !== today,
@@ -160,7 +179,7 @@ export const useGami = create<GamiState>()(
           }
         }
         // Ensure weekly/monthly/yearly exist once.
-        for (const q of QUESTS.filter((x) => x.scope !== 'daily')) {
+        for (const q of eligible.filter((x) => x.scope !== 'daily')) {
           if (!next.find((uq) => uq.questId === q.id)) {
             next.push({ questId: q.id, progress: 0, completed: false, claimed: false, assignedAt: new Date().toISOString() });
           }
@@ -175,6 +194,30 @@ export const useGami = create<GamiState>()(
             if (!def || def.metric !== metric || uq.completed) return uq;
             const progress = Math.min(def.target, uq.progress + amount);
             return { ...uq, progress, completed: progress >= def.target };
+          }),
+        });
+      },
+
+      syncHealthQuests: (days) => {
+        if (!days.length) return;
+        const today = todayStr();
+        const monday = mondayOf(today);
+        const todayDay = days.find((d) => d.date === today);
+        const week = days.filter((d) => d.date >= monday && d.date <= today);
+        const values: Record<string, number> = {
+          sleepMin: todayDay?.sleepMinutes ?? 0,
+          steps: todayDay?.steps ?? 0,
+          weekSteps: week.reduce((a, d) => a + (d.steps ?? 0), 0),
+          sleepNights: week.filter((d) => (d.sleepMinutes ?? 0) >= 420).length,
+        };
+        set({
+          quests: get().quests.map((uq) => {
+            const def = QUESTS.find((q) => q.id === uq.questId);
+            if (!def || !HEALTH_METRICS.has(def.metric) || uq.claimed) return uq;
+            const progress = Math.min(def.target, values[def.metric] ?? 0);
+            // Absolute sync, but never take a completion back once earned.
+            const completed = uq.completed || progress >= def.target;
+            return { ...uq, progress: completed ? Math.max(progress, uq.progress) : progress, completed };
           }),
         });
       },

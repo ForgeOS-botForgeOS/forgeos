@@ -28,6 +28,7 @@ const DEFAULTS: Settings = {
   geofenceEnabled: false,
   hapticsEnabled: true,
   recoveryEnabled: true,
+  bedtimeNudge: true,
   units: 'metric',
 };
 

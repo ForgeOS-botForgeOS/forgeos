@@ -201,7 +201,9 @@ export interface Quest {
   xp: number;
   coins: number;
   target: number;
-  metric: 'sets' | 'sessions' | 'volume' | 'pr' | 'streak';
+  // sleepMin/steps/weekSteps/sleepNights are recovery metrics synced as
+  // absolute values from healthStore (not bumped incrementally).
+  metric: 'sets' | 'sessions' | 'volume' | 'pr' | 'streak' | 'sleepMin' | 'steps' | 'weekSteps' | 'sleepNights';
 }
 
 export interface UserQuest {
@@ -231,6 +233,7 @@ export interface Friend {
   avatarSeed: string;
   trainingNow?: boolean;
   streak?: number;
+  weeklySteps?: number; // this week's step count (shared via Garmin sync)
   lastActiveISO?: string;
   cheeredAt?: string; // last time you cheered them
   friendCode?: string; // set when added via a real invite link (dedup + "real" badge)
@@ -432,6 +435,7 @@ export interface Settings {
   geofenceEnabled: boolean;
   hapticsEnabled: boolean;
   recoveryEnabled: boolean; // show Health & recovery (sleep/readiness) across the app
+  bedtimeNudge: boolean; // evening "aim for 8h" notification (APK, needs recovery on)
   units: 'metric';
 }
 

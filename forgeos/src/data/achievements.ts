@@ -8,6 +8,9 @@ export interface AchievementStats {
   rankIndex: number; // index into RANKS
   heavyLifts: number;
   cardioKm: number;
+  // Recovery (0 until health data is synced)
+  sleepNights8h: number; // nights with 8h+ sleep, all time
+  totalSteps: number; // steps across all synced days
 }
 
 export interface Achievement {
@@ -91,4 +94,11 @@ export const ACHIEVEMENTS: Achievement[] = [
   // ---- Milestone flavour ----
   { id: 'pr_and_heavy', title: 'Strong All Round', desc: '10 PRs and 25 heavy sets', icon: '🧨', goal: 2, value: (s) => (s.prs >= 10 ? 1 : 0) + (s.heavyLifts >= 25 ? 1 : 0) },
   { id: 'wellrounded', title: 'Complete Athlete', desc: '50 sessions, 50 km cardio, 50 PRs', icon: '🏵️', goal: 3, value: (s) => (s.sessions >= 50 ? 1 : 0) + (s.cardioKm >= 50 ? 1 : 0) + (s.prs >= 50 ? 1 : 0) },
+
+  // ---- Recovery (Garmin/health sync) ----
+  { id: 'sleep8x7', title: 'Well Rested', desc: '7 nights of 8h+ sleep', icon: '😴', goal: 7, value: (s) => s.sleepNights8h },
+  { id: 'sleep8x30', title: 'Sleep Athlete', desc: '30 nights of 8h+ sleep', icon: '🛌', goal: 30, value: (s) => s.sleepNights8h },
+  { id: 'sleep8x100', title: 'Recovery Master', desc: '100 nights of 8h+ sleep', icon: '🌙', goal: 100, value: (s) => s.sleepNights8h },
+  { id: 'steps100k', title: 'Wanderer', desc: 'Walk 100,000 steps (synced)', icon: '🚶', goal: 100000, value: (s) => s.totalSteps },
+  { id: 'steps1m', title: 'Million Stepper', desc: 'Walk 1,000,000 steps (synced)', icon: '🌍', goal: 1000000, value: (s) => s.totalSteps },
 ];

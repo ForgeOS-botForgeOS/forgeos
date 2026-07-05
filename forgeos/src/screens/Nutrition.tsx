@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react';
-import { Camera, Trash2, Sparkles, Calculator, ChefHat, Clock, Star, Check, Barcode } from 'lucide-react';
+import { Camera, Trash2, Sparkles, Calculator, ChefHat, Clock, Star, Check, Barcode, Moon } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
 import { useNutrition } from '../state/nutritionStore';
@@ -12,6 +12,7 @@ import { useT } from '../lib/i18n';
 import { haptic } from '../lib/haptics';
 import { toast, celebrate } from '../lib/toast';
 import { BarcodeScanner } from '../components/BarcodeScanner';
+import { useHealth } from '../state/healthStore';
 import type { ScanResult, FoodItem } from '../types';
 
 export default function Nutrition() {
@@ -27,6 +28,14 @@ export default function Nutrition() {
   const water = useNutrition((s) => s.todaysWaterMl());
   const today = new Date().toISOString().slice(0, 10);
   const log = useMemo(() => rawLog.filter((e) => e.date.slice(0, 10) === today), [rawLog, today]);
+  // Last night's sleep, if it was short (<6h) — drives the fuelling banner.
+  const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
+  const healthDays = useHealth((s) => s.days);
+  const shortNight = useMemo(() => {
+    if (!recoveryEnabled) return null;
+    const m = healthDays[today]?.sleepMinutes;
+    return typeof m === 'number' && m > 0 && m < 360 ? m : null;
+  }, [recoveryEnabled, healthDays, today]);
   const totals = useMemo(
     () => log.reduce(
       (a, e) => ({ calories: a.calories + e.calories, proteinG: a.proteinG + e.proteinG, carbsG: a.carbsG + e.carbsG, fatG: a.fatG + e.fatG, sugarG: a.sugarG + e.sugarG }),
@@ -124,6 +133,18 @@ export default function Nutrition() {
     <Screen title={t('nut.title')} subtitle={`${profile?.goal ?? 'recomp'} · ${macros.calories} kcal`}>
       {/* No `capture` attribute → the native picker offers Camera *and* Photo Library. */}
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
+
+      {/* Sleep-aware fuelling: a rough night changes today's priorities */}
+      {shortNight != null && (
+        <Card className="border-warn/50 flex gap-3 items-start">
+          <Moon size={18} className="text-warn mt-0.5 shrink-0" />
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted">Short night ({Math.floor(shortNight / 60)}h {String(shortNight % 60).padStart(2, '0')}m)</p>
+            <p className="text-sm mt-1">Aim for <b>+20 g protein</b> and extra water today — poor sleep raises muscle breakdown and fake hunger.</p>
+            <p className="text-[11px] text-muted mt-1">Go easy on the sugar; cravings hit harder on low sleep.</p>
+          </div>
+        </Card>
+      )}
 
       <Card className="space-y-3">
         <div className="flex items-center justify-between">
