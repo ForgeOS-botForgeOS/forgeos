@@ -157,11 +157,16 @@ export default function App() {
     }
     ensureDailyQuests();
     seedFeed();
-    // Seamless wearable refresh on launch — no-ops off-device, without Health
-    // Connect permission, or when the user has switched recovery off.
-    if (useSettings.getState().recoveryEnabled) {
+    // Seamless wearable refresh — no-ops off-device, without Health Connect
+    // permission, or when the user has switched recovery off. minGapMin
+    // throttles the foreground-resume path so we don't hammer Health Connect.
+    const syncHealth = (minGapMin = 0) => {
+      if (!useSettings.getState().recoveryEnabled) return;
+      const last = useHealth.getState().lastSyncAt;
+      if (minGapMin && last && Date.now() - last < minGapMin * 60_000) return;
       void readHealthConnect(21).then((rows) => { if (rows.length) useHealth.getState().ingest(rows, 'healthconnect'); });
-    }
+    };
+    syncHealth();
     // Live social: ensure a cloud session (anonymous if needed, no signup),
     // then pull the real friend graph.
     void ensureCloudAccount().then(() => void useSocial.getState().syncFriends());
@@ -171,8 +176,13 @@ export default function App() {
     const stopReminders = startReminderScheduler(() => useSettings.getState().reminder);
     // Offline sync engine: flush queued writes whenever we regain connectivity.
     const off = onReconnect(() => void syncQueue());
-    // Auto cloud-backup when the app is backgrounded (no-ops if signed out/offline).
-    const onHide = () => { if (document.visibilityState === 'hidden') { void pushCloudBackup(); void pushMyActivity(); } };
+    // Auto cloud-backup when the app is backgrounded (no-ops if signed out/offline),
+    // and a fresh wearable pull when it comes back to the foreground so Garmin
+    // data stays current without the user ever opening the Health screen.
+    const onHide = () => {
+      if (document.visibilityState === 'hidden') { void pushCloudBackup(); void pushMyActivity(); }
+      else syncHealth(20);
+    };
     document.addEventListener('visibilitychange', onHide);
     return () => {
       stopAuth();
