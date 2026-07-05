@@ -17,6 +17,7 @@ import { useSocial } from './state/socialStore';
 import { useWorkout } from './state/workoutStore';
 import { watchGym } from './lib/geo';
 import { configureBackgroundSync, drainHealthCache, readHealthConnect } from './lib/healthConnect';
+import { checkForApkUpdate } from './lib/appUpdate';
 import { useHealth } from './state/healthStore';
 import { haptic } from './lib/haptics';
 import { initAuth } from './lib/auth';
@@ -172,6 +173,8 @@ export default function App() {
     void configureBackgroundSync(rec);
     if (rec) void drainHealthCache().then((rows) => { if (rows.length) useHealth.getState().ingest(rows, 'healthconnect'); });
     syncHealth();
+    // APK self-update nudge (no-op on the website — the SW prompt covers that).
+    void checkForApkUpdate().then((u) => { if (u.available) toast('A newer ForgeOS is out! Update it from You → Update available 🚀', 'info'); });
     // Live social: ensure a cloud session (anonymous if needed, no signup),
     // then pull the real friend graph.
     void ensureCloudAccount().then(() => void useSocial.getState().syncFriends());

@@ -6,6 +6,9 @@ import { VitePWA } from 'vite-plugin-pwa'
 export default defineConfig({
   // Base path: '/' locally, '/<repo>/' for GitHub Pages (set via DEPLOY_BASE).
   base: process.env.DEPLOY_BASE || '/',
+  // Build timestamp baked into the bundle — the APK compares it against the
+  // app-latest release to detect that a newer build exists (src/lib/appUpdate.ts).
+  define: { __BUILD_TIME__: JSON.stringify(Date.now()) },
   // Allow tunnel hostnames (e.g. *.trycloudflare.com) to reach dev/preview.
   server: { allowedHosts: true },
   preview: { allowedHosts: true },
