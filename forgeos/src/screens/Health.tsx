@@ -174,9 +174,11 @@ export default function Health() {
         ) : (
           <>
             <div className="space-y-1.5">
-              <SetupStep n={1} done={hcStatus === 'ready' || hcStatus === 'unavailable'}>Install the <b>ForgeOS Android app</b></SetupStep>
-              <SetupStep n={2} done={hcStatus === 'ready'}>In <b>Garmin Connect</b>: profile picture → Settings → <b>Health Connect</b> → allow sleep &amp; activity</SetupStep>
-              <SetupStep n={3}>Tap the button — one permission screen, then it’s automatic forever</SetupStep>
+              {/* The install step only exists for browser visitors — inside the
+                  APK it's already satisfied, so don't show it at all. */}
+              {hcStatus === 'web' && <SetupStep n={1}>Install the <b>ForgeOS Android app</b></SetupStep>}
+              <SetupStep n={hcStatus === 'web' ? 2 : 1} done={hcStatus === 'ready'}>In <b>Garmin Connect</b>: profile picture → Settings → <b>Health Connect</b> → allow sleep &amp; activity</SetupStep>
+              <SetupStep n={hcStatus === 'web' ? 3 : 2}>Tap the button — one permission screen, then it’s automatic forever</SetupStep>
             </div>
             {hcStatus === 'ready' && (
               <Button className="w-full justify-center" disabled={syncing} onClick={autoSync}>
