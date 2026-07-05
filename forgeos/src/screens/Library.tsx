@@ -1,8 +1,10 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Search, Nfc, Play } from 'lucide-react';
+import { ChevronLeft, Search, Nfc, Play, Plus, Trash2 } from 'lucide-react';
 import { Card, Sheet, Badge, Button } from '../components/ui';
 import { EXERCISES, EXERCISE_CATEGORIES } from '../data/exercises';
+import { useExercises } from '../state/exerciseStore';
+import { CreateExerciseSheet } from '../components/CreateExercise';
 import { MUSCLE_CUES } from '../data/tips';
 import { cuesFor } from '../data/cues';
 import { useWorkout } from '../state/workoutStore';
@@ -35,17 +37,20 @@ export default function Library() {
   const [equip, setEquip] = useState<string>('All');
   const [detail, setDetail] = useState<Exercise | null>(null);
   const [nfcMsg, setNfcMsg] = useState<string | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const custom = useExercises((s) => s.custom);
+  const removeCustom = useExercises((s) => s.removeCustom);
 
   const list = useMemo(
     () =>
-      EXERCISES.filter(
+      [...custom, ...EXERCISES].filter(
         (e) =>
           (cat === 'All' || e.category === cat) &&
           (muscle === 'All' || e.primary === muscle || e.secondary.includes(muscle as MuscleGroup)) &&
           (equip === 'All' || equipGroup(e.equipment) === equip) &&
           (e.name.toLowerCase().includes(q.toLowerCase()) || e.primary.toLowerCase().includes(q.toLowerCase())),
       ),
-    [q, cat, muscle, equip],
+    [q, cat, muscle, equip, custom],
   );
 
   async function pairNfc() {
@@ -79,8 +84,13 @@ export default function Library() {
 
       <div className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
         <Search size={16} className="text-muted" />
-        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${EXERCISES.length} exercises…`} className="bg-transparent text-sm flex-1 outline-none" />
+        <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={`Search ${EXERCISES.length + custom.length} exercises…`} className="bg-transparent text-sm flex-1 outline-none" />
       </div>
+
+      {/* Create your own — described in your words, classified by the coach */}
+      <Button className="w-full justify-center" onClick={() => setCreateOpen(true)}>
+        <span className="flex items-center gap-1.5 text-sm"><Plus size={15} /> Create your own exercise{custom.length ? ` (${custom.length} made)` : ''}</span>
+      </Button>
 
       {/* Category filter */}
       <div>
@@ -126,12 +136,18 @@ export default function Library() {
               <p className="text-xs text-muted">{e.primary}{e.secondary.length ? ` · ${e.secondary.join(', ')}` : ''}</p>
             </div>
             <div className="flex items-center gap-2">
+              {e.id.startsWith('cus-') && <Badge color="rgb(var(--success))">yours</Badge>}
               {e.isCore && <Badge>core</Badge>}
               <Badge color="rgb(var(--accent-2))">{e.category}</Badge>
+              {e.id.startsWith('cus-') && (
+                <button onClick={(ev) => { ev.stopPropagation(); removeCustom(e.id); }} className="text-danger" aria-label="Delete custom exercise"><Trash2 size={14} /></button>
+              )}
             </div>
           </Card>
         ))}
       </div>
+
+      <CreateExerciseSheet open={createOpen} onClose={() => setCreateOpen(false)} />
 
       <Sheet open={!!detail} onClose={() => setDetail(null)} title={detail?.name}>
         {detail && (
