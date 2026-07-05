@@ -338,14 +338,33 @@ create policy "prs friends read" on prs for select using (
 -- CRITICAL: the original "profiles read using (true)" exposed EVERY column —
 -- email, weight, age, body fat, quiz answers — to anyone with the public anon
 -- key. Lock profile rows to the owner and their accepted friends only.
+-- Profile rows are OWNER-ONLY. Friends never read the raw row (it holds
+-- email, weight, age, body fat, health-derived numbers); they read the
+-- masked friend_profiles view below instead.
 drop policy if exists "profiles read" on profiles;
-create policy "profiles read" on profiles for select using (
-  auth.uid() = id
-  or exists (
-    select 1 from friendships f
-    where f.user_id = auth.uid() and f.friend_id = profiles.id and f.status = 'accepted'
-  )
+create policy "profiles read" on profiles for select using (auth.uid() = id);
+
+-- Friend-facing projection: social fields only, and activity numbers are
+-- zeroed server-side when the owner turns "Share activity" off — the client
+-- toggle is no longer the only gate. Definer view (bypasses RLS) restricted
+-- to the caller's accepted friends.
+create or replace view friend_profiles as
+select
+  p.id,
+  p.name,
+  p.xp,
+  p.last_active,
+  p.share_activity,
+  case when coalesce(p.share_activity, true) then p.streak_days else 0 end as streak_days,
+  case when coalesce(p.share_activity, true) then p.training_now else false end as training_now,
+  case when coalesce(p.share_activity, true) then coalesce(p.weekly_steps, 0) else 0 end as weekly_steps
+from profiles p
+where exists (
+  select 1 from friendships f
+  where f.user_id = auth.uid() and f.friend_id = p.id and f.status = 'accepted'
 );
+revoke all on friend_profiles from anon;
+grant select on friend_profiles to authenticated;
 
 -- Feed is friends-only (your posts + accepted friends'), not all-authenticated.
 -- author_name is denormalised so reading a post never needs a cross-profile read.

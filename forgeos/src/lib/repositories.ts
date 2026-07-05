@@ -99,11 +99,10 @@ export async function addFriendByCodeRemote(code: string): Promise<Friend | null
   if (!isBackendLive || !supabase) return null;
   const { data: fid, error } = await supabase.rpc('add_friend_by_code', { code });
   if (error || !fid) return null;
-  const { data: rows } = await supabase
-    .from('profiles')
-    .select('id, name, xp, streak_days, last_active, training_now')
-    .eq('id', String(fid))
-    .limit(1);
+  // friend_profiles is the masked friend-facing view; fall back to the raw
+  // table for databases that haven't applied the latest schema.sql yet.
+  let rows: unknown[] | null = (await supabase.from('friend_profiles').select('id, name, xp, streak_days, last_active, training_now, weekly_steps').eq('id', String(fid)).limit(1)).data;
+  if (!rows) rows = (await supabase.from('profiles').select('id, name, xp, streak_days, last_active, training_now').eq('id', String(fid)).limit(1)).data;
   return rows && rows[0] ? rowToFriend(rows[0] as Row) : null;
 }
 
@@ -116,8 +115,9 @@ export async function fetchFriendsRemote(): Promise<Friend[] | null> {
   if (error || !links) return null;
   const ids = links.map((l) => String((l as { friend_id: string }).friend_id));
   if (ids.length === 0) return [];
-  // weekly_steps may not exist on older databases — fall back to the old select.
-  let profs: unknown[] | null = (await supabase.from('profiles').select('id, name, xp, streak_days, last_active, training_now, weekly_steps').in('id', ids)).data;
+  // Masked friend-facing view first; fall back to the raw table for databases
+  // that haven't applied the latest schema.sql yet.
+  let profs: unknown[] | null = (await supabase.from('friend_profiles').select('id, name, xp, streak_days, last_active, training_now, weekly_steps').in('id', ids)).data;
   if (!profs) profs = (await supabase.from('profiles').select('id, name, xp, streak_days, last_active, training_now').in('id', ids)).data;
   return (profs ?? []).map((p) => rowToFriend(p as Row));
 }
@@ -135,7 +135,8 @@ export async function removeFriendRemote(friendId: string): Promise<void> {
 // privacy: when they've turned sharing off we return only the private flag.
 export async function fetchFriendActivityRemote(friendId: string): Promise<FriendActivity | null> {
   if (!isBackendLive || !supabase) return null;
-  const { data: prof } = await supabase.from('profiles').select('share_activity').eq('id', friendId).single();
+  let prof: { share_activity?: boolean } | null = (await supabase.from('friend_profiles').select('share_activity').eq('id', friendId).single()).data;
+  if (!prof) prof = (await supabase.from('profiles').select('share_activity').eq('id', friendId).single()).data;
   if (prof && prof.share_activity === false) {
     return { weeklySessions: 0, totalVolumeKg: 0, prs: 0, favourite: '', sessions: [], bio: '', real: true, private: true };
   }
