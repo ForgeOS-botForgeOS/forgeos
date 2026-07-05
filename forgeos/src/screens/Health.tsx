@@ -13,7 +13,7 @@ import { ReadinessHero } from '../components/Readiness';
 import { Sparkline } from '../components/Sparkline';
 import {
   platformSupportsHealthConnect, healthConnectAvailable,
-  requestHealthConnectPermissions, readHealthConnect,
+  requestHealthConnectPermissions, readHealthConnect, configureBackgroundSync,
 } from '../lib/healthConnect';
 import { haptic } from '../lib/haptics';
 import { toast, celebrate } from '../lib/toast';
@@ -85,6 +85,9 @@ export default function Health() {
     try {
       const granted = await requestHealthConnectPermissions();
       if (!granted) { toast('Health Connect permission was not granted.', 'info'); return; }
+      // From now on data also flows while the app is closed; user-initiated,
+      // so it may prompt once for the notification permission (Android 13+).
+      void configureBackgroundSync(true, { interactive: true });
       const rows = await readHealthConnect(21);
       if (!rows.length) { toast('Connected, but no data came back yet. Make sure Garmin Connect is syncing to Health Connect.', 'info'); return; }
       const n = ingest(rows, 'healthconnect');

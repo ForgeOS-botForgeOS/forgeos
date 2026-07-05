@@ -4,6 +4,7 @@ import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { pushMyActivity } from '../lib/activitySync';
+import { configureBackgroundSync } from '../lib/healthConnect';
 import { useSettings } from '../state/settingsStore';
 import { useUser } from '../state/userStore';
 import { useGami } from '../state/gamificationStore';
@@ -267,7 +268,7 @@ export default function Profile() {
             <Toggle checked={s.geofenceEnabled} onChange={(v) => s.set('geofenceEnabled', v)} />
           </Row>
           <Row label="Health & recovery" desc="Sleep, readiness & Garmin sync">
-            <Toggle checked={s.recoveryEnabled} onChange={(v) => s.set('recoveryEnabled', v)} />
+            <Toggle checked={s.recoveryEnabled} onChange={(v) => { s.set('recoveryEnabled', v); void configureBackgroundSync(v); }} />
           </Row>
         </Card>
       </div>

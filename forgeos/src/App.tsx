@@ -16,7 +16,7 @@ import { useGami } from './state/gamificationStore';
 import { useSocial } from './state/socialStore';
 import { useWorkout } from './state/workoutStore';
 import { watchGym } from './lib/geo';
-import { readHealthConnect } from './lib/healthConnect';
+import { configureBackgroundSync, drainHealthCache, readHealthConnect } from './lib/healthConnect';
 import { useHealth } from './state/healthStore';
 import { haptic } from './lib/haptics';
 import { initAuth } from './lib/auth';
@@ -166,6 +166,11 @@ export default function App() {
       if (minGapMin && last && Date.now() - last < minGapMin * 60_000) return;
       void readHealthConnect(21).then((rows) => { if (rows.length) useHealth.getState().ingest(rows, 'healthconnect'); });
     };
+    // Keep the closed-app background worker in step with the toggle, and ingest
+    // anything it cached overnight (instant — no Health Connect round-trip).
+    const rec = useSettings.getState().recoveryEnabled;
+    void configureBackgroundSync(rec);
+    if (rec) void drainHealthCache().then((rows) => { if (rows.length) useHealth.getState().ingest(rows, 'healthconnect'); });
     syncHealth();
     // Live social: ensure a cloud session (anonymous if needed, no signup),
     // then pull the real friend graph.
