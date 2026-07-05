@@ -38,6 +38,14 @@ jobs:
       - run: npm ci
 
       - name: Build web bundle
+        # Same live-service keys as the website build (deploy.yml) — without
+        # them the APK falls back to offline/mock mode and hides login & cloud.
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+          VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
+          VITE_GEMINI_API_KEY: ${{ vars.VITE_GEMINI_API_KEY }}
+          VITE_VISION_API_URL: ${{ vars.VITE_VISION_API_URL }}
         run: npm run build
 
       - name: Sync Capacitor
