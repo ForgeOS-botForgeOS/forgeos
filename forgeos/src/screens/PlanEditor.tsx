@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, Wand2, Trash2, Search, X, Share2, Save, Play, GripVertical, FolderOpen, Sparkles, Store, ClipboardPaste, History, TrendingDown } from 'lucide-react';
+import { ChevronLeft, Plus, Wand2, Trash2, Search, X, Share2, Save, Play, GripVertical, FolderOpen, Sparkles, Store, ClipboardPaste, History, TrendingDown, AlertTriangle, LayoutGrid } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -11,14 +11,40 @@ import { useWorkout } from '../state/workoutStore';
 import { useSettings } from '../state/settingsStore';
 import { useSocial } from '../state/socialStore';
 import { useGami } from '../state/gamificationStore';
-import { EXERCISES, EXERCISE_CATEGORIES, exerciseById } from '../data/exercises';
+import { EXERCISE_CATEGORIES, exerciseById, allExercises } from '../data/exercises';
+import { useExercises } from '../state/exerciseStore';
+import { CreateExerciseSheet } from '../components/CreateExercise';
+import { analyseWeek, estimateDayMinutes } from '../lib/planInsights';
 import { PLAN_FOCI, type PlanFocus, exercisesForFocus, inferFocus } from './onboarding/planGenerator';
 import { sharePlan, decodePlan } from '../lib/planShare';
 import { buildSmartDay, parsePastedWorkout, parsePastedWeek } from '../lib/planSmart';
 import { tailorPlan } from '../lib/tailor';
 import { rankForXp, rankLabel } from '../data/ranks';
-import type { ExerciseTarget, PlannedDay } from '../types';
+import type { ExerciseTarget, PlannedDay, MuscleGroup, Weekday } from '../types';
 import { haptic } from '../lib/haptics';
+
+// One-tap proven splits — each day is built from the focus engine, so the
+// exercises adapt to the catalogue (including the user's custom ones).
+const STARTER_SPLITS: { name: string; desc: string; spec: Partial<Record<Weekday, { label: string; focus: PlanFocus }>> }[] = [
+  {
+    name: 'Full-body 3×', desc: 'Mon/Wed/Fri — the best all-round start',
+    spec: { Mon: { label: 'Full Body A', focus: 'Full Body' }, Wed: { label: 'Full Body B', focus: 'Full Body' }, Fri: { label: 'Full Body C', focus: 'Full Body' } },
+  },
+  {
+    name: 'Upper / Lower 4×', desc: 'Strength + size with 3 rest days',
+    spec: { Mon: { label: 'Upper', focus: 'Upper' }, Tue: { label: 'Lower', focus: 'Lower' }, Thu: { label: 'Upper', focus: 'Upper' }, Fri: { label: 'Lower', focus: 'Lower' } },
+  },
+  {
+    name: 'Push / Pull / Legs 6×', desc: 'High volume — for busy gym rats',
+    spec: { Mon: { label: 'Push', focus: 'Push' }, Tue: { label: 'Pull', focus: 'Pull' }, Wed: { label: 'Legs', focus: 'Legs' }, Thu: { label: 'Push', focus: 'Push' }, Fri: { label: 'Pull', focus: 'Pull' }, Sat: { label: 'Legs', focus: 'Legs' } },
+  },
+  {
+    name: 'PPL + rest 3×', desc: 'Classic split with full recovery',
+    spec: { Mon: { label: 'Push', focus: 'Push' }, Wed: { label: 'Pull', focus: 'Pull' }, Fri: { label: 'Legs', focus: 'Legs' } },
+  },
+];
+
+const BALANCE_MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Core'];
 
 export default function PlanEditor() {
   const navigate = useNavigate();
@@ -48,6 +74,13 @@ export default function PlanEditor() {
   const [pasteOpen, setPasteOpen] = useState(false);
   const [pasteWeekOpen, setPasteWeekOpen] = useState(false);
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const customCount = useExercises((s) => s.custom.length);
+  const [createOpen, setCreateOpen] = useState(false);
+
+  // Week balance: sets per muscle + plain-language warnings, live as you edit.
+  const analysis = useMemo(() => (plan ? analyseWeek(plan, exerciseById) : null), [plan, customCount]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const daySets = (d: PlannedDay) => d.exerciseIds.reduce((a, id) => a + (d.targets?.[id]?.sets ?? 3), 0);
 
   // Heaviest weight you last lifted for an exercise, from completed sets.
   function histWeight(exerciseId: string): number | null {
@@ -152,6 +185,37 @@ export default function PlanEditor() {
     flash(notes.length ? notes.join(' ') : 'No matching rules — try keywords like knees, shoulder, back, time.');
     haptic('success');
   }
+  function copyDay(src: string, dst: string) {
+    const from = plan!.days.find((x) => x.day === src)!;
+    patch(dst, { label: from.label, exerciseIds: [...from.exerciseIds], targets: { ...(from.targets ?? {}) }, rest: from.rest });
+    flash(`Copied ${src} → ${dst}`);
+    haptic('success');
+  }
+  function swapDays(a: string, b: string) {
+    const da = plan!.days.find((x) => x.day === a)!;
+    const db = plan!.days.find((x) => x.day === b)!;
+    const take = (d: PlannedDay) => ({ label: d.label, exerciseIds: [...d.exerciseIds], targets: { ...(d.targets ?? {}) }, rest: d.rest });
+    const ca = take(da);
+    const cb = take(db);
+    setWeekPlan({ ...plan!, days: plan!.days.map((d) => (d.day === a ? { ...d, ...cb } : d.day === b ? { ...d, ...ca } : d)) });
+    flash(`Swapped ${a} ↔ ${b}`);
+    haptic('success');
+  }
+  function applySplit(split: (typeof STARTER_SPLITS)[number]) {
+    setWeekPlan({
+      ...plan!,
+      days: plan!.days.map((d) => {
+        const spec = split.spec[d.day];
+        return spec
+          ? { ...d, label: spec.label, exerciseIds: exercisesForFocus(spec.focus, 6), targets: {}, rest: false }
+          : { ...d, label: 'Rest', exerciseIds: [], targets: {}, rest: true };
+      }),
+    });
+    setShowSaved(false);
+    flash(`Built “${split.name}” — tweak anything you like`);
+    haptic('success');
+  }
+
   function publish() {
     const title = prompt('Publish your plan as…', 'My Forge Week');
     if (!title) return;
@@ -244,6 +308,34 @@ export default function PlanEditor() {
         </div>
       </Card>
 
+      {/* Week balance — sets per muscle + honest warnings */}
+      {analysis && analysis.totalSets > 0 && (
+        <Card className="space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] uppercase tracking-wide text-muted flex items-center gap-1"><LayoutGrid size={12} /> Week balance</span>
+            <span className="text-[11px] text-muted">{analysis.totalSets} sets · push:pull {analysis.pullSets ? `${Math.round((analysis.pushSets / analysis.pullSets) * 10) / 10}:1` : '—'}</span>
+          </div>
+          <div className="space-y-1">
+            {BALANCE_MUSCLES.map((m) => {
+              const v = analysis.setsPerMuscle[m] ?? 0;
+              const max = Math.max(...BALANCE_MUSCLES.map((x) => analysis.setsPerMuscle[x] ?? 0), 1);
+              return (
+                <div key={m} className="flex items-center gap-2">
+                  <span className="text-[10px] text-muted w-20 shrink-0">{m}</span>
+                  <div className="flex-1 h-1.5 rounded-full bg-surface-2 overflow-hidden">
+                    <div className={`h-full rounded-full ${v === 0 ? '' : 'bg-accent'}`} style={{ width: `${(v / max) * 100}%` }} />
+                  </div>
+                  <span className={`text-[10px] font-mono w-8 text-right ${v === 0 ? 'text-warn' : 'text-muted'}`}>{Math.round(v * 10) / 10}</span>
+                </div>
+              );
+            })}
+          </div>
+          {analysis.warnings.map((w) => (
+            <p key={w} className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={12} className="mt-0.5 shrink-0" /> {w}</p>
+          ))}
+        </Card>
+      )}
+
       {specialRequest && (
         <Card className="bg-surface-2 text-xs text-muted">📝 Your note: <span className="text-text">{specialRequest}</span></Card>
       )}
@@ -262,7 +354,7 @@ export default function PlanEditor() {
                   placeholder="Name this day"
                   className="flex-1 bg-transparent text-sm font-semibold outline-none disabled:text-muted"
                 />
-                <span className="text-[11px] text-muted">{d.rest ? 'Rest' : `${d.exerciseIds.length} ex`}</span>
+                <span className="text-[11px] text-muted">{d.rest ? 'Rest' : `${d.exerciseIds.length} ex · ~${estimateDayMinutes(daySets(d))} min`}</span>
                 <Toggle checked={!d.rest} onChange={() => toggleRest(d)} />
               </div>
 
@@ -322,6 +414,19 @@ export default function PlanEditor() {
                       <Button variant="ghost" className="w-full justify-center py-2" onClick={() => setPickerDay(d.day)}>
                         <span className="flex items-center gap-1 text-xs"><Plus size={14} /> Add exercise</span>
                       </Button>
+
+                      <div className="flex items-center gap-1.5 flex-wrap" data-noswipe>
+                        <span className="text-[10px] text-muted">Copy to</span>
+                        {plan.days.filter((x) => x.day !== d.day).map((x) => (
+                          <button key={x.day} onClick={() => copyDay(d.day, x.day)} className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-muted">{x.day}</button>
+                        ))}
+                      </div>
+                      <div className="flex items-center gap-1.5 flex-wrap" data-noswipe>
+                        <span className="text-[10px] text-muted">Swap with</span>
+                        {plan.days.filter((x) => x.day !== d.day).map((x) => (
+                          <button key={x.day} onClick={() => swapDays(d.day, x.day)} className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-muted">{x.day}</button>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </>
@@ -337,7 +442,8 @@ export default function PlanEditor() {
         <div className="fixed left-1/2 -translate-x-1/2 bottom-24 z-[80] rounded-full bg-surface-2 border border-line px-4 py-2 text-sm shadow-glow">{toast}</div>
       )}
 
-      <ExercisePickerSheet open={!!pickerDay} onClose={() => setPickerDay(null)} onPick={(id) => { if (pickerDay) addExercise(pickerDay, id); }} />
+      <ExercisePickerSheet open={!!pickerDay} onClose={() => setPickerDay(null)} onPick={(id) => { if (pickerDay) addExercise(pickerDay, id); }} onCreate={() => setCreateOpen(true)} />
+      <CreateExerciseSheet open={createOpen} onClose={() => setCreateOpen(false)} />
 
       <AiBuildSheet open={aiOpen} onClose={() => setAiOpen(false)} days={plan.days} onBuild={(day, built) => { patch(day, { label: built.label, exerciseIds: built.exerciseIds, targets: built.targets, rest: false }); setAiOpen(false); flash('Workout built ✨'); haptic('success'); }} />
       <PasteSheet open={pasteOpen} onClose={() => setPasteOpen(false)} days={plan.days} onParse={(day, built) => { patch(day, { label: built.label, exerciseIds: built.exerciseIds, targets: built.targets, rest: false }); setPasteOpen(false); flash(`Matched ${built.exerciseIds.length} exercises`); haptic('success'); }} />
@@ -353,8 +459,19 @@ export default function PlanEditor() {
       </Sheet>
 
       {/* Saved templates */}
-      <Sheet open={showSaved} onClose={() => setShowSaved(false)} title="Saved plans">
+      <Sheet open={showSaved} onClose={() => setShowSaved(false)} title="Templates">
         <div className="space-y-2">
+          <p className="text-[11px] uppercase tracking-wide text-muted">Starter splits</p>
+          {STARTER_SPLITS.map((t) => (
+            <Card key={t.name} className="flex items-center gap-3">
+              <div className="flex-1">
+                <p className="text-sm font-semibold">{t.name}</p>
+                <p className="text-[11px] text-muted">{t.desc}</p>
+              </div>
+              <Button className="py-1.5" onClick={() => applySplit(t)}>Build</Button>
+            </Card>
+          ))}
+          <p className="text-[11px] uppercase tracking-wide text-muted pt-2">Your saved plans</p>
           {savedPlans.length === 0 && <p className="text-sm text-muted">No saved plans yet. Tap “Save” to store the current one.</p>}
           {savedPlans.map((sp) => (
             <Card key={sp.id} className="flex items-center gap-3">
@@ -474,11 +591,13 @@ function Stepper({ label, value, min, max, step = 1, onChange }: { label: string
   );
 }
 
-function ExercisePickerSheet({ open, onClose, onPick }: { open: boolean; onClose: () => void; onPick: (id: string) => void }) {
+function ExercisePickerSheet({ open, onClose, onPick, onCreate }: { open: boolean; onClose: () => void; onPick: (id: string) => void; onCreate: () => void }) {
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<string>('All');
-  const list = EXERCISES.filter(
-    (e) => (cat === 'All' || e.category === cat) && (e.name.toLowerCase().includes(q.toLowerCase()) || e.primary.toLowerCase().includes(q.toLowerCase())),
+  const list = allExercises().filter(
+    (e) =>
+      (cat === 'All' || (cat === 'Yours' ? e.id.startsWith('cus-') : e.category === cat)) &&
+      (e.name.toLowerCase().includes(q.toLowerCase()) || e.primary.toLowerCase().includes(q.toLowerCase())),
   ).slice(0, 60);
 
   return (
@@ -490,18 +609,21 @@ function ExercisePickerSheet({ open, onClose, onPick }: { open: boolean; onClose
           {q && <button onClick={() => setQ('')}><X size={14} className="text-muted" /></button>}
         </div>
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1" data-noswipe>
-          {['All', ...EXERCISE_CATEGORIES].map((c) => (
+          {['All', 'Yours', ...EXERCISE_CATEGORIES].map((c) => (
             <button key={c} onClick={() => setCat(c)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${cat === c ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>{c}</button>
           ))}
         </div>
         <div className="space-y-1.5 max-h-72 overflow-y-auto no-scrollbar">
           {list.map((e) => (
             <button key={e.id} onClick={() => { onPick(e.id); haptic('tap'); }} className="w-full text-left rounded-xl bg-surface-2 px-4 py-2.5">
-              <p className="text-sm font-medium">{e.name}</p>
+              <p className="text-sm font-medium">{e.name}{e.id.startsWith('cus-') && <span className="text-[10px] text-success ml-1.5">yours</span>}</p>
               <p className="text-xs text-muted">{e.primary} · {e.category}</p>
             </button>
           ))}
         </div>
+        <Button variant="ghost" className="w-full justify-center py-2" onClick={onCreate}>
+          <span className="flex items-center gap-1 text-xs"><Plus size={14} /> Not in the list? Create your own</span>
+        </Button>
       </div>
     </Sheet>
   );

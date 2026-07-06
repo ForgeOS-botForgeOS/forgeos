@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { HealthDay, HealthSource } from '../types';
+import { useGami } from './gamificationStore';
 
 // Wearable / wellness data (sleep, steps, recovery). Source-agnostic: Garmin
 // export, Android Health Connect and manual entry all land here, merged per day.
@@ -11,10 +12,15 @@ interface HealthState {
   days: Record<string, HealthDay>; // keyed by 'YYYY-MM-DD'
   lastSyncAt: number | null;
   lastSource: HealthSource | null;
+  // Watch-workout import ledger: Health Connect record id → when we handled it.
+  // Every considered session lands here (imported OR skipped) so a session is
+  // never re-evaluated — the idempotency key for garminWorkouts.ts.
+  importedWorkoutIds: Record<string, number>;
   /** Merge one day in, field-by-field (a later source never blanks an earlier value). */
   upsertDay: (day: HealthDay) => void;
   /** Bulk merge (import / auto-sync). Returns how many distinct days were touched. */
   ingest: (days: HealthDay[], source: HealthSource) => number;
+  markWorkoutsHandled: (ids: string[]) => void;
   removeDay: (date: string) => void;
   clearAll: () => void;
 }
@@ -42,13 +48,16 @@ export const useHealth = create<HealthState>()(
       days: {},
       lastSyncAt: null,
       lastSource: null,
+      importedWorkoutIds: {},
 
-      upsertDay: (day) =>
+      upsertDay: (day) => {
         set((s) => ({
           days: { ...s.days, [day.date]: mergeDay(s.days[day.date], day) },
           lastSyncAt: Date.now(),
           lastSource: day.source,
-        })),
+        }));
+        useGami.getState().syncHealthQuests(sortedDays(get().days));
+      },
 
       ingest: (incoming, source) => {
         if (!incoming.length) return 0;
@@ -60,7 +69,22 @@ export const useHealth = create<HealthState>()(
           seen.add(d.date);
         }
         set({ days, lastSyncAt: Date.now(), lastSource: source });
+        useGami.getState().syncHealthQuests(sortedDays(days));
         return seen.size;
+      },
+
+      markWorkoutsHandled: (ids) => {
+        if (!ids.length) return;
+        const now = Date.now();
+        const importedWorkoutIds = { ...get().importedWorkoutIds };
+        for (const id of ids) importedWorkoutIds[id] = now;
+        // Keep the ledger bounded: drop entries older than 90 days (Health
+        // Connect only serves ~30 days back, so they can never reappear).
+        const cutoff = now - 90 * 86400000;
+        for (const [id, at] of Object.entries(importedWorkoutIds)) {
+          if (at < cutoff) delete importedWorkoutIds[id];
+        }
+        set({ importedWorkoutIds });
       },
 
       removeDay: (date) =>

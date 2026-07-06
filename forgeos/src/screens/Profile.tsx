@@ -6,6 +6,7 @@ import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/u
 import { pushMyActivity } from '../lib/activitySync';
 import { configureBackgroundSync } from '../lib/healthConnect';
 import { checkForApkUpdate } from '../lib/appUpdate';
+import { useHealth } from '../state/healthStore';
 import { useSettings } from '../state/settingsStore';
 import { useUser } from '../state/userStore';
 import { useGami } from '../state/gamificationStore';
@@ -123,6 +124,8 @@ export default function Profile() {
       rankIndex: index,
       heavyLifts: g.heavyLifts,
       cardioKm: w.history.reduce((a, x) => a + (x.cardio?.distanceKm ?? 0), 0),
+      sleepNights8h: Object.values(useHealth.getState().days).filter((d) => (d.sleepMinutes ?? 0) >= 480).length,
+      totalSteps: Object.values(useHealth.getState().days).reduce((a, d) => a + (d.steps ?? 0), 0),
     };
     const achievements = ACHIEVEMENTS.filter((a) => a.value(stats) >= a.goal).length;
     const bestLifts = [...w.prs].sort((a, b) => b.e1rm - a.e1rm).slice(0, 3).map((p) => ({ name: p.exerciseName, e1rm: p.e1rm }));
@@ -283,8 +286,18 @@ export default function Profile() {
             <Toggle checked={s.geofenceEnabled} onChange={(v) => s.set('geofenceEnabled', v)} />
           </Row>
           <Row label="Health & recovery" desc="Sleep, readiness & Garmin sync">
-            <Toggle checked={s.recoveryEnabled} onChange={(v) => { s.set('recoveryEnabled', v); void configureBackgroundSync(v); }} />
+            <Toggle checked={s.recoveryEnabled} onChange={(v) => { s.set('recoveryEnabled', v); void configureBackgroundSync(v, { bedtime: s.bedtimeNudge }); }} />
           </Row>
+          {s.recoveryEnabled && (
+            <Row label="Bedtime reminder" desc="Evening nudge when sleep debt builds">
+              <Toggle checked={s.bedtimeNudge} onChange={(v) => { s.set('bedtimeNudge', v); void configureBackgroundSync(true, { bedtime: v }); }} />
+            </Row>
+          )}
+          {s.recoveryEnabled && (
+            <Row label="Import watch workouts" desc="Garmin runs & sessions join your history">
+              <Toggle checked={s.autoImportWorkouts} onChange={(v) => s.set('autoImportWorkouts', v)} />
+            </Row>
+          )}
         </Card>
       </div>
 

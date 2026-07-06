@@ -95,7 +95,12 @@ function Sessions() {
                 <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString()}</span>
               </div>
             </div>
-            <p className="text-xs text-muted">{Math.round(w.totalVolumeKg ?? 0).toLocaleString()} kg · {sets} sets · {w.exercises.length} exercises {w.synced === false && '· ⏳ queued'}</p>
+            <p className="text-xs text-muted">
+              {w.exercises.length === 0 && w.durationSec
+                ? `${Math.round(w.durationSec / 60)} min · recorded on your watch`
+                : `${Math.round(w.totalVolumeKg ?? 0).toLocaleString()} kg · ${sets} sets · ${w.exercises.length} exercises`}
+              {w.synced === false && ' · ⏳ queued'}
+            </p>
             <div className="flex flex-wrap gap-1 pt-1">
               {w.exercises.slice(0, 6).map((e) => (
                 <span key={e.id} className="text-[10px] rounded-full bg-surface-2 px-2 py-0.5 text-muted">{exerciseById(e.exerciseId)?.name ?? '—'}</span>

@@ -1,7 +1,7 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, TrendingDown, TrendingUp, Camera, Trophy, Footprints, Dumbbell, Target, Flame } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine } from 'recharts';
 import { Card, Button, Sheet, SectionTitle, Badge, Pill } from '../components/ui';
 import { CountUp } from '../components/CountUp';
 import { useUser } from '../state/userStore';
@@ -12,6 +12,8 @@ import { haptic } from '../lib/haptics';
 import { toast } from '../lib/toast';
 import { e1rmSeries } from '../lib/analytics';
 import { exerciseById } from '../data/exercises';
+import { useHealth, sortedDays } from '../state/healthStore';
+import { computeReadiness, median } from '../lib/readiness';
 import type { BodyStat } from '../types';
 
 const MEASURES: { key: keyof BodyStat; label: string; unit: string; step: number }[] = [
@@ -74,6 +76,97 @@ export default function Progress() {
       {tab === 'cardio' && <CardioPanel />}
       {tab === 'strength' && <StrengthPanel />}
     </div>
+  );
+}
+
+/* --------------------------- RECOVERY GROWTH --------------------------- */
+// Three single-series charts (one hue each, no legends needed) showing how
+// recovery itself is trending: readiness line, sleep bars vs the 8h target,
+// and daily steps. Colors are theme tokens so both light & dark stay correct.
+
+const AXIS_TICK = { fontSize: 10, fill: 'rgb(var(--muted))' };
+const TIP_STYLE = { background: 'rgb(var(--surface))', border: '1px solid rgb(var(--line))', borderRadius: 12, fontSize: 12 };
+
+function RecoveryGrowth() {
+  const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
+  const days = useHealth((s) => s.days);
+
+  const series = useMemo(() => {
+    const list = sortedDays(days).slice(0, 30).reverse(); // oldest → newest
+    const rhrs = list.map((d) => d.restingHr).filter((v): v is number => typeof v === 'number');
+    const baseline = rhrs.length >= 3 ? median(rhrs) : undefined;
+    return list.map((d) => ({
+      d: d.date.slice(5),
+      score: computeReadiness(d, baseline)?.score ?? null,
+      sleepH: typeof d.sleepMinutes === 'number' ? Math.round((d.sleepMinutes / 60) * 10) / 10 : null,
+      steps: d.steps ?? null,
+    }));
+  }, [days]);
+
+  const scores = series.filter((s) => s.score != null);
+  // Growth headline: this week's average readiness vs the previous week's.
+  const delta = useMemo(() => {
+    const xs = scores.map((s) => s.score as number);
+    if (xs.length < 10) return null;
+    const later = xs.slice(-7);
+    const earlier = xs.slice(-14, -7);
+    if (!earlier.length) return null;
+    const avg = (a: number[]) => a.reduce((x, y) => x + y, 0) / a.length;
+    return Math.round(avg(later) - avg(earlier));
+  }, [scores]);
+
+  if (!recoveryEnabled || scores.length < 5) return null;
+  const last14 = series.slice(-14);
+
+  return (
+    <>
+      <Card>
+        <SectionTitle action={delta != null && delta !== 0 ? (
+          <span className={`flex items-center gap-1 text-xs font-bold ${delta > 0 ? 'text-success' : 'text-warn'}`}>
+            {delta > 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}{delta > 0 ? '+' : ''}{delta} vs last week
+          </span>
+        ) : undefined}>Readiness (30d)</SectionTitle>
+        <div className="h-36">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={series} margin={{ left: -24, right: 6, top: 6 }}>
+              <XAxis dataKey="d" tick={AXIS_TICK} interval="preserveStartEnd" />
+              <YAxis domain={[0, 100]} tick={AXIS_TICK} />
+              <Tooltip contentStyle={TIP_STYLE} formatter={(v) => [`${v}`, 'Readiness']} />
+              <Line type="monotone" dataKey="score" stroke="rgb(var(--accent))" strokeWidth={2.5} dot={false} connectNulls />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      <Card>
+        <SectionTitle>Sleep vs the 8h target (14d)</SectionTitle>
+        <div className="h-36">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={last14} margin={{ left: -24, right: 6, top: 6 }}>
+              <XAxis dataKey="d" tick={AXIS_TICK} interval="preserveStartEnd" />
+              <YAxis domain={[0, 10]} tick={AXIS_TICK} />
+              <Tooltip contentStyle={TIP_STYLE} formatter={(v) => [`${v} h`, 'Sleep']} />
+              <ReferenceLine y={8} stroke="rgb(var(--muted))" strokeDasharray="4 4" />
+              <Bar dataKey="sleepH" fill="rgb(var(--accent-2))" radius={[4, 4, 0, 0]} maxBarSize={14} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+
+      <Card>
+        <SectionTitle>Daily steps (14d)</SectionTitle>
+        <div className="h-36">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={last14} margin={{ left: -14, right: 6, top: 6 }}>
+              <XAxis dataKey="d" tick={AXIS_TICK} interval="preserveStartEnd" />
+              <YAxis tick={AXIS_TICK} />
+              <Tooltip contentStyle={TIP_STYLE} formatter={(v) => [Number(v).toLocaleString(), 'Steps']} />
+              <Bar dataKey="steps" fill="rgb(var(--success))" radius={[4, 4, 0, 0]} maxBarSize={14} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+    </>
   );
 }
 
@@ -151,6 +244,8 @@ function BodyPanel() {
           </div>
         </Card>
       )}
+
+      <RecoveryGrowth />
 
       {/* progress photos */}
       {photos.length > 0 && (

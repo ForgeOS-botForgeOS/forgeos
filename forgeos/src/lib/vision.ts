@@ -1,13 +1,10 @@
 import type { ScanResult, CardioScan } from '../types';
 
-// Real meal-photo macro counting via Google Gemini vision. Set VITE_GEMINI_API_KEY
-// (Google AI Studio). Restrict the key by HTTP referrer to your site origin.
-// Without a key, returns a realistic mocked estimate so the screen still works.
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_API_KEY as string | undefined;
-// Preferred free path: a Cloudflare Worker running Workers AI vision.
+// Meal-photo macro counting via the Cloudflare Worker proxy (VITE_VISION_API_URL).
+// AI keys live server-side in the Worker — never in this bundle, where anyone
+// could extract them. Without a Worker, returns a realistic mocked estimate.
 const WORKER_URL = import.meta.env.VITE_VISION_API_URL as string | undefined;
-const MODEL = 'gemini-2.0-flash';
-export const visionIsLive = Boolean(WORKER_URL || GEMINI_KEY);
+export const visionIsLive = Boolean(WORKER_URL);
 export const cardioScanIsLive = Boolean(WORKER_URL);
 
 export type CardioSource = 'machine' | 'watch';
@@ -55,27 +52,6 @@ function fileToBase64(file: File): Promise<{ data: string; mime: string }> {
   });
 }
 
-const PROMPT =
-  'You are a precise nutrition estimator. Analyse the meal in this photo and return ' +
-  'your best estimate of its macros for the whole portion shown. Be realistic and ' +
-  'specific about the dish name. Respond ONLY as JSON.';
-
-// JSON schema Gemini must follow — guarantees parseable, exact fields.
-const RESPONSE_SCHEMA = {
-  type: 'object',
-  properties: {
-    name: { type: 'string' },
-    calories: { type: 'number' },
-    proteinG: { type: 'number' },
-    carbsG: { type: 'number' },
-    fatG: { type: 'number' },
-    sugarG: { type: 'number' },
-    confidence: { type: 'number' },
-    tip: { type: 'string' },
-  },
-  required: ['name', 'calories', 'proteinG', 'carbsG', 'fatG', 'sugarG', 'confidence', 'tip'],
-};
-
 export function estimateMock(file: File): ScanResult {
   return withItems(MOCK_MEALS[file.size % MOCK_MEALS.length]);
 }
@@ -109,34 +85,7 @@ export async function scanMeal(file: File): Promise<ScanResult> {
     return withItems(out as ScanResult);
   }
 
-  // 2) Gemini direct (needs billing-enabled key).
-  if (!GEMINI_KEY) {
-    await new Promise((r) => setTimeout(r, 900));
-    return estimateMock(file);
-  }
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent?key=${GEMINI_KEY}`;
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      contents: [{ parts: [{ text: PROMPT }, { inline_data: { mime_type: mime, data } }] }],
-      generationConfig: { responseMimeType: 'application/json', responseSchema: RESPONSE_SCHEMA, temperature: 0.2 },
-    }),
-  });
-  if (!res.ok) {
-    const msg =
-      res.status === 429
-        ? 'Gemini quota/billing not active for this project yet.'
-        : res.status === 403
-          ? 'Gemini key rejected (check key restrictions).'
-          : `Gemini error ${res.status}.`;
-    throw new VisionError(msg, res.status);
-  }
-  const json = await res.json();
-  const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!text) throw new Error('Empty response from Gemini');
-  const parsed = JSON.parse(text) as ScanResult;
-  // clamp confidence to 0..1
-  parsed.confidence = Math.max(0, Math.min(1, parsed.confidence ?? 0.7));
-  return withItems(parsed);
+  // 2) No Worker configured → honest mock so the screen still works offline.
+  await new Promise((r) => setTimeout(r, 900));
+  return estimateMock(file);
 }

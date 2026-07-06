@@ -182,3 +182,20 @@ export function recoveryTrend(days: HealthDay[], window = 7): RecoveryTrend {
 function avg(xs: number[]): number {
   return xs.reduce((a, b) => a + b, 0) / xs.length;
 }
+
+// ---- Overtraining alarm ------------------------------------------------------
+// Sustained physiological red flags (not one bad night) that together say
+// "back off for a few days". Fed by recoveryTrend over the last week.
+
+export interface OvertrainingRisk {
+  level: 'ok' | 'watch' | 'high';
+  reasons: string[];
+}
+
+export function overtrainingRisk(t: RecoveryTrend): OvertrainingRisk {
+  const reasons: string[] = [];
+  if (t.rhrDrift != null && t.rhrDrift >= 3) reasons.push(`Resting HR is up ${t.rhrDrift} bpm vs your baseline`);
+  if (t.sleepDebtMin >= 240) reasons.push(`You're carrying ${Math.round(t.sleepDebtMin / 60)}h of sleep debt this week`);
+  if (t.avgScore != null && t.avgScore < 50) reasons.push(`Average readiness is only ${t.avgScore}`);
+  return { level: reasons.length >= 2 ? 'high' : reasons.length === 1 ? 'watch' : 'ok', reasons };
+}

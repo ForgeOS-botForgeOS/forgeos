@@ -1,4 +1,5 @@
 import type { Exercise, ExerciseCategory, MuscleGroup } from '../types';
+import { useExercises } from '../state/exerciseStore';
 
 // Compact helper so the 150+ list stays readable.
 let n = 0;
@@ -1083,11 +1084,16 @@ export const EXERCISE_CATEGORIES: ExerciseCategory[] = [
   'Cardio',
 ];
 
-export const exerciseById = (id: string) => EXERCISES.find((e) => e.id === id);
+// Catalogue + the user's own creations (state/exerciseStore). Custom ids are
+// 'cus-…' so they can never collide with generated catalogue ids.
+export const allExercises = (): Exercise[] => [...useExercises.getState().custom, ...EXERCISES];
+
+export const exerciseById = (id: string) =>
+  EXERCISES.find((e) => e.id === id) ?? useExercises.getState().custom.find((e) => e.id === id);
 
 // Substitution engine — swap for an exercise sharing the same primary muscle.
 export function substitutesFor(id: string): Exercise[] {
   const base = exerciseById(id);
   if (!base) return [];
-  return EXERCISES.filter((e) => e.id !== id && e.primary === base.primary).slice(0, 8);
+  return allExercises().filter((e) => e.id !== id && e.primary === base.primary).slice(0, 8);
 }

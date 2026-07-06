@@ -99,11 +99,10 @@ export async function addFriendByCodeRemote(code: string): Promise<Friend | null
   if (!isBackendLive || !supabase) return null;
   const { data: fid, error } = await supabase.rpc('add_friend_by_code', { code });
   if (error || !fid) return null;
-  const { data: rows } = await supabase
-    .from('profiles')
-    .select('id, name, xp, streak_days, last_active, training_now')
-    .eq('id', String(fid))
-    .limit(1);
+  // friend_profiles is the masked friend-facing view; fall back to the raw
+  // table for databases that haven't applied the latest schema.sql yet.
+  let rows: unknown[] | null = (await supabase.from('friend_profiles').select('id, name, xp, streak_days, last_active, training_now, weekly_steps').eq('id', String(fid)).limit(1)).data;
+  if (!rows) rows = (await supabase.from('profiles').select('id, name, xp, streak_days, last_active, training_now').eq('id', String(fid)).limit(1)).data;
   return rows && rows[0] ? rowToFriend(rows[0] as Row) : null;
 }
 
@@ -116,7 +115,10 @@ export async function fetchFriendsRemote(): Promise<Friend[] | null> {
   if (error || !links) return null;
   const ids = links.map((l) => String((l as { friend_id: string }).friend_id));
   if (ids.length === 0) return [];
-  const { data: profs } = await supabase.from('profiles').select('id, name, xp, streak_days, last_active, training_now').in('id', ids);
+  // Masked friend-facing view first; fall back to the raw table for databases
+  // that haven't applied the latest schema.sql yet.
+  let profs: unknown[] | null = (await supabase.from('friend_profiles').select('id, name, xp, streak_days, last_active, training_now, weekly_steps').in('id', ids)).data;
+  if (!profs) profs = (await supabase.from('profiles').select('id, name, xp, streak_days, last_active, training_now').in('id', ids)).data;
   return (profs ?? []).map((p) => rowToFriend(p as Row));
 }
 
@@ -133,7 +135,8 @@ export async function removeFriendRemote(friendId: string): Promise<void> {
 // privacy: when they've turned sharing off we return only the private flag.
 export async function fetchFriendActivityRemote(friendId: string): Promise<FriendActivity | null> {
   if (!isBackendLive || !supabase) return null;
-  const { data: prof } = await supabase.from('profiles').select('share_activity').eq('id', friendId).single();
+  let prof: { share_activity?: boolean } | null = (await supabase.from('friend_profiles').select('share_activity').eq('id', friendId).single()).data;
+  if (!prof) prof = (await supabase.from('profiles').select('share_activity').eq('id', friendId).single()).data;
   if (prof && prof.share_activity === false) {
     return { weeklySessions: 0, totalVolumeKg: 0, prs: 0, favourite: '', sessions: [], bio: '', real: true, private: true };
   }
@@ -159,12 +162,12 @@ export async function fetchFriendActivityRemote(friendId: string): Promise<Frien
 }
 
 // Push my own status so friends see accurate rank/XP/streak/presence.
-export async function syncMyActivityRemote(opts: { friendCode?: string; xp: number; streakDays: number; shareActivity: boolean; trainingNow?: boolean }): Promise<void> {
+export async function syncMyActivityRemote(opts: { friendCode?: string; xp: number; streakDays: number; shareActivity: boolean; trainingNow?: boolean; weeklySteps?: number }): Promise<void> {
   if (!isBackendLive || !supabase) return;
   const me = (await supabase.auth.getUser()).data.user?.id;
   if (!me) return;
   const rankTier = rankLabel(rankForXp(opts.xp).tier);
-  await supabase.from('profiles').update({
+  const base = {
     friend_code: opts.friendCode ?? null,
     xp: opts.xp,
     streak_days: opts.streakDays,
@@ -172,7 +175,11 @@ export async function syncMyActivityRemote(opts: { friendCode?: string; xp: numb
     share_activity: opts.shareActivity,
     training_now: opts.trainingNow ?? false,
     last_active: new Date().toISOString(),
-  }).eq('id', me);
+  };
+  // weekly_steps is a newer column — retry without it so activity sync keeps
+  // working on databases where schema.sql hasn't been re-applied yet.
+  const { error } = await supabase.from('profiles').update({ ...base, weekly_steps: opts.weeklySteps ?? 0 }).eq('id', me);
+  if (error) await supabase.from('profiles').update(base).eq('id', me);
   await supabase.from('leaderboard_entries').upsert({ user_id: me, xp: opts.xp, rank_tier: rankTier, public: true, updated_at: new Date().toISOString() });
 }
 
@@ -209,6 +216,7 @@ function rowToFriend(p: Row): Friend {
     avatarSeed: name.slice(0, 2).toUpperCase(),
     trainingNow: Boolean(p.training_now) && online,
     streak: Number(p.streak_days) || 0,
+    weeklySteps: Number(p.weekly_steps) || 0,
     lastActiveISO: lastIso,
     friendCode: (p.friend_code as string) || undefined,
   };

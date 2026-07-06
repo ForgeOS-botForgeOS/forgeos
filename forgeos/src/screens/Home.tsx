@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, TrendingUp, Lightbulb, ChevronRight, Watch } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { Flame, TrendingUp, Lightbulb, ChevronRight, Watch, Moon, Footprints } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine } from 'recharts';
 import { Screen } from '../components/Screen';
 import { Card, Ring, SectionTitle, Badge } from '../components/ui';
 import { CountUp } from '../components/CountUp';
@@ -128,6 +128,9 @@ export default function Home() {
           </Card>
         ) : null}
 
+        {/* Sleep & steps at a glance — only for people with Garmin auto-sync flowing */}
+        <HealthGlance />
+
         {/* Progress shortcut */}
         <Card onClick={() => navigate('/progress')} className="flex items-center justify-between">
           <div>
@@ -193,6 +196,81 @@ export default function Home() {
         </button>
       </Screen>
     </>
+  );
+}
+
+// 7-day sleep + steps mini charts. Rendered only when Garmin data actually
+// flows in via Health Connect (same "connected" signal the Health screen uses),
+// so manual-only or disconnected users never see an empty card.
+function HealthGlance() {
+  const navigate = useNavigate();
+  const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
+  const days = useHealth((s) => s.days);
+
+  const glance = useMemo(() => {
+    const list = sortedDays(days); // newest → oldest
+    if (!list.some((d) => d.source === 'healthconnect')) return null;
+    const week = list.slice(0, 7).reverse(); // oldest → newest
+    const rows = week.map((d) => ({
+      d: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][new Date(d.date + 'T12:00:00').getDay()],
+      sleepH: typeof d.sleepMinutes === 'number' ? Math.round((d.sleepMinutes / 60) * 10) / 10 : null,
+      steps: d.steps ?? null,
+    }));
+    const sleeps = rows.map((r) => r.sleepH).filter((v): v is number => v != null);
+    const steps = rows.map((r) => r.steps).filter((v): v is number => v != null);
+    if (!sleeps.length && !steps.length) return null;
+    return {
+      rows,
+      avgSleepH: sleeps.length ? Math.round((sleeps.reduce((a, b) => a + b, 0) / sleeps.length) * 10) / 10 : null,
+      totalSteps: steps.length ? steps.reduce((a, b) => a + b, 0) : null,
+    };
+  }, [days]);
+
+  if (!recoveryEnabled || !glance) return null;
+
+  const tick = { fontSize: 9, fill: 'rgb(var(--muted))' } as const;
+  const tip = { background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 12, fontSize: 12 } as const;
+
+  return (
+    <Card onClick={() => navigate('/health')} className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-xs uppercase tracking-wide text-muted">Last 7 days · Garmin</p>
+        <Badge>Open Health</Badge>
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <p className="flex items-center gap-1 text-[11px] text-muted mb-1">
+            <Moon size={12} className="text-accent-2" /> Sleep{glance.avgSleepH != null && <span className="font-mono text-text ml-auto">Ø {glance.avgSleepH}h</span>}
+          </p>
+          <div className="h-20">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={glance.rows} margin={{ left: 0, right: 0, top: 4 }}>
+                <XAxis dataKey="d" tick={tick} axisLine={false} tickLine={false} interval={0} />
+                <YAxis hide domain={[0, 10]} />
+                <Tooltip cursor={{ fill: 'rgb(var(--surface-2))' }} contentStyle={tip} formatter={(v) => [`${v} h`, 'Sleep']} />
+                <ReferenceLine y={8} stroke="rgb(var(--muted))" strokeDasharray="3 3" />
+                <Bar dataKey="sleepH" fill="rgb(var(--accent-2))" radius={[3, 3, 0, 0]} maxBarSize={10} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+        <div>
+          <p className="flex items-center gap-1 text-[11px] text-muted mb-1">
+            <Footprints size={12} className="text-success" /> Steps{glance.totalSteps != null && <span className="font-mono text-text ml-auto">{glance.totalSteps.toLocaleString()}</span>}
+          </p>
+          <div className="h-20">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={glance.rows} margin={{ left: 0, right: 0, top: 4 }}>
+                <XAxis dataKey="d" tick={tick} axisLine={false} tickLine={false} interval={0} />
+                <YAxis hide />
+                <Tooltip cursor={{ fill: 'rgb(var(--surface-2))' }} contentStyle={tip} formatter={(v) => [Number(v).toLocaleString(), 'Steps']} />
+                <Bar dataKey="steps" fill="rgb(var(--success))" radius={[3, 3, 0, 0]} maxBarSize={10} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+    </Card>
   );
 }
 

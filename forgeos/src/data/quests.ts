@@ -27,6 +27,12 @@ export const QUESTS: Quest[] = [
   { id: 'w-vol-50k', title: 'Tonnage King', description: 'Move 50,000 kg this week.', scope: 'weekly', xp: 750, coins: 50, target: 50000, metric: 'volume' },
   { id: 'w-streak-14', title: 'Two Weeks Strong', description: 'Hold a 14-day streak.', scope: 'weekly', xp: 600, coins: 45, target: 14, metric: 'streak' },
 
+  // Recovery (need Garmin/health data; hidden while settings.recoveryEnabled is off)
+  { id: 'd-sleep-8h', title: 'Recovery Priority', description: 'Sleep 8 hours tonight.', scope: 'daily', xp: 100, coins: 4, target: 480, metric: 'sleepMin' },
+  { id: 'd-steps-8k', title: 'On Your Feet', description: 'Walk 8,000 steps today.', scope: 'daily', xp: 90, coins: 4, target: 8000, metric: 'steps' },
+  { id: 'w-steps-50k', title: 'Wanderer', description: 'Accumulate 50,000 steps this week.', scope: 'weekly', xp: 500, coins: 30, target: 50000, metric: 'weekSteps' },
+  { id: 'w-sleep-5', title: 'Sleep Champion', description: 'Five nights of 7h+ sleep this week.', scope: 'weekly', xp: 550, coins: 35, target: 5, metric: 'sleepNights' },
+
   // Monthly
   { id: 'm-sessions-16', title: 'Consistency King', description: 'Train 16 sessions this month.', scope: 'monthly', xp: 1800, coins: 120, target: 16, metric: 'sessions' },
   { id: 'm-streak-20', title: 'Iron Discipline', description: 'Hold a 20-day streak this month.', scope: 'monthly', xp: 1600, coins: 110, target: 20, metric: 'streak' },

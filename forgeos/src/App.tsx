@@ -17,6 +17,7 @@ import { useSocial } from './state/socialStore';
 import { useWorkout } from './state/workoutStore';
 import { watchGym } from './lib/geo';
 import { configureBackgroundSync, drainHealthCache, readHealthConnect } from './lib/healthConnect';
+import { ingestGarminWorkouts } from './lib/garminWorkouts';
 import { checkForApkUpdate } from './lib/appUpdate';
 import { useHealth } from './state/healthStore';
 import { haptic } from './lib/haptics';
@@ -165,13 +166,19 @@ export default function App() {
       if (!useSettings.getState().recoveryEnabled) return;
       const last = useHealth.getState().lastSyncAt;
       if (minGapMin && last && Date.now() - last < minGapMin * 60_000) return;
-      void readHealthConnect(21).then((rows) => { if (rows.length) useHealth.getState().ingest(rows, 'healthconnect'); });
+      void readHealthConnect(21).then((r) => {
+        if (r.days.length) useHealth.getState().ingest(r.days, 'healthconnect');
+        ingestGarminWorkouts(r.workouts);
+      });
     };
     // Keep the closed-app background worker in step with the toggle, and ingest
     // anything it cached overnight (instant — no Health Connect round-trip).
     const rec = useSettings.getState().recoveryEnabled;
-    void configureBackgroundSync(rec);
-    if (rec) void drainHealthCache().then((rows) => { if (rows.length) useHealth.getState().ingest(rows, 'healthconnect'); });
+    void configureBackgroundSync(rec, { bedtime: useSettings.getState().bedtimeNudge });
+    if (rec) void drainHealthCache().then((r) => {
+      if (r.days.length) useHealth.getState().ingest(r.days, 'healthconnect');
+      ingestGarminWorkouts(r.workouts);
+    });
     syncHealth();
     // APK self-update nudge (no-op on the website — the SW prompt covers that).
     void checkForApkUpdate().then((u) => { if (u.available) toast('A newer ForgeOS is out! Update it from You → Update available 🚀', 'info'); });
