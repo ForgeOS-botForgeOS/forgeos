@@ -170,6 +170,7 @@ export interface UserProfile {
   heightCm: number;
   weightKg: number;
   goal: Goal;
+  goalWeightKg?: number; // target on the scale — drives the trend ETA on the weigh-in card
   activity: ActivityLevel;
   experience: ExperienceLevel;
   bodyFatPct?: number;

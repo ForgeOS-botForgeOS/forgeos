@@ -21,6 +21,7 @@ import { useHealth, sortedDays } from '../state/healthStore';
 import { useSettings } from '../state/settingsStore';
 import { readinessFromDays } from '../lib/readiness';
 import { ReadinessCard } from '../components/Readiness';
+import { weekendNudge } from '../lib/nudges';
 
 export default function Home() {
   const t = useT();
@@ -112,6 +113,9 @@ export default function Home() {
           <Badge>Open Train</Badge>
         </Card>
 
+        {/* End-of-week reminder: streak on the line / sessions to goal */}
+        <WeekendNudge />
+
         {/* Recovery readiness — card when there's data, a one-time nudge otherwise */}
         {readiness ? (
           <ReadinessCard r={readiness} onClick={() => navigate('/health')} />
@@ -202,6 +206,28 @@ export default function Home() {
 // 7-day sleep + steps mini charts. Rendered only when Garmin data actually
 // flows in via Health Connect (same "connected" signal the Health screen uses),
 // so manual-only or disconnected users never see an empty card.
+// Friday-to-Sunday banner from lib/nudges: quiet unless a streak is genuinely
+// on the line or the weekly session goal is still winnable.
+function WeekendNudge() {
+  const navigate = useNavigate();
+  const weekStart = useGami((s) => s.weekStart);
+  const weekSessions = useGami((s) => s.weekSessions);
+  const weekStreak = useGami((s) => s.weekStreak);
+  const weeklyGoal = useSettings((s) => s.weeklyGoal);
+  const nudge = useMemo(
+    () => weekendNudge({ weekStart, weekSessions, weekStreak, weeklyGoal }),
+    [weekStart, weekSessions, weekStreak, weeklyGoal],
+  );
+  if (!nudge) return null;
+  return (
+    <Card onClick={() => navigate('/train')} className="flex items-center gap-2">
+      <Flame size={16} className={nudge.kind === 'streak' ? 'text-accent' : 'text-accent-2'} />
+      <p className="text-sm flex-1">{nudge.message}</p>
+      <Badge color={nudge.kind === 'streak' ? 'rgb(var(--accent))' : 'rgb(var(--accent-2))'}>Train</Badge>
+    </Card>
+  );
+}
+
 function HealthGlance() {
   const navigate = useNavigate();
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
