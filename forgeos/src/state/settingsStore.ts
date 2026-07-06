@@ -29,6 +29,7 @@ const DEFAULTS: Settings = {
   hapticsEnabled: true,
   recoveryEnabled: true,
   bedtimeNudge: true,
+  autoImportWorkouts: true,
   units: 'metric',
 };
 

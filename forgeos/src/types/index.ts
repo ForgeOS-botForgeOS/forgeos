@@ -372,6 +372,20 @@ export interface HealthDay {
   updatedAt: number;
 }
 
+// A workout session recorded on the watch (Garmin → Health Connect →
+// ExerciseSessionRecord). `id` is Health Connect's stable record UUID — the
+// dedupe key that makes importing the same session twice impossible.
+export interface GarminWorkout {
+  id: string;
+  type: string; // normalised: 'running' | 'cycling' | 'strength' | … | 'workout'
+  title?: string; // the name Garmin gave it (e.g. "Morning Run")
+  start: string; // ISO instant
+  date: string; // local 'YYYY-MM-DD'
+  durationMin: number;
+  distanceKm?: number;
+  calories?: number;
+}
+
 export type Language = 'en' | 'sk';
 
 export type QuoteGenrePref = QuoteGenre | 'all';
@@ -436,6 +450,7 @@ export interface Settings {
   hapticsEnabled: boolean;
   recoveryEnabled: boolean; // show Health & recovery (sleep/readiness) across the app
   bedtimeNudge: boolean; // evening "aim for 8h" notification (APK, needs recovery on)
+  autoImportWorkouts: boolean; // watch-recorded workouts flow into history (needs recovery on)
   units: 'metric';
 }
 

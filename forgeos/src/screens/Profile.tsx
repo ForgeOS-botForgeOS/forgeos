@@ -293,6 +293,11 @@ export default function Profile() {
               <Toggle checked={s.bedtimeNudge} onChange={(v) => { s.set('bedtimeNudge', v); void configureBackgroundSync(true, { bedtime: v }); }} />
             </Row>
           )}
+          {s.recoveryEnabled && (
+            <Row label="Import watch workouts" desc="Garmin runs & sessions join your history">
+              <Toggle checked={s.autoImportWorkouts} onChange={(v) => s.set('autoImportWorkouts', v)} />
+            </Row>
+          )}
         </Card>
       </div>
 

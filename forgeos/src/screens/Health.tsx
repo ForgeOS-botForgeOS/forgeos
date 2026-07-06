@@ -17,6 +17,7 @@ import {
   platformSupportsHealthConnect, healthConnectAvailable,
   requestHealthConnectPermissions, readHealthConnect, configureBackgroundSync,
 } from '../lib/healthConnect';
+import { ingestGarminWorkouts } from '../lib/garminWorkouts';
 import { haptic } from '../lib/haptics';
 import { toast, celebrate } from '../lib/toast';
 import { openTutorial } from '../components/Tutorial';
@@ -71,8 +72,9 @@ export default function Health() {
       setHcStatus(ok ? 'ready' : 'unavailable');
       // Seamless: if we already have permission, silently refresh on open.
       if (ok) {
-        const rows = await readHealthConnect(21); // returns [] without permission
-        if (rows.length) ingest(rows, 'healthconnect');
+        const r = await readHealthConnect(21); // empty without permission
+        if (r.days.length) ingest(r.days, 'healthconnect');
+        ingestGarminWorkouts(r.workouts);
       }
     });
   }, [ingest]);
@@ -81,8 +83,9 @@ export default function Health() {
   useEffect(() => {
     if (hcStatus !== 'ready') return;
     const id = setInterval(async () => {
-      const rows = await readHealthConnect(21);
-      if (rows.length) ingest(rows, 'healthconnect');
+      const r = await readHealthConnect(21);
+      if (r.days.length) ingest(r.days, 'healthconnect');
+      ingestGarminWorkouts(r.workouts);
     }, 5 * 60 * 1000);
     return () => clearInterval(id);
   }, [hcStatus, ingest]);
@@ -96,9 +99,10 @@ export default function Health() {
       // From now on data also flows while the app is closed; user-initiated,
       // so it may prompt once for the notification permission (Android 13+).
       void configureBackgroundSync(true, { interactive: true });
-      const rows = await readHealthConnect(21);
-      if (!rows.length) { toast('Connected, but no data came back yet. Make sure Garmin Connect is syncing to Health Connect.', 'info'); return; }
-      const n = ingest(rows, 'healthconnect');
+      const r = await readHealthConnect(21);
+      if (!r.days.length && !r.workouts.length) { toast('Connected, but no data came back yet. Make sure Garmin Connect is syncing to Health Connect.', 'info'); return; }
+      const n = ingest(r.days, 'healthconnect');
+      ingestGarminWorkouts(r.workouts);
       celebrate();
       toast(`Synced ${n} day(s) from Health Connect 🔥`, 'success');
     } finally { setSyncing(false); }

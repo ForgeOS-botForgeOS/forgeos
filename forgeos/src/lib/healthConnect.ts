@@ -1,5 +1,5 @@
 import { Capacitor, registerPlugin } from '@capacitor/core';
-import type { HealthDay } from '../types';
+import type { HealthDay, GarminWorkout } from '../types';
 
 // Bridge to Android Health Connect — the hub that the Garmin Connect app writes
 // your sleep, steps, heart rate and calories into. We read from it so ForgeOS
@@ -17,19 +17,29 @@ interface NativeDay {
   activeCalories?: number;
 }
 
+// Workout sessions arrive pre-normalised from the native side (HealthReader
+// maps Health Connect's exercise-type ints to our type strings).
+type NativeWorkout = GarminWorkout;
+
 interface HealthConnectPlugin {
   isAvailable(): Promise<{ available: boolean }>;
   requestAuthorization(options: { read: string[] }): Promise<{ granted: boolean }>;
-  readDays(options: { days: number }): Promise<{ days: NativeDay[] }>;
+  readDays(options: { days: number }): Promise<{ days: NativeDay[]; workouts?: NativeWorkout[] }>;
   configureBackgroundSync(options: { enabled: boolean; notify: boolean; interactive: boolean; bedtime: boolean }): Promise<void>;
-  drainCache(): Promise<{ days: NativeDay[]; cachedAt: number }>;
+  drainCache(): Promise<{ days: NativeDay[]; workouts?: NativeWorkout[]; cachedAt: number }>;
+}
+
+/** What one sync returns: daily wellness rows + watch-recorded workouts. */
+export interface HealthPayload {
+  days: HealthDay[];
+  workouts: GarminWorkout[];
 }
 
 // registerPlugin returns a proxy even when no native side exists; calls reject
 // with "not implemented" off-Android, which we treat as "unavailable".
 const Native = registerPlugin<HealthConnectPlugin>('HealthConnect');
 
-const READ_TYPES = ['SleepSession', 'Steps', 'RestingHeartRate', 'ActiveCaloriesBurned'];
+const READ_TYPES = ['SleepSession', 'Steps', 'RestingHeartRate', 'ActiveCaloriesBurned', 'ExerciseSession', 'Distance'];
 
 /** True only on the native Android app where the plugin can exist at all. */
 export function platformSupportsHealthConnect(): boolean {
@@ -73,14 +83,20 @@ function toHealthDays(rows: NativeDay[] | undefined): HealthDay[] {
     }));
 }
 
-/** Pull the last `days` of data and map to HealthDay rows. Empty on any failure. */
-export async function readHealthConnect(days = 14): Promise<HealthDay[]> {
-  if (!platformSupportsHealthConnect()) return [];
+function toWorkouts(rows: NativeWorkout[] | undefined): GarminWorkout[] {
+  return (rows ?? []).filter((w) => w && w.id && w.date && typeof w.durationMin === 'number');
+}
+
+const EMPTY: HealthPayload = { days: [], workouts: [] };
+
+/** Pull the last `days` of data (wellness rows + watch workouts). Empty on any failure. */
+export async function readHealthConnect(days = 14): Promise<HealthPayload> {
+  if (!platformSupportsHealthConnect()) return EMPTY;
   try {
     const r = await Native.readDays({ days });
-    return toHealthDays(r.days);
+    return { days: toHealthDays(r.days), workouts: toWorkouts(r.workouts) };
   } catch {
-    return [];
+    return EMPTY;
   }
 }
 
@@ -107,13 +123,13 @@ export async function configureBackgroundSync(
   }
 }
 
-/** Days the background worker cached while the app was closed. Empty on any failure. */
-export async function drainHealthCache(): Promise<HealthDay[]> {
-  if (!platformSupportsHealthConnect()) return [];
+/** Data the background worker cached while the app was closed. Empty on any failure. */
+export async function drainHealthCache(): Promise<HealthPayload> {
+  if (!platformSupportsHealthConnect()) return EMPTY;
   try {
     const r = await Native.drainCache();
-    return toHealthDays(r.days);
+    return { days: toHealthDays(r.days), workouts: toWorkouts(r.workouts) };
   } catch {
-    return [];
+    return EMPTY;
   }
 }

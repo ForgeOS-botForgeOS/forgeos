@@ -56,9 +56,9 @@ class HealthConnectPlugin : Plugin() {
                 if (granted.containsAll(HealthReader.readPerms)) {
                     call.resolve(JSObject().put("granted", true))
                 } else {
-                    // Also ask for background reads so the periodic worker can run
-                    // with the app closed; optional — grant check below ignores it.
-                    val wanted = HealthReader.readPerms + HealthReader.BACKGROUND_READ_PERMISSION
+                    // Also ask for workout-session reads and background reads;
+                    // both optional — the grant check below ignores them.
+                    val wanted = HealthReader.readPerms + HealthReader.workoutPerms + HealthReader.BACKGROUND_READ_PERMISSION
                     val intent = PermissionController
                         .createRequestPermissionResultContract()
                         .createIntent(context, wanted)
@@ -94,7 +94,12 @@ class HealthConnectPlugin : Plugin() {
         scope.launch {
             try {
                 val arr = HealthReader.readDays(hc, days)
-                call.resolve(JSObject().put("days", JSArray(arr.toString())))
+                val workouts = try { HealthReader.readWorkouts(hc, days) } catch (e: Exception) { org.json.JSONArray() }
+                call.resolve(
+                    JSObject()
+                        .put("days", JSArray(arr.toString()))
+                        .put("workouts", JSArray(workouts.toString()))
+                )
             } catch (e: Exception) {
                 call.reject(e.message ?: "read failed")
             }
@@ -140,9 +145,12 @@ class HealthConnectPlugin : Plugin() {
         val prefs = context.getSharedPreferences(HealthReader.PREFS, Context.MODE_PRIVATE)
         val raw = prefs.getString(HealthReader.KEY_CACHE, null)
         val days = if (raw == null) JSArray() else try { JSArray(raw) } catch (e: Exception) { JSArray() }
+        val rawW = prefs.getString(HealthReader.KEY_CACHE_WORKOUTS, null)
+        val workouts = if (rawW == null) JSArray() else try { JSArray(rawW) } catch (e: Exception) { JSArray() }
         call.resolve(
             JSObject()
                 .put("days", days)
+                .put("workouts", workouts)
                 .put("cachedAt", prefs.getLong(HealthReader.KEY_CACHED_AT, 0L))
         )
     }

@@ -44,6 +44,10 @@ class HealthSyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
                     .putLong(HealthReader.KEY_CACHED_AT, System.currentTimeMillis())
                     .apply()
             }
+            val workouts = try { HealthReader.readWorkouts(hc, 14) } catch (e: Exception) { JSONArray() }
+            if (workouts.length() > 0) {
+                prefs.edit().putString(HealthReader.KEY_CACHE_WORKOUTS, workouts.toString()).apply()
+            }
             maybeNotifyReadiness(ctx, prefs, arr)
             maybeBedtimeNudge(ctx, prefs, arr)
         } catch (e: Exception) {

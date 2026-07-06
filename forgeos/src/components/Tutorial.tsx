@@ -24,7 +24,7 @@ const MAIN_SLIDES = [
 ];
 
 const GARMIN_SLIDES = [
-  { icon: Watch, title: 'Garmin auto-sync', text: 'Wear your watch as normal. ForgeOS pulls in your sleep, steps, resting heart rate and calories — automatically, no typing ever.' },
+  { icon: Watch, title: 'Garmin auto-sync', text: 'Wear your watch as normal. ForgeOS pulls in your sleep, steps, resting heart rate and calories — and workouts you record on the watch join your history with XP. Automatically, no typing ever.' },
   { icon: Link2, title: 'How it works', text: 'Garmin Connect saves your data into Android Health Connect. ForgeOS just reads it from there — everything stays on your phone, nothing is uploaded.' },
   { icon: ShieldCheck, title: 'One-time setup', text: '1) Install the ForgeOS Android app. 2) In Garmin Connect: Settings → Health Connect → allow sleep & activity. 3) Tap “Connect Garmin” and approve once.' },
   { icon: Gauge, title: 'Your readiness score', text: 'Every morning you get a 0–100 readiness score with advice — it even adjusts today’s suggested training load on the Train tab. Turn it all off anytime in You → Preferences.' },
