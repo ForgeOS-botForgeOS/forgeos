@@ -1,9 +1,11 @@
 import { Capacitor } from '@capacitor/core';
+import { syncWebUpdate, hasWebUpdater } from './webUpdate';
 
-// APK auto-update check. The website updates itself through the service
-// worker, but an installed APK has no store to update it — so on launch we
-// ask the public GitHub API when the rolling `app-latest` release was last
-// rebuilt and compare that with this bundle's own build time.
+// "Download a new APK" nudge. APKs with the OTA updater pull web changes by
+// themselves (src/lib/webUpdate.ts), so for them the nudge only fires when the
+// release's native code is newer than the installed app's. Older APKs (before
+// the updater existed) fall back to the original check: compare the release's
+// rebuild time against this bundle's own build time.
 
 declare const __BUILD_TIME__: number; // injected by vite `define`
 
@@ -29,6 +31,12 @@ async function doCheck(): Promise<ApkUpdate> {
   // Only meaningful inside the installed Android app.
   if (!(Capacitor.getPlatform() === 'android' && Capacitor.isNativePlatform())) {
     return { available: false };
+  }
+  // OTA-capable APK: web changes apply themselves; only a native-code bump
+  // still needs a fresh APK.
+  if (hasWebUpdater()) {
+    const r = await syncWebUpdate();
+    return { available: r.nativeUpdate };
   }
   try {
     const res = await fetch(RELEASE_API, { headers: { Accept: 'application/vnd.github+json' } });

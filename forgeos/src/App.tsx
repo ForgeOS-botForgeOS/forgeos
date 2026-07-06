@@ -19,6 +19,7 @@ import { watchGym } from './lib/geo';
 import { configureBackgroundSync, drainHealthCache, readHealthConnect } from './lib/healthConnect';
 import { ingestGarminWorkouts } from './lib/garminWorkouts';
 import { checkForApkUpdate } from './lib/appUpdate';
+import { syncWebUpdate } from './lib/webUpdate';
 import { useHealth } from './state/healthStore';
 import { haptic } from './lib/haptics';
 import { initAuth } from './lib/auth';
@@ -180,7 +181,9 @@ export default function App() {
       ingestGarminWorkouts(r.workouts);
     });
     syncHealth();
-    // APK self-update nudge (no-op on the website — the SW prompt covers that).
+    // APK updates: OTA-capable builds pull new web bundles silently
+    // (checkForApkUpdate triggers that sync); the nudge only fires when a
+    // native change genuinely needs a fresh APK. No-op on the website.
     void checkForApkUpdate().then((u) => { if (u.available) toast('A newer ForgeOS is out! Update it from You → Update available 🚀', 'info'); });
     // Live social: ensure a cloud session (anonymous if needed, no signup),
     // then pull the real friend graph.
@@ -196,7 +199,7 @@ export default function App() {
     // data stays current without the user ever opening the Health screen.
     const onHide = () => {
       if (document.visibilityState === 'hidden') { void pushCloudBackup(); void pushMyActivity(); }
-      else syncHealth(20);
+      else { syncHealth(20); void syncWebUpdate(); }
     };
     document.addEventListener('visibilitychange', onHide);
     return () => {

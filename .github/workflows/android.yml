@@ -59,6 +59,17 @@ jobs:
       - name: Stage APK
         run: cp android/app/build/outputs/apk/debug/app-debug.apk forgeos.apk
 
+      - name: Stage web bundle for in-app OTA updates
+        # The installed app checks version.json on launch and swaps in web.zip
+        # by itself (WebUpdatePlugin) — no APK re-download for web-only changes.
+        run: |
+          (cd dist && zip -qr ../web.zip .)
+          NATIVE_VERSION=$(grep -oP 'NATIVE_VERSION = \K\d+' android/app/src/main/java/com/forgeos/app/WebUpdatePlugin.kt)
+          ZIP_SHA256=$(sha256sum web.zip | cut -d' ' -f1)
+          printf '{"sha":"%s","zipSha256":"%s","nativeVersion":%s,"builtAt":"%s"}\n' \
+            "$GITHUB_SHA" "$ZIP_SHA256" "$NATIVE_VERSION" "$(date -u +%FT%TZ)" > version.json
+          cat version.json
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
@@ -70,7 +81,10 @@ jobs:
         with:
           tag_name: app-latest
           name: ForgeOS Android (latest)
-          files: forgeos/forgeos.apk
+          files: |
+            forgeos/forgeos.apk
+            forgeos/web.zip
+            forgeos/version.json
           make_latest: 'true'
           body: |
             Latest ForgeOS Android build (debug-signed for direct install).

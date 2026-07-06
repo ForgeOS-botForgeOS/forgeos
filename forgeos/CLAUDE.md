@@ -33,7 +33,8 @@ Build/test gotchas:
 
 Pushing to `main` triggers **two** CI builds (the website and the APK). The default branch worked on is often a feature branch, so deploy by pushing to `main` explicitly: `git push origin HEAD:main`.
 - **Website** (`deploy.yml`) builds with `DEPLOY_BASE=/forgeos/` (GitHub Pages subpath) → `https://forgeos-botforgeos.github.io/forgeos/`.
-- **APK** (`android.yml`) builds the Capacitor Android app and publishes `forgeos.apk` to a rolling `app-latest` GitHub release; the in-app `/download` page links to it.
+- **APK** (`android.yml`) builds the Capacitor Android app and publishes `forgeos.apk` + `web.zip` + `version.json` to a rolling `app-latest` GitHub release; the in-app `/download` page links to it.
+- **OTA updates:** installed APKs pull `web.zip` by themselves on launch/foreground (`WebUpdatePlugin.kt` ↔ `src/lib/webUpdate.ts`), so web-only changes never need an APK re-download. **If you change anything under `android/`, bump `NATIVE_VERSION` in `WebUpdatePlugin.kt`** — that's what makes installed apps show the "download new APK" nudge instead of applying an incompatible web bundle. No service worker runs inside the APK (UpdatePrompt unregisters it).
 - **Base path matters:** the website uses base `/forgeos/`; the Capacitor app uses base `/` (the default `npm run build`, no `DEPLOY_BASE`). Never hardcode the base — it's driven by `vite.config.ts` reading `DEPLOY_BASE`.
 
 ## Architecture (big picture)
