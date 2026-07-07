@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import {
   ChevronLeft, Moon, Footprints, HeartPulse, Flame, Watch, RefreshCw, FileUp,
-  Copy, Check, Trash2, Plus, BatteryCharging, AlertTriangle, Smartphone,
+  Copy, Check, Trash2, Plus, BatteryCharging, AlertTriangle,
 } from 'lucide-react';
 import { Card, Button, Badge, SectionTitle } from '../components/ui';
 import { useHealth, sortedDays } from '../state/healthStore';
@@ -203,18 +203,13 @@ export default function Health() {
             <div className="space-y-1.5">
               {/* The install step only exists for browser visitors — inside the
                   APK it's already satisfied, so don't show it at all. */}
-              {hcStatus === 'web' && <SetupStep n={1}>Install the <b>ForgeOS Android app</b></SetupStep>}
+              {hcStatus === 'web' && <SetupStep n={1}>Install the <b>ForgeOS Android app</b> (You → Get the app)</SetupStep>}
               <SetupStep n={hcStatus === 'web' ? 2 : 1} done={hcStatus === 'ready'}>In <b>Garmin Connect</b>: profile picture → Settings → <b>Health Connect</b> → allow sleep &amp; activity</SetupStep>
               <SetupStep n={hcStatus === 'web' ? 3 : 2}>Tap the button — one permission screen, then it’s automatic forever</SetupStep>
             </div>
             {hcStatus === 'ready' && (
               <Button className="w-full justify-center" disabled={syncing} onClick={autoSync}>
                 <span className="flex items-center gap-1.5"><Watch size={15} className={syncing ? 'animate-pulse' : ''} />{syncing ? 'Connecting…' : 'Connect Garmin'}</span>
-              </Button>
-            )}
-            {hcStatus === 'web' && (
-              <Button className="w-full justify-center" onClick={() => navigate('/download')}>
-                <span className="flex items-center gap-1.5"><Smartphone size={15} /> Get the Android app</span>
               </Button>
             )}
             {hcStatus === 'unavailable' && (

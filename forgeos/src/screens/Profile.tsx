@@ -19,7 +19,6 @@ import { exportData, importData } from '../lib/backup';
 import { useCosmetics } from '../state/cosmeticsStore';
 import { cosmeticById } from '../data/cosmetics';
 import { openTutorial } from '../components/Tutorial';
-import { isStandalone } from '../lib/pwaInstall';
 import { ChangePasswordSheet, PasscodeSheet } from '../components/SecuritySheets';
 import { toast } from '../lib/toast';
 import { pushCloudBackup, pullCloudBackup, cloudSyncAvailable } from '../lib/cloudSync';
@@ -357,13 +356,10 @@ export default function Profile() {
           <Badge color="rgb(var(--accent))">Open</Badge>
         </Card>
       )}
-      {/* Pointless once you're already inside the installed app */}
-      {!isStandalone() && (
-        <Card className="flex items-center justify-between" onClick={() => navigate('/download')}>
-          <div className="flex items-center gap-2"><Smartphone size={16} className="text-muted" /><span className="text-sm">Get the app (install / APK)</span></div>
-          <Badge color="rgb(var(--accent))">Open</Badge>
-        </Card>
-      )}
+      <Card className="flex items-center justify-between" onClick={() => navigate('/download')}>
+        <div className="flex items-center gap-2"><Smartphone size={16} className="text-muted" /><span className="text-sm">Get the app (install / APK)</span></div>
+        <Badge color="rgb(var(--accent))">Open</Badge>
+      </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/import-progress')}>
         <div className="flex items-center gap-2"><Download size={16} className="text-muted" /><span className="text-sm">Import progress from another app</span></div>
         <Badge color="rgb(var(--accent-2))">Open</Badge>
