@@ -50,14 +50,29 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      - name: Build debug APK
+      - name: Prepare permanent signing key
+        # Without a permanent key every CI build gets a random debug signature,
+        # and Android refuses to install the "update" over the existing app.
+        env:
+          KS_B64: ${{ secrets.ANDROID_KEYSTORE_B64 }}
+        run: |
+          if [ -z "$KS_B64" ]; then
+            echo "::error::Missing ANDROID_KEYSTORE_B64 secret. Add it (and ANDROID_KEYSTORE_PASSWORD) under Settings → Secrets and variables → Actions."
+            exit 1
+          fi
+          echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/forgeos.jks"
+
+      - name: Build signed release APK
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ runner.temp }}/forgeos.jks
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
         run: |
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug --no-daemon
+          ./gradlew assembleRelease --no-daemon -PappVersionCode=$GITHUB_RUN_NUMBER
 
       - name: Stage APK
-        run: cp android/app/build/outputs/apk/debug/app-debug.apk forgeos.apk
+        run: cp android/app/build/outputs/apk/release/app-release.apk forgeos.apk
 
       - name: Stage web bundle for in-app OTA updates
         # The installed app checks version.json on launch and swaps in web.zip
@@ -87,6 +102,7 @@ jobs:
             forgeos/version.json
           make_latest: 'true'
           body: |
-            Latest ForgeOS Android build (debug-signed for direct install).
+            Latest ForgeOS Android build (signed with the permanent ForgeOS key —
+            new APKs install straight over the old version, no uninstall needed).
             Download `forgeos.apk`, then on your phone allow “Install unknown apps”
             for your browser when prompted. Distributed from the website only.
