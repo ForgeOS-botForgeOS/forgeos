@@ -147,7 +147,13 @@ export default function PlanEditor() {
   function addExercise(day: string, id: string) {
     const d = plan!.days.find((x) => x.day === day)!;
     if (d.exerciseIds.includes(id)) return;
-    patch(day, { exerciseIds: [...d.exerciseIds, id] });
+    // Seed the target from your last performance so a newly added exercise
+    // starts at real numbers instead of 3×8 @ 20 kg (same toggle as Train).
+    const prev = useSettings.getState().prefillWeights ? useWorkout.getState().lastPerformance(id) : undefined;
+    const targets = prev?.length
+      ? { ...(d.targets ?? {}), [id]: { sets: prev.length, reps: prev[0].reps, weightKg: round2(Math.max(...prev.map((s) => s.weightKg))) } }
+      : d.targets;
+    patch(day, { exerciseIds: [...d.exerciseIds, id], targets });
     haptic('tap');
   }
   function removeExercise(day: string, id: string) {

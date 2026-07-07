@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, Trash2, Search, X } from 'lucide-react';
 import { Card, Button, Sheet } from '../components/ui';
 import { useWorkout } from '../state/workoutStore';
+import { useSettings } from '../state/settingsStore';
 import { EXERCISES, EXERCISE_CATEGORIES, exerciseById } from '../data/exercises';
 import type { Workout, WorkoutExercise, SetEntry } from '../types';
 import { haptic } from '../lib/haptics';
@@ -39,7 +40,12 @@ export default function WorkoutEdit() {
     setDraft({ ...draft, exercises: draft.exercises.map((we) => (we.id !== weId ? we : { ...we, sets: we.sets.filter((s) => s.id !== setId) })) });
   const removeExercise = (weId: string) => setDraft({ ...draft, exercises: draft.exercises.filter((we) => we.id !== weId) });
   const addExercise = (exId: string) => {
-    const we: WorkoutExercise = { id: uid(), exerciseId: exId, sets: [{ id: uid(), weightKg: 20, reps: 8, completed: true, rpe: 7 }], restPresetSec: 90 };
+    // Pre-fill from the last time you did this exercise (same toggle as Train).
+    const prev = useSettings.getState().prefillWeights ? useWorkout.getState().lastPerformance(exId) : undefined;
+    const sets: SetEntry[] = prev?.length
+      ? prev.map((p) => ({ id: uid(), weightKg: p.weightKg, reps: p.reps, completed: true, rpe: p.rpe ?? 7 }))
+      : [{ id: uid(), weightKg: 20, reps: 8, completed: true, rpe: 7 }];
+    const we: WorkoutExercise = { id: uid(), exerciseId: exId, sets, restPresetSec: 90 };
     setDraft({ ...draft, exercises: [...draft.exercises, we] });
   };
 

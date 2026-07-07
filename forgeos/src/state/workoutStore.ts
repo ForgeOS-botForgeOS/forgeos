@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { CardioLog, CardioMetric, PR, SetEntry, SpotifyTrack, Workout, WorkoutExercise } from '../types';
-import { e1rm, volumeOf, overloadSuggestion } from '../lib/fitness';
+import { e1rm, volumeOf } from '../lib/fitness';
 import { exerciseById, EXERCISES } from '../data/exercises';
 import { enqueue } from '../lib/offlineQueue';
 import { pushPRsRemote } from '../lib/repositories';
@@ -51,6 +51,9 @@ interface WorkoutState {
   updateCardio: (id: string, fields: CardioLog & { date?: string }) => void;
 
   lastSetFor: (exerciseId: string, setIndex: number) => SetEntry | undefined;
+  // All sets from the most recent workout that included this exercise — what
+  // "last time" actually looked like, set for set (prefers completed sets).
+  lastPerformance: (exerciseId: string) => SetEntry[] | undefined;
   bestE1rm: (exerciseId: string) => number;
 }
 
@@ -97,40 +100,26 @@ export const useWorkout = create<WorkoutState>()(
 
       startWorkout: (name, exerciseIds = [], opts = {}) => {
         const seedWeight = opts.maxWeightKg ? Math.min(20, opts.maxWeightKg) : 20;
-        const history = get().history;
-        // Auto-progression: find the most recent completed set for this exercise
-        // and suggest the next target via progressive overload.
-        const lastBest = (exerciseId: string): SetEntry | undefined => {
-          for (const w of history) {
-            const we = w.exercises.find((e) => e.exerciseId === exerciseId);
-            const done = we?.sets.filter((s) => s.completed) ?? [];
-            if (done.length) return done.reduce((a, b) => (b.weightKg * b.reps > a.weightKg * a.reps ? b : a));
-          }
-          return undefined;
-        };
         // Settings toggle: pre-fill new sets from workout history (default on).
+        // When on, history beats planned targets — sets start exactly where you
+        // left off last time (same weight, reps and RPE, set for set).
         const prefill = useSettings.getState().prefillWeights;
         const exercises: WorkoutExercise[] = exerciseIds.map((id) => {
           const target = opts.targets?.[id];
-          const setCount = Math.max(1, target?.sets ?? 1);
-          const prev = prefill ? lastBest(id) : undefined;
-          let weightKg = seedWeight;
-          let reps = target?.reps ?? 8;
-          if (target?.weightKg && target.weightKg > 0) {
-            // Explicit planned weight wins.
-            weightKg = target.weightKg;
-            reps = target?.reps ?? 8;
-          } else if (prev) {
-            const sug = overloadSuggestion(prev.weightKg, prev.reps, target?.reps ?? prev.reps, prev.rpe ?? 8);
-            weightKg = sug.weightKg; // no cap — based on what was actually lifted
-            reps = sug.reps;
+          const prev = prefill ? get().lastPerformance(id) : undefined;
+          let sets: SetEntry[];
+          if (prev?.length) {
+            const setCount = Math.max(1, target?.sets ?? prev.length);
+            sets = Array.from({ length: setCount }, (_, i) => {
+              const p = prev[Math.min(i, prev.length - 1)];
+              return { id: uid(), weightKg: p.weightKg, reps: p.reps, rpe: p.rpe ?? 7, completed: false };
+            });
+          } else {
+            const weightKg = target?.weightKg && target.weightKg > 0 ? target.weightKg : seedWeight;
+            const setCount = Math.max(1, target?.sets ?? 1);
+            sets = Array.from({ length: setCount }, () => ({ id: uid(), weightKg, reps: target?.reps ?? 8, completed: false, rpe: 7 }));
           }
-          return {
-            id: uid(),
-            exerciseId: id,
-            sets: Array.from({ length: setCount }, () => ({ id: uid(), weightKg, reps, completed: false, rpe: 7 })),
-            restPresetSec: 90,
-          };
+          return { id: uid(), exerciseId: id, sets, restPresetSec: 90 };
         });
         set({
           active: { id: uid(), name, date: new Date().toISOString(), exercises, completed: false, synced: false },
@@ -166,14 +155,12 @@ export const useWorkout = create<WorkoutState>()(
         const a = get().active;
         if (!a) return;
         // Pre-fill from the last session that included this exercise (toggleable
-        // in settings) instead of always starting at the empty-bar 20 kg.
-        const prev = useSettings.getState().prefillWeights ? get().lastSetFor(exerciseId, 0) : undefined;
-        const we: WorkoutExercise = {
-          id: uid(),
-          exerciseId,
-          sets: [{ id: uid(), weightKg: prev?.weightKg ?? 20, reps: prev?.reps ?? 8, completed: false, rpe: prev?.rpe ?? 7 }],
-          restPresetSec: 90,
-        };
+        // in settings) — same sets, weights and reps as last time.
+        const prev = useSettings.getState().prefillWeights ? get().lastPerformance(exerciseId) : undefined;
+        const sets: SetEntry[] = prev?.length
+          ? prev.map((p) => ({ id: uid(), weightKg: p.weightKg, reps: p.reps, rpe: p.rpe ?? 7, completed: false }))
+          : [{ id: uid(), weightKg: 20, reps: 8, completed: false, rpe: 7 }];
+        const we: WorkoutExercise = { id: uid(), exerciseId, sets, restPresetSec: 90 };
         set({ active: { ...a, exercises: [...a.exercises, we] } });
       },
 
@@ -385,6 +372,16 @@ export const useWorkout = create<WorkoutState>()(
         for (const w of get().history) {
           const we = w.exercises.find((e) => e.exerciseId === exerciseId);
           if (we && we.sets[setIndex]) return we.sets[setIndex];
+        }
+        return undefined;
+      },
+
+      lastPerformance: (exerciseId) => {
+        for (const w of get().history) {
+          const we = w.exercises.find((e) => e.exerciseId === exerciseId);
+          if (!we || we.sets.length === 0) continue;
+          const done = we.sets.filter((s) => s.completed);
+          return done.length ? done : we.sets;
         }
         return undefined;
       },

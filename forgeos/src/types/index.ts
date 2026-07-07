@@ -452,7 +452,7 @@ export interface Settings {
   recoveryEnabled: boolean; // show Health & recovery (sleep/readiness) across the app
   bedtimeNudge: boolean; // evening "aim for 8h" notification (APK, needs recovery on)
   autoImportWorkouts: boolean; // watch-recorded workouts flow into history (needs recovery on)
-  prefillWeights: boolean; // new sets start at what you lifted last time for that exercise
+  prefillWeights: boolean; // new sets start at last time's weights AND reps, set for set
   units: 'metric';
 }
 

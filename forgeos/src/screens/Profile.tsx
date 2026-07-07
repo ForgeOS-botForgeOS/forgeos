@@ -276,7 +276,7 @@ export default function Profile() {
           <Row label={t('p.streakGambling')} desc="Wager coins on session targets">
             <Toggle checked={s.streakGambling} onChange={(v) => s.set('streakGambling', v)} />
           </Row>
-          <Row label="Pre-fill last weights" desc="New sets start at what you lifted last time">
+          <Row label="Pre-fill from last time" desc="New sets start at your last weights and reps">
             <Toggle checked={s.prefillWeights} onChange={(v) => s.set('prefillWeights', v)} />
           </Row>
           <Row label={t('p.marketplace')} desc="Buy & sell programs">
