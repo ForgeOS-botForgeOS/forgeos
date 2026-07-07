@@ -13,6 +13,9 @@ export default defineConfig({
   define: {
     __BUILD_TIME__: JSON.stringify(Date.now()),
     __WEB_SHA__: JSON.stringify(process.env.GITHUB_SHA || 'dev'),
+    // Human-readable version like "1.0.52" (CI sets APP_VERSION from the run
+    // number); shown in the Profile footer so users can tell builds apart.
+    __APP_VERSION__: JSON.stringify(process.env.APP_VERSION || 'dev'),
   },
   // Allow tunnel hostnames (e.g. *.trycloudflare.com) to reach dev/preview.
   server: { allowedHosts: true },

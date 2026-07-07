@@ -523,6 +523,10 @@ export default function Profile() {
       }}>
         <span className="flex items-center gap-2"><LogOut size={16} /> Sign out</span>
       </Button>
+
+      <p className="text-center text-[11px] text-muted pb-2">
+        ForgeOS {__APP_VERSION__ === 'dev' ? 'dev build' : `v${__APP_VERSION__}`}
+      </p>
     </Screen>
   );
 }

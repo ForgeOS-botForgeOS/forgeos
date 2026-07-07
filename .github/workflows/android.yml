@@ -45,6 +45,8 @@ jobs:
           VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
           VITE_GOOGLE_CLIENT_ID: ${{ vars.VITE_GOOGLE_CLIENT_ID }}
           VITE_VISION_API_URL: ${{ vars.VITE_VISION_API_URL }}
+          # Human-readable build version, shown in the app (Profile footer).
+          APP_VERSION: 1.0.${{ github.run_number }}
         run: npm run build
 
       - name: Sync Capacitor
