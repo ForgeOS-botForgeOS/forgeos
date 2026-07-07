@@ -30,6 +30,7 @@ const DEFAULTS: Settings = {
   recoveryEnabled: true,
   bedtimeNudge: true,
   autoImportWorkouts: true,
+  prefillWeights: true,
   units: 'metric',
 };
 

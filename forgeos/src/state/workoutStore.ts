@@ -7,6 +7,7 @@ import { enqueue } from '../lib/offlineQueue';
 import { pushPRsRemote } from '../lib/repositories';
 import { pushMyActivity } from '../lib/activitySync';
 import { useGami } from './gamificationStore';
+import { useSettings } from './settingsStore';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -107,10 +108,12 @@ export const useWorkout = create<WorkoutState>()(
           }
           return undefined;
         };
+        // Settings toggle: pre-fill new sets from workout history (default on).
+        const prefill = useSettings.getState().prefillWeights;
         const exercises: WorkoutExercise[] = exerciseIds.map((id) => {
           const target = opts.targets?.[id];
           const setCount = Math.max(1, target?.sets ?? 1);
-          const prev = lastBest(id);
+          const prev = prefill ? lastBest(id) : undefined;
           let weightKg = seedWeight;
           let reps = target?.reps ?? 8;
           if (target?.weightKg && target.weightKg > 0) {
@@ -162,10 +165,13 @@ export const useWorkout = create<WorkoutState>()(
       addExercise: (exerciseId) => {
         const a = get().active;
         if (!a) return;
+        // Pre-fill from the last session that included this exercise (toggleable
+        // in settings) instead of always starting at the empty-bar 20 kg.
+        const prev = useSettings.getState().prefillWeights ? get().lastSetFor(exerciseId, 0) : undefined;
         const we: WorkoutExercise = {
           id: uid(),
           exerciseId,
-          sets: [{ id: uid(), weightKg: 20, reps: 8, completed: false, rpe: 7 }],
+          sets: [{ id: uid(), weightKg: prev?.weightKg ?? 20, reps: prev?.reps ?? 8, completed: false, rpe: prev?.rpe ?? 7 }],
           restPresetSec: 90,
         };
         set({ active: { ...a, exercises: [...a.exercises, we] } });
