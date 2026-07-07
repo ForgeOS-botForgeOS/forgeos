@@ -21,6 +21,18 @@ export interface ApkUpdate {
 
 let cached: Promise<ApkUpdate> | null = null;
 
+/** Version name (e.g. "1.0.53") of the newest published APK, or null. */
+export async function fetchLatestApkVersion(): Promise<string | null> {
+  try {
+    const res = await fetch(RELEASE_API, { headers: { Accept: 'application/vnd.github+json' } });
+    if (!res.ok) return null;
+    const rel: { name?: string } = await res.json();
+    return rel.name?.match(/v(\d+\.\d+\.\d+)/)?.[1] ?? null;
+  } catch {
+    return null;
+  }
+}
+
 /** One network check per session, shared by every caller. Never throws. */
 export function checkForApkUpdate(): Promise<ApkUpdate> {
   cached ??= doCheck();

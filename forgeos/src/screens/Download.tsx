@@ -4,6 +4,7 @@ import { ChevronLeft, Smartphone, Download as DownloadIcon, ShieldCheck, Apple, 
 import { Card, Button, Badge } from '../components/ui';
 import { ForgeLogo } from '../components/ForgeLogo';
 import { InstallButton } from '../components/InstallButton';
+import { fetchLatestApkVersion } from '../lib/appUpdate';
 
 // The APK is published by CI to a rolling GitHub release. Distribution is
 // website-only (no app stores) — this page is the single download point.
@@ -13,6 +14,9 @@ export default function Download() {
   const navigate = useNavigate();
   const [qr, setQr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [latest, setLatest] = useState<string | null>(null);
+
+  useEffect(() => { void fetchLatestApkVersion().then(setLatest); }, []);
 
   async function shareLink() {
     const nav = navigator as Navigator & { share?: (d: { title?: string; text?: string; url?: string }) => Promise<void> };
@@ -46,7 +50,7 @@ export default function Download() {
       <Card className="space-y-3">
         <div className="flex items-center justify-between">
           <p className="font-semibold flex items-center gap-2"><Smartphone size={16} className="text-accent" /> Android app</p>
-          <Badge color="rgb(var(--accent))">APK</Badge>
+          <Badge color="rgb(var(--accent))">{latest ? `APK v${latest}` : 'APK'}</Badge>
         </div>
         {qr && (
           <div className="flex justify-center">

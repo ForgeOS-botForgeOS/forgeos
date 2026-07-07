@@ -93,8 +93,8 @@ jobs:
           (cd dist && zip -qr ../web.zip .)
           NATIVE_VERSION=$(grep -oP 'NATIVE_VERSION = \K\d+' android/app/src/main/java/com/forgeos/app/WebUpdatePlugin.kt)
           ZIP_SHA256=$(sha256sum web.zip | cut -d' ' -f1)
-          printf '{"sha":"%s","zipSha256":"%s","nativeVersion":%s,"builtAt":"%s"}\n' \
-            "$GITHUB_SHA" "$ZIP_SHA256" "$NATIVE_VERSION" "$(date -u +%FT%TZ)" > version.json
+          printf '{"version":"1.0.%s","sha":"%s","zipSha256":"%s","nativeVersion":%s,"builtAt":"%s"}\n' \
+            "$GITHUB_RUN_NUMBER" "$GITHUB_SHA" "$ZIP_SHA256" "$NATIVE_VERSION" "$(date -u +%FT%TZ)" > version.json
           cat version.json
 
       - name: Upload APK artifact
@@ -107,7 +107,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: app-latest
-          name: ForgeOS Android (latest)
+          # The version in the name is read by the app's download page.
+          name: ForgeOS Android v1.0.${{ github.run_number }}
           files: |
             forgeos/forgeos.apk
             forgeos/web.zip
