@@ -45,6 +45,7 @@ const History = lazy(() => import('./screens/History'));
 const Collection = lazy(() => import('./screens/Collection'));
 const PlanEditorScreen = lazy(() => import('./screens/PlanEditor'));
 const ImportPlan = lazy(() => import('./screens/ImportPlan'));
+const ImportWorkout = lazy(() => import('./screens/ImportWorkout'));
 const Calendar = lazy(() => import('./screens/Calendar'));
 const Achievements = lazy(() => import('./screens/Achievements'));
 const Shop = lazy(() => import('./screens/Shop'));
@@ -249,6 +250,7 @@ export default function App() {
             <Route path="/collection" element={<Collection />} />
             <Route path="/plan" element={<PlanEditorScreen />} />
             <Route path="/import" element={<ImportPlan />} />
+            <Route path="/import-workout" element={<ImportWorkout />} />
             <Route path="/calendar" element={<Calendar />} />
             <Route path="/achievements" element={<Achievements />} />
             <Route path="/shop" element={<Shop />} />

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Dumbbell, TrendingUp, Plus, Copy, Activity, Trash2 } from 'lucide-react';
+import { ChevronLeft, Dumbbell, TrendingUp, Plus, Copy, Activity, Trash2, Share2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, Badge, Pill, Button, Sheet } from '../components/ui';
 import { useWorkout } from '../state/workoutStore';
@@ -12,6 +12,7 @@ import { speedKmh, paceLabel, newCardioData, type CardioData } from '../lib/card
 import { CardioFields } from '../components/CardioForm';
 import { haptic } from '../lib/haptics';
 import { toast } from '../lib/toast';
+import { shareWorkout } from '../lib/workoutShare';
 import type { Workout } from '../types';
 
 export default function History() {
@@ -40,6 +41,12 @@ function Sessions() {
   const [editCardio, setEditCardio] = useState<Workout | null>(null);
   const uid = () => Math.random().toString(36).slice(2, 10);
 
+  async function share(w: typeof history[number]) {
+    const r = await shareWorkout(w);
+    haptic('tap');
+    toast(r === 'shared' ? 'Shared!' : 'Share link copied to clipboard');
+  }
+
   function duplicate(w: typeof history[number]) {
     addManualWorkout({
       ...structuredClone(w),
@@ -56,7 +63,7 @@ function Sessions() {
       <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/workout/new')}>
         <span className="flex items-center gap-1"><Plus size={15} /> Add a past workout</span>
       </Button>
-      {history.length > 0 && <p className="text-[11px] text-muted">Tap a session to edit · ⧉ to duplicate.</p>}
+      {history.length > 0 && <p className="text-[11px] text-muted">Tap a session to edit · ⧉ duplicate · ↗ share a link.</p>}
       {history.map((w) => {
         if (w.cardio) {
           const c = w.cardio;
@@ -66,6 +73,7 @@ function Sessions() {
               <div className="flex items-center justify-between">
                 <button onClick={() => setEditCardio(w)} className="font-semibold text-sm flex items-center gap-2 text-left flex-1"><Activity size={14} className="text-accent-2" /> {c.machine}</button>
                 <div className="flex items-center gap-2">
+                  <button onClick={() => share(w)} title="Share" className="text-muted"><Share2 size={14} /></button>
                   <button onClick={() => duplicate(w)} title="Duplicate" className="text-muted"><Copy size={14} /></button>
                   <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString()}</span>
                 </div>
@@ -91,6 +99,7 @@ function Sessions() {
             <div className="flex items-center justify-between">
               <button onClick={() => navigate(`/workout/${w.id}`)} className="font-semibold text-sm flex items-center gap-2 text-left flex-1"><Dumbbell size={14} className="text-accent" /> {w.name}</button>
               <div className="flex items-center gap-2">
+                {w.exercises.length > 0 && <button onClick={() => share(w)} title="Share" className="text-muted"><Share2 size={14} /></button>}
                 <button onClick={() => duplicate(w)} title="Duplicate" className="text-muted"><Copy size={14} /></button>
                 <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString()}</span>
               </div>

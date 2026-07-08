@@ -26,6 +26,9 @@ interface WorkoutState {
   // structure, prior weights/reps pre-filled but uncompleted. Pass nothing to
   // repeat the most recent strength session.
   repeatWorkout: (id?: string) => boolean;
+  // Begin a live session from a shared/imported workout — exercises already
+  // hydrated with fresh ids and uncompleted sets (see lib/workoutShare).
+  startSharedWorkout: (name: string, exercises: WorkoutExercise[]) => void;
   addExercise: (exerciseId: string) => void;
   addCardioToActive: (exerciseId: string, durationMin: number, note: string) => void;
   removeExercise: (workoutExerciseId: string) => void;
@@ -149,6 +152,12 @@ export const useWorkout = create<WorkoutState>()(
         set({ active: { id: uid(), name: src.name, date: new Date().toISOString(), exercises, completed: false, synced: false } });
         void pushMyActivity(true);
         return true;
+      },
+
+      startSharedWorkout: (name, exercises) => {
+        if (exercises.length === 0) return;
+        set({ active: { id: uid(), name, date: new Date().toISOString(), exercises, completed: false, synced: false } });
+        void pushMyActivity(true); // friends see "training now" while the session is live
       },
 
       addExercise: (exerciseId) => {
