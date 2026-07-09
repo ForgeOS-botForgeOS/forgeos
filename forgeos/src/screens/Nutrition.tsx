@@ -350,7 +350,7 @@ function Num({ label, v, set }: { label: string; v: number; set: (n: number) => 
   return (
     <label className="text-xs text-muted">
       {label}
-      <input type="number" value={v} onChange={(e) => set(Number(e.target.value))} className="w-full rounded-lg bg-surface-2 border border-line px-3 py-2 text-sm mt-1 text-text" />
+      <input type="number" inputMode="decimal" value={v} onChange={(e) => set(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg bg-surface-2 border border-line px-3 py-2 text-sm mt-1 text-text" />
     </label>
   );
 }

@@ -270,23 +270,47 @@ function BodyPanel() {
 }
 
 function MeasureSheet({ open, onClose, latest, onSave }: { open: boolean; onClose: () => void; latest?: BodyStat; onSave: (patch: Partial<BodyStat>) => void }) {
-  const [vals, setVals] = useState<Record<string, number>>({});
-  const get = (k: keyof BodyStat) => vals[k as string] ?? (latest?.[k] as number | undefined) ?? defaultFor(k);
+  // Raw text per touched field, so an emptied box stays empty instead of
+  // snapping to 0. Untouched fields fall back to your last value / a seed.
+  const [vals, setVals] = useState<Record<string, string>>({});
+  const numOf = (k: keyof BodyStat): number => {
+    const raw = vals[k as string];
+    if (raw !== undefined) return Number(raw) || 0;
+    return (latest?.[k] as number | undefined) ?? defaultFor(k);
+  };
+  const textOf = (k: keyof BodyStat): string => {
+    const raw = vals[k as string];
+    if (raw !== undefined) return raw;
+    return String((latest?.[k] as number | undefined) ?? defaultFor(k));
+  };
+  const setRaw = (k: keyof BodyStat, raw: string) => setVals((v) => ({ ...v, [k as string]: raw }));
+
+  // Only fields the user actually filled with a real positive number are saved;
+  // blank or 0 entries are dropped so nothing gets stored as zero.
+  const patch = useMemo(() => {
+    const out: Record<string, number> = {};
+    for (const [k, raw] of Object.entries(vals)) {
+      const n = Number(raw);
+      if (raw.trim() !== '' && Number.isFinite(n) && n > 0) out[k] = Math.round(n * 10) / 10;
+    }
+    return out;
+  }, [vals]);
+
   return (
     <Sheet open={open} onClose={onClose} title="Log measurements">
       <div className="space-y-2.5">
-        <p className="text-[11px] text-muted">Only the ones you change are saved. Track what matters to you.</p>
+        <p className="text-[11px] text-muted">Only the ones you fill in are saved. Track what matters to you.</p>
         {MEASURES.map((m) => (
           <div key={m.key} className="flex items-center justify-between gap-2">
             <span className="text-sm text-muted">{m.label} <span className="text-[10px]">({m.unit})</span></span>
             <div className="flex items-center gap-1">
-              <button onClick={() => setVals((v) => ({ ...v, [m.key]: Math.max(0, Math.round((get(m.key) - m.step) * 10) / 10) }))} className="w-8 h-8 rounded-md bg-surface-2">−</button>
-              <input type="number" value={get(m.key)} onChange={(e) => setVals((v) => ({ ...v, [m.key]: Math.max(0, Number(e.target.value) || 0) }))} className="w-16 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-center font-mono" />
-              <button onClick={() => setVals((v) => ({ ...v, [m.key]: Math.round((get(m.key) + m.step) * 10) / 10 }))} className="w-8 h-8 rounded-md bg-surface-2">+</button>
+              <button onClick={() => setRaw(m.key, String(Math.max(0, Math.round((numOf(m.key) - m.step) * 10) / 10)))} className="w-8 h-8 rounded-md bg-surface-2">−</button>
+              <input type="number" inputMode="decimal" value={textOf(m.key)} onChange={(e) => setRaw(m.key, e.target.value)} className="w-16 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-center font-mono" />
+              <button onClick={() => setRaw(m.key, String(Math.round((numOf(m.key) + m.step) * 10) / 10))} className="w-8 h-8 rounded-md bg-surface-2">+</button>
             </div>
           </div>
         ))}
-        <Button className="w-full justify-center" disabled={Object.keys(vals).length === 0} onClick={() => onSave(vals as Partial<BodyStat>)}>Save today’s snapshot</Button>
+        <Button className="w-full justify-center" disabled={Object.keys(patch).length === 0} onClick={() => onSave(patch as Partial<BodyStat>)}>Save today’s snapshot</Button>
       </div>
     </Sheet>
   );
