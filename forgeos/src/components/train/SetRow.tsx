@@ -142,13 +142,13 @@ function SubTarget({ set, onChange }: { set: SetEntry; onChange: (patch: Partial
             </button>
           ))}
           {kind === 'tut' && (
-            <input type="number" placeholder="sec" value={set.tutSeconds ?? ''} onChange={(e) => onChange({ tutSeconds: Number(e.target.value) })} className="w-16 rounded bg-surface-2 px-2 py-0.5 text-[11px]" />
+            <input type="number" inputMode="numeric" placeholder="sec" value={set.tutSeconds ?? ''} onChange={(e) => onChange({ tutSeconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} className="w-16 rounded bg-surface-2 px-2 py-0.5 text-[11px]" />
           )}
           {kind === 'band' && (
             <input placeholder="band colour" value={set.bandColor ?? ''} onChange={(e) => onChange({ bandColor: e.target.value })} className="w-24 rounded bg-surface-2 px-2 py-0.5 text-[11px]" />
           )}
           {kind === 'isometric' && (
-            <input type="number" placeholder="hold s" value={set.isoSeconds ?? ''} onChange={(e) => onChange({ isoSeconds: Number(e.target.value) })} className="w-16 rounded bg-surface-2 px-2 py-0.5 text-[11px]" />
+            <input type="number" inputMode="numeric" placeholder="hold s" value={set.isoSeconds ?? ''} onChange={(e) => onChange({ isoSeconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} className="w-16 rounded bg-surface-2 px-2 py-0.5 text-[11px]" />
           )}
         </div>
       )}
