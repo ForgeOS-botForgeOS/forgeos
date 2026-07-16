@@ -1,2 +1,7 @@
 honecrest/
 everything-claude-code/
+
+# Peter's private local files — never commit these to this public repo
+SecondBrain/
+CLAUDE.md
+FIX-PLAYBOOK.md
