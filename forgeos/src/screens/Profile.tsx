@@ -161,8 +161,8 @@ export default function Profile() {
         <Card className="border-accent/40 bg-accent/5 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center shrink-0"><Download size={18} className="text-accent" /></div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold">Update available</p>
-            <p className="text-[11px] text-muted">A newer ForgeOS build is out — grab it in a tap.</p>
+            <p className="text-sm font-semibold">One-time update needed</p>
+            <p className="text-[11px] text-muted">Normal updates install themselves — this one changes the app's core and needs a single download.</p>
           </div>
           <Button onClick={() => navigate('/download')}>Update</Button>
         </Card>
