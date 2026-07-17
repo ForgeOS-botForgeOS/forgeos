@@ -214,7 +214,7 @@ export default function Onboarding() {
   }
 
   return (
-    <div className="h-full overflow-y-auto no-scrollbar px-5 py-12">
+    <div className="min-h-full px-5 py-12">
       <div className="flex items-center gap-2 mb-6">
         <ForgeLogo size={32} tile />
         <span className="font-extrabold text-xl tracking-tight">ForgeOS</span>

@@ -126,6 +126,20 @@ function AppShell() {
   );
 }
 
+// Layout for routes that live OUTSIDE AppShell (no tab bar, pre-onboarding
+// friendly). AppShell's <main> provides scrolling for everything inside it —
+// this shell does the same job out here, so no public screen can ever ship
+// with its content clipped again. New public routes go under this element.
+function PublicShell() {
+  return (
+    <div className="h-full overflow-y-auto no-scrollbar">
+      <Suspense fallback={<ScreenSkeleton />}>
+        <Outlet />
+      </Suspense>
+    </div>
+  );
+}
+
 function RequireOnboarding({ children }: { children: React.ReactNode }) {
   const onboarded = useUser((s) => s.profile?.onboarded);
   if (!onboarded) return <Navigate to="/onboarding" replace />;
@@ -232,9 +246,11 @@ export default function App() {
       <HashRouter>
         <Suspense fallback={<ScreenSkeleton />}>
         <Routes>
-          <Route path="/onboarding" element={<Onboarding />} />
-          <Route path="/download" element={<Download />} />
-          <Route path="/add-friend" element={<AddFriend />} />
+          <Route element={<PublicShell />}>
+            <Route path="/onboarding" element={<Onboarding />} />
+            <Route path="/download" element={<Download />} />
+            <Route path="/add-friend" element={<AddFriend />} />
+          </Route>
           <Route
             element={
               <RequireOnboarding>

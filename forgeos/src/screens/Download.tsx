@@ -50,9 +50,7 @@ export default function Download() {
   }, []);
 
   return (
-    // h-full + overflow (like Onboarding): public routes live outside AppShell's
-    // scrolling <main>, so without this the page clips instead of scrolling.
-    <div className="h-full overflow-y-auto no-scrollbar px-5 py-12 space-y-5 max-w-md mx-auto">
+    <div className="min-h-full px-5 py-12 space-y-5 max-w-md mx-auto">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
 
       <div className="text-center space-y-2">

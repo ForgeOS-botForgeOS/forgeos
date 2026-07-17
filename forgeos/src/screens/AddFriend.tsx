@@ -24,13 +24,9 @@ export default function AddFriend() {
   }, [params]);
 
   const Frame = ({ children }: { children: React.ReactNode }) => (
-    // Outer div scrolls (public route — no AppShell <main> around us); inner
-    // keeps the vertical centering when the content is shorter than the screen.
-    <div className="h-full overflow-y-auto no-scrollbar">
-      <div className="min-h-full px-5 py-12 flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-5">
-        <div className="mx-auto w-fit"><ForgeLogo size={64} tile /></div>
-        {children}
-      </div>
+    <div className="min-h-full px-5 py-12 flex flex-col items-center justify-center text-center max-w-md mx-auto space-y-5">
+      <div className="mx-auto w-fit"><ForgeLogo size={64} tile /></div>
+      {children}
     </div>
   );
 
