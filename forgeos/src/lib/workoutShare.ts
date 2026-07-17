@@ -34,11 +34,12 @@ function fromBase64Url(code: string): string {
   return decodeURIComponent(escape(atob(b64)));
 }
 
-export function encodeWorkout(w: Workout): string {
-  // Map real superset group ids to small integer tags so linkage survives the
-  // trip without leaking local ids.
+// Trim a full Workout down to the shareable view. Maps real superset group
+// ids to small integer tags so linkage survives the trip without leaking
+// local ids. Also used by live races to carry the workout in the invite.
+export function toSharedWorkout(w: Workout): SharedWorkout {
   const groupTag = new Map<string, number>();
-  const shared: SharedWorkout = {
+  return {
     name: w.name,
     exercises: w.exercises.map((e) => {
       let tag: number | undefined;
@@ -55,7 +56,10 @@ export function encodeWorkout(w: Workout): string {
     }),
     cardio: w.cardio,
   };
-  return toBase64Url(JSON.stringify(shared));
+}
+
+export function encodeWorkout(w: Workout): string {
+  return toBase64Url(JSON.stringify(toSharedWorkout(w)));
 }
 
 export function decodeWorkout(code: string): SharedWorkout | null {

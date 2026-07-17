@@ -28,6 +28,7 @@ import { onReconnect, syncQueue } from './lib/offlineQueue';
 import { pushCloudBackup } from './lib/cloudSync';
 import { takePendingInvite } from './lib/invite';
 import { ensureCloudAccount, pushMyActivity } from './lib/activitySync';
+import { ensureRaceSession } from './lib/raceSession';
 import { toast, celebrate } from './lib/toast';
 
 // Code-split every screen so the initial route loads a small chunk.
@@ -56,6 +57,7 @@ const Health = lazy(() => import('./screens/Health'));
 const Download = lazy(() => import('./screens/Download'));
 const ImportProgress = lazy(() => import('./screens/ImportProgress'));
 const AddFriend = lazy(() => import('./screens/AddFriend'));
+const RaceJoin = lazy(() => import('./screens/RaceJoin'));
 
 // Left→right order of the bottom tabs; swiping moves to the neighbour.
 const TAB_ORDER = ['/home', '/train', '/nutrition', '/social', '/quests', '/profile'];
@@ -189,6 +191,8 @@ export default function App() {
     // Live social: ensure a cloud session (anonymous if needed, no signup),
     // then pull the real friend graph.
     void ensureCloudAccount().then(() => void useSocial.getState().syncFriends());
+    // Rejoin a live race channel if the app was refreshed mid-race.
+    ensureRaceSession();
     // Restore any live Supabase session and keep stores in sync.
     const stopAuth = initAuth();
     // Best-effort workout reminders while the app is open.
@@ -258,6 +262,7 @@ export default function App() {
             <Route path="/progress" element={<Progress />} />
             <Route path="/health" element={<Health />} />
             <Route path="/import-progress" element={<ImportProgress />} />
+            <Route path="/race-join" element={<RaceJoin />} />
             <Route path="/u" element={<PublicProfile />} />
             <Route path="/quote/:id" element={<QuoteDeepDive />} />
           </Route>

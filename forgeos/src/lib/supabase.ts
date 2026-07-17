@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import type { RaceBroadcast } from './race';
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
@@ -137,6 +138,53 @@ export function joinRace(raceId: string, me: RaceUpdate, onUpdate: (all: RaceUpd
       onUpdate([...state.values()]);
     },
     leave: () => void supabase.removeChannel(channel),
+  };
+}
+
+// The real multiplayer race channel (see lib/raceSession.ts for the state
+// glue). Unlike the older joinRace above it handles presence sync/join/leave,
+// so every client sees a live roster and can tell who dropped off.
+export interface RaceChannelHandlers {
+  // A rival reported progress. (Broadcasts are NOT echoed back to the sender —
+  // raceSession applies its own updates locally before sending.)
+  onProgress: (u: RaceBroadcast) => void;
+  // The set of userIds currently connected to the channel changed.
+  onRoster: (racers: RaceBroadcast[], onlineIds: string[]) => void;
+  // The host started the race.
+  onStart: (startAt: number) => void;
+}
+
+export interface RaceChannel {
+  sendProgress: (u: RaceBroadcast) => void;
+  sendStart: (startAt: number) => void;
+  leave: () => void;
+}
+
+export function joinRaceChannel(raceId: string, me: RaceBroadcast, handlers: RaceChannelHandlers): RaceChannel | null {
+  if (!supabase) return null;
+  const channel = supabase.channel(`live-race:${raceId}`, { config: { presence: { key: me.userId } } });
+  let latestMe = me;
+
+  channel
+    .on('broadcast', { event: 'progress' }, ({ payload }) => handlers.onProgress(payload as RaceBroadcast))
+    .on('broadcast', { event: 'start' }, ({ payload }) => handlers.onStart((payload as { startAt: number }).startAt))
+    .on('presence', { event: 'sync' }, () => {
+      const state = channel.presenceState<RaceBroadcast>();
+      const racers = Object.values(state).map((metas) => metas[0]).filter(Boolean);
+      handlers.onRoster(racers, Object.keys(state));
+    })
+    .subscribe((status) => {
+      if (status === 'SUBSCRIBED') void channel.track(latestMe);
+    });
+
+  return {
+    sendProgress: (u) => {
+      latestMe = u;
+      void channel.send({ type: 'broadcast', event: 'progress', payload: u });
+      void channel.track(u); // keep presence meta fresh for late joiners
+    },
+    sendStart: (startAt) => void channel.send({ type: 'broadcast', event: 'start', payload: { startAt } }),
+    leave: () => void supabase?.removeChannel(channel),
   };
 }
 

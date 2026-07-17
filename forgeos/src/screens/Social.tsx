@@ -1,12 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Swords, Store, Share2, Wifi, Circle, UserPlus, Check, X,
   MessageCircle, Send, Trash2, Crown, Zap, Heart, Dumbbell, Star, ChevronRight, Plus, UserMinus,
   RotateCw, Search, Footprints,
 } from 'lucide-react';
-import { joinRace } from '../lib/supabase';
+import { joinRace, isBackendLive } from '../lib/supabase';
+import { RaceHub } from '../components/race/RaceHub';
 import { Screen } from '../components/Screen';
 import { Card, Button, Pill, Badge, SectionTitle, Sheet } from '../components/ui';
 import { CloudStatus } from '../components/CloudStatus';
@@ -33,7 +34,12 @@ type Tab = 'feed' | 'friends' | 'race' | 'market';
 
 export default function Social() {
   const t = useT();
-  const [tab, setTab] = useState<Tab>('feed');
+  // Deep links (e.g. joining a race) can open a specific tab via ?tab=.
+  const [params] = useSearchParams();
+  const [tab, setTab] = useState<Tab>(() => {
+    const wanted = params.get('tab');
+    return wanted === 'friends' || wanted === 'race' || wanted === 'market' ? wanted : 'feed';
+  });
   const marketEnabled = useSettings((s) => s.marketplaceEnabled);
   const requests = useSocial((s) => s.requests);
   const incoming = requests.filter((r) => r.direction === 'incoming').length;
@@ -794,7 +800,8 @@ function MiniStat({ v, l }: { v: string; l: string }) {
 function Race() {
   return (
     <div className="space-y-3">
-      <LiveRace />
+      {/* Real realtime races when the backend is live; offline demo otherwise. */}
+      {isBackendLive ? <RaceHub /> : <LiveRace />}
       <Duels />
     </div>
   );

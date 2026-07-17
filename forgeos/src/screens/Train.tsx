@@ -9,6 +9,8 @@ import { Screen } from '../components/Screen';
 import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
 import { SetRow } from '../components/train/SetRow';
 import { RestTimer } from '../components/train/RestTimer';
+import { RaceBar } from '../components/train/RaceBar';
+import { reportRaceProgress, raceWorkoutEnded } from '../lib/raceSession';
 import { Tools } from '../components/train/Tools';
 import { Confetti } from '../components/Celebrate';
 import { toast, celebrate } from '../lib/toast';
@@ -415,6 +417,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   function handleComplete(weId: string, set: SetEntry) {
     if (set.completed) return;
     completeSet(weId, set.id);
+    reportRaceProgress(); // live race: broadcast the set to every rival
     addXp(xpForSet(set.weightKg, set.reps, set.rpe ?? 7));
     bumpMetric('sets', 1);
     bumpMetric('volume', volumeOf(set.weightKg, set.reps));
@@ -435,6 +438,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   }
 
   function finish() {
+    raceWorkoutEnded(); // report final progress / leave an undecided race
     const res = finishWorkout();
     if (!res) return;
     const { newPrs } = res;
@@ -473,6 +477,8 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
         </div>
         <Badge color="rgb(var(--success))">LIVE</Badge>
       </header>
+
+      <RaceBar />
 
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <SortableContext items={active.exercises.map((e) => e.id)} strategy={verticalListSortingStrategy}>
@@ -556,7 +562,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       <input ref={cardioRef} type="file" accept="image/*" className="hidden" onChange={onCardioFile} />
 
       <div className="flex gap-2">
-        <Button variant="outline" className="flex-1 justify-center" onClick={() => { discardWorkout(); navigate('/home'); }}>Discard</Button>
+        <Button variant="outline" className="flex-1 justify-center" onClick={() => { raceWorkoutEnded(); discardWorkout(); navigate('/home'); }}>Discard</Button>
         <Button className="flex-1 justify-center" onClick={finish}>Finish 🔥</Button>
       </div>
 
