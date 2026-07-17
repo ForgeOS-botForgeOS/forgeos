@@ -20,6 +20,7 @@ import { configureBackgroundSync, drainHealthCache, readHealthConnect } from './
 import { ingestGarminWorkouts } from './lib/garminWorkouts';
 import { checkForApkUpdate } from './lib/appUpdate';
 import { syncWebUpdate } from './lib/webUpdate';
+import { announceIfUpdated } from './lib/updateNotice';
 import { useHealth } from './state/healthStore';
 import { haptic } from './lib/haptics';
 import { initAuth } from './lib/auth';
@@ -177,6 +178,8 @@ export default function App() {
     }
     ensureDailyQuests();
     seedFeed();
+    // If a silent auto-update just applied, confirm it visibly (see updateNotice).
+    announceIfUpdated();
     // Seamless wearable refresh — no-ops off-device, without Health Connect
     // permission, or when the user has switched recovery off. minGapMin
     // throttles the foreground-resume path so we don't hammer Health Connect.
