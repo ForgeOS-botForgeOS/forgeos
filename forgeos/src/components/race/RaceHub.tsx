@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { Swords, Timer, Weight, Dumbbell, Share2, Flag, Circle } from 'lucide-react';
 import { Card, Button, Pill, Badge, SectionTitle } from '../ui';
 import { useRace, type ActiveRace } from '../../state/raceStore';
@@ -153,7 +154,12 @@ function RaceStatus({ active }: { active: ActiveRace }) {
             </div>
             {status !== 'lobby' && (
               <div className="h-1.5 mt-1 rounded-full bg-surface-2 overflow-hidden">
-                <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${progressFraction(config, r, leaderVolume) * 100}%` }} />
+                <motion.div
+                  className="h-full bg-accent rounded-full"
+                  initial={{ width: 0 }}
+                  animate={{ width: `${progressFraction(config, r, leaderVolume) * 100}%` }}
+                  transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+                />
               </div>
             )}
           </div>

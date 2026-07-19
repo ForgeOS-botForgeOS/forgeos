@@ -1,9 +1,11 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ChevronLeft, Share2, Trophy, Dumbbell, Flame, Clock, Heart } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button } from '../components/ui';
+import { CountUp } from '../components/CountUp';
+import { celebrate } from '../lib/toast';
 import { useWorkout } from '../state/workoutStore';
 import { useUser } from '../state/userStore';
 import { useGami } from '../state/gamificationStore';
@@ -25,6 +27,15 @@ export default function Wrapped() {
     const { year, monthIndex } = lastCompletedMonth(Date.now());
     return buildWrapped(history, prs, year, monthIndex);
   }, [history, prs]);
+
+  // A recap is a small ceremony — confetti once per visit.
+  const celebrated = useRef(false);
+  useEffect(() => {
+    if (wrapped && !celebrated.current) {
+      celebrated.current = true;
+      celebrate();
+    }
+  }, [wrapped]);
 
   function share() {
     if (!wrapped) return;
@@ -55,29 +66,39 @@ export default function Wrapped() {
 
       {wrapped && (
         <>
-          <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.35 }}>
+          <motion.div initial={{ opacity: 0, scale: 0.9, y: 12 }} animate={{ opacity: 1, scale: 1, y: 0 }} transition={{ type: 'spring', stiffness: 260, damping: 22 }}>
             <Card className="text-center py-6 space-y-1 border-accent/40 bg-accent/5">
               <p className="text-[11px] text-muted uppercase tracking-widest">total volume</p>
-              <p className="text-4xl font-extrabold font-mono text-accent">{wrapped.volumeKg.toLocaleString()}<span className="text-lg"> kg</span></p>
+              <p className="text-4xl font-extrabold font-mono text-accent"><CountUp value={wrapped.volumeKg} from={0} duration={1400} /><span className="text-lg"> kg</span></p>
               <p className="text-[11px] text-muted">that's what you moved in {wrapped.monthLabel} 💪</p>
             </Card>
           </motion.div>
 
           <div className="grid grid-cols-2 gap-3">
-            <Card className="text-center py-4"><Dumbbell size={18} className="mx-auto text-accent mb-1" /><p className="font-mono font-bold text-xl">{wrapped.sessions}</p><p className="text-[10px] text-muted">sessions</p></Card>
-            <Card className="text-center py-4"><Flame size={18} className="mx-auto text-accent mb-1" /><p className="font-mono font-bold text-xl">{wrapped.sets}</p><p className="text-[10px] text-muted">working sets</p></Card>
-            <Card className="text-center py-4"><Clock size={18} className="mx-auto text-accent mb-1" /><p className="font-mono font-bold text-xl">{Math.round(wrapped.durationMin / 60)}h</p><p className="text-[10px] text-muted">under the bar</p></Card>
-            <Card className="text-center py-4"><Trophy size={18} className="mx-auto text-accent-2 mb-1" /><p className="font-mono font-bold text-xl">{wrapped.prCount}</p><p className="text-[10px] text-muted">PRs</p></Card>
+            {([
+              [<Dumbbell key="i" size={18} className="mx-auto text-accent mb-1" />, wrapped.sessions, 'sessions'],
+              [<Flame key="i" size={18} className="mx-auto text-accent mb-1" />, wrapped.sets, 'working sets'],
+              [<Clock key="i" size={18} className="mx-auto text-accent mb-1" />, Math.round(wrapped.durationMin / 60), 'hours under the bar'],
+              [<Trophy key="i" size={18} className="mx-auto text-accent-2 mb-1" />, wrapped.prCount, 'PRs'],
+            ] as const).map(([icon, value, label], i) => (
+              <motion.div key={label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 + i * 0.1, type: 'spring', stiffness: 300, damping: 24 }}>
+                <Card className="text-center py-4">{icon}<p className="font-mono font-bold text-xl"><CountUp value={value} from={0} duration={900 + i * 150} /></p><p className="text-[10px] text-muted">{label}</p></Card>
+              </motion.div>
+            ))}
           </div>
 
           {(wrapped.bestLift || wrapped.favoriteExercise) && (
-            <Card className="space-y-1.5">
-              {wrapped.bestLift && <p className="text-sm flex items-center gap-2"><Trophy size={14} className="text-accent-2" /> Best lift: <b>{wrapped.bestLift.exerciseName} {wrapped.bestLift.weightKg} kg</b></p>}
-              {wrapped.favoriteExercise && <p className="text-sm flex items-center gap-2"><Heart size={14} className="text-accent" /> Favourite: <b>{wrapped.favoriteExercise}</b></p>}
-            </Card>
+            <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.55, type: 'spring', stiffness: 300, damping: 24 }}>
+              <Card className="space-y-1.5">
+                {wrapped.bestLift && <p className="text-sm flex items-center gap-2"><Trophy size={14} className="text-accent-2" /> Best lift: <b>{wrapped.bestLift.exerciseName} {wrapped.bestLift.weightKg} kg</b></p>}
+                {wrapped.favoriteExercise && <p className="text-sm flex items-center gap-2"><Heart size={14} className="text-accent" /> Favourite: <b>{wrapped.favoriteExercise}</b></p>}
+              </Card>
+            </motion.div>
           )}
 
-          <Button className="w-full justify-center gap-2" onClick={share}><Share2 size={16} /> Save the share card</Button>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.75 }}>
+            <Button className="w-full justify-center gap-2" onClick={share}><Share2 size={16} /> Save the share card</Button>
+          </motion.div>
         </>
       )}
     </Screen>

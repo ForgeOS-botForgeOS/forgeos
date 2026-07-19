@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { motion } from 'framer-motion';
 import { X, Brain, TrendingUp, TrendingDown } from 'lucide-react';
 import { Card } from './ui';
 import { useWorkout } from '../state/workoutStore';
@@ -34,6 +35,7 @@ export function WeeklyReviewCard() {
   }
 
   return (
+    <motion.div initial={{ opacity: 0, y: -12, scale: 0.98 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 280, damping: 24 }}>
     <Card className="space-y-2 border-accent/40 bg-accent/5">
       <div className="flex items-center justify-between">
         <p className="text-sm font-semibold flex items-center gap-2"><Brain size={15} className="text-accent" /> Coach review · {review.weekLabel}</p>
@@ -57,5 +59,6 @@ export function WeeklyReviewCard() {
       )}
       <p className="text-sm">{review.focus}</p>
     </Card>
+    </motion.div>
   );
 }

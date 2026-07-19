@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { Circle, X } from 'lucide-react';
 import { Card, Badge } from '../ui';
 import { useRace } from '../../state/raceStore';
@@ -52,7 +53,12 @@ export function RaceBar() {
             </span>
           </div>
           <div className="h-1 mt-0.5 rounded-full bg-surface-2 overflow-hidden">
-            <div className="h-full bg-accent rounded-full transition-all" style={{ width: `${progressFraction(config, r, leaderVolume) * 100}%` }} />
+            <motion.div
+              className="h-full bg-accent rounded-full"
+              initial={{ width: 0 }}
+              animate={{ width: `${progressFraction(config, r, leaderVolume) * 100}%` }}
+              transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+            />
           </div>
         </div>
       ))}

@@ -948,7 +948,11 @@ function Duels() {
               <p className="font-semibold text-sm flex items-center gap-2"><Swords size={14} className="text-accent" /> vs {d.opponentName}</p>
               <span className="flex items-center gap-1.5">
                 {d.side != null && <Badge color="rgb(var(--accent))">LIVE</Badge>}
-                {d.status === 'won' && <Badge color="rgb(var(--success))">You won 🏆</Badge>}
+                {d.status === 'won' && (
+                  <motion.span initial={{ scale: 0, rotate: -12 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 400, damping: 14 }}>
+                    <Badge color="rgb(var(--success))">You won 🏆</Badge>
+                  </motion.span>
+                )}
                 {d.status === 'lost' && <Badge color="rgb(var(--danger))">Lost</Badge>}
                 {d.status === 'active' && <Badge>{daysLeft(d.endsAt)}</Badge>}
               </span>
@@ -979,7 +983,14 @@ function DuelBar({ label, value, target, me }: { label: string; value: number; t
   return (
     <div>
       <div className="flex justify-between text-[11px]"><span className={me ? 'text-accent font-semibold' : 'text-muted'}>{label}</span><span className="font-mono text-muted">{value.toLocaleString()}/{target.toLocaleString()}</span></div>
-      <div className="h-1.5 mt-0.5 rounded-full bg-surface-2 overflow-hidden"><div className={`h-full rounded-full transition-all ${me ? 'bg-accent' : 'bg-accent-2'}`} style={{ width: `${Math.min(100, (value / target) * 100)}%` }} /></div>
+      <div className="h-1.5 mt-0.5 rounded-full bg-surface-2 overflow-hidden">
+        <motion.div
+          className={`h-full rounded-full ${me ? 'bg-accent' : 'bg-accent-2'}`}
+          initial={{ width: 0 }}
+          animate={{ width: `${Math.min(100, (value / target) * 100)}%` }}
+          transition={{ type: 'spring', stiffness: 120, damping: 20 }}
+        />
+      </div>
     </div>
   );
 }

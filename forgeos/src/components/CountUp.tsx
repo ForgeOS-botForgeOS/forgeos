@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from 'react';
 
-// Smoothly tweens a number when it changes (XP, coins, totals…). Cheap rAF, no deps.
-export function CountUp({ value, className, format, duration = 600 }: { value: number; className?: string; format?: (n: number) => string; duration?: number }) {
-  const [display, setDisplay] = useState(value);
-  const prev = useRef(value);
+// Smoothly tweens a number when it changes (XP, coins, totals…). Cheap rAF, no
+// deps. Pass `from` to also tween on first mount (e.g. count up from 0).
+export function CountUp({ value, className, format, duration = 600, from }: { value: number; className?: string; format?: (n: number) => string; duration?: number; from?: number }) {
+  const [display, setDisplay] = useState(from ?? value);
+  const prev = useRef(from ?? value);
 
   useEffect(() => {
     const from = prev.current;
