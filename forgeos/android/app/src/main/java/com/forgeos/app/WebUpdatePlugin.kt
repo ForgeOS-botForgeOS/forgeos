@@ -40,7 +40,7 @@ class WebUpdatePlugin : Plugin() {
     companion object {
         // Bump whenever android/ code changes in a way the web bundle depends on.
         // CI greps this value into version.json.
-        const val NATIVE_VERSION = 5
+        const val NATIVE_VERSION = 6
 
         const val PREFS = "forgeos-webupdate"
         const val KEY_PATH = "path"
