@@ -27,6 +27,15 @@
                 <action android:name="androidx.health.connect.action.SHOW_PERMISSIONS_RATIONALE" />
             </intent-filter>
 
+            <!-- Return leg of Google/Apple OAuth: the system browser redirects to
+                 forgeos://auth?code=… which reopens the app (src/lib/authDeepLink.ts). -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="forgeos" android:host="auth" />
+            </intent-filter>
+
         </activity>
 
         <!-- Health Connect permission-rationale screen (Android 14+). -->

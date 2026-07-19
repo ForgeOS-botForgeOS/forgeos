@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { Capacitor } from '@capacitor/core';
 import { Mail, Globe, Loader2, Check, Eye, EyeOff, Download } from 'lucide-react';
 import { Button, Card, Pill, Sheet, Toggle } from '../../components/ui';
 import { ForgeLogo } from '../../components/ForgeLogo';
@@ -72,7 +73,13 @@ export default function Onboarding() {
       setSigningIn('google');
       try {
         const res = await signInWithOAuth('google');
-        if (!('error' in res) || !res.error) return; // redirecting to Google…
+        if (!('error' in res) || !res.error) {
+          // Website: this page is about to navigate away. Installed app: the
+          // system browser opened on top — re-enable the button so a cancelled
+          // sign-in isn't a dead end (the deep link handles the success path).
+          if (Capacitor.isNativePlatform()) setTimeout(() => setSigningIn(null), 4000);
+          return;
+        }
       } catch { /* fall through to local flow */ }
       setSigningIn(null);
     }

@@ -1,4 +1,5 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { Capacitor } from '@capacitor/core';
 import type { RaceBroadcast } from './race';
 
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
@@ -17,11 +18,19 @@ export const supabase: SupabaseClient | null = isBackendLive
   : null;
 
 // Pluggable auth — Google + Apple OAuth + email/password.
+// Where the OAuth provider sends the user back to. In the installed app the
+// sign-in happens in the system browser (Google blocks WebViews), so the
+// return leg is a deep link that reopens the app — handled in authDeepLink.ts.
+// Both URLs must be listed in Supabase Auth → URL Configuration → Redirect URLs.
+export const NATIVE_OAUTH_REDIRECT = 'forgeos://auth';
+
 export async function signInWithOAuth(provider: 'google' | 'apple') {
   if (!supabase) return { error: 'mock-mode' } as const;
-  // Return to the app root (no hash) so the ?code= lands cleanly before
-  // HashRouter takes over. Add this URL to Supabase Auth → URL Configuration.
-  const redirectTo = window.location.origin + window.location.pathname;
+  // On the website: return to the app root (no hash) so the ?code= lands
+  // cleanly before HashRouter takes over.
+  const redirectTo = Capacitor.isNativePlatform()
+    ? NATIVE_OAUTH_REDIRECT
+    : window.location.origin + window.location.pathname;
   return supabase.auth.signInWithOAuth({ provider, options: { redirectTo } });
 }
 

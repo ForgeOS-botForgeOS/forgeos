@@ -30,6 +30,8 @@ import { pushCloudBackup } from './lib/cloudSync';
 import { takePendingInvite } from './lib/invite';
 import { ensureCloudAccount, pushMyActivity } from './lib/activitySync';
 import { ensureRaceSession } from './lib/raceSession';
+import { initAuthDeepLinks } from './lib/authDeepLink';
+import { syncDuels } from './lib/duelSync';
 import { toast, celebrate } from './lib/toast';
 
 // Code-split every screen so the initial route loads a small chunk.
@@ -207,9 +209,16 @@ export default function App() {
     void checkForApkUpdate().then((u) => { if (u.available) toast('Rare one-time update: this release changes the app core — grab it in You → Update 🚀', 'info'); });
     // Live social: ensure a cloud session (anonymous if needed, no signup),
     // then pull the real friend graph.
-    void ensureCloudAccount().then(() => void useSocial.getState().syncFriends());
+    void ensureCloudAccount().then(() => {
+      void useSocial.getState().syncFriends();
+      // Live duels: discover incoming challenges + opponents' progress.
+      void syncDuels();
+    });
     // Rejoin a live race channel if the app was refreshed mid-race.
     ensureRaceSession();
+    // Installed app: catch the forgeos://auth deep link that completes Google
+    // sign-in (the round-trip happens in the system browser).
+    initAuthDeepLinks();
     // Restore any live Supabase session and keep stores in sync.
     const stopAuth = initAuth();
     // Best-effort workout reminders while the app is open.
