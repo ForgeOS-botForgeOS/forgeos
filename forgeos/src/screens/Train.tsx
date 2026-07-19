@@ -11,6 +11,7 @@ import { SetRow } from '../components/train/SetRow';
 import { RestTimer } from '../components/train/RestTimer';
 import { RaceBar } from '../components/train/RaceBar';
 import { reportRaceProgress, raceWorkoutEnded } from '../lib/raceSession';
+import { reportDuelWorkout } from '../lib/duelSync';
 import { Tools } from '../components/train/Tools';
 import { Confetti } from '../components/Celebrate';
 import { toast, celebrate } from '../lib/toast';
@@ -441,6 +442,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
     raceWorkoutEnded(); // report final progress / leave an undecided race
     const res = finishWorkout();
     if (!res) return;
+    reportDuelWorkout(res.workout); // active duels advance by what you really did
     const { newPrs } = res;
     registerSession();
     bumpMetric('pr', newPrs.length);

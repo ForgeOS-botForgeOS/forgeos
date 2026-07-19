@@ -385,3 +385,33 @@ drop policy if exists "leaderboard read" on leaderboard_entries;
 create policy "leaderboard read" on leaderboard_entries for select using (
   auth.role() = 'authenticated' and (public = true or auth.uid() = user_id)
 );
+
+-- ---------- Duels (live 1v1 challenges, 2026-07-19) ----------
+-- One row per duel; each side owns one progress column. Clients compute
+-- win/lose locally (first to target, or higher total at the deadline) — the
+-- table is just the shared source of truth for both totals.
+create table if not exists duels (
+  id uuid primary key,
+  metric text not null check (metric in ('volume','sessions','sets')),
+  target numeric not null check (target > 0 and target <= 1000000),
+  challenger uuid not null references profiles(id) on delete cascade,
+  opponent uuid not null references profiles(id) on delete cascade,
+  challenger_progress numeric not null default 0 check (challenger_progress >= 0),
+  opponent_progress numeric not null default 0 check (opponent_progress >= 0),
+  ends_at timestamptz not null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+create index if not exists duels_challenger_idx on duels (challenger);
+create index if not exists duels_opponent_idx on duels (opponent);
+alter table duels enable row level security;
+drop policy if exists "duel participants read" on duels;
+create policy "duel participants read" on duels for select using (
+  auth.uid() = challenger or auth.uid() = opponent
+);
+drop policy if exists "challenger starts duel" on duels;
+create policy "challenger starts duel" on duels for insert with check (auth.uid() = challenger);
+drop policy if exists "participants update progress" on duels;
+create policy "participants update progress" on duels for update using (
+  auth.uid() = challenger or auth.uid() = opponent
+);

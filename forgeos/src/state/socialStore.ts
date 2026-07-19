@@ -42,9 +42,9 @@ interface SocialState {
   // Pull the real friend graph from the backend (no-op without one).
   syncFriends: () => Promise<void>;
   cheerFriend: (id: string) => void;
-  // duels
+  // duels — progress advances from real workouts (lib/duelSync.ts), not manually
   startDuel: (opponentName: string, opponentAvatar: string, metric: DuelMetric, target: number, days: number) => void;
-  advanceDuel: (id: string, mine: number) => void;
+  upsertDuel: (duel: Duel) => void;
   clearDuel: (id: string) => void;
   // marketplace
   buyRoutine: (id: string) => void;
@@ -215,19 +215,9 @@ export const useSocial = create<SocialState>()(
         set({ duels: [duel, ...get().duels] });
       },
 
-      advanceDuel: (id, mine) => {
-        set({
-          duels: get().duels.map((d) => {
-            if (d.id !== id || d.status !== 'active') return d;
-            const myProgress = Math.min(d.target, d.myProgress + mine);
-            // opponent grinds along too
-            const theirProgress = Math.min(d.target, d.theirProgress + Math.round(mine * (0.6 + Math.random() * 0.7)));
-            let status = d.status as Duel['status'];
-            if (myProgress >= d.target) status = 'won';
-            else if (theirProgress >= d.target) status = 'lost';
-            return { ...d, myProgress, theirProgress, status };
-          }),
-        });
+      upsertDuel: (duel) => {
+        const exists = get().duels.some((d) => d.id === duel.id);
+        set({ duels: exists ? get().duels.map((d) => (d.id === duel.id ? duel : d)) : [duel, ...get().duels] });
       },
 
       clearDuel: (id) => set({ duels: get().duels.filter((d) => d.id !== id) }),

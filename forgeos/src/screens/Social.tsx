@@ -26,6 +26,7 @@ import { generateFriendCode } from '../lib/friendCode';
 import { buildInviteLink, tryExtractInvite } from '../lib/invite';
 import { friendActivity, whenLabel } from '../lib/friendActivity';
 import { useFriendActivity } from '../lib/friendData';
+import { challengeFriend, syncDuels } from '../lib/duelSync';
 import { useT } from '../lib/i18n';
 import type { DuelMetric, FeedPost, Friend } from '../types';
 
@@ -903,21 +904,14 @@ const DUEL_LABEL: Record<DuelMetric, string> = { volume: 'kg volume', sessions: 
 function Duels() {
   const duels = useSocial((s) => s.duels);
   const friends = useSocial((s) => s.friends);
-  const startDuel = useSocial((s) => s.startDuel);
-  const advanceDuel = useSocial((s) => s.advanceDuel);
   const clearDuel = useSocial((s) => s.clearDuel);
-  const addXp = useGami((s) => s.addXp);
-  const addCoins = useGami((s) => s.addCoins);
   const [open, setOpen] = useState(false);
 
-  function onAdvance(id: string, metric: DuelMetric) {
-    const step = metric === 'volume' ? 1500 : metric === 'sets' ? 3 : 1;
-    advanceDuel(id, step);
-    haptic('tap');
-    const d = useSocial.getState().duels.find((x) => x.id === id);
-    if (d?.status === 'won') { addXp(150); addCoins(20); celebrate(); toast('Challenge won! +150 XP · 🪙20 🏆'); }
-    else if (d?.status === 'lost') { toast('Challenge lost — get them next time.', 'info'); }
-  }
+  // Discover incoming challenges + fold in opponents' synced progress whenever
+  // the tab opens. Progress itself comes from finished workouts (duelSync.ts).
+  useEffect(() => {
+    void syncDuels();
+  }, []);
 
   return (
     <div className="space-y-2">
@@ -932,20 +926,23 @@ function Duels() {
           <Card key={d.id} className="space-y-2">
             <div className="flex items-center justify-between">
               <p className="font-semibold text-sm flex items-center gap-2"><Swords size={14} className="text-accent" /> vs {d.opponentName}</p>
-              {d.status === 'won' && <Badge color="rgb(var(--success))">You won 🏆</Badge>}
-              {d.status === 'lost' && <Badge color="rgb(var(--danger))">Lost</Badge>}
-              {d.status === 'active' && <Badge>{daysLeft(d.endsAt)}</Badge>}
+              <span className="flex items-center gap-1.5">
+                {d.side != null && <Badge color="rgb(var(--accent))">LIVE</Badge>}
+                {d.status === 'won' && <Badge color="rgb(var(--success))">You won 🏆</Badge>}
+                {d.status === 'lost' && <Badge color="rgb(var(--danger))">Lost</Badge>}
+                {d.status === 'active' && <Badge>{daysLeft(d.endsAt)}</Badge>}
+              </span>
             </div>
             <p className="text-[11px] text-muted">First to {d.target.toLocaleString()} {DUEL_LABEL[d.metric]}</p>
             <DuelBar label="You" value={d.myProgress} target={d.target} me />
             <DuelBar label={d.opponentName} value={d.theirProgress} target={d.target} />
             {ended
               ? <Button variant="ghost" className="w-full justify-center" onClick={() => clearDuel(d.id)}>Clear</Button>
-              : <Button variant="ghost" className="w-full justify-center" onClick={() => onAdvance(d.id, d.metric)}>Log progress (+{d.metric === 'volume' ? '1,500 kg' : d.metric === 'sets' ? '3 sets' : '1 session'})</Button>}
+              : <p className="text-[11px] text-muted text-center py-1">💪 Progress counts automatically when you finish workouts</p>}
           </Card>
         );
       })}
-      <NewDuelSheet open={open} onClose={() => setOpen(false)} friends={friends} onStart={(f, m, target, days) => { startDuel(f.name, f.avatarSeed, m, target, days); setOpen(false); haptic('success'); }} />
+      <NewDuelSheet open={open} onClose={() => setOpen(false)} friends={friends} onStart={(f, m, target, days) => { void challengeFriend(f, m, target, days); setOpen(false); haptic('success'); }} />
     </div>
   );
 }

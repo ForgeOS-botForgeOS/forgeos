@@ -272,6 +272,10 @@ export interface Duel {
   endsAt: string;
   createdAt: string;
   status: 'active' | 'won' | 'lost';
+  /** Real friend's profile id — present only on live (Supabase-synced) duels. */
+  opponentId?: string;
+  /** Which duels-table column is mine; absent = local duel with a simulated opponent. */
+  side?: 'challenger' | 'opponent';
 }
 
 export interface FeedPost {
