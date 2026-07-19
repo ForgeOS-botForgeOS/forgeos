@@ -32,6 +32,7 @@ import { ensureCloudAccount, pushMyActivity } from './lib/activitySync';
 import { ensureRaceSession } from './lib/raceSession';
 import { initAuthDeepLinks } from './lib/authDeepLink';
 import { syncDuels } from './lib/duelSync';
+import { initLiveFeed } from './lib/liveFeed';
 import { toast, celebrate } from './lib/toast';
 
 // Code-split every screen so the initial route loads a small chunk.
@@ -61,6 +62,7 @@ const Download = lazy(() => import('./screens/Download'));
 const ImportProgress = lazy(() => import('./screens/ImportProgress'));
 const AddFriend = lazy(() => import('./screens/AddFriend'));
 const RaceJoin = lazy(() => import('./screens/RaceJoin'));
+const Wrapped = lazy(() => import('./screens/Wrapped'));
 
 // Left→right order of the bottom tabs; swiping moves to the neighbour.
 const TAB_ORDER = ['/home', '/train', '/nutrition', '/social', '/quests', '/profile'];
@@ -213,6 +215,8 @@ export default function App() {
       void useSocial.getState().syncFriends();
       // Live duels: discover incoming challenges + opponents' progress.
       void syncDuels();
+      // Live feed: friends' new posts stream in (needs the session for RLS).
+      initLiveFeed();
     });
     // Rejoin a live race channel if the app was refreshed mid-race.
     ensureRaceSession();
@@ -293,6 +297,7 @@ export default function App() {
             <Route path="/race-join" element={<RaceJoin />} />
             <Route path="/u" element={<PublicProfile />} />
             <Route path="/quote/:id" element={<QuoteDeepDive />} />
+            <Route path="/wrapped" element={<Wrapped />} />
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>

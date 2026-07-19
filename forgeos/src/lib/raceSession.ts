@@ -4,7 +4,7 @@ import {
   hasFinished, newRaceConfig, raceEndsAt, resolveWinner,
   type RaceBroadcast, type RaceConfig, type RaceMode,
 } from './race';
-import { sharedToExercises } from './workoutShare';
+import { sharedToExercises, type SharedWorkout } from './workoutShare';
 import { useRace } from '../state/raceStore';
 import { useWorkout, computeVolume } from '../state/workoutStore';
 import { useUser } from '../state/userStore';
@@ -55,9 +55,17 @@ function attachChannel(config: RaceConfig, me: RaceBroadcast): boolean {
   return channel != null;
 }
 
+/** Same rules, fresh race, me as host — back to the lobby for another round. */
+export function rematchRace(): RaceConfig | null {
+  const a = useRace.getState().active;
+  if (!a) return null;
+  const { mode, targetKg, durationMin, workout } = a.config;
+  return createRace(mode, { targetKg, durationMin, workout });
+}
+
 export function createRace(
   mode: RaceMode,
-  opts: { targetKg?: number; durationMin?: number; workout?: Workout } = {},
+  opts: { targetKg?: number; durationMin?: number; workout?: Workout | SharedWorkout } = {},
 ): RaceConfig | null {
   const me = myIdentity();
   const config = newRaceConfig(mode, { id: me.userId, name: me.name }, opts);
@@ -180,6 +188,14 @@ function finalizeOutcome(): void {
   const me = myIdentity();
   const iWon = winner.userId === me.userId;
   const gami = useGami.getState();
+  // All-time rivalry record: a win counts against every rival in the race,
+  // a loss only against whoever beat you.
+  const social = useSocial.getState();
+  if (iWon) {
+    Object.values(a.racers).forEach((r) => { if (r.userId !== me.userId) social.recordRivalry(r.name, 'win'); });
+  } else {
+    social.recordRivalry(winner.name, 'loss');
+  }
   if (iWon) {
     gami.addXp(WINNER_XP);
     gami.addCoins(WINNER_COINS);

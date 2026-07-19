@@ -415,3 +415,9 @@ drop policy if exists "participants update progress" on duels;
 create policy "participants update progress" on duels for update using (
   auth.uid() = challenger or auth.uid() = opponent
 );
+
+-- Live feed (2026-07-19): stream new feed_posts to subscribed clients.
+-- RLS still applies — subscribers only receive rows they're allowed to read.
+do $$ begin
+  alter publication supabase_realtime add table feed_posts;
+exception when duplicate_object then null; end $$;

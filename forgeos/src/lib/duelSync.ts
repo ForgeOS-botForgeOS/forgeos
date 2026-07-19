@@ -35,6 +35,7 @@ const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/
 
 function payoutIfJustSettled(previousStatus: Duel['status'], d: Duel): void {
   if (previousStatus !== 'active' || d.status === 'active') return;
+  useSocial.getState().recordRivalry(d.opponentName, d.status === 'won' ? 'win' : 'loss');
   if (d.status === 'won') {
     useGami.getState().addXp(DUEL_WIN_XP);
     useGami.getState().addCoins(DUEL_WIN_COINS);
@@ -147,6 +148,15 @@ export async function syncDuels(): Promise<void> {
         const theirTotal = Number(side === 'challenger' ? raw.opponent_progress : raw.challenger_progress);
         const existing = merged.find((d) => d.id === raw.id);
         if (existing) {
+          // A rival sneaking past you deserves a heads-up.
+          if (
+            existing.status === 'active' &&
+            existing.theirProgress <= existing.myProgress &&
+            theirTotal > existing.myProgress &&
+            theirTotal < existing.target
+          ) {
+            toast(`⚔️ ${existing.opponentName} just passed you — ${Math.round(theirTotal).toLocaleString()} vs ${Math.round(existing.myProgress).toLocaleString()}`, 'info');
+          }
           merged = merged.map((d) => (d.id === raw.id ? mergeTheirProgress(d, theirTotal) : d));
         } else {
           // A challenge from a friend we haven't seen yet — mirror it locally.

@@ -28,7 +28,7 @@ import { friendActivity, whenLabel } from '../lib/friendActivity';
 import { useFriendActivity } from '../lib/friendData';
 import { challengeFriend, syncDuels } from '../lib/duelSync';
 import { useT } from '../lib/i18n';
-import type { DuelMetric, FeedPost, Friend } from '../types';
+import type { Duel, DuelMetric, FeedPost, Friend } from '../types';
 
 const REACTIONS = ['🔥', '💪', '👏', '🐐', '🧠'];
 type Tab = 'feed' | 'friends' | 'race' | 'market';
@@ -901,11 +901,31 @@ function LiveRace() {
 
 const DUEL_LABEL: Record<DuelMetric, string> = { volume: 'kg volume', sessions: 'sessions', sets: 'sets' };
 
+function rivalryLabel(record: { wins: number; losses: number } | undefined, rival: string): string | null {
+  if (!record || record.wins + record.losses === 0) return null;
+  if (record.wins > record.losses) return `You lead ${record.wins}–${record.losses}`;
+  if (record.losses > record.wins) return `${rival} leads ${record.losses}–${record.wins}`;
+  return `Tied ${record.wins}–${record.losses}`;
+}
+
 function Duels() {
   const duels = useSocial((s) => s.duels);
   const friends = useSocial((s) => s.friends);
   const clearDuel = useSocial((s) => s.clearDuel);
+  const rivalry = useSocial((s) => s.rivalry);
   const [open, setOpen] = useState(false);
+
+  function rematch(d: Duel) {
+    const friend = friends.find((f) => f.id === d.opponentId) ?? {
+      // Local/simulated rival — a pseudo-friend routes challengeFriend to the local path.
+      id: d.opponentId ?? 'local', name: d.opponentName, avatarSeed: d.opponentAvatar, rank: '', xp: 0, online: false,
+    };
+    const days = Math.max(1, Math.round((new Date(d.endsAt).getTime() - new Date(d.createdAt).getTime()) / 86_400_000));
+    void challengeFriend(friend, d.metric, d.target, days);
+    clearDuel(d.id);
+    haptic('success');
+    toast(`Rematch vs ${d.opponentName} is on ⚔️`, 'success');
+  }
 
   // Discover incoming challenges + fold in opponents' synced progress whenever
   // the tab opens. Progress itself comes from finished workouts (duelSync.ts).
@@ -933,11 +953,19 @@ function Duels() {
                 {d.status === 'active' && <Badge>{daysLeft(d.endsAt)}</Badge>}
               </span>
             </div>
-            <p className="text-[11px] text-muted">First to {d.target.toLocaleString()} {DUEL_LABEL[d.metric]}</p>
+            <p className="text-[11px] text-muted">
+              First to {d.target.toLocaleString()} {DUEL_LABEL[d.metric]}
+              {rivalryLabel(rivalry[d.opponentName], d.opponentName) && <> · {rivalryLabel(rivalry[d.opponentName], d.opponentName)}</>}
+            </p>
             <DuelBar label="You" value={d.myProgress} target={d.target} me />
             <DuelBar label={d.opponentName} value={d.theirProgress} target={d.target} />
             {ended
-              ? <Button variant="ghost" className="w-full justify-center" onClick={() => clearDuel(d.id)}>Clear</Button>
+              ? (
+                <div className="flex gap-2">
+                  <Button className="flex-1 justify-center" onClick={() => rematch(d)}>Rematch ⚔️</Button>
+                  <Button variant="ghost" className="flex-1 justify-center" onClick={() => clearDuel(d.id)}>Clear</Button>
+                </div>
+              )
               : <p className="text-[11px] text-muted text-center py-1">💪 Progress counts automatically when you finish workouts</p>}
           </Card>
         );

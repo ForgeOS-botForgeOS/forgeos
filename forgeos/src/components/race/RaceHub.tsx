@@ -8,7 +8,7 @@ import {
   progressFraction, raceRuleText, shareRaceInvite,
   TIMED_DURATIONS_MIN, VOLUME_TARGETS_KG, type RaceMode,
 } from '../../lib/race';
-import { createRace, ensureRaceSession, leaveRace, startRace } from '../../lib/raceSession';
+import { createRace, ensureRaceSession, leaveRace, rematchRace, startRace } from '../../lib/raceSession';
 import { haptic } from '../../lib/haptics';
 import { toast } from '../../lib/toast';
 import { useT } from '../../lib/i18n';
@@ -176,7 +176,13 @@ function RaceStatus({ active }: { active: ActiveRace }) {
         <Button className="w-full justify-center" onClick={() => navigate('/train')}>{t('s.raceOpenTrain')}</Button>
       )}
       {status === 'done' && (
-        <Button className="w-full justify-center" onClick={() => leaveRace()}>{t('common.finish')}</Button>
+        <div className="flex gap-2">
+          <Button className="flex-1 justify-center" onClick={() => {
+            const next = rematchRace();
+            if (next) void shareRaceInvite(next).then((how) => toast(how === 'copied' ? 'Rematch invite copied 🏁' : 'Rematch invite sent 🏁', 'success'));
+          }}>Rematch 🏁</Button>
+          <Button variant="ghost" className="flex-1 justify-center" onClick={() => leaveRace()}>{t('common.finish')}</Button>
+        </div>
       )}
     </Card>
   );

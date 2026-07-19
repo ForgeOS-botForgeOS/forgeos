@@ -46,6 +46,9 @@ interface SocialState {
   startDuel: (opponentName: string, opponentAvatar: string, metric: DuelMetric, target: number, days: number) => void;
   upsertDuel: (duel: Duel) => void;
   clearDuel: (id: string) => void;
+  // all-time win/loss per rival (duels + races), keyed by rival name
+  rivalry: Record<string, { wins: number; losses: number }>;
+  recordRivalry: (rivalName: string, outcome: 'win' | 'loss') => void;
   // marketplace
   buyRoutine: (id: string) => void;
   publishRoutine: (r: { title: string; priceCoins: number; focus: string; plan: WeekPlan; author: string; authorRank: string }) => void;
@@ -221,6 +224,15 @@ export const useSocial = create<SocialState>()(
       },
 
       clearDuel: (id) => set({ duels: get().duels.filter((d) => d.id !== id) }),
+
+      rivalry: {},
+      recordRivalry: (rivalName, outcome) => {
+        const current = get().rivalry[rivalName] ?? { wins: 0, losses: 0 };
+        const next = outcome === 'win'
+          ? { ...current, wins: current.wins + 1 }
+          : { ...current, losses: current.losses + 1 };
+        set({ rivalry: { ...get().rivalry, [rivalName]: next } });
+      },
 
       // ---- Marketplace ----
       buyRoutine: (id) => {

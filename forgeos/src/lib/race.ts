@@ -50,7 +50,8 @@ export function countSets(w: SharedWorkout): number {
 export function newRaceConfig(
   mode: RaceMode,
   host: { id: string; name: string },
-  opts: { targetKg?: number; durationMin?: number; workout?: Workout } = {},
+  // A rematch passes the previous race's already-shared workout back in.
+  opts: { targetKg?: number; durationMin?: number; workout?: Workout | SharedWorkout } = {},
 ): RaceConfig | null {
   const raceId = uid();
   const base = { raceId, hostId: host.id, hostName: host.name };
@@ -65,7 +66,7 @@ export function newRaceConfig(
     return { ...base, mode, durationMin };
   }
   if (!opts.workout || opts.workout.exercises.length === 0) return null;
-  const shared = toSharedWorkout(opts.workout);
+  const shared = 'id' in opts.workout ? toSharedWorkout(opts.workout) : opts.workout;
   if (countSets(shared) === 0) return null;
   return { ...base, mode, workout: shared, totalSets: countSets(shared) };
 }

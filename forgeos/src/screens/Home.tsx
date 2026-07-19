@@ -8,6 +8,8 @@ import { CountUp } from '../components/CountUp';
 import { DailyQuote } from '../components/DailyQuote';
 import { InstallButton } from '../components/InstallButton';
 import { WeeklyRecap } from '../components/WeeklyRecap';
+import { WeeklyReviewCard } from '../components/WeeklyReviewCard';
+import { WrappedTeaser } from '../components/WrappedTeaser';
 import { useT } from '../lib/i18n';
 import { useUser } from '../state/userStore';
 import { useNutrition } from '../state/nutritionStore';
@@ -154,6 +156,9 @@ export default function Home() {
         </Card>
 
         {/* Week in review */}
+        {/* Fresh-month recap teaser + Monday look-back at the completed week */}
+        <WrappedTeaser />
+        <WeeklyReviewCard />
         <WeeklyRecap />
 
         {/* Weekly volume */}
