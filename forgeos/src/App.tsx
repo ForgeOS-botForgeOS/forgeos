@@ -206,7 +206,7 @@ export default function App() {
     // APK updates: OTA-capable builds pull new web bundles silently
     // (checkForApkUpdate triggers that sync); the nudge only fires when a
     // native change genuinely needs a fresh APK. No-op on the website.
-    void checkForApkUpdate().then((u) => { if (u.available) toast('Rare one-time update: this release changes the app core — grab it in You → Update 🚀', 'info'); });
+    void checkForApkUpdate().then((u) => { if (u.available) toast('Core update ready — one tap in You → Update installs it 🚀', 'info'); });
     // Live social: ensure a cloud session (anonymous if needed, no signup),
     // then pull the real friend graph.
     void ensureCloudAccount().then(() => {

@@ -6,6 +6,7 @@ import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/u
 import { pushMyActivity } from '../lib/activitySync';
 import { configureBackgroundSync } from '../lib/healthConnect';
 import { checkForApkUpdate } from '../lib/appUpdate';
+import { installApkUpdate } from '../lib/webUpdate';
 import { useHealth } from '../state/healthStore';
 import { useSettings } from '../state/settingsStore';
 import { useUser } from '../state/userStore';
@@ -72,7 +73,19 @@ export default function Profile() {
   const [cloudConfirm, setCloudConfirm] = useState(false);
   const backupFileRef = useRef<HTMLInputElement>(null);
   const [updateReady, setUpdateReady] = useState(false);
+  const [updating, setUpdating] = useState(false);
   useEffect(() => { void checkForApkUpdate().then((u) => setUpdateReady(u.available)); }, []);
+
+  // One-tap core update: the app downloads the APK itself and Android's
+  // installer takes over. Old APKs without the native method fall back to the
+  // classic download page.
+  async function handleApkUpdate() {
+    setUpdating(true);
+    toast('Getting the update… Android will ask you to confirm 📲', 'info');
+    const started = await installApkUpdate();
+    setUpdating(false);
+    if (!started) navigate('/download');
+  }
   const equippedTitle = useCosmetics((c) => c.equippedTitle);
   const equippedFrame = useCosmetics((c) => c.equippedFrame);
   const ownedCosmetics = useCosmetics((c) => c.owned);
@@ -161,10 +174,10 @@ export default function Profile() {
         <Card className="border-accent/40 bg-accent/5 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center shrink-0"><Download size={18} className="text-accent" /></div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold">One-time update needed</p>
-            <p className="text-[11px] text-muted">Normal updates install themselves — this one changes the app's core and needs a single download.</p>
+            <p className="text-sm font-semibold">Core update ready</p>
+            <p className="text-[11px] text-muted">Tap Update — the app fetches it and Android asks to confirm the install. Nothing is lost.</p>
           </div>
-          <Button onClick={() => navigate('/download')}>Update</Button>
+          <Button disabled={updating} onClick={() => { void handleApkUpdate(); }}>{updating ? 'Getting it…' : 'Update'}</Button>
         </Card>
       )}
 

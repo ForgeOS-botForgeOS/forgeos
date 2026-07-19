@@ -1,6 +1,8 @@
 package com.forgeos.app
 
 import android.content.Context
+import android.content.Intent
+import androidx.core.content.FileProvider
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
 import com.getcapacitor.PluginCall
@@ -40,7 +42,7 @@ class WebUpdatePlugin : Plugin() {
     companion object {
         // Bump whenever android/ code changes in a way the web bundle depends on.
         // CI greps this value into version.json.
-        const val NATIVE_VERSION = 6
+        const val NATIVE_VERSION = 7
 
         const val PREFS = "forgeos-webupdate"
         const val KEY_PATH = "path"
@@ -51,6 +53,8 @@ class WebUpdatePlugin : Plugin() {
             "https://github.com/ForgeOS-botForgeOS/forgeos/releases/download/app-latest/version.json"
         const val ZIP_URL =
             "https://github.com/ForgeOS-botForgeOS/forgeos/releases/download/app-latest/web.zip"
+        const val APK_URL =
+            "https://github.com/ForgeOS-botForgeOS/forgeos/releases/download/app-latest/forgeos.apk"
 
         /** Bundle dir to serve on boot, or null for the built-in assets. */
         fun bootPath(context: Context): String? {
@@ -134,6 +138,35 @@ class WebUpdatePlugin : Plugin() {
         }
     }
 
+    /**
+     * Self-update the APK: download the newest release and hand it to Android's
+     * package installer. The system shows its own confirmation UI — nothing
+     * installs silently — and it verifies the new APK is signed with the same
+     * key as the installed app, which is the integrity check that matters.
+     * Resolves { started } once the installer has been launched.
+     */
+    @PluginMethod
+    fun installApkUpdate(call: PluginCall) {
+        scope.launch {
+            try {
+                val dir = File(context.cacheDir, "apk-updates")
+                if (dir.exists()) dir.deleteRecursively()
+                dir.mkdirs()
+                val apk = File(dir, "forgeos.apk")
+                downloadToFile(APK_URL, apk)
+                val uri = FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", apk)
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/vnd.android.package-archive")
+                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_ACTIVITY_NEW_TASK)
+                }
+                context.startActivity(intent)
+                call.resolve(JSObject().put("started", true))
+            } catch (e: Exception) {
+                call.resolve(JSObject().put("started", false))
+            }
+        }
+    }
+
     private fun prefs() = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
     private fun fetchText(url: String) = fetchBytes(url).toString(Charsets.UTF_8)
@@ -146,6 +179,20 @@ class WebUpdatePlugin : Plugin() {
         try {
             if (conn.responseCode != 200) throw IllegalStateException("HTTP ${conn.responseCode}")
             return conn.inputStream.use { it.readBytes() }
+        } finally {
+            conn.disconnect()
+        }
+    }
+
+    /** Stream a download straight to disk (APKs are too big to buffer in RAM). */
+    private fun downloadToFile(url: String, out: File) {
+        val conn = URL(url).openConnection() as HttpURLConnection
+        conn.connectTimeout = 15_000
+        conn.readTimeout = 120_000
+        conn.instanceFollowRedirects = true
+        try {
+            if (conn.responseCode != 200) throw IllegalStateException("HTTP ${conn.responseCode}")
+            conn.inputStream.use { input -> FileOutputStream(out).use { input.copyTo(it) } }
         } finally {
             conn.disconnect()
         }

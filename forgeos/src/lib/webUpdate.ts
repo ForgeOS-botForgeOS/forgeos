@@ -18,6 +18,7 @@ export interface WebUpdateResult {
 interface WebUpdateNative {
   confirmBoot(): Promise<void>;
   sync(opts: { currentSha: string }): Promise<WebUpdateResult>;
+  installApkUpdate(): Promise<{ started: boolean }>;
 }
 
 const WebUpdate = registerPlugin<WebUpdateNative>('WebUpdate');
@@ -60,3 +61,19 @@ export function syncWebUpdate(): Promise<WebUpdateResult> {
 
 /** Whether this build runs inside an APK that has the OTA updater. */
 export const hasWebUpdater = available;
+
+/**
+ * In-app APK self-update: the native side downloads the newest APK and opens
+ * Android's install confirmation. Resolves false when this APK is too old to
+ * have the method (pre-v1.0.68), we're not in the app, or the download failed —
+ * callers should then fall back to the classic download page.
+ */
+export async function installApkUpdate(): Promise<boolean> {
+  if (!available()) return false;
+  try {
+    const r = await WebUpdate.installApkUpdate();
+    return Boolean(r.started);
+  } catch {
+    return false;
+  }
+}

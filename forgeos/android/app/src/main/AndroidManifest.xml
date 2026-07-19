@@ -64,6 +64,9 @@
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- In-app APK self-update: lets the app hand a downloaded update to the
+         system installer (the user still confirms every install). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
     <!-- Health Connect: read-only access to the data Garmin Connect writes. -->
     <uses-permission android:name="android.permission.health.READ_SLEEP" />

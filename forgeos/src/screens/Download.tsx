@@ -6,6 +6,7 @@ import { Card, Button, Badge } from '../components/ui';
 import { ForgeLogo } from '../components/ForgeLogo';
 import { InstallButton } from '../components/InstallButton';
 import { fetchLatestApkVersion, checkForApkUpdate } from '../lib/appUpdate';
+import { installApkUpdate } from '../lib/webUpdate';
 
 // The APK is published by CI to a rolling GitHub release. Distribution is
 // website-only (no app stores) — this page is the single download point.
@@ -30,6 +31,15 @@ export default function Download() {
 
   // Website (or a pending native update): offer the APK. Up-to-date app: don't.
   const showApkDownload = !isInstalledApp || nativeUpdate;
+  const [updating, setUpdating] = useState(false);
+
+  async function handleInstallUpdate() {
+    setUpdating(true);
+    const started = await installApkUpdate();
+    setUpdating(false);
+    // APK too old for in-app install → classic browser download.
+    if (!started) window.location.href = APK_URL;
+  }
 
   async function shareLink() {
     const nav = navigator as Navigator & { share?: (d: { title?: string; text?: string; url?: string }) => Promise<void> };
@@ -88,11 +98,17 @@ export default function Download() {
           </div>
         )}
         <p className="text-[11px] text-muted text-center">{showApkDownload ? 'Scan with your phone, or tap to download.' : 'Scan with the other phone to download ForgeOS there.'}</p>
-        {showApkDownload && (
+        {showApkDownload && (isInstalledApp ? (
+          // Inside the app: self-update — download + system install prompt in one
+          // tap. Old APKs without the native method fall back to the plain link.
+          <Button disabled={updating} className="w-full justify-center gap-2" onClick={() => { void handleInstallUpdate(); }}>
+            <DownloadIcon size={16} /> {updating ? 'Getting the update…' : 'Install the update'}
+          </Button>
+        ) : (
           <a href={APK_URL}>
-            <Button className="w-full justify-center gap-2"><DownloadIcon size={16} /> {isInstalledApp ? 'Download the update' : 'Download Android app'}</Button>
+            <Button className="w-full justify-center gap-2"><DownloadIcon size={16} /> Download Android app</Button>
           </a>
-        )}
+        ))}
         {/* The direct download link, shown so you can copy/share it anywhere. */}
         <button onClick={shareLink} className="w-full flex items-center justify-between gap-2 rounded-xl bg-surface-2 border border-line px-3 py-2.5 text-left active:scale-[0.99] transition">
           <span className="text-[11px] text-muted truncate font-mono">{APK_URL}</span>
