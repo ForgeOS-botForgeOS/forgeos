@@ -30,8 +30,14 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { shareProfile, generateProfileCard, type PublicProfile } from '../lib/profileShare';
 import { downloadDataUrl } from '../lib/shareCard';
 import { EXERCISES } from '../data/exercises';
-import type { ThemeId } from '../types';
+import type { DesignMode, ThemeId } from '../types';
 import { haptic } from '../lib/haptics';
+
+const DESIGN_MODES: { id: DesignMode; name: string; emoji: string; desc: string }[] = [
+  { id: 'classic', name: 'Classic', emoji: '⚙️', desc: 'The original — flat & functional' },
+  { id: 'forge', name: 'Forge', emoji: '🔥', desc: 'Tempered metal, ember heat & depth' },
+  { id: 'aurora', name: 'Aurora', emoji: '✨', desc: 'Airy & soft — a modern consumer feel' },
+];
 
 const THEMES: { id: ThemeId; name: string; locked: boolean; unlockRank: string }[] = [
   { id: 'forge-dark', name: 'Forge Dark', locked: false, unlockRank: '' },
@@ -250,12 +256,27 @@ export default function Profile() {
           </div>
           <Toggle checked={s.autoTheme} onChange={(v) => s.set('autoTheme', v)} />
         </div>
-        <div className="flex items-center justify-between mt-2">
-          <div>
-            <p className="text-sm flex items-center gap-1.5">New design <span className="text-[10px] rounded-full bg-accent/15 text-accent px-1.5 py-0.5 font-semibold">v2</span></p>
-            <p className="text-[11px] text-muted">Redesigned, more animated look · off = the classic app</p>
+        <div className="mt-3">
+          <p className="text-sm font-medium mb-2 flex items-center gap-1.5">App design <span className="text-[10px] rounded-full bg-accent/15 text-accent px-1.5 py-0.5 font-semibold">NEW</span></p>
+          <div className="space-y-2" data-noswipe>
+            {DESIGN_MODES.map((m) => {
+              const active = s.designMode === m.id;
+              return (
+                <button
+                  key={m.id}
+                  onClick={() => { s.set('designMode', m.id); haptic('tap'); }}
+                  className={`w-full text-left rounded-xl border px-4 py-3 flex items-center gap-3 transition active:scale-[0.99] ${active ? 'border-accent ring-1 ring-accent bg-accent/5' : 'border-line bg-surface hover:bg-surface-2'}`}
+                >
+                  <span className="text-xl shrink-0">{m.emoji}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="text-sm font-semibold block">{m.name}</span>
+                    <span className="text-[11px] text-muted block">{m.desc}</span>
+                  </span>
+                  <span className={`w-4 h-4 rounded-full border-2 shrink-0 ${active ? 'border-accent bg-accent' : 'border-line'}`} />
+                </button>
+              );
+            })}
           </div>
-          <Toggle checked={s.uiPolish} onChange={(v) => { s.set('uiPolish', v); haptic('tap'); }} />
         </div>
       </div>
 

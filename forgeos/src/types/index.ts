@@ -435,6 +435,11 @@ export interface AppLock {
   code: string; // local passcode (app lock, not account auth)
 }
 
+// Design mode = the visual language, orthogonal to the colour `theme`.
+// 'classic' = the original flat UI · 'forge' = heavy tempered-metal redesign ·
+// 'aurora' = airy, soft-elevation, floating-nav consumer look.
+export type DesignMode = 'classic' | 'forge' | 'aurora';
+
 export interface Settings {
   language: Language;
   gym: GymConfig;
@@ -446,7 +451,7 @@ export interface Settings {
   reminder: ReminderConfig;
   theme: ThemeId;
   autoTheme: boolean; // day = light, night = dark
-  uiPolish: boolean; // "Fresh look" — a cleaner, more layered visual style (off = classic)
+  designMode: DesignMode; // visual language: classic · forge · aurora
   quoteGenre: QuoteGenrePref;
   leaderboardPublic: boolean;
   shareActivity: boolean; // let friends see your real workout activity (live backend)

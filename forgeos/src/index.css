@@ -409,3 +409,90 @@ button {
   border-color: rgb(var(--accent) / 0.6);
   box-shadow: 0 0 0 3px rgb(var(--accent) / 0.16);
 }
+
+/* ============================================================================
+   "Aurora" — the third design: airy, soft-elevation, modern-consumer (the iOS /
+   Airbnb / Things energy). Big rounding, a floating pill nav, clean pill
+   actions, gentle diffuse shadows, calm light. Deliberately the opposite of
+   Forge's heavy metal. Same hook classes, driven by the theme variables so it
+   works on every colour theme; remove `.ui-aurora` and the classic app returns.
+   ========================================================================== */
+
+/* Calm, luminous backdrop — a soft overhead light + a faint accent bloom */
+.ui-aurora #phone-root {
+  background-image:
+    radial-gradient(120% 70% at 50% -12%, rgb(var(--accent) / 0.09), transparent 60%),
+    linear-gradient(180deg, rgb(var(--surface-2) / 0.5), transparent 34%);
+}
+
+/* Big, soft, floating cards — minimal border, generous radius, diffuse shadow */
+.ui-aurora .fx-card {
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.04), transparent 60%);
+  border-color: rgb(var(--line) / 0.45);
+  border-radius: 26px;
+  box-shadow:
+    0 1px 1px rgb(0 0 0 / 0.12),
+    0 12px 32px -16px rgb(0 0 0 / 0.42);
+  transition:
+    transform 260ms var(--ease-out-quart),
+    box-shadow 260ms var(--ease-out-quart);
+}
+@media (hover: hover) {
+  .ui-aurora .fx-card.cursor-pointer:hover {
+    transform: translateY(-2px) scale(1.006);
+    box-shadow:
+      0 2px 2px rgb(0 0 0 / 0.12),
+      0 18px 42px -18px rgb(0 0 0 / 0.48);
+  }
+}
+
+/* Primary actions become clean, confident pills */
+.ui-aurora .fx-primary {
+  border-radius: 999px;
+  box-shadow: 0 6px 18px -6px rgb(var(--accent) / 0.5);
+}
+
+/* Floating pill navigation — Aurora's signature move */
+.ui-aurora .fx-tabbar {
+  margin: 0 0.75rem calc(0.6rem + env(safe-area-inset-bottom));
+  padding-bottom: 0;
+  border: 1px solid rgb(var(--line) / 0.5);
+  border-radius: 26px;
+  background-color: rgb(var(--surface) / 0.8);
+  backdrop-filter: blur(22px) saturate(160%);
+  -webkit-backdrop-filter: blur(22px) saturate(160%);
+  box-shadow: 0 14px 34px -14px rgb(0 0 0 / 0.5);
+}
+
+/* Softer, rounder bottom sheets */
+.ui-aurora .fx-sheet {
+  border-radius: 28px 28px 0 0;
+  border-top-color: rgb(var(--line) / 0.5);
+  box-shadow: 0 -20px 60px -24px rgb(0 0 0 / 0.5);
+}
+
+/* Big, tight, confident titles */
+.ui-aurora .screen-head h1 {
+  font-size: 1.85rem;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  font-weight: 800;
+}
+.ui-aurora h2 {
+  letter-spacing: -0.02em;
+}
+
+/* Rounder inputs with a soft focus glow */
+.ui-aurora input,
+.ui-aurora textarea,
+.ui-aurora select {
+  border-radius: 14px;
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.ui-aurora input:focus,
+.ui-aurora textarea:focus,
+.ui-aurora select:focus {
+  outline: none;
+  border-color: rgb(var(--accent) / 0.55);
+  box-shadow: 0 0 0 4px rgb(var(--accent) / 0.12);
+}
