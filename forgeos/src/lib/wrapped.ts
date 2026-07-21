@@ -25,7 +25,7 @@ export function lastCompletedMonth(now: number): { year: number; monthIndex: num
 }
 
 /** Stats for one calendar month. Null when it had no finished workouts. */
-export function buildWrapped(history: Workout[], prs: PR[], year: number, monthIndex: number): WrappedStats | null {
+export function buildWrapped(history: Workout[], prs: PR[], year: number, monthIndex: number, locale = 'en-GB'): WrappedStats | null {
   const inMonth = (iso: string) => {
     const d = new Date(iso);
     return d.getFullYear() === year && d.getMonth() === monthIndex;
@@ -59,7 +59,7 @@ export function buildWrapped(history: Workout[], prs: PR[], year: number, monthI
   }
 
   return {
-    monthLabel: new Date(year, monthIndex, 1).toLocaleDateString('en-GB', { month: 'long', year: 'numeric' }),
+    monthLabel: new Date(year, monthIndex, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' }),
     monthKey: `${year}-${String(monthIndex + 1).padStart(2, '0')}`,
     sessions: month.length,
     volumeKg: Math.round(volumeKg),

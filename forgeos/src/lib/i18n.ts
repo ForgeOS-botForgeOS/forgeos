@@ -136,6 +136,73 @@ const EN: Dict = {
   's.raceOffline': 'offline',
   's.raceWinner': 'Winner',
   's.raceInProgress': 'Race in progress',
+  // duels
+  'duel.btn': 'Duel',
+  'duel.challengeSent': 'Challenge sent to {name} ⚔️',
+  'duel.rematchOn': 'Rematch vs {name} is on ⚔️',
+  'duel.weeklyChallenges': 'Weekly challenges',
+  'duel.new': 'New',
+  'duel.none': 'No active challenges. Throw down a gauntlet 🥊',
+  'duel.vs': 'vs {name}',
+  'duel.live': 'LIVE',
+  'duel.won': 'You won 🏆',
+  'duel.lost': 'Lost',
+  'duel.firstTo': 'First to {target} {metric}',
+  'duel.you': 'You',
+  'duel.rematch': 'Rematch ⚔️',
+  'duel.clear': 'Clear',
+  'duel.autoProgress': '💪 Progress counts automatically when you finish workouts',
+  'duel.ending': 'ending',
+  'duel.daysLeft': '{n}d left',
+  'duel.metric.volume': 'kg volume',
+  'duel.metric.sets': 'sets',
+  'duel.metric.sessions': 'sessions',
+  'duel.metricName.volume': 'volume',
+  'duel.metricName.sets': 'sets',
+  'duel.metricName.sessions': 'sessions',
+  'duel.youLead': 'You lead {w}–{l}',
+  'duel.rivalLeads': '{rival} leads {l}–{w}',
+  'duel.tied': 'Tied {w}–{l}',
+  'duel.newTitle': 'New challenge',
+  'duel.newIntro': 'Pick a friend and a target. Whoever hits it first in {days} days wins XP + coins.',
+  'duel.opponent': 'Opponent',
+  'duel.metricLabel': 'Metric',
+  'duel.duration': 'Duration: {days} days',
+  'duel.startBtn': 'First to {target} {metric} · {days}d',
+  // weekly review
+  'wr.coachReview': 'Coach review · {week}',
+  'wr.dismiss': 'Dismiss weekly review',
+  'wr.recoveryUp': 'Recovery trended up through the week',
+  'wr.recoveryDown': 'Recovery trended down through the week',
+  'wr.best': 'best: {name} {kg} kg',
+  'wr.session.one': '{n} session',
+  'wr.session.other': '{n} sessions',
+  'wr.pr.one': '{n} PR',
+  'wr.pr.other': '{n} PRs',
+  'wr.focus.recoveryDown': 'Recovery is trending down — keep one or two sessions deliberately light this week.',
+  'wr.focus.volumeDip': 'Volume dipped — lock in your planned sessions before adding anything new.',
+  'wr.focus.chasePR': 'Volume is climbing and no PR fell — pick one lift and go chase it this week.',
+  'wr.focus.ridePRs': 'PRs are dropping — ride the wave, add 2.5 kg where last week felt easy.',
+  'wr.focus.keepRhythm': 'Keep the rhythm: same training days, +2.5 kg wherever last week felt easy.',
+  // forge wrapped
+  'wrap.title': 'Forge Wrapped 🎁',
+  'wrap.subtitleEmpty': 'Your month in iron',
+  'wrap.teaserReady': 'Your {month} Wrapped is ready 🎁',
+  'wrap.dismissTeaser': 'Dismiss Wrapped teaser',
+  'wrap.tapRelive': 'tap to relive it',
+  'wrap.empty': 'No finished workouts last month — this month is the one to wrap.',
+  'wrap.totalVolume': 'total volume',
+  'wrap.moved': 'that’s what you moved in {month} 💪',
+  'wrap.lblSessions': 'sessions',
+  'wrap.lblSets': 'working sets',
+  'wrap.lblHours': 'hours under the bar',
+  'wrap.lblPRs': 'PRs',
+  'wrap.bestLift': 'Best lift:',
+  'wrap.cardBest': 'best {name} {kg} kg',
+  'wrap.favourite': 'Favourite:',
+  'wrap.saveCard': 'Save the share card',
+  'wrap.cardError': 'Could not render the card',
+  'wrap.cardSaved': 'Wrapped card saved 🎁',
 };
 
 const SK: Dict = {
@@ -269,18 +336,138 @@ const SK: Dict = {
   's.raceOffline': 'offline',
   's.raceWinner': 'Víťaz',
   's.raceInProgress': 'Preteky prebiehajú',
+  // duels
+  'duel.btn': 'Súboj',
+  'duel.challengeSent': 'Výzva odoslaná pre {name} ⚔️',
+  'duel.rematchOn': 'Odveta proti {name} beží ⚔️',
+  'duel.weeklyChallenges': 'Týždenné výzvy',
+  'duel.new': 'Nová',
+  'duel.none': 'Žiadne aktívne výzvy. Hoď rukavicu 🥊',
+  'duel.vs': 'proti {name}',
+  'duel.live': 'NAŽIVO',
+  'duel.won': 'Vyhral si 🏆',
+  'duel.lost': 'Prehra',
+  'duel.firstTo': 'Prvý na {target} {metric}',
+  'duel.you': 'Ty',
+  'duel.rematch': 'Odveta ⚔️',
+  'duel.clear': 'Zmazať',
+  'duel.autoProgress': '💪 Postup sa počíta automaticky, keď dokončíš tréningy',
+  'duel.ending': 'končí',
+  'duel.daysLeft': 'zostáva {n}d',
+  'duel.metric.volume': 'kg objemu',
+  'duel.metric.sets': 'sérií',
+  'duel.metric.sessions': 'tréningov',
+  'duel.metricName.volume': 'objem',
+  'duel.metricName.sets': 'série',
+  'duel.metricName.sessions': 'tréningy',
+  'duel.youLead': 'Vedieš {w}–{l}',
+  'duel.rivalLeads': '{rival} vedie {l}–{w}',
+  'duel.tied': 'Nerozhodne {w}–{l}',
+  'duel.newTitle': 'Nová výzva',
+  'duel.newIntro': 'Vyber priateľa a cieľ. Kto ho dosiahne prvý za {days} dní, získa XP + mince.',
+  'duel.opponent': 'Súper',
+  'duel.metricLabel': 'Metrika',
+  'duel.duration': 'Trvanie: {days} dní',
+  'duel.startBtn': 'Prvý na {target} {metric} · {days}d',
+  // weekly review
+  'wr.coachReview': 'Prehľad kouča · {week}',
+  'wr.dismiss': 'Zavrieť týždenný prehľad',
+  'wr.recoveryUp': 'Regenerácia sa cez týždeň zlepšovala',
+  'wr.recoveryDown': 'Regenerácia sa cez týždeň zhoršovala',
+  'wr.best': 'najlepší: {name} {kg} kg',
+  'wr.session.one': '{n} tréning',
+  'wr.session.few': '{n} tréningy',
+  'wr.session.other': '{n} tréningov',
+  'wr.pr.one': '{n} PR',
+  'wr.pr.few': '{n} PR',
+  'wr.pr.other': '{n} PR',
+  'wr.focus.recoveryDown': 'Regenerácia klesá — nechaj tento týždeň jeden či dva tréningy zámerne ľahké.',
+  'wr.focus.volumeDip': 'Objem klesol — najprv si udrž naplánované tréningy, než pridáš čokoľvek nové.',
+  'wr.focus.chasePR': 'Objem stúpa a nepadol žiadny rekord — vyber jeden cvik a choď si poňho tento týždeň.',
+  'wr.focus.ridePRs': 'Padajú rekordy — využi vlnu a pridaj 2,5 kg tam, kde bol minulý týždeň ľahký.',
+  'wr.focus.keepRhythm': 'Udrž rytmus: rovnaké tréningové dni, +2,5 kg všade, kde bol minulý týždeň ľahký.',
+  // forge wrapped
+  'wrap.title': 'Forge Wrapped 🎁',
+  'wrap.subtitleEmpty': 'Tvoj mesiac v železe',
+  'wrap.teaserReady': 'Tvoj Wrapped za {month} je pripravený 🎁',
+  'wrap.dismissTeaser': 'Zavrieť upútavku Wrapped',
+  'wrap.tapRelive': 'ťukni a preži to znova',
+  'wrap.empty': 'Minulý mesiac žiadne dokončené tréningy — zabaľ radšej tento.',
+  'wrap.totalVolume': 'celkový objem',
+  'wrap.moved': 'toľko si zdvihol za {month} 💪',
+  'wrap.lblSessions': 'tréningy',
+  'wrap.lblSets': 'pracovné série',
+  'wrap.lblHours': 'hodín pod činkou',
+  'wrap.lblPRs': 'PR',
+  'wrap.bestLift': 'Najlepší zdvih:',
+  'wrap.cardBest': 'najlepší {name} {kg} kg',
+  'wrap.favourite': 'Obľúbený:',
+  'wrap.saveCard': 'Uložiť kartu na zdieľanie',
+  'wrap.cardError': 'Kartu sa nepodarilo vytvoriť',
+  'wrap.cardSaved': 'Karta uložená 🎁',
 };
 
 const DICTS: Record<Language, Dict> = { en: EN, sk: SK };
 
-export function translate(lang: Language, key: string): string {
-  return DICTS[lang][key] ?? DICTS.en[key] ?? key;
+export type TParams = Record<string, string | number>;
+
+// Replace {placeholder} tokens. Keeping the number *inside* the string (rather
+// than concatenating around it) lets each language own its word order — Slovak
+// and English put the noun on different sides of the count.
+function interpolate(raw: string, params?: TParams): string {
+  if (!params) return raw;
+  return raw.replace(/\{(\w+)\}/g, (_, k: string) => (k in params ? String(params[k]) : `{${k}}`));
 }
 
-// Hook: const t = useT(); t('nav.home')
+export function translate(lang: Language, key: string, params?: TParams): string {
+  const raw = DICTS[lang][key] ?? DICTS.en[key] ?? key;
+  return interpolate(raw, params);
+}
+
+// Plural category. English has one/other; Slovak (CLDR) adds a "few" bucket for
+// 2–4. We treat 0 and 5+ as "other".
+export type PluralCat = 'one' | 'few' | 'other';
+export function pluralCategory(lang: Language, n: number): PluralCat {
+  if (lang === 'sk') {
+    if (n === 1) return 'one';
+    if (n >= 2 && n <= 4) return 'few';
+    return 'other';
+  }
+  return n === 1 ? 'one' : 'other';
+}
+
+// Count-aware lookup: resolves `${base}.${category}` and injects `{n}` (plus any
+// extra params). Falls back to `.other` when a language omits a bucket.
+export function translateCount(lang: Language, base: string, n: number, params?: TParams): string {
+  const cat = pluralCategory(lang, n);
+  const dict = DICTS[lang];
+  const raw =
+    dict[`${base}.${cat}`] ?? dict[`${base}.other`] ??
+    DICTS.en[`${base}.${cat}`] ?? DICTS.en[`${base}.other`] ?? base;
+  return interpolate(raw, { n, ...params });
+}
+
+/** BCP-47 locale for date/number formatting in the active language. */
+export function localeFor(lang: Language): string {
+  return lang === 'sk' ? 'sk-SK' : 'en-GB';
+}
+
+// Hook: const t = useT(); t('nav.home') · t('duel.challengeSent', { name })
 export function useT() {
   const lang = useSettings((s) => s.language);
-  return (key: string) => translate(lang, key);
+  return (key: string, params?: TParams) => translate(lang, key, params);
+}
+
+// Hook for count-driven strings: const tn = useTn(); tn('wr.session', 3)
+export function useTn() {
+  const lang = useSettings((s) => s.language);
+  return (base: string, n: number, params?: TParams) => translateCount(lang, base, n, params);
+}
+
+/** Active BCP-47 locale (for `toLocaleDateString` etc. in components). */
+export function useLocale() {
+  const lang = useSettings((s) => s.language);
+  return localeFor(lang);
 }
 
 export const LANGUAGES: { id: Language; label: string }[] = [

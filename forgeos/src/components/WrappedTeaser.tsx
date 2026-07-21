@@ -5,6 +5,7 @@ import { Gift, X } from 'lucide-react';
 import { Card } from './ui';
 import { useWorkout } from '../state/workoutStore';
 import { buildWrapped, lastCompletedMonth } from '../lib/wrapped';
+import { useT, useTn, useLocale } from '../lib/i18n';
 
 const SEEN_KEY = 'forge-wrapped-seen';
 const TEASER_DAYS = 7; // only tease during the first week of a new month
@@ -12,6 +13,9 @@ const TEASER_DAYS = 7; // only tease during the first week of a new month
 // "Your Forge Wrapped is ready 🎁" — Home teaser at the start of each month.
 export function WrappedTeaser() {
   const navigate = useNavigate();
+  const t = useT();
+  const tn = useTn();
+  const locale = useLocale();
   const history = useWorkout((s) => s.history);
   const prs = useWorkout((s) => s.prs);
   const [dismissed, setDismissed] = useState(false);
@@ -19,8 +23,8 @@ export function WrappedTeaser() {
   const wrapped = useMemo(() => {
     if (new Date().getDate() > TEASER_DAYS) return null;
     const { year, monthIndex } = lastCompletedMonth(Date.now());
-    return buildWrapped(history, prs, year, monthIndex);
-  }, [history, prs]);
+    return buildWrapped(history, prs, year, monthIndex, locale);
+  }, [history, prs, locale]);
 
   if (!wrapped || dismissed) return null;
   try {
@@ -51,10 +55,10 @@ export function WrappedTeaser() {
         <Gift size={20} className="text-accent" />
       </motion.span>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-semibold">Your {wrapped.monthLabel} Wrapped is ready 🎁</p>
-        <p className="text-[11px] text-muted">{wrapped.volumeKg.toLocaleString()} kg · {wrapped.sessions} sessions · {wrapped.prCount} PRs — tap to relive it</p>
+        <p className="text-sm font-semibold">{t('wrap.teaserReady', { month: wrapped.monthLabel })}</p>
+        <p className="text-[11px] text-muted">{wrapped.volumeKg.toLocaleString(locale)} kg · {tn('wr.session', wrapped.sessions)} · {tn('wr.pr', wrapped.prCount)} — {t('wrap.tapRelive')}</p>
       </div>
-      <button onClick={(e) => { e.stopPropagation(); markSeen(); }} aria-label="Dismiss Wrapped teaser" className="text-muted"><X size={15} /></button>
+      <button onClick={(e) => { e.stopPropagation(); markSeen(); }} aria-label={t('wrap.dismissTeaser')} className="text-muted"><X size={15} /></button>
     </Card>
     </motion.div>
   );

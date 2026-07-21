@@ -684,6 +684,7 @@ function Friends() {
 }
 
 function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () => void }) {
+  const t = useT();
   const removeFriend = useSocial((s) => s.removeFriend);
   const startDuel = useSocial((s) => s.startDuel);
   const cheerFriend = useSocial((s) => s.cheerFriend);
@@ -772,8 +773,8 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
 
         {/* actions */}
         <div className="grid grid-cols-3 gap-2">
-          <Button className="justify-center" onClick={() => { startDuel(friend.name, friend.avatarSeed, 'volume', 20000, 7); haptic('success'); toast(`Challenge sent to ${friend.name} ⚔️`); onClose(); }}>
-            <span className="flex items-center gap-1"><Swords size={15} /> Duel</span>
+          <Button className="justify-center" onClick={() => { startDuel(friend.name, friend.avatarSeed, 'volume', 20000, 7); haptic('success'); toast(t('duel.challengeSent', { name: friend.name })); onClose(); }}>
+            <span className="flex items-center gap-1"><Swords size={15} /> {t('duel.btn')}</span>
           </Button>
           <Button variant="ghost" className="justify-center" onClick={() => { cheerFriend(friend.id); haptic('success'); toast(`Cheered ${friend.name} 👏`); }}>
             <span className="flex items-center gap-1"><Heart size={15} /> Cheer</span>
@@ -899,16 +900,18 @@ function LiveRace() {
   );
 }
 
-const DUEL_LABEL: Record<DuelMetric, string> = { volume: 'kg volume', sessions: 'sessions', sets: 'sets' };
+type TFn = (key: string, params?: Record<string, string | number>) => string;
+const duelMetricLabel = (t: TFn, metric: DuelMetric): string => t(`duel.metric.${metric}`);
 
-function rivalryLabel(record: { wins: number; losses: number } | undefined, rival: string): string | null {
+function rivalryLabel(t: TFn, record: { wins: number; losses: number } | undefined, rival: string): string | null {
   if (!record || record.wins + record.losses === 0) return null;
-  if (record.wins > record.losses) return `You lead ${record.wins}–${record.losses}`;
-  if (record.losses > record.wins) return `${rival} leads ${record.losses}–${record.wins}`;
-  return `Tied ${record.wins}–${record.losses}`;
+  if (record.wins > record.losses) return t('duel.youLead', { w: record.wins, l: record.losses });
+  if (record.losses > record.wins) return t('duel.rivalLeads', { rival, w: record.wins, l: record.losses });
+  return t('duel.tied', { w: record.wins, l: record.losses });
 }
 
 function Duels() {
+  const t = useT();
   const duels = useSocial((s) => s.duels);
   const friends = useSocial((s) => s.friends);
   const clearDuel = useSocial((s) => s.clearDuel);
@@ -924,7 +927,7 @@ function Duels() {
     void challengeFriend(friend, d.metric, d.target, days);
     clearDuel(d.id);
     haptic('success');
-    toast(`Rematch vs ${d.opponentName} is on ⚔️`, 'success');
+    toast(t('duel.rematchOn', { name: d.opponentName }), 'success');
   }
 
   // Discover incoming challenges + fold in opponents' synced progress whenever
@@ -936,41 +939,42 @@ function Duels() {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <SectionTitle>Weekly challenges</SectionTitle>
-        <Button variant="ghost" className="px-3 py-1.5" onClick={() => setOpen(true)} disabled={friends.length === 0}><span className="text-xs flex items-center gap-1"><Swords size={14} /> New</span></Button>
+        <SectionTitle>{t('duel.weeklyChallenges')}</SectionTitle>
+        <Button variant="ghost" className="px-3 py-1.5" onClick={() => setOpen(true)} disabled={friends.length === 0}><span className="text-xs flex items-center gap-1"><Swords size={14} /> {t('duel.new')}</span></Button>
       </div>
-      {duels.length === 0 && <p className="text-sm text-muted">No active challenges. Throw down a gauntlet 🥊</p>}
+      {duels.length === 0 && <p className="text-sm text-muted">{t('duel.none')}</p>}
       {duels.map((d) => {
         const ended = d.status !== 'active';
+        const rivalry_ = rivalryLabel(t, rivalry[d.opponentName], d.opponentName);
         return (
           <Card key={d.id} className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="font-semibold text-sm flex items-center gap-2"><Swords size={14} className="text-accent" /> vs {d.opponentName}</p>
+              <p className="font-semibold text-sm flex items-center gap-2"><Swords size={14} className="text-accent" /> {t('duel.vs', { name: d.opponentName })}</p>
               <span className="flex items-center gap-1.5">
-                {d.side != null && <Badge color="rgb(var(--accent))">LIVE</Badge>}
+                {d.side != null && <Badge color="rgb(var(--accent))">{t('duel.live')}</Badge>}
                 {d.status === 'won' && (
                   <motion.span initial={{ scale: 0, rotate: -12 }} animate={{ scale: 1, rotate: 0 }} transition={{ type: 'spring', stiffness: 400, damping: 14 }}>
-                    <Badge color="rgb(var(--success))">You won 🏆</Badge>
+                    <Badge color="rgb(var(--success))">{t('duel.won')}</Badge>
                   </motion.span>
                 )}
-                {d.status === 'lost' && <Badge color="rgb(var(--danger))">Lost</Badge>}
-                {d.status === 'active' && <Badge>{daysLeft(d.endsAt)}</Badge>}
+                {d.status === 'lost' && <Badge color="rgb(var(--danger))">{t('duel.lost')}</Badge>}
+                {d.status === 'active' && <Badge>{daysLeft(t, d.endsAt)}</Badge>}
               </span>
             </div>
             <p className="text-[11px] text-muted">
-              First to {d.target.toLocaleString()} {DUEL_LABEL[d.metric]}
-              {rivalryLabel(rivalry[d.opponentName], d.opponentName) && <> · {rivalryLabel(rivalry[d.opponentName], d.opponentName)}</>}
+              {t('duel.firstTo', { target: d.target.toLocaleString(), metric: duelMetricLabel(t, d.metric) })}
+              {rivalry_ && <> · {rivalry_}</>}
             </p>
-            <DuelBar label="You" value={d.myProgress} target={d.target} me />
+            <DuelBar label={t('duel.you')} value={d.myProgress} target={d.target} me />
             <DuelBar label={d.opponentName} value={d.theirProgress} target={d.target} />
             {ended
               ? (
                 <div className="flex gap-2">
-                  <Button className="flex-1 justify-center" onClick={() => rematch(d)}>Rematch ⚔️</Button>
-                  <Button variant="ghost" className="flex-1 justify-center" onClick={() => clearDuel(d.id)}>Clear</Button>
+                  <Button className="flex-1 justify-center" onClick={() => rematch(d)}>{t('duel.rematch')}</Button>
+                  <Button variant="ghost" className="flex-1 justify-center" onClick={() => clearDuel(d.id)}>{t('duel.clear')}</Button>
                 </div>
               )
-              : <p className="text-[11px] text-muted text-center py-1">💪 Progress counts automatically when you finish workouts</p>}
+              : <p className="text-[11px] text-muted text-center py-1">{t('duel.autoProgress')}</p>}
           </Card>
         );
       })}
@@ -996,27 +1000,28 @@ function DuelBar({ label, value, target, me }: { label: string; value: number; t
 }
 
 function NewDuelSheet({ open, onClose, friends, onStart }: { open: boolean; onClose: () => void; friends: Friend[]; onStart: (f: Friend, m: DuelMetric, target: number, days: number) => void }) {
+  const t = useT();
   const [fid, setFid] = useState<string>('');
   const [metric, setMetric] = useState<DuelMetric>('volume');
   const [days, setDays] = useState(7);
   const friend = friends.find((f) => f.id === fid) ?? friends[0];
   const targets: Record<DuelMetric, number> = { volume: 20000, sets: 60, sessions: 4 };
   return (
-    <Sheet open={open} onClose={onClose} title="New challenge">
+    <Sheet open={open} onClose={onClose} title={t('duel.newTitle')}>
       <div className="space-y-3">
-        <p className="text-[11px] text-muted">Pick a friend and a target. Whoever hits it first in {days} days wins XP + coins.</p>
-        <p className="text-xs font-medium">Opponent</p>
+        <p className="text-[11px] text-muted">{t('duel.newIntro', { days })}</p>
+        <p className="text-xs font-medium">{t('duel.opponent')}</p>
         <div className="flex gap-2 flex-wrap">
           {friends.map((f) => <Pill key={f.id} active={(fid || friends[0]?.id) === f.id} onClick={() => setFid(f.id)}>{f.name}</Pill>)}
         </div>
-        <p className="text-xs font-medium">Metric</p>
+        <p className="text-xs font-medium">{t('duel.metricLabel')}</p>
         <div className="flex gap-2">
-          {(['volume', 'sets', 'sessions'] as DuelMetric[]).map((m) => <Pill key={m} active={metric === m} onClick={() => setMetric(m)}>{m}</Pill>)}
+          {(['volume', 'sets', 'sessions'] as DuelMetric[]).map((m) => <Pill key={m} active={metric === m} onClick={() => setMetric(m)}>{t(`duel.metricName.${m}`)}</Pill>)}
         </div>
-        <p className="text-xs font-medium">Duration: {days} days</p>
+        <p className="text-xs font-medium">{t('duel.duration', { days })}</p>
         <input type="range" min={3} max={14} value={days} onChange={(e) => setDays(Number(e.target.value))} className="w-full accent-[rgb(var(--accent))]" />
         <Button className="w-full justify-center" disabled={!friend} onClick={() => friend && onStart(friend, metric, targets[metric], days)}>
-          First to {targets[metric].toLocaleString()} {DUEL_LABEL[metric]} · {days}d
+          {t('duel.startBtn', { target: targets[metric].toLocaleString(), metric: duelMetricLabel(t, metric), days })}
         </Button>
       </div>
     </Sheet>
@@ -1092,7 +1097,7 @@ function timeAgo(iso: string) {
   return `${Math.round(h / 24)}d ago`;
 }
 
-function daysLeft(iso: string) {
+function daysLeft(t: TFn, iso: string) {
   const d = Math.ceil((new Date(iso).getTime() - Date.now()) / 86400000);
-  return d <= 0 ? 'ending' : `${d}d left`;
+  return d <= 0 ? t('duel.ending') : t('duel.daysLeft', { n: d });
 }

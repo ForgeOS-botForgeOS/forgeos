@@ -55,8 +55,8 @@ describe('buildWeeklyReview', () => {
     expect(review?.bestSet).toEqual({ exerciseName: 'Squat', weightKg: 140 });
   });
 
-  test('always produces a focus line', () => {
+  test('always produces a focus key', () => {
     const review = buildWeeklyReview([workout(new Date(2026, 6, 8, 18, 0).toISOString(), 5000)], [], [], NOW);
-    expect(review?.focus.length).toBeGreaterThan(10);
+    expect(review?.focusKey).toMatch(/^wr\.focus\./);
   });
 });
