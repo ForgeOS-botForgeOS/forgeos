@@ -16,7 +16,7 @@ const TABS = [
 export function TabBar() {
   const t = useT();
   return (
-    <nav className="shrink-0 border-t border-line bg-surface/90 backdrop-blur px-1 pb-[env(safe-area-inset-bottom)]">
+    <nav className="fx-tabbar shrink-0 border-t border-line bg-surface/90 backdrop-blur px-1 pb-[env(safe-area-inset-bottom)]">
       <div className="flex">
         {TABS.map((tab) => {
           const Icon = tab.icon;

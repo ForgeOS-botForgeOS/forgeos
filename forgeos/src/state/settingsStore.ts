@@ -6,6 +6,7 @@ import { setHapticsEnabled } from '../lib/haptics';
 interface SettingsState extends Settings {
   set: <K extends keyof Settings>(key: K, value: Settings[K]) => void;
   applyTheme: (theme: ThemeId) => void;
+  applyPolish: (on: boolean) => void;
 }
 
 const DEFAULTS: Settings = {
@@ -19,6 +20,7 @@ const DEFAULTS: Settings = {
   reminder: { enabled: false, time: '18:00', days: [0, 1, 2, 3, 4] },
   theme: 'forge-dark',
   autoTheme: false,
+  uiPolish: false,
   quoteGenre: 'stoic',
   leaderboardPublic: true,
   shareActivity: true,
@@ -42,10 +44,18 @@ export const useSettings = create<SettingsState>()(
         set({ [key]: value } as Partial<SettingsState>);
         if (key === 'hapticsEnabled') setHapticsEnabled(value as boolean);
         if (key === 'theme') get().applyTheme(value as ThemeId);
+        if (key === 'uiPolish') get().applyPolish(value as boolean);
       },
       applyTheme: (theme) => {
         if (typeof document !== 'undefined') {
           document.documentElement.setAttribute('data-theme', theme);
+        }
+      },
+      // "Fresh look" is a single class on <html> that a scoped CSS block keys
+      // off — so flipping it is instant and reverting is total (classic = no class).
+      applyPolish: (on) => {
+        if (typeof document !== 'undefined') {
+          document.documentElement.classList.toggle('ui-fresh', on);
         }
       },
     }),
@@ -73,6 +83,7 @@ export const useSettings = create<SettingsState>()(
       onRehydrateStorage: () => (state) => {
         if (state) {
           state.applyTheme(state.theme);
+          state.applyPolish(state.uiPolish);
           setHapticsEnabled(state.hapticsEnabled);
         }
       },

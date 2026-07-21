@@ -1,5 +1,5 @@
-import { useRef, useState } from 'react';
-import { motion, useMotionValue, useTransform } from 'framer-motion';
+import { useEffect, useRef, useState } from 'react';
+import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Check, Trash2 } from 'lucide-react';
 import type { SetEntry } from '../../types';
 import { e1rm } from '../../lib/fitness';
@@ -20,6 +20,20 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
   const bg = useTransform(x, [-80, 0, 80], ['rgb(var(--danger))', 'rgb(var(--surface))', 'rgb(var(--success))']);
   const pressTimer = useRef<number | null>(null);
 
+  // One-shot celebration the moment a set flips to completed: a checkmark burst
+  // and a quick pop of the row. Fires on the false→true edge only.
+  const [burst, setBurst] = useState(false);
+  const wasDone = useRef(set.completed);
+  useEffect(() => {
+    if (set.completed && !wasDone.current) {
+      setBurst(true);
+      const id = window.setTimeout(() => setBurst(false), 650);
+      wasDone.current = set.completed;
+      return () => window.clearTimeout(id);
+    }
+    wasDone.current = set.completed;
+  }, [set.completed]);
+
   function startPress() {
     pressTimer.current = window.setTimeout(() => {
       haptic('warning');
@@ -31,12 +45,35 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
   }
 
   return (
-    <div data-noswipe className="relative overflow-hidden rounded-xl">
+    <motion.div data-noswipe className="relative overflow-hidden rounded-xl" animate={burst ? { scale: [1, 1.035, 1] } : { scale: 1 }} transition={{ duration: 0.4, ease: 'easeOut' }}>
       {/* swipe action hints */}
       <div className="absolute inset-0 flex items-center justify-between px-4 text-black/70">
         <Trash2 size={16} />
         <Check size={16} />
       </div>
+
+      {/* completion burst — a checkmark that blooms and fades over the row */}
+      <AnimatePresence>
+        {burst && (
+          <motion.div
+            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.span
+              className="flex items-center justify-center rounded-full bg-success text-black"
+              style={{ width: 40, height: 40 }}
+              initial={{ scale: 0.3, opacity: 0 }}
+              animate={{ scale: [0.3, 1.2, 1], opacity: [0, 1, 0] }}
+              transition={{ duration: 0.6, ease: 'easeOut', times: [0, 0.5, 1] }}
+            >
+              <Check size={22} strokeWidth={3} />
+            </motion.span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <motion.div
         style={{ x, backgroundColor: bg }}
         drag="x"
@@ -105,7 +142,7 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
 
         <SubTarget set={set} onChange={onChange} />
       </motion.div>
-    </div>
+    </motion.div>
   );
 }
 

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Capacitor } from '@capacitor/core';
@@ -17,6 +17,7 @@ import { ensureCloudAccount } from '../../lib/activitySync';
 import { pullCloudBackup, pushCloudBackup } from '../../lib/cloudSync';
 import { useT } from '../../lib/i18n';
 import { haptic } from '../../lib/haptics';
+import { parseAbout, parsedFieldCount, type ParsedProfile } from '../../lib/profileParser';
 import type { ActivityLevel, ExperienceLevel, Goal, Sex, UserProfile } from '../../types';
 import { buildWeekPlan } from './planGenerator';
 import { FitnessTest } from './FitnessTest';
@@ -44,6 +45,35 @@ export default function Onboarding() {
   const [authMode, setAuthMode] = useState<'in' | 'up'>('up');
   const [noWeekends, setNoWeekends] = useState(false);
   const [specialRequest, setSpecialRequest] = useState('');
+  const [about, setAbout] = useState('');
+
+  // Free-text path: apply the parsed hints to the manual form and jump there so
+  // the user just confirms the numbers instead of tapping through every question.
+  function applyParsed(parsed: ParsedProfile, raw: string) {
+    if (parsed.sex) setSex(parsed.sex);
+    if (parsed.age) setAge(parsed.age);
+    if (parsed.heightCm) setHeightCm(parsed.heightCm);
+    if (parsed.weightKg) setWeightKg(parsed.weightKg);
+    if (parsed.goal) setGoal(parsed.goal);
+    if (parsed.experience) setExperience(parsed.experience);
+    setAbout(raw);
+    if (parsed.constraints.length) {
+      setSpecialRequest((prev) => {
+        const note = parsed.constraints.join(', ');
+        return prev ? `${prev}; ${note}` : note;
+      });
+    }
+    // Seed the quiz answers the plan generator reads (days / style).
+    setQuiz((q) => {
+      const copy = { ...q };
+      if (parsed.daysPerWeek) copy['days'] = String(parsed.daysPerWeek);
+      if (parsed.style) copy['style'] = parsed.style;
+      if (parsed.experience) copy['experience'] = parsed.experience;
+      return copy;
+    });
+    haptic('success');
+    setStep('metrics');
+  }
 
   function emailContinue() {
     if (!isBackendLive) {
@@ -210,6 +240,7 @@ export default function Onboarding() {
       macros: derived.macros,
       quizAnswers: quiz,
       specialRequest: specialRequest.trim() || undefined,
+      about: about.trim() || undefined,
       noWeekends,
       onboarded: true,
     };
@@ -275,7 +306,7 @@ export default function Onboarding() {
       )}
 
       {step === 'quiz' && (
-        <QuizStep quiz={quiz} setQuiz={setQuiz} onDone={() => setStep('metrics')} setName={setName} name={name} />
+        <QuizStep quiz={quiz} setQuiz={setQuiz} onDone={() => setStep('metrics')} onManual={applyParsed} setName={setName} name={name} />
       )}
 
       {step === 'metrics' && (
@@ -484,20 +515,27 @@ function QuizStep({
   quiz,
   setQuiz,
   onDone,
+  onManual,
   name,
   setName,
 }: {
   quiz: Record<string, string>;
   setQuiz: (q: Record<string, string>) => void;
   onDone: () => void;
+  onManual: (parsed: ParsedProfile, raw: string) => void;
   name: string;
   setName: (n: string) => void;
 }) {
   const SEP = ' · ';
+  const [mode, setMode] = useState<'quiz' | 'type'>('quiz');
   const [i, setI] = useState(0);
   const q = ICE_BREAKER[i];
   const [custom, setCustom] = useState('');
   const isLast = i === ICE_BREAKER.length - 1;
+
+  if (mode === 'type') {
+    return <ManualIntro name={name} setName={setName} onManual={onManual} onSkip={onDone} onBack={() => setMode('quiz')} />;
+  }
 
   const selected = quiz[q.id] ? quiz[q.id].split(SEP) : [];
 
@@ -529,6 +567,15 @@ function QuizStep({
 
   return (
     <motion.div key={i} initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="space-y-4 mt-6">
+      {i === 0 && (
+        <button
+          onClick={() => { haptic('tap'); setMode('type'); }}
+          className="w-full rounded-xl border border-accent/40 bg-accent/5 px-4 py-2.5 text-sm text-left flex items-center gap-2"
+        >
+          <span className="text-lg">💬</span>
+          <span className="flex-1">Rather just describe yourself? <b className="text-accent">Type it instead →</b></span>
+        </button>
+      )}
       <p className="text-xs text-muted">Question {i + 1} of {ICE_BREAKER.length} · pick all that apply</p>
       <h2 className="text-2xl font-bold leading-snug">{q.q}</h2>
       <div className="space-y-2">
@@ -588,6 +635,84 @@ function QuizStep({
       {selected.length === 0 && <p className="text-[11px] text-muted/70 text-center">Select at least one option to continue.</p>}
     </motion.div>
   );
+}
+
+// The "just type it" alternative to the tap-through quiz: one free-text box that
+// we parse into the form. Nothing is committed silently — it drops the user on
+// the metrics screen with everything pre-filled to confirm.
+function ManualIntro({
+  name,
+  setName,
+  onManual,
+  onSkip,
+  onBack,
+}: {
+  name: string;
+  setName: (n: string) => void;
+  onManual: (parsed: ParsedProfile, raw: string) => void;
+  onSkip: () => void;
+  onBack: () => void;
+}) {
+  const [text, setText] = useState('');
+  const parsed = useMemo(() => parseAbout(text), [text]);
+  const caught = parsedFieldCount(parsed);
+
+  return (
+    <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="space-y-4 mt-6">
+      <h2 className="text-2xl font-bold leading-snug">Tell me about yourself</h2>
+      <p className="text-sm text-muted">
+        In your own words — your age, height &amp; weight, what you want (lose fat, build muscle, get stronger…),
+        how long you’ve trained, how many days a week you can, and anything to work around (bad knees, no time…).
+        I’ll fill the form in for you to check.
+      </p>
+
+      <textarea
+        autoFocus
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        placeholder="e.g. I’m 16, 178cm, around 72kg. Total beginner, want to build muscle, can train 4 days a week. Bad knees so nothing that aggravates them."
+        className="w-full rounded-xl bg-surface border border-line px-4 py-3 text-sm h-40"
+      />
+
+      <input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="Your name (optional)"
+        className="w-full rounded-xl bg-surface border border-line px-4 py-3 text-sm"
+      />
+
+      {caught > 0 && (
+        <div className="rounded-xl bg-surface-2 border border-line px-4 py-3 text-xs space-y-1">
+          <p className="text-muted">Caught {caught} thing{caught === 1 ? '' : 's'} — you can fix anything on the next screen:</p>
+          <div className="flex flex-wrap gap-1.5 pt-1">
+            {parsed.goal && <Chip>goal: {parsed.goal}</Chip>}
+            {parsed.experience && <Chip>{parsed.experience}</Chip>}
+            {parsed.age !== undefined && <Chip>{parsed.age} yrs</Chip>}
+            {parsed.heightCm !== undefined && <Chip>{parsed.heightCm} cm</Chip>}
+            {parsed.weightKg !== undefined && <Chip>{parsed.weightKg} kg</Chip>}
+            {parsed.sex && <Chip>{parsed.sex}</Chip>}
+            {parsed.daysPerWeek !== undefined && <Chip>{parsed.daysPerWeek} days/wk</Chip>}
+            {parsed.style && <Chip>{parsed.style}</Chip>}
+            {parsed.constraints.map((c) => <Chip key={c}>⚠ {c}</Chip>)}
+          </div>
+        </div>
+      )}
+
+      <div className="flex items-center gap-2 pt-1">
+        <Button variant="outline" onClick={onBack}>← Quiz</Button>
+        <Button className="flex-1 justify-center" onClick={() => onManual(parsed, text)}>
+          {caught > 0 ? 'Use this →' : 'Continue →'}
+        </Button>
+      </div>
+      <button onClick={onSkip} className="w-full text-center text-[11px] text-muted/70">
+        Skip — I’ll just use the sliders
+      </button>
+    </motion.div>
+  );
+}
+
+function Chip({ children }: { children: ReactNode }) {
+  return <span className="rounded-full bg-accent/10 text-accent px-2 py-0.5 text-[11px] font-medium">{children}</span>;
 }
 
 function NumberRow({

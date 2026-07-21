@@ -34,12 +34,15 @@ import { CardioFields } from '../components/CardioForm';
 import { newCardioData, type CardioData } from '../lib/cardio';
 import { xpForSet } from '../data/ranks';
 import { haptic } from '../lib/haptics';
+import { personalTips } from '../lib/personalCoach';
 import type { SetEntry } from '../types';
 
 export default function Train() {
   const active = useWorkout((s) => s.active);
   const history = useWorkout((s) => s.history);
+  const profile = useUser((s) => s.profile);
   const weekPlan = useUser((s) => s.weekPlan);
+  const tips = useMemo(() => personalTips(profile), [profile]);
   const gymMax = useSettings((s) => s.gym.maxWeightKg);
   const startWorkout = useWorkout((s) => s.startWorkout);
   const repeatWorkout = useWorkout((s) => s.repeatWorkout);
@@ -103,6 +106,19 @@ export default function Train() {
       </Card>
 
       <CustomWorkoutSheet open={customOpen} onClose={() => setCustomOpen(false)} onStart={(name) => { startWorkout(name); setCustomOpen(false); haptic('success'); toast(`“${name}” started 💪`); }} />
+
+      {/* Your coach — tailored to what you told us at sign-up (goal, experience, the words you typed) */}
+      {tips.length > 0 && (
+        <Card className="space-y-2 border-accent-2/30 bg-accent-2/5">
+          <p className="text-xs uppercase tracking-wide text-muted">Your coach</p>
+          {tips.map((tip) => (
+            <p key={tip.text} className="text-sm flex items-start gap-2">
+              <span className="shrink-0">{tip.icon}</span>
+              <span>{tip.text}</span>
+            </p>
+          ))}
+        </Card>
+      )}
 
       {/* Repeat your last session — same lifts, last weights pre-filled */}
       {lastStrength && (

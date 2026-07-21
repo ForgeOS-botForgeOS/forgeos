@@ -17,7 +17,7 @@ export function Card({
     <div
       onClick={onClick}
       style={style}
-      className={`rounded-2xl bg-surface border border-line p-4 animate-fade-in-up ${onClick ? 'cursor-pointer active:scale-[0.99] transition hover:border-line/80' : ''} ${className}`}
+      className={`fx-card rounded-2xl bg-surface border border-line p-4 animate-fade-in-up ${onClick ? 'cursor-pointer active:scale-[0.99] transition hover:border-line/80' : ''} ${className}`}
     >
       {children}
     </div>
@@ -30,7 +30,7 @@ type BtnProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onAnimationStart'
 const PRESS = { type: 'spring' as const, stiffness: 500, damping: 30 };
 export function Button({ variant = 'primary', className = '', children, ...rest }: BtnProps) {
   const styles: Record<string, string> = {
-    primary: 'bg-accent text-black font-semibold hover:brightness-110',
+    primary: 'fx-primary bg-accent text-black font-semibold hover:brightness-110',
     ghost: 'bg-surface-2 text-text hover:bg-line',
     outline: 'border border-line text-text hover:bg-surface-2',
     danger: 'bg-danger text-black font-semibold hover:brightness-110',

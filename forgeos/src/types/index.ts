@@ -179,6 +179,7 @@ export interface UserProfile {
   macros: MacroTargets;
   quizAnswers: Record<string, string>;
   specialRequest?: string;
+  about?: string; // free-text self-description from onboarding — feeds tailored coaching
   noWeekends?: boolean;
   onboarded: boolean;
   joinedAt?: string; // "member since" — preserved across progress imports
@@ -445,6 +446,7 @@ export interface Settings {
   reminder: ReminderConfig;
   theme: ThemeId;
   autoTheme: boolean; // day = light, night = dark
+  uiPolish: boolean; // "Fresh look" — a cleaner, more layered visual style (off = classic)
   quoteGenre: QuoteGenrePref;
   leaderboardPublic: boolean;
   shareActivity: boolean; // let friends see your real workout activity (live backend)
