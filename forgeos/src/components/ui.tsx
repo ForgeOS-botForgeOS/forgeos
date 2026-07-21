@@ -163,7 +163,7 @@ export function Sheet({
             dragConstraints={{ top: 0, bottom: 0 }}
             dragElastic={{ top: 0, bottom: 0.4 }}
             onDragEnd={(_, info) => { if (info.offset.y > 120) onClose(); }}
-            className="relative flex max-h-[85%] w-full flex-col rounded-t-2xl bg-surface border-t border-line"
+            className="fx-sheet relative flex max-h-[85%] w-full flex-col rounded-t-2xl bg-surface border-t border-line"
             onClick={(e) => e.stopPropagation()}
           >
             <div

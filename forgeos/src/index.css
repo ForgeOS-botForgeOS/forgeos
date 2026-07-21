@@ -293,44 +293,119 @@ button {
 }
 
 /* ============================================================================
-   "Fresh look" — an opt-in visual layer (Settings → toggle). It only styles a
-   handful of hook classes (.fx-card / .fx-primary / .fx-tabbar) plus the phone
-   root, all through the existing theme variables so every theme (dark & light)
-   is respected. Turning it off removes the `.ui-fresh` class → pixel-identical
-   classic look, nothing else changes.
+   Motion tokens + accessibility — GLOBAL (apply in both classic & new design).
+   The reduced-motion block is an accessibility fix the app was missing; it only
+   changes behaviour for users whose OS asks for less motion.
    ========================================================================== */
+:root {
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ============================================================================
+   "New design" — an opt-in redesign (Settings → toggle). A committed
+   forge-tempered visual language: layered metal-plate surfaces, an ember-heat
+   atmosphere, molten primary actions, a frosted nav & sheets, bolder titles,
+   and real interaction states. It only restyles a few hook classes
+   (.fx-card / .fx-primary / .fx-tabbar / .fx-sheet / .screen-head) plus the
+   phone root, all through the existing theme variables so every theme (dark &
+   light) still works. Remove the `.ui-fresh` class → the previous look returns
+   exactly, nothing else changes.
+   ========================================================================== */
+
+/* Forge-heat atmosphere behind the whole app */
 .ui-fresh #phone-root {
   background-image:
-    radial-gradient(125% 85% at 12% -8%, rgb(var(--accent) / 0.1), transparent 58%),
-    radial-gradient(125% 85% at 100% 0%, rgb(var(--accent-2) / 0.08), transparent 55%);
+    radial-gradient(140% 92% at 6% -12%, rgb(var(--accent) / 0.14), transparent 55%),
+    radial-gradient(130% 88% at 110% 2%, rgb(var(--accent-2) / 0.1), transparent 52%),
+    linear-gradient(180deg, rgb(var(--surface) / 0.4), transparent 26%);
 }
 
+/* Cards read as tempered plates: a soft top light-edge, ambient depth, generous
+   radius. The gradient is a translucent sheen so tinted cards keep their hue. */
 .ui-fresh .fx-card {
-  /* A translucent top sheen — adds depth without erasing a card's own tint
-     (e.g. accent-tinted cards keep their colour showing underneath). */
-  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.035), transparent 42%);
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.05), transparent 46%);
   border-color: rgb(var(--line) / 0.7);
-  border-radius: 22px;
+  border-radius: 20px;
   box-shadow:
-    0 1px 0 0 rgb(255 255 255 / 0.05) inset,
-    0 12px 26px -14px rgb(0 0 0 / 0.55);
-  transition: box-shadow 200ms ease, transform 200ms ease;
+    0 1px 0 0 rgb(255 255 255 / 0.06) inset,
+    0 1px 2px rgb(0 0 0 / 0.28),
+    0 18px 32px -20px rgb(0 0 0 / 0.62);
+  transition:
+    transform 220ms var(--ease-out-expo),
+    box-shadow 220ms var(--ease-out-expo),
+    border-color 200ms ease;
 }
 
+/* Tappable cards lift toward the light (hover-capable pointers only) */
+@media (hover: hover) {
+  .ui-fresh .fx-card.cursor-pointer:hover {
+    transform: translateY(-2px);
+    border-color: rgb(var(--accent) / 0.35);
+    box-shadow:
+      0 1px 0 0 rgb(255 255 255 / 0.08) inset,
+      0 22px 40px -20px rgb(0 0 0 / 0.7);
+  }
+}
+
+/* Primary actions: molten ember→gold, a top light + a heat glow */
 .ui-fresh .fx-primary {
   background-image: linear-gradient(135deg, rgb(var(--accent)), rgb(var(--accent-2)));
-  box-shadow: 0 8px 20px -8px rgb(var(--accent) / 0.55);
+  box-shadow:
+    0 1px 0 0 rgb(255 255 255 / 0.28) inset,
+    0 8px 22px -8px rgb(var(--accent) / 0.6);
 }
 
+/* Frosted floating nav */
 .ui-fresh .fx-tabbar {
   background-color: rgb(var(--surface) / 0.72);
-  backdrop-filter: blur(18px) saturate(140%);
-  -webkit-backdrop-filter: blur(18px) saturate(140%);
-  border-top-color: rgb(var(--line) / 0.55);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border-top-color: rgb(var(--line) / 0.5);
+  box-shadow: 0 -10px 26px -14px rgb(0 0 0 / 0.5);
 }
 
-/* Tighter, more intentional heading rhythm */
-.ui-fresh h1,
+/* Bottom sheets get the same plate treatment + a deeper cast shadow */
+.ui-fresh .fx-sheet {
+  background-image: linear-gradient(180deg, rgb(255 255 255 / 0.045), transparent 24%);
+  border-top-color: rgb(var(--line) / 0.6);
+  box-shadow: 0 -24px 60px -24px rgb(0 0 0 / 0.72);
+}
+
+/* Bolder, more confident screen titles + tighter heading rhythm */
+.ui-fresh .screen-head h1 {
+  font-size: 1.7rem;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
+.ui-fresh h1 {
+  letter-spacing: -0.03em;
+}
 .ui-fresh h2 {
-  letter-spacing: -0.015em;
+  letter-spacing: -0.02em;
+}
+
+/* Inputs feel alive: a real accent focus ring + smooth border */
+.ui-fresh input,
+.ui-fresh textarea,
+.ui-fresh select {
+  transition: border-color 160ms ease, box-shadow 160ms ease;
+}
+.ui-fresh input:focus,
+.ui-fresh textarea:focus,
+.ui-fresh select:focus {
+  outline: none;
+  border-color: rgb(var(--accent) / 0.6);
+  box-shadow: 0 0 0 3px rgb(var(--accent) / 0.16);
 }

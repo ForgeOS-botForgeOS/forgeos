@@ -14,13 +14,13 @@ export function Screen({
 }) {
   return (
     <motion.div
-      className="px-4 pt-12 pb-6 space-y-4"
+      className="screen-root px-4 pt-12 pb-6 space-y-4"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.28, ease: 'easeOut' }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
     >
       {(title || right) && (
-        <header className="flex items-start justify-between">
+        <header className="screen-head flex items-start justify-between">
           <div>
             {title && <h1 className="text-2xl font-extrabold tracking-tight">{title}</h1>}
             {subtitle && <p className="text-sm text-muted">{subtitle}</p>}

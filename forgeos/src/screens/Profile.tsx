@@ -252,8 +252,8 @@ export default function Profile() {
         </div>
         <div className="flex items-center justify-between mt-2">
           <div>
-            <p className="text-sm flex items-center gap-1.5">Fresh look <span className="text-[10px] rounded-full bg-accent/15 text-accent px-1.5 py-0.5 font-semibold">NEW</span></p>
-            <p className="text-[11px] text-muted">Cleaner, more layered style · off = classic</p>
+            <p className="text-sm flex items-center gap-1.5">New design <span className="text-[10px] rounded-full bg-accent/15 text-accent px-1.5 py-0.5 font-semibold">v2</span></p>
+            <p className="text-[11px] text-muted">Redesigned, more animated look · off = the classic app</p>
           </div>
           <Toggle checked={s.uiPolish} onChange={(v) => { s.set('uiPolish', v); haptic('tap'); }} />
         </div>
