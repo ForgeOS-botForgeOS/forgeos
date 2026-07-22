@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Flame, TrendingUp, Lightbulb, ChevronRight, Watch, Moon, Footprints } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine } from 'recharts';
@@ -71,10 +71,23 @@ export default function Home() {
   const macros = profile?.macros ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 };
   const v2 = useSettings((s) => s.designMode === 'v2');
 
+  // Extra data the V2 "A×C" Home surfaces (gauges + rails). All from existing
+  // stores — no behaviour change.
+  const weighIns = useUser((s) => s.weighIns);
+  const heavyLifts = useGami((s) => s.heavyLifts);
+
   // Recovery readiness — only when the feature is on and there's actual data.
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
   const healthDays = useHealth((s) => s.days);
   const readiness = useMemo(() => (recoveryEnabled ? readinessFromDays(sortedDays(healthDays)) : null), [recoveryEnabled, healthDays]);
+  const acVitals = useMemo(() => {
+    const latest = sortedDays(healthDays)[0];
+    return {
+      steps: latest?.steps ?? null,
+      sleepH: typeof latest?.sleepMinutes === 'number' ? Math.round((latest.sleepMinutes / 60) * 10) / 10 : null,
+      restingHr: latest?.restingHr ?? null,
+    };
+  }, [healthDays]);
 
   return (
     <>
@@ -92,17 +105,21 @@ export default function Home() {
         {/* Install CTA — only shows in a browser, hidden once installed */}
         <InstallButton variant="banner" />
 
-        {/* Top of Home — V2: a bento dashboard; Legacy: ring hero + status card */}
+        {/* Top of Home — V2: focus hero + gauges + rails (A×C); Legacy: ring hero + status card */}
         {v2 ? (
-          <BentoTop
-            totals={totals}
-            macros={macros}
-            streak={streak}
+          <HomeAC
+            energyValue={totals.calories}
+            energyMax={macros.calories}
+            proteinValue={totals.proteinG}
+            proteinMax={macros.proteinG}
+            steps={acVitals.steps}
             trainedToday={!!(history[0] && isToday(history[0].date))}
             readiness={readiness}
-            recoveryEnabled={recoveryEnabled}
-            hasHealthData={Object.keys(healthDays).length > 0}
-            weeklyVolume={weeklyVolume}
+            sleepH={acVitals.sleepH}
+            restingHr={acVitals.restingHr}
+            volumeTotal={weeklyVolume.reduce((a, b) => a + b.volume, 0)}
+            weightKg={weighIns.length ? weighIns[weighIns.length - 1].weightKg : null}
+            prs={heavyLifts}
             onNav={navigate}
           />
         ) : (
@@ -151,8 +168,8 @@ export default function Home() {
             </Card>
           ) : null)}
 
-        {/* Sleep & steps at a glance — only for people with Garmin auto-sync flowing */}
-        <HealthGlance />
+        {/* Sleep & steps at a glance — V2 surfaces this in the recovery rail above */}
+        {!v2 && <HealthGlance />}
 
         {/* Progress shortcut */}
         <Card onClick={() => navigate('/progress')} className="flex items-center justify-between">
@@ -324,153 +341,124 @@ function HealthGlance() {
   );
 }
 
-// V2 "Tempo" energy hero: a broadcast telemetry readout — a big ENERGY value
-// with the live percentage, a full-width segmented meter, and the three macros
-// as labelled readouts with their own thin meters. Same data as Legacy, new form.
-function HeroV2({
-  totals,
-  macros,
-}: {
-  totals: { calories: number; proteinG: number; carbsG: number; fatG: number };
-  macros: { calories: number; proteinG: number; carbsG: number; fatG: number };
-}) {
-  const pct = Math.min(100, macros.calories > 0 ? (totals.calories / macros.calories) * 100 : 0);
-  return (
-    <Card>
-      <div className="flex items-end justify-between">
-        <div>
-          <p className="text-[10px] uppercase tracking-[0.14em] text-muted mb-1">Energy</p>
-          <p className="leading-none">
-            <CountUp value={Math.round(totals.calories)} className="text-4xl font-bold font-mono" duration={500} />
-            <span className="text-sm text-muted"> / {macros.calories.toLocaleString()}</span>
-          </p>
-        </div>
-        <span className="font-mono text-2xl font-bold text-accent leading-none">{Math.round(pct)}%</span>
-      </div>
-      <div className="v2-meter mt-3" style={{ height: 14 }}>
-        <div className="v2-meter-fill" style={{ width: `${pct}%`, background: 'rgb(var(--accent))' }} />
-        <div className="v2-meter-seg" />
-      </div>
-    </Card>
-  );
-}
-
-// V2 "Bento dashboard" — the whole top of Home as a tiled grid of live modules:
-// a full-width energy hero, a 2-col grid (macros · streak · today · readiness),
-// and a wide volume tile. Same data + navigation as Legacy, new structure.
-function BentoTop({
-  totals,
-  macros,
-  streak,
+// V2 Home — the chosen "A×C" composition: a decisive focus hero, three summary
+// gauges (energy/protein/steps), and swipeable recovery + progress rails. Same
+// data + navigation as Legacy, new structure. See docs/redesign/home-layout.md.
+function HomeAC({
+  energyValue,
+  energyMax,
+  proteinValue,
+  proteinMax,
+  steps,
   trainedToday,
   readiness,
-  recoveryEnabled,
-  hasHealthData,
-  weeklyVolume,
+  sleepH,
+  restingHr,
+  volumeTotal,
+  weightKg,
+  prs,
   onNav,
 }: {
-  totals: { calories: number; proteinG: number; carbsG: number; fatG: number };
-  macros: { calories: number; proteinG: number; carbsG: number; fatG: number };
-  streak: number;
+  energyValue: number;
+  energyMax: number;
+  proteinValue: number;
+  proteinMax: number;
+  steps: number | null;
   trainedToday: boolean;
   readiness: Readiness | null;
-  recoveryEnabled: boolean;
-  hasHealthData: boolean;
-  weeklyVolume: { day: string; volume: number }[];
+  sleepH: number | null;
+  restingHr: number | null;
+  volumeTotal: number;
+  weightKg: number | null;
+  prs: number;
   onNav: (to: string) => void;
 }) {
-  const totalVol = weeklyVolume.reduce((a, b) => a + b.volume, 0);
-  const tileLabel = 'text-[10px] uppercase tracking-[0.12em] text-muted';
+  const energyPct = energyMax > 0 ? (energyValue / energyMax) * 100 : 0;
+  const proteinPct = proteinMax > 0 ? (proteinValue / proteinMax) * 100 : 0;
+  const stepsPct = steps != null ? (steps / 10000) * 100 : 0;
   return (
     <div className="space-y-3">
-      <HeroV2 totals={totals} macros={macros} />
-      <div className="grid grid-cols-2 gap-3">
-        {/* Macros */}
-        <Card>
-          <p className={`${tileLabel} mb-2`}>Macros</p>
-          <div className="space-y-2">
-            <MacroReadout label="Protein" value={totals.proteinG} max={macros.proteinG} color="rgb(var(--accent))" />
-            <MacroReadout label="Carbs" value={totals.carbsG} max={macros.carbsG} color="rgb(var(--accent-2))" />
-            <MacroReadout label="Fat" value={totals.fatG} max={macros.fatG} color="rgb(var(--success))" />
-          </div>
-        </Card>
-        {/* Streak */}
-        <Card className="flex flex-col">
-          <p className={tileLabel}>Streak</p>
-          <div className="flex items-end gap-1.5 mt-auto">
-            <Flame size={22} className="text-accent mb-1" />
-            <CountUp value={streak} className="text-4xl font-bold font-mono leading-none" />
-            <span className="text-xs text-muted mb-1">wks</span>
-          </div>
-          <p className="text-[11px] text-muted mt-2">weeks you showed up</p>
-        </Card>
-        {/* Today's training */}
-        <Card onClick={() => onNav('/train')} className="flex flex-col">
-          <p className={tileLabel}>Today</p>
-          <p className="font-semibold mt-2 leading-tight">{trainedToday ? 'Session logged' : 'Ready to train'}</p>
-          <span className="mt-auto pt-2 inline-flex items-center gap-1 text-sm text-accent font-semibold">▸ {trainedToday ? 'Open Train' : 'Start'}</span>
-        </Card>
-        {/* Readiness → recovery-setup → progress (always fills the cell) */}
-        {readiness ? (
-          <Card onClick={() => onNav('/health')} className="flex flex-col">
-            <p className={tileLabel}>Readiness</p>
-            <CountUp value={readiness.score} className="text-4xl font-bold font-mono leading-none mt-auto" />
-            <p className="text-[12px] text-muted mt-1">{readiness.label}</p>
-          </Card>
-        ) : recoveryEnabled && !hasHealthData ? (
-          <Card onClick={() => onNav('/health')} className="flex flex-col">
-            <p className={tileLabel}>Recovery</p>
-            <Watch size={22} className="text-accent mt-auto" />
-            <span className="mt-2 inline-flex items-center gap-1 text-sm text-accent font-semibold">▸ Set up</span>
-          </Card>
-        ) : (
-          <Card onClick={() => onNav('/progress')} className="flex flex-col">
-            <p className={tileLabel}>Progress</p>
-            <p className="font-semibold mt-2 leading-tight">Body &amp; trends</p>
-            <span className="mt-auto pt-2 inline-flex items-center gap-1 text-sm text-accent-2 font-semibold">▸ Open</span>
-          </Card>
-        )}
+      {/* Focus hero — the one decisive action */}
+      <div
+        onClick={() => onNav('/train')}
+        className="fx-card cursor-pointer p-5"
+        style={{ background: 'linear-gradient(160deg, rgb(var(--accent) / 0.12), rgb(var(--surface)))' }}
+      >
+        <p className="text-[10px] uppercase tracking-[0.14em] text-accent">Today’s focus</p>
+        <p className="text-3xl font-bold uppercase italic leading-none mt-2">{trainedToday ? 'Session logged' : 'Ready to train'}</p>
+        <p className="text-[13px] text-muted mt-2">{trainedToday ? 'Great work — review it or add another block.' : 'Your next session is queued. Let’s move.'}</p>
+        <div className="mt-4 rounded-md bg-accent text-black text-center font-bold uppercase italic tracking-wide py-3">▸ {trainedToday ? 'Open Train' : 'Start workout'}</div>
       </div>
-      {/* Volume — wide tile */}
+
+      {/* Summary gauges — live vitals at a glance */}
       <Card>
-        <div className="flex items-center justify-between mb-1">
-          <p className={tileLabel}>Volume · this week</p>
-          <span className="font-mono text-sm">{totalVol.toLocaleString()} kg</span>
-        </div>
-        <div className="h-28">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={weeklyVolume}>
-              <XAxis dataKey="day" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
-              <YAxis hide />
-              <Tooltip
-                cursor={{ fill: 'rgb(var(--surface-2))' }}
-                contentStyle={{ background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 8, fontSize: 12 }}
-                formatter={(v) => [`${Number(v).toLocaleString()} kg`, 'Volume']}
-              />
-              <Bar dataKey="volume" fill="rgb(var(--accent))" radius={[3, 3, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
+        <div className="grid grid-cols-3 gap-2">
+          <Gauge label="Energy" center={`${Math.round(energyPct)}%`} pct={energyPct} color="rgb(var(--accent))" />
+          <Gauge label="Protein" center={`${Math.round(proteinValue)}g`} pct={proteinPct} color="rgb(var(--accent-2))" />
+          <Gauge label="Steps" center={steps != null ? fmtK(steps) : '—'} pct={stepsPct} color="rgb(var(--success))" />
         </div>
       </Card>
+
+      {/* Recovery rail */}
+      <Rail title="Recovery" onSee={() => onNav('/health')}>
+        <Chip t="Readiness" v={readiness ? String(readiness.score) : '—'} s={readiness?.label} />
+        <Chip t="Sleep" v={sleepH != null ? String(sleepH) : '—'} s={sleepH != null ? 'h' : undefined} />
+        <Chip t="Resting HR" v={restingHr != null ? String(restingHr) : '—'} s={restingHr != null ? 'bpm' : undefined} />
+      </Rail>
+
+      {/* Progress rail */}
+      <Rail title="Progress" onSee={() => onNav('/progress')}>
+        <Chip t="Volume · wk" v={fmtK(volumeTotal)} s="kg" />
+        <Chip t="Weight" v={weightKg != null ? String(weightKg) : '—'} s={weightKg != null ? 'kg' : undefined} />
+        <Chip t="PRs" v={String(prs)} s="all-time" />
+      </Rail>
     </div>
   );
 }
 
-function MacroReadout({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
-  const pct = Math.min(100, max > 0 ? (value / max) * 100 : 0);
+function Gauge({ label, center, pct, color }: { label: string; center: string; pct: number; color: string }) {
+  const p = Math.max(0, Math.min(100, pct));
   return (
-    <div>
-      <p className="text-[9px] uppercase tracking-[0.1em] text-muted">{label}</p>
-      <p className="font-mono text-sm leading-tight">
-        {Math.round(value)}
-        <span className="text-muted text-[11px]">/{max}g</span>
-      </p>
-      <div className="v2-meter mt-1" style={{ height: 6 }}>
-        <div className="v2-meter-fill" style={{ width: `${pct}%`, background: color }} />
-        <div className="v2-meter-seg" />
+    <div className="flex flex-col items-center gap-1.5">
+      <div
+        className="grid place-items-center rounded-full"
+        style={{ width: 66, height: 66, background: `conic-gradient(${color} ${p}%, rgb(var(--surface-2)) 0)` }}
+      >
+        <div className="grid place-items-center rounded-full bg-surface" style={{ width: 50, height: 50 }}>
+          <span className="font-mono font-bold text-sm">{center}</span>
+        </div>
       </div>
+      <span className="text-[10px] uppercase tracking-wider text-muted">{label}</span>
     </div>
   );
+}
+
+function Rail({ title, onSee, children }: { title: string; onSee: () => void; children: ReactNode }) {
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-2">
+        <p className="text-[10px] uppercase tracking-[0.12em] text-muted">{title}</p>
+        <button onClick={onSee} className="text-[10px] uppercase tracking-wide text-accent font-semibold">See all ▸</button>
+      </div>
+      <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">{children}</div>
+    </div>
+  );
+}
+
+function Chip({ t, v, s }: { t: string; v: string; s?: string }) {
+  return (
+    <div className="fx-card shrink-0 min-w-[104px] p-3">
+      <p className="text-[10px] uppercase tracking-wide text-muted">{t}</p>
+      <p className="font-mono font-bold text-lg mt-1.5 leading-none">
+        {v}
+        {s && <span className="text-muted text-[11px] font-medium"> {s}</span>}
+      </p>
+    </div>
+  );
+}
+
+function fmtK(n: number) {
+  return n >= 1000 ? `${(n / 1000).toFixed(1).replace(/\.0$/, '')}k` : String(Math.round(n));
 }
 
 function MacroBar({ label, value, max, unit, color }: { label: string; value: number; max: number; unit: string; color: string }) {
