@@ -20,7 +20,7 @@ const DEFAULTS: Settings = {
   reminder: { enabled: false, time: '18:00', days: [0, 1, 2, 3, 4] },
   theme: 'forge-dark',
   autoTheme: false,
-  designMode: 'classic', // original look is the default; Nova redesign is a selectable option
+  designMode: 'nova', // Nova redesign is the app's default look; Classic stays selectable to compare
   quoteGenre: 'stoic',
   leaderboardPublic: true,
   shareActivity: true,
@@ -79,10 +79,9 @@ export const useSettings = create<SettingsState>()(
           return (saved === undefined ? def : saved) as T;
         };
         const merged = { ...current, ...deep(DEFAULTS, p) } as SettingsState;
-        // Any retired design value (the old 'forge'/'aurora' modes, or the ancient
-        // `uiPolish` boolean) → back to the default. The redesign is an opt-in
-        // option now, so nobody is silently left on a superseded look.
-        if (merged.designMode !== 'classic' && merged.designMode !== 'nova') merged.designMode = 'classic';
+        // Any retired design value (the old 'forge'/'aurora' modes) → Nova, the
+        // current default look. Anyone who explicitly picked Classic keeps it.
+        if (merged.designMode !== 'classic' && merged.designMode !== 'nova') merged.designMode = 'nova';
         return merged;
       },
       onRehydrateStorage: () => (state) => {
