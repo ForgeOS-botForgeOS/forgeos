@@ -20,7 +20,7 @@ const DEFAULTS: Settings = {
   reminder: { enabled: false, time: '18:00', days: [0, 1, 2, 3, 4] },
   theme: 'forge-dark',
   autoTheme: false,
-  designMode: 'classic',
+  designMode: 'aurora', // the redesign is the default experience; Classic/Forge are one tap away in Settings
   quoteGenre: 'stoic',
   leaderboardPublic: true,
   shareActivity: true,
