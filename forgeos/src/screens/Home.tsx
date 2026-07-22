@@ -69,6 +69,7 @@ export default function Home() {
   }, [history]);
 
   const macros = profile?.macros ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 };
+  const v2 = useSettings((s) => s.designMode === 'v2');
 
   // Recovery readiness — only when the feature is on and there's actual data.
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
@@ -91,20 +92,24 @@ export default function Home() {
         {/* Install CTA — only shows in a browser, hidden once installed */}
         <InstallButton variant="banner" />
 
-        {/* Calorie ring + macro donuts */}
-        <Card>
-          <div className="flex items-center gap-4">
-            <Ring value={totals.calories} max={macros.calories}>
-              <CountUp value={Math.round(totals.calories)} className="text-2xl font-bold font-mono" duration={500} />
-              <span className="text-[10px] text-muted">/ {macros.calories} kcal</span>
-            </Ring>
-            <div className="flex-1 space-y-2">
-              <MacroBar label="Protein" value={totals.proteinG} max={macros.proteinG} unit="g" color="rgb(var(--accent))" />
-              <MacroBar label="Carbs" value={totals.carbsG} max={macros.carbsG} unit="g" color="rgb(var(--accent-2))" />
-              <MacroBar label="Fat" value={totals.fatG} max={macros.fatG} unit="g" color="rgb(var(--success))" />
+        {/* Energy + macros — Tempo telemetry hero in V2, ring+bars in Legacy */}
+        {v2 ? (
+          <HeroV2 totals={totals} macros={macros} />
+        ) : (
+          <Card>
+            <div className="flex items-center gap-4">
+              <Ring value={totals.calories} max={macros.calories}>
+                <CountUp value={Math.round(totals.calories)} className="text-2xl font-bold font-mono" duration={500} />
+                <span className="text-[10px] text-muted">/ {macros.calories} kcal</span>
+              </Ring>
+              <div className="flex-1 space-y-2">
+                <MacroBar label="Protein" value={totals.proteinG} max={macros.proteinG} unit="g" color="rgb(var(--accent))" />
+                <MacroBar label="Carbs" value={totals.carbsG} max={macros.carbsG} unit="g" color="rgb(var(--accent-2))" />
+                <MacroBar label="Fat" value={totals.fatG} max={macros.fatG} unit="g" color="rgb(var(--success))" />
+              </div>
             </div>
-          </div>
-        </Card>
+          </Card>
+        )}
 
         {/* Workout status */}
         <Card onClick={() => navigate('/train')} className="flex items-center justify-between">
@@ -302,6 +307,59 @@ function HealthGlance() {
         </div>
       </div>
     </Card>
+  );
+}
+
+// V2 "Tempo" energy hero: a broadcast telemetry readout — a big ENERGY value
+// with the live percentage, a full-width segmented meter, and the three macros
+// as labelled readouts with their own thin meters. Same data as Legacy, new form.
+function HeroV2({
+  totals,
+  macros,
+}: {
+  totals: { calories: number; proteinG: number; carbsG: number; fatG: number };
+  macros: { calories: number; proteinG: number; carbsG: number; fatG: number };
+}) {
+  const pct = Math.min(100, macros.calories > 0 ? (totals.calories / macros.calories) * 100 : 0);
+  return (
+    <Card>
+      <div className="flex items-end justify-between">
+        <div>
+          <p className="text-[10px] uppercase tracking-[0.14em] text-muted mb-1">Energy</p>
+          <p className="leading-none">
+            <CountUp value={Math.round(totals.calories)} className="text-4xl font-bold font-mono" duration={500} />
+            <span className="text-sm text-muted"> / {macros.calories.toLocaleString()}</span>
+          </p>
+        </div>
+        <span className="font-mono text-2xl font-bold text-accent leading-none">{Math.round(pct)}%</span>
+      </div>
+      <div className="v2-meter my-3" style={{ height: 14 }}>
+        <div className="v2-meter-fill" style={{ width: `${pct}%`, background: 'rgb(var(--accent))' }} />
+        <div className="v2-meter-seg" />
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        <MacroReadout label="Protein" value={totals.proteinG} max={macros.proteinG} color="rgb(var(--accent))" />
+        <MacroReadout label="Carbs" value={totals.carbsG} max={macros.carbsG} color="rgb(var(--accent-2))" />
+        <MacroReadout label="Fat" value={totals.fatG} max={macros.fatG} color="rgb(var(--success))" />
+      </div>
+    </Card>
+  );
+}
+
+function MacroReadout({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+  const pct = Math.min(100, max > 0 ? (value / max) * 100 : 0);
+  return (
+    <div>
+      <p className="text-[9px] uppercase tracking-[0.1em] text-muted">{label}</p>
+      <p className="font-mono text-sm leading-tight">
+        {Math.round(value)}
+        <span className="text-muted text-[11px]">/{max}g</span>
+      </p>
+      <div className="v2-meter mt-1" style={{ height: 6 }}>
+        <div className="v2-meter-fill" style={{ width: `${pct}%`, background: color }} />
+        <div className="v2-meter-seg" />
+      </div>
+    </div>
   );
 }
 
