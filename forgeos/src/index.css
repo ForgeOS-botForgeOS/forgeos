@@ -953,3 +953,38 @@ button {
   width: 28px;
   border-radius: 0;
 }
+
+/* --- Phase 4: signature segmented telemetry meter (replaces the Ring) ---- */
+.ui-v2 .v2-meter {
+  position: relative;
+  height: 12px;
+  border-radius: 2px;
+  background: rgb(var(--surface-2));
+  overflow: hidden;
+}
+.ui-v2 .v2-meter-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+}
+/* Punches thin vertical gaps (in the app ground colour) into the fill + track
+   so it reads as discrete signal segments, not a smooth bar. */
+.ui-v2 .v2-meter-seg {
+  position: absolute;
+  inset: 0;
+  background-image: repeating-linear-gradient(
+    90deg,
+    transparent 0 10px,
+    rgb(var(--bg)) 10px 12px
+  );
+  pointer-events: none;
+}
+
+/* --- Phase 4: pills as squared telemetry chips ------------------------- */
+.ui-v2 .fx-pill {
+  border-radius: 3px;
+  font-family: var(--v2-display);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}

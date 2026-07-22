@@ -1,6 +1,7 @@
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
+import { useSettings } from '../state/settingsStore';
 
 export function Card({
   children,
@@ -53,7 +54,7 @@ export function Pill({ children, active = false, onClick }: { children: ReactNod
       onClick={onClick}
       whileTap={{ scale: 0.92 }}
       transition={PRESS}
-      className={`whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+      className={`fx-pill whitespace-nowrap rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
         active ? 'bg-accent text-black' : 'bg-surface-2 text-muted hover:text-text'
       }`}
     >
@@ -72,6 +73,17 @@ export function SectionTitle({ children, action }: { children: ReactNode; action
 }
 
 export function Stat({ label, value, sub }: { label: string; value: ReactNode; sub?: string }) {
+  const v2 = useSettings((s) => s.designMode) === 'v2';
+  // Tempo telemetry readout: micro label ABOVE the value (channel-readout order).
+  if (v2) {
+    return (
+      <div className="flex flex-col">
+        <span className="text-[10px] uppercase tracking-[0.12em] text-muted leading-none mb-1">{label}</span>
+        <span className="text-2xl font-bold font-mono leading-none">{value}</span>
+        {sub && <span className="text-[10px] text-muted/70 mt-1">{sub}</span>}
+      </div>
+    );
+  }
   return (
     <div className="flex flex-col">
       <span className="text-2xl font-bold font-mono leading-none">{value}</span>
@@ -100,6 +112,26 @@ export function Ring({
   const r = (size - stroke) / 2;
   const c = 2 * Math.PI * r;
   const pct = Math.max(0, Math.min(1, max > 0 ? value / max : 0));
+  // Tempo signature: the ring becomes a segmented telemetry METER that sweeps
+  // in — same props, drop-in. The readout (children) sits above the meter.
+  const v2 = useSettings((s) => s.designMode) === 'v2';
+  if (v2) {
+    return (
+      <div className="v2-ring inline-flex flex-col items-center justify-center gap-3" style={{ width: size, minHeight: size }}>
+        <div className="text-center leading-none">{children}</div>
+        <div className="v2-meter" style={{ width: size }}>
+          <motion.div
+            className="v2-meter-fill"
+            style={{ background: color }}
+            initial={{ width: 0 }}
+            animate={{ width: `${pct * 100}%` }}
+            transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }}
+          />
+          <div className="v2-meter-seg" />
+        </div>
+      </div>
+    );
+  }
   return (
     <div className="relative inline-flex items-center justify-center" style={{ width: size, height: size }}>
       <svg width={size} height={size} className="-rotate-90">
