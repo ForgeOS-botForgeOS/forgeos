@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -642,4 +642,152 @@ button {
   box-shadow:
     0 0 0 4px rgb(var(--accent) / 0.14),
     0 0 20px -6px rgb(var(--accent) / 0.4);
+}
+
+/* ============================================================================
+   "Bolt" — the editorial / neo-brutalist ground-up redesign, a selectable
+   option (Settings → App design). Nothing about it echoes the soft-dark classic
+   app or Nova's gradient glass: a grotesque display typeface, flat high-contrast
+   surfaces, crisp keyline borders, hard offset shadows, an anchored bordered
+   navigation with block-underline tabs, and uppercase display headers. Every
+   rule reads the theme variables, so all colour themes work in this style;
+   remove `.ui-bolt` (Classic) and the original app returns exactly.
+   ========================================================================== */
+
+/* Grotesque type across the whole app — the single biggest shift in feel */
+.ui-bolt,
+.ui-bolt body {
+  font-family: 'Space Grotesk', 'Inter', system-ui, sans-serif;
+}
+
+/* Flat, technical backdrop — a faint keyline grid instead of any glow */
+.ui-bolt #phone-root {
+  background-color: rgb(var(--bg));
+  background-image:
+    linear-gradient(rgb(var(--line) / 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(var(--line) / 0.16) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+/* Cards are printed blocks: flat fill, a crisp keyline, near-square corners —
+   no radial glow, no gradient sheen. */
+.ui-bolt .fx-card {
+  background-image: none;
+  background-color: rgb(var(--surface));
+  border: 1.5px solid rgb(var(--line));
+  border-radius: 10px;
+  box-shadow: none;
+  transition:
+    transform 140ms var(--ease-out-quart),
+    box-shadow 140ms var(--ease-out-quart),
+    border-color 140ms ease;
+}
+
+/* Tappable blocks get the signature hard accent offset shadow + an ink keyline,
+   and physically press in on interaction (the offset collapses under the block). */
+.ui-bolt .fx-card.cursor-pointer {
+  border-color: rgb(var(--text) / 0.85);
+  box-shadow: 4px 4px 0 0 rgb(var(--accent));
+}
+@media (hover: hover) {
+  .ui-bolt .fx-card.cursor-pointer:hover {
+    transform: translate(2px, 2px);
+    box-shadow: 2px 2px 0 0 rgb(var(--accent));
+  }
+}
+.ui-bolt .fx-card.cursor-pointer:active {
+  transform: translate(4px, 4px);
+  box-shadow: 0 0 0 0 rgb(var(--accent));
+}
+
+/* Primary actions: solid accent fill, an ink keyline, a hard offset, uppercase +
+   tracked. A stamped button, not a gradient pill. */
+.ui-bolt .fx-primary {
+  background-image: none;
+  border-radius: 8px;
+  border: 1.5px solid rgb(var(--text) / 0.9);
+  box-shadow: 3px 3px 0 0 rgb(var(--text) / 0.9);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  transition:
+    transform 120ms var(--ease-out-quart),
+    box-shadow 120ms var(--ease-out-quart);
+}
+@media (hover: hover) {
+  .ui-bolt .fx-primary:hover {
+    transform: translate(1.5px, 1.5px);
+    box-shadow: 1.5px 1.5px 0 0 rgb(var(--text) / 0.9);
+  }
+}
+.ui-bolt .fx-primary:active {
+  transform: translate(3px, 3px);
+  box-shadow: 0 0 0 0 rgb(var(--text) / 0.9);
+}
+
+/* Navigation is anchored and solid — a bordered bar, not a floating glass pill.
+   A strong top keyline separates it from the app; no blur. */
+.ui-bolt .fx-tabbar {
+  background-color: rgb(var(--surface));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-top: 2px solid rgb(var(--text) / 0.85);
+  box-shadow: none;
+}
+/* Active tab: a solid accent underline block under the label */
+.ui-bolt .fx-tabbar a[aria-current='page'] {
+  position: relative;
+  filter: none;
+}
+.ui-bolt .fx-tabbar a[aria-current='page']::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 1px;
+  width: 22px;
+  height: 3px;
+  transform: translateX(-50%);
+  background-color: rgb(var(--accent));
+  border-radius: 1px;
+}
+
+/* Sheets: square top, a strong top keyline, flat surface */
+.ui-bolt .fx-sheet {
+  background-image: none;
+  border-radius: 14px 14px 0 0;
+  border-top: 2px solid rgb(var(--text) / 0.85);
+  box-shadow: 0 -24px 50px -30px rgb(0 0 0 / 0.6);
+}
+
+/* Uppercase editorial display headers — oversized, ultra-tight */
+.ui-bolt .screen-head h1 {
+  font-size: 2rem;
+  line-height: 0.98;
+  letter-spacing: -0.03em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+.ui-bolt h1 {
+  letter-spacing: -0.02em;
+}
+.ui-bolt h2 {
+  letter-spacing: -0.01em;
+  font-weight: 700;
+}
+
+/* Inputs: square, keyline border, a hard focus inset (no glow) */
+.ui-bolt input,
+.ui-bolt textarea,
+.ui-bolt select {
+  border-radius: 8px;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease;
+}
+.ui-bolt input:focus,
+.ui-bolt textarea:focus,
+.ui-bolt select:focus {
+  outline: none;
+  border-color: rgb(var(--accent));
+  box-shadow: inset 0 0 0 1.5px rgb(var(--accent));
 }

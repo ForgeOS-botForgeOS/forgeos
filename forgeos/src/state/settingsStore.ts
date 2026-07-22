@@ -20,7 +20,7 @@ const DEFAULTS: Settings = {
   reminder: { enabled: false, time: '18:00', days: [0, 1, 2, 3, 4] },
   theme: 'forge-dark',
   autoTheme: false,
-  designMode: 'nova', // Nova redesign is the app's default look; Classic stays selectable to compare
+  designMode: 'bolt', // Bolt (editorial/brutalist) redesign is the app's default look; Classic & Nova stay selectable to compare
   quoteGenre: 'stoic',
   leaderboardPublic: true,
   shareActivity: true,
@@ -51,12 +51,14 @@ export const useSettings = create<SettingsState>()(
           document.documentElement.setAttribute('data-theme', theme);
         }
       },
-      // The design mode is a single class on <html> that a scoped CSS block keys
+      // Each design mode is a single class on <html> that a scoped CSS block keys
       // off — so switching is instant and 'classic' means no class at all
-      // (the original look returns exactly).
+      // (the original look returns exactly). Only one mode class is ever set.
       applyDesign: (mode) => {
         if (typeof document === 'undefined') return;
-        document.documentElement.classList.toggle('ui-nova', mode === 'nova');
+        const root = document.documentElement.classList;
+        root.toggle('ui-nova', mode === 'nova');
+        root.toggle('ui-bolt', mode === 'bolt');
       },
     }),
     {
@@ -79,9 +81,11 @@ export const useSettings = create<SettingsState>()(
           return (saved === undefined ? def : saved) as T;
         };
         const merged = { ...current, ...deep(DEFAULTS, p) } as SettingsState;
-        // Any retired design value (the old 'forge'/'aurora' modes) → Nova, the
-        // current default look. Anyone who explicitly picked Classic keeps it.
-        if (merged.designMode !== 'classic' && merged.designMode !== 'nova') merged.designMode = 'nova';
+        // Any retired/unknown design value (the old 'forge'/'aurora' modes) →
+        // Bolt, the current default look. Anyone who explicitly picked Classic
+        // or Nova keeps their choice.
+        const VALID_DESIGN: DesignMode[] = ['classic', 'nova', 'bolt'];
+        if (!VALID_DESIGN.includes(merged.designMode)) merged.designMode = 'bolt';
         return merged;
       },
       onRehydrateStorage: () => (state) => {

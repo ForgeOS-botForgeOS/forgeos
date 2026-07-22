@@ -438,9 +438,11 @@ export interface AppLock {
 }
 
 // Design mode = the visual language, orthogonal to the colour `theme`.
-// 'classic' = the original ForgeOS look (default) · 'nova' = the bold ground-up
-// redesign (new type, vivid gradients, glassy floating nav). Selectable option.
-export type DesignMode = 'classic' | 'nova';
+// 'classic' = the original ForgeOS look · 'nova' = the gradient-glass redesign ·
+// 'bolt' = the bold editorial / neo-brutalist ground-up redesign (grotesque
+// display type, flat high-contrast blocks, hard offset shadows, anchored nav).
+// Every mode drives off the theme variables, so all colour themes keep working.
+export type DesignMode = 'classic' | 'nova' | 'bolt';
 
 export interface Settings {
   language: Language;
@@ -453,7 +455,7 @@ export interface Settings {
   reminder: ReminderConfig;
   theme: ThemeId;
   autoTheme: boolean; // day = light, night = dark
-  designMode: DesignMode; // visual language: classic · forge · aurora
+  designMode: DesignMode; // visual language: classic · nova · bolt
   quoteGenre: QuoteGenrePref;
   leaderboardPublic: boolean;
   shareActivity: boolean; // let friends see your real workout activity (live backend)
