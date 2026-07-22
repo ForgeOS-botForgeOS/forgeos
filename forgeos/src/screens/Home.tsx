@@ -21,7 +21,7 @@ import { WeighInTracker } from '../components/WeighInTracker';
 import { Heatmap } from '../components/Heatmap';
 import { useHealth, sortedDays } from '../state/healthStore';
 import { useSettings } from '../state/settingsStore';
-import { readinessFromDays } from '../lib/readiness';
+import { readinessFromDays, type Readiness } from '../lib/readiness';
 import { ReadinessCard } from '../components/Readiness';
 import { weekendNudge } from '../lib/nudges';
 
@@ -92,52 +92,64 @@ export default function Home() {
         {/* Install CTA — only shows in a browser, hidden once installed */}
         <InstallButton variant="banner" />
 
-        {/* Energy + macros — Tempo telemetry hero in V2, ring+bars in Legacy */}
+        {/* Top of Home — V2: a bento dashboard; Legacy: ring hero + status card */}
         {v2 ? (
-          <HeroV2 totals={totals} macros={macros} />
+          <BentoTop
+            totals={totals}
+            macros={macros}
+            streak={streak}
+            trainedToday={!!(history[0] && isToday(history[0].date))}
+            readiness={readiness}
+            recoveryEnabled={recoveryEnabled}
+            hasHealthData={Object.keys(healthDays).length > 0}
+            weeklyVolume={weeklyVolume}
+            onNav={navigate}
+          />
         ) : (
-          <Card>
-            <div className="flex items-center gap-4">
-              <Ring value={totals.calories} max={macros.calories}>
-                <CountUp value={Math.round(totals.calories)} className="text-2xl font-bold font-mono" duration={500} />
-                <span className="text-[10px] text-muted">/ {macros.calories} kcal</span>
-              </Ring>
-              <div className="flex-1 space-y-2">
-                <MacroBar label="Protein" value={totals.proteinG} max={macros.proteinG} unit="g" color="rgb(var(--accent))" />
-                <MacroBar label="Carbs" value={totals.carbsG} max={macros.carbsG} unit="g" color="rgb(var(--accent-2))" />
-                <MacroBar label="Fat" value={totals.fatG} max={macros.fatG} unit="g" color="rgb(var(--success))" />
+          <>
+            <Card>
+              <div className="flex items-center gap-4">
+                <Ring value={totals.calories} max={macros.calories}>
+                  <CountUp value={Math.round(totals.calories)} className="text-2xl font-bold font-mono" duration={500} />
+                  <span className="text-[10px] text-muted">/ {macros.calories} kcal</span>
+                </Ring>
+                <div className="flex-1 space-y-2">
+                  <MacroBar label="Protein" value={totals.proteinG} max={macros.proteinG} unit="g" color="rgb(var(--accent))" />
+                  <MacroBar label="Carbs" value={totals.carbsG} max={macros.carbsG} unit="g" color="rgb(var(--accent-2))" />
+                  <MacroBar label="Fat" value={totals.fatG} max={macros.fatG} unit="g" color="rgb(var(--success))" />
+                </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+            <Card onClick={() => navigate('/train')} className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted">Today’s training</p>
+                <p className="font-semibold">{history[0] && isToday(history[0].date) ? 'Session logged ✅' : 'Ready when you are'}</p>
+              </div>
+              <Badge>Open Train</Badge>
+            </Card>
+          </>
         )}
-
-        {/* Workout status */}
-        <Card onClick={() => navigate('/train')} className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted">Today’s training</p>
-            <p className="font-semibold">{history[0] && isToday(history[0].date) ? 'Session logged ✅' : 'Ready when you are'}</p>
-          </div>
-          <Badge>Open Train</Badge>
-        </Card>
 
         {/* End-of-week reminder: streak on the line / sessions to goal */}
         <WeekendNudge />
 
-        {/* Recovery readiness — card when there's data, a one-time nudge otherwise */}
-        {readiness ? (
-          <ReadinessCard r={readiness} onClick={() => navigate('/health')} />
-        ) : recoveryEnabled && Object.keys(healthDays).length === 0 ? (
-          <Card onClick={() => navigate('/health')} className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <Watch size={16} className="text-accent shrink-0" />
-              <div>
-                <p className="text-sm font-semibold">Track recovery</p>
-                <p className="text-[12px] text-muted">Connect Garmin or log sleep to unlock readiness</p>
+        {/* Recovery readiness — card when there's data, a one-time nudge otherwise.
+            V2 surfaces this in the bento grid above, so only Legacy renders it here. */}
+        {!v2 &&
+          (readiness ? (
+            <ReadinessCard r={readiness} onClick={() => navigate('/health')} />
+          ) : recoveryEnabled && Object.keys(healthDays).length === 0 ? (
+            <Card onClick={() => navigate('/health')} className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Watch size={16} className="text-accent shrink-0" />
+                <div>
+                  <p className="text-sm font-semibold">Track recovery</p>
+                  <p className="text-[12px] text-muted">Connect Garmin or log sleep to unlock readiness</p>
+                </div>
               </div>
-            </div>
-            <Badge color="rgb(var(--accent))">Set up</Badge>
-          </Card>
-        ) : null}
+              <Badge color="rgb(var(--accent))">Set up</Badge>
+            </Card>
+          ) : null)}
 
         {/* Sleep & steps at a glance — only for people with Garmin auto-sync flowing */}
         <HealthGlance />
@@ -166,28 +178,30 @@ export default function Home() {
         <WeeklyReviewCard />
         <WeeklyRecap />
 
-        {/* Weekly volume */}
-        <div>
-          <SectionTitle action={<span className="text-xs text-muted flex items-center gap-1"><TrendingUp size={12} /> this week</span>}>
-            Weekly volume
-          </SectionTitle>
-          <Card>
-            <div className="h-36">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={weeklyVolume}>
-                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
-                  <YAxis hide />
-                  <Tooltip
-                    cursor={{ fill: 'rgb(var(--surface-2))' }}
-                    contentStyle={{ background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 12, fontSize: 12 }}
-                    formatter={(v) => [`${Number(v).toLocaleString()} kg`, 'Volume']}
-                  />
-                  <Bar dataKey="volume" fill="rgb(var(--accent))" radius={[6, 6, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </Card>
-        </div>
+        {/* Weekly volume — V2 surfaces this in the bento grid above */}
+        {!v2 && (
+          <div>
+            <SectionTitle action={<span className="text-xs text-muted flex items-center gap-1"><TrendingUp size={12} /> this week</span>}>
+              Weekly volume
+            </SectionTitle>
+            <Card>
+              <div className="h-36">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={weeklyVolume}>
+                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
+                    <YAxis hide />
+                    <Tooltip
+                      cursor={{ fill: 'rgb(var(--surface-2))' }}
+                      contentStyle={{ background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 12, fontSize: 12 }}
+                      formatter={(v) => [`${Number(v).toLocaleString()} kg`, 'Volume']}
+                    />
+                    <Bar dataKey="volume" fill="rgb(var(--accent))" radius={[6, 6, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Weigh-in tracker */}
         <div>
@@ -333,16 +347,112 @@ function HeroV2({
         </div>
         <span className="font-mono text-2xl font-bold text-accent leading-none">{Math.round(pct)}%</span>
       </div>
-      <div className="v2-meter my-3" style={{ height: 14 }}>
+      <div className="v2-meter mt-3" style={{ height: 14 }}>
         <div className="v2-meter-fill" style={{ width: `${pct}%`, background: 'rgb(var(--accent))' }} />
         <div className="v2-meter-seg" />
       </div>
-      <div className="grid grid-cols-3 gap-3">
-        <MacroReadout label="Protein" value={totals.proteinG} max={macros.proteinG} color="rgb(var(--accent))" />
-        <MacroReadout label="Carbs" value={totals.carbsG} max={macros.carbsG} color="rgb(var(--accent-2))" />
-        <MacroReadout label="Fat" value={totals.fatG} max={macros.fatG} color="rgb(var(--success))" />
-      </div>
     </Card>
+  );
+}
+
+// V2 "Bento dashboard" — the whole top of Home as a tiled grid of live modules:
+// a full-width energy hero, a 2-col grid (macros · streak · today · readiness),
+// and a wide volume tile. Same data + navigation as Legacy, new structure.
+function BentoTop({
+  totals,
+  macros,
+  streak,
+  trainedToday,
+  readiness,
+  recoveryEnabled,
+  hasHealthData,
+  weeklyVolume,
+  onNav,
+}: {
+  totals: { calories: number; proteinG: number; carbsG: number; fatG: number };
+  macros: { calories: number; proteinG: number; carbsG: number; fatG: number };
+  streak: number;
+  trainedToday: boolean;
+  readiness: Readiness | null;
+  recoveryEnabled: boolean;
+  hasHealthData: boolean;
+  weeklyVolume: { day: string; volume: number }[];
+  onNav: (to: string) => void;
+}) {
+  const totalVol = weeklyVolume.reduce((a, b) => a + b.volume, 0);
+  const tileLabel = 'text-[10px] uppercase tracking-[0.12em] text-muted';
+  return (
+    <div className="space-y-3">
+      <HeroV2 totals={totals} macros={macros} />
+      <div className="grid grid-cols-2 gap-3">
+        {/* Macros */}
+        <Card>
+          <p className={`${tileLabel} mb-2`}>Macros</p>
+          <div className="space-y-2">
+            <MacroReadout label="Protein" value={totals.proteinG} max={macros.proteinG} color="rgb(var(--accent))" />
+            <MacroReadout label="Carbs" value={totals.carbsG} max={macros.carbsG} color="rgb(var(--accent-2))" />
+            <MacroReadout label="Fat" value={totals.fatG} max={macros.fatG} color="rgb(var(--success))" />
+          </div>
+        </Card>
+        {/* Streak */}
+        <Card className="flex flex-col">
+          <p className={tileLabel}>Streak</p>
+          <div className="flex items-end gap-1.5 mt-auto">
+            <Flame size={22} className="text-accent mb-1" />
+            <CountUp value={streak} className="text-4xl font-bold font-mono leading-none" />
+            <span className="text-xs text-muted mb-1">wks</span>
+          </div>
+          <p className="text-[11px] text-muted mt-2">weeks you showed up</p>
+        </Card>
+        {/* Today's training */}
+        <Card onClick={() => onNav('/train')} className="flex flex-col">
+          <p className={tileLabel}>Today</p>
+          <p className="font-semibold mt-2 leading-tight">{trainedToday ? 'Session logged' : 'Ready to train'}</p>
+          <span className="mt-auto pt-2 inline-flex items-center gap-1 text-sm text-accent font-semibold">▸ {trainedToday ? 'Open Train' : 'Start'}</span>
+        </Card>
+        {/* Readiness → recovery-setup → progress (always fills the cell) */}
+        {readiness ? (
+          <Card onClick={() => onNav('/health')} className="flex flex-col">
+            <p className={tileLabel}>Readiness</p>
+            <CountUp value={readiness.score} className="text-4xl font-bold font-mono leading-none mt-auto" />
+            <p className="text-[12px] text-muted mt-1">{readiness.label}</p>
+          </Card>
+        ) : recoveryEnabled && !hasHealthData ? (
+          <Card onClick={() => onNav('/health')} className="flex flex-col">
+            <p className={tileLabel}>Recovery</p>
+            <Watch size={22} className="text-accent mt-auto" />
+            <span className="mt-2 inline-flex items-center gap-1 text-sm text-accent font-semibold">▸ Set up</span>
+          </Card>
+        ) : (
+          <Card onClick={() => onNav('/progress')} className="flex flex-col">
+            <p className={tileLabel}>Progress</p>
+            <p className="font-semibold mt-2 leading-tight">Body &amp; trends</p>
+            <span className="mt-auto pt-2 inline-flex items-center gap-1 text-sm text-accent-2 font-semibold">▸ Open</span>
+          </Card>
+        )}
+      </div>
+      {/* Volume — wide tile */}
+      <Card>
+        <div className="flex items-center justify-between mb-1">
+          <p className={tileLabel}>Volume · this week</p>
+          <span className="font-mono text-sm">{totalVol.toLocaleString()} kg</span>
+        </div>
+        <div className="h-28">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={weeklyVolume}>
+              <XAxis dataKey="day" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
+              <YAxis hide />
+              <Tooltip
+                cursor={{ fill: 'rgb(var(--surface-2))' }}
+                contentStyle={{ background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 8, fontSize: 12 }}
+                formatter={(v) => [`${Number(v).toLocaleString()} kg`, 'Volume']}
+              />
+              <Bar dataKey="volume" fill="rgb(var(--accent))" radius={[3, 3, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+      </Card>
+    </div>
   );
 }
 
