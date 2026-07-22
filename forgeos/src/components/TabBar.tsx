@@ -33,11 +33,11 @@ export function TabBar() {
             >
               {({ isActive }) => (
                 <>
-                  {isActive && <motion.span layoutId="tab-indicator" className="absolute top-0 h-0.5 w-8 rounded-full bg-accent" transition={{ type: 'spring', stiffness: 500, damping: 32 }} />}
-                  <motion.span animate={{ scale: isActive ? 1.12 : 1, y: isActive ? -1 : 0 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
+                  {isActive && <motion.span layoutId="tab-indicator" className="tab-indicator absolute top-0 h-0.5 w-8 rounded-full bg-accent" transition={{ type: 'spring', stiffness: 500, damping: 32 }} />}
+                  <motion.span className="tab-icon" animate={{ scale: isActive ? 1.12 : 1, y: isActive ? -1 : 0 }} transition={{ type: 'spring', stiffness: 400, damping: 20 }}>
                     <Icon size={20} strokeWidth={isActive ? 2.5 : 2} />
                   </motion.span>
-                  {t(tab.key)}
+                  <span className="tab-label">{t(tab.key)}</span>
                 </>
               )}
             </NavLink>

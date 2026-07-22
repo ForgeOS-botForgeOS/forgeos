@@ -937,3 +937,19 @@ button {
   border-color: rgb(var(--accent));
   box-shadow: 0 0 0 2px rgb(var(--accent) / 0.25);
 }
+
+/* --- Phase 3: Tempo navigation form (IA unchanged) ---------------------- */
+/* A broadcast "channel selector": condensed uppercase labels + a squared
+   signal segment marking the active tab (vs Legacy's rounded accent pill). */
+.ui-v2 .fx-tabbar .tab-label {
+  font-family: var(--v2-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: 600;
+}
+.ui-v2 .fx-tabbar .tab-indicator {
+  top: 0;
+  height: 3px;
+  width: 28px;
+  border-radius: 0;
+}
