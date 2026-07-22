@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;600;700&family=Saira:ital,wght@0,400;0,500;0,600;0,700;1,500;1,600&family=Saira+Condensed:wght@600;700&display=swap');
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -790,4 +790,150 @@ button {
   outline: none;
   border-color: rgb(var(--accent));
   box-shadow: inset 0 0 0 1.5px rgb(var(--accent));
+}
+
+/* ============================================================================
+   "V2 / TEMPO" — the from-scratch V2 redesign (Phase 2 foundation). A
+   broadcast-sport telemetry language: data as the interface, condensed italic
+   display type, flat telemetry panels, a signal accent reserved for live state
+   & action, and fast sweep motion. Selectable as a PREVIEW while it's built
+   (Settings → App design → V2); it becomes the Legacy⟷V2 default at QA sign-off.
+   Scoped entirely under `.ui-v2` (no leakage into Legacy) and driven by the
+   theme variables. Token reference: docs/redesign/tokens.md.
+   ========================================================================== */
+
+/* --- V2 design tokens (Tempo) ------------------------------------------- */
+.ui-v2 {
+  --v2-display: 'Saira Condensed', 'Saira', system-ui, sans-serif;
+  --v2-body: 'Saira', system-ui, sans-serif;
+  --v2-r-card: 8px;
+  --v2-r-control: 6px;
+  --v2-ease-sweep: cubic-bezier(0.22, 1, 0.36, 1);
+  --v2-dur-fast: 140ms;
+  --v2-dur: 220ms;
+}
+
+/* --- Re-authored default palette: forge-dark → Tempo (Phase 2 delivers the
+   hero theme; other themes inherit their own vars in Tempo form for now) --- */
+.ui-v2[data-theme='forge-dark'] {
+  --bg: 14 17 22; /* #0E1116 Graphite */
+  --surface: 22 27 34; /* #161B22 Slate panel */
+  --surface-2: 30 37 48; /* #1E2530 Raised */
+  --line: 42 51 64; /* #2A3340 Hairline */
+  --text: 237 241 246; /* #EDF1F6 Signal white */
+  --muted: 138 151 166; /* #8A97A6 Readout grey */
+  --accent: 47 230 196; /* #2FE6C4 Signal teal */
+  --accent-2: 255 90 60; /* #FF5A3C Heat (PRs) */
+}
+
+/* Grotesque-free: Tempo body face app-wide */
+.ui-v2,
+.ui-v2 body {
+  font-family: var(--v2-body);
+}
+
+/* Retarget Legacy's mono stat numbers (JetBrains) → Tempo tabular readouts,
+   so big numbers read as telemetry without touching any component. */
+.ui-v2 .font-mono {
+  font-family: var(--v2-body);
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+/* Flat telemetry backdrop — faint horizontal scanlines, no glow */
+.ui-v2 #phone-root {
+  background-color: rgb(var(--bg));
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgb(var(--text) / 0.02) 0 1px,
+    transparent 1px 3px
+  );
+}
+
+/* Cards are flat telemetry panels: thin hairline, small radius, no shadow */
+.ui-v2 .fx-card {
+  background-image: none;
+  background-color: rgb(var(--surface));
+  border: 1px solid rgb(var(--line));
+  border-radius: var(--v2-r-card);
+  box-shadow: none;
+  transition:
+    border-color var(--v2-dur-fast) var(--v2-ease-sweep),
+    transform var(--v2-dur-fast) var(--v2-ease-sweep);
+}
+@media (hover: hover) {
+  .ui-v2 .fx-card.cursor-pointer:hover {
+    border-color: rgb(var(--accent) / 0.6);
+  }
+}
+.ui-v2 .fx-card.cursor-pointer:active {
+  transform: scale(0.995);
+}
+
+/* Primary action: signal-filled, condensed italic uppercase — a broadcast CTA */
+.ui-v2 .fx-primary {
+  background-image: none;
+  border-radius: var(--v2-r-control);
+  font-family: var(--v2-display);
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  letter-spacing: 0.01em;
+}
+
+/* Navigation: a solid anchored broadcast strip with a signal top keyline —
+   no blur, no floating pill. */
+.ui-v2 .fx-tabbar {
+  background-color: rgb(var(--surface));
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-top: 1.5px solid rgb(var(--accent) / 0.5);
+  box-shadow: 0 -1px 0 0 rgb(var(--line));
+}
+
+/* Sheets: telemetry panel sliding up — squared top, signal keyline */
+.ui-v2 .fx-sheet {
+  background-image: none;
+  border-radius: var(--v2-r-card) var(--v2-r-card) 0 0;
+  border-top: 1.5px solid rgb(var(--accent) / 0.5);
+  box-shadow: 0 -20px 44px -26px rgb(0 0 0 / 0.7);
+}
+
+/* Display headers: condensed italic uppercase — the broadcast title */
+.ui-v2 .screen-head h1 {
+  font-family: var(--v2-display);
+  font-weight: 700;
+  font-style: italic;
+  text-transform: uppercase;
+  font-size: 2rem;
+  line-height: 0.95;
+  letter-spacing: 0.005em;
+}
+.ui-v2 h1 {
+  font-family: var(--v2-display);
+}
+.ui-v2 h2 {
+  font-family: var(--v2-display);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  font-weight: 600;
+}
+
+/* Inputs: squared, signal focus ring (no glow) */
+.ui-v2 input,
+.ui-v2 textarea,
+.ui-v2 select {
+  border-radius: var(--v2-r-control);
+  font-family: var(--v2-body);
+  transition:
+    border-color var(--v2-dur-fast) ease,
+    box-shadow var(--v2-dur-fast) ease;
+}
+.ui-v2 input:focus,
+.ui-v2 textarea:focus,
+.ui-v2 select:focus {
+  outline: none;
+  border-color: rgb(var(--accent));
+  box-shadow: 0 0 0 2px rgb(var(--accent) / 0.25);
 }

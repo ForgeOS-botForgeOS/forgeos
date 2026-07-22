@@ -59,6 +59,7 @@ export const useSettings = create<SettingsState>()(
         const root = document.documentElement.classList;
         root.toggle('ui-nova', mode === 'nova');
         root.toggle('ui-bolt', mode === 'bolt');
+        root.toggle('ui-v2', mode === 'v2');
       },
     }),
     {
@@ -84,7 +85,7 @@ export const useSettings = create<SettingsState>()(
         // Any retired/unknown design value (the old 'forge'/'aurora' modes) →
         // Bolt, the current default look. Anyone who explicitly picked Classic
         // or Nova keeps their choice.
-        const VALID_DESIGN: DesignMode[] = ['classic', 'nova', 'bolt'];
+        const VALID_DESIGN: DesignMode[] = ['classic', 'nova', 'bolt', 'v2'];
         if (!VALID_DESIGN.includes(merged.designMode)) merged.designMode = 'bolt';
         return merged;
       },

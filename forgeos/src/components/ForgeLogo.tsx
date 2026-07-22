@@ -10,10 +10,11 @@ import { useSettings } from '../state/settingsStore';
 export function ForgeLogo({ size = 64, tile = false, className = '' }: { size?: number; tile?: boolean; className?: string }) {
   const mode = useSettings((s) => s.designMode);
   const gradId = useId();
-  const markColor = tile ? '#F5F5F7' : 'currentColor';
-  const spark = mode === 'nova' ? '#FFFFFF' : mode === 'bolt' ? '#FACC15' : '#FFD34A';
-  const tileRadius = mode === 'nova' ? 16 : mode === 'bolt' ? 6 : 14;
-  const tileFill = mode === 'nova' ? `url(#${gradId})` : mode === 'bolt' ? '#0B0B0D' : '#FF5C35';
+  const markColor = tile ? (mode === 'v2' ? '#0E1116' : '#F5F5F7') : 'currentColor';
+  const spark = mode === 'nova' ? '#FFFFFF' : mode === 'bolt' ? '#FACC15' : mode === 'v2' ? '#FF5A3C' : '#FFD34A';
+  const tileRadius = mode === 'nova' ? 16 : mode === 'bolt' ? 6 : mode === 'v2' ? 8 : 14;
+  const tileFill =
+    mode === 'nova' ? `url(#${gradId})` : mode === 'bolt' ? '#0B0B0D' : mode === 'v2' ? '#2FE6C4' : '#FF5C35';
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" className={className} role="img" aria-label="ForgeOS">
       {mode === 'nova' && (

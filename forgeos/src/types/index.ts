@@ -439,10 +439,11 @@ export interface AppLock {
 
 // Design mode = the visual language, orthogonal to the colour `theme`.
 // 'classic' = the original ForgeOS look · 'nova' = the gradient-glass redesign ·
-// 'bolt' = the bold editorial / neo-brutalist ground-up redesign (grotesque
-// display type, flat high-contrast blocks, hard offset shadows, anchored nav).
+// 'bolt' = the bold editorial / neo-brutalist redesign · 'v2' = the in-progress
+// "Tempo" broadcast-sport telemetry redesign (selectable preview while it's
+// built; becomes the Legacy⟷V2 default at QA sign-off).
 // Every mode drives off the theme variables, so all colour themes keep working.
-export type DesignMode = 'classic' | 'nova' | 'bolt';
+export type DesignMode = 'classic' | 'nova' | 'bolt' | 'v2';
 
 export interface Settings {
   language: Language;

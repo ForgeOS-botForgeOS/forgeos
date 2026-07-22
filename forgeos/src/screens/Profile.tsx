@@ -34,6 +34,7 @@ import type { DesignMode, ThemeId } from '../types';
 import { haptic } from '../lib/haptics';
 
 const DESIGN_MODES: { id: DesignMode; name: string; emoji: string; desc: string }[] = [
+  { id: 'v2', name: 'V2 · Tempo (preview)', emoji: '📡', desc: 'In-progress redesign — broadcast-sport telemetry: condensed italic type, signal accent, live meters' },
   { id: 'bolt', name: 'Bolt', emoji: '⚡', desc: 'Bold editorial redesign — grotesque type, flat high-contrast blocks, hard shadows' },
   { id: 'nova', name: 'Nova', emoji: '🌈', desc: 'Gradient-glass redesign — new type, vivid gradients, glass nav' },
   { id: 'classic', name: 'Classic', emoji: '⚙️', desc: 'The original ForgeOS look' },
