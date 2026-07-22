@@ -1,14 +1,28 @@
+import { useSettings } from '../state/settingsStore';
+
 // The ForgeOS anvil-and-spark mark, as crisp vector — same design as the app
-// icon. `tile` wraps it in the rounded ember square (for splash/branding);
-// without it you get just the mark to drop next to the wordmark.
+// icon. `tile` wraps it in the rounded brand square (for splash/branding);
+// without it you get just the mark to drop next to the wordmark. In the Nova
+// redesign the tile becomes a vivid violet→magenta→coral gradient with a clean
+// white mark, so the in-app branding switches with the design mode.
 export function ForgeLogo({ size = 64, tile = false, className = '' }: { size?: number; tile?: boolean; className?: string }) {
-  const W = '#F5F5F7';
-  const G = '#FFD34A';
+  const nova = useSettings((s) => s.designMode) === 'nova';
+  const markColor = tile ? '#F5F5F7' : 'currentColor';
+  const spark = nova ? '#FFFFFF' : '#FFD34A';
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" className={className} role="img" aria-label="ForgeOS">
-      {tile && <rect x="0" y="0" width="64" height="64" rx="14" fill="#FF5C35" />}
+      {nova && (
+        <defs>
+          <linearGradient id="forgeNovaTile" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stopColor="#7C3AED" />
+            <stop offset="0.5" stopColor="#EC4899" />
+            <stop offset="1" stopColor="#FB7A3C" />
+          </linearGradient>
+        </defs>
+      )}
+      {tile && <rect x="0" y="0" width="64" height="64" rx={nova ? 16 : 14} fill={nova ? 'url(#forgeNovaTile)' : '#FF5C35'} />}
       {/* anvil */}
-      <g fill={tile ? W : 'currentColor'}>
+      <g fill={markColor}>
         <rect x="3.8" y="24.9" width="4.6" height="2" rx="1" /> {/* horn tip */}
         <rect x="6.4" y="24" width="6.6" height="3.6" rx="1.2" /> {/* horn */}
         <rect x="51.2" y="24.6" width="5.2" height="4.2" rx="1.4" /> {/* heel */}
@@ -18,7 +32,7 @@ export function ForgeLogo({ size = 64, tile = false, className = '' }: { size?: 
         <rect x="17.9" y="39.6" width="28.2" height="5.9" rx="2" /> {/* base */}
       </g>
       {/* sparks */}
-      <g fill={G}>
+      <g fill={spark}>
         <rect x="17.6" y="12.8" width="2" height="6.4" rx="1" />
         <rect x="15.4" y="15" width="6.4" height="2" rx="1" />
         <rect x="25.6" y="16.3" width="1.6" height="3.2" rx="0.8" />

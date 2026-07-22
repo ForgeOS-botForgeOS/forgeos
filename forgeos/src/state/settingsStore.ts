@@ -20,7 +20,7 @@ const DEFAULTS: Settings = {
   reminder: { enabled: false, time: '18:00', days: [0, 1, 2, 3, 4] },
   theme: 'forge-dark',
   autoTheme: false,
-  designMode: 'aurora', // the redesign is the default experience; Classic/Forge are one tap away in Settings
+  designMode: 'classic', // original look is the default; Nova redesign is a selectable option
   quoteGenre: 'stoic',
   leaderboardPublic: true,
   shareActivity: true,
@@ -51,15 +51,12 @@ export const useSettings = create<SettingsState>()(
           document.documentElement.setAttribute('data-theme', theme);
         }
       },
-      // The design mode is a single class on <html> that scoped CSS blocks key
+      // The design mode is a single class on <html> that a scoped CSS block keys
       // off — so switching is instant and 'classic' means no class at all
-      // (the original look returns exactly). 'forge' keeps the historical
-      // `ui-fresh` class name so already-shipped bundles stay compatible.
+      // (the original look returns exactly).
       applyDesign: (mode) => {
         if (typeof document === 'undefined') return;
-        const cl = document.documentElement.classList;
-        cl.toggle('ui-fresh', mode === 'forge');
-        cl.toggle('ui-aurora', mode === 'aurora');
+        document.documentElement.classList.toggle('ui-nova', mode === 'nova');
       },
     }),
     {
@@ -82,10 +79,10 @@ export const useSettings = create<SettingsState>()(
           return (saved === undefined ? def : saved) as T;
         };
         const merged = { ...current, ...deep(DEFAULTS, p) } as SettingsState;
-        // Migrate the old boolean `uiPolish` toggle → the new three-way mode:
-        // anyone who had the v2 look on lands on 'forge'; everyone else stays classic.
-        const legacy = (persisted ?? {}) as { uiPolish?: boolean; designMode?: DesignMode };
-        if (!legacy.designMode && legacy.uiPolish) merged.designMode = 'forge';
+        // Any retired design value (the old 'forge'/'aurora' modes, or the ancient
+        // `uiPolish` boolean) → back to the default. The redesign is an opt-in
+        // option now, so nobody is silently left on a superseded look.
+        if (merged.designMode !== 'classic' && merged.designMode !== 'nova') merged.designMode = 'classic';
         return merged;
       },
       onRehydrateStorage: () => (state) => {

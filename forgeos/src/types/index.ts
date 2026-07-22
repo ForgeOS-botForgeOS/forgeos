@@ -412,6 +412,8 @@ export type ThemeId =
   | 'synthwave'
   | 'blood-moon'
   | 'solar-flare'
+  | 'nebula'
+  | 'sunset-blaze'
   | 'daybreak-light'
   | 'paper-light';
 export type QuoteGenre = 'stoic' | 'biblical' | 'zen' | 'warrior';
@@ -436,9 +438,9 @@ export interface AppLock {
 }
 
 // Design mode = the visual language, orthogonal to the colour `theme`.
-// 'classic' = the original flat UI · 'forge' = heavy tempered-metal redesign ·
-// 'aurora' = airy, soft-elevation, floating-nav consumer look.
-export type DesignMode = 'classic' | 'forge' | 'aurora';
+// 'classic' = the original ForgeOS look (default) · 'nova' = the bold ground-up
+// redesign (new type, vivid gradients, glassy floating nav). Selectable option.
+export type DesignMode = 'classic' | 'nova';
 
 export interface Settings {
   language: Language;

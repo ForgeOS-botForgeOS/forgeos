@@ -34,13 +34,14 @@ import type { DesignMode, ThemeId } from '../types';
 import { haptic } from '../lib/haptics';
 
 const DESIGN_MODES: { id: DesignMode; name: string; emoji: string; desc: string }[] = [
-  { id: 'classic', name: 'Classic', emoji: '⚙️', desc: 'The original — flat & functional' },
-  { id: 'forge', name: 'Forge', emoji: '🔥', desc: 'Tempered metal, ember heat & depth' },
-  { id: 'aurora', name: 'Aurora', emoji: '✨', desc: 'Airy & soft — a modern consumer feel' },
+  { id: 'classic', name: 'Classic', emoji: '⚙️', desc: 'The original ForgeOS look' },
+  { id: 'nova', name: 'Nova', emoji: '🌈', desc: 'Bold ground-up redesign — new type, vivid gradients, glass nav' },
 ];
 
 const THEMES: { id: ThemeId; name: string; locked: boolean; unlockRank: string }[] = [
   { id: 'forge-dark', name: 'Forge Dark', locked: false, unlockRank: '' },
+  { id: 'nebula', name: 'Nebula', locked: false, unlockRank: '' },
+  { id: 'sunset-blaze', name: 'Sunset Blaze', locked: false, unlockRank: '' },
   { id: 'iron-dawn', name: 'Iron Dawn', locked: false, unlockRank: '' },
   { id: 'crimson-titan', name: 'Crimson Titan', locked: false, unlockRank: '' },
   { id: 'arctic-steel', name: 'Arctic Steel', locked: false, unlockRank: '' },
