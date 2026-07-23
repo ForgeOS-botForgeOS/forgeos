@@ -1,10 +1,45 @@
 import type { CardioMetric } from '../types';
 
-export const CARDIO_MACHINES = ['Run', 'Treadmill', 'Rower', 'Bike', 'Ski-erg', 'Elliptical', 'Stairmaster', 'Swim', 'Walk', 'Parkour', 'Karate'];
+export const CARDIO_MACHINES = ['Run', 'Treadmill', 'Rower', 'Bike', 'Ski-erg', 'Elliptical', 'Stairmaster', 'Swim', 'Walk', 'Parkour', 'Karate', 'Boxing', 'HIIT', 'Yoga', 'Climbing'];
 
-// Karate is scored by intensity, not distance — the form swaps the distance
-// field for an intensity dial (1–10) and hides the speed/pace readouts.
-export const INTENSITY_ACTIVITIES = ['Karate'];
+// Not every activity is measured in kilometres. Each one has a "primary metric"
+// that the form and scoring adapt to — distance for machines/runs, an intensity
+// dial for combat/HIIT/yoga, laps for swimming, a climbing grade for climbing.
+// The value is stored in CardioData.distanceKm (kept for back-compat) and just
+// interpreted differently per type.
+export type CardioMetricType = 'distance' | 'intensity' | 'grade' | 'laps';
+
+const ACTIVITY_METRIC: Record<string, CardioMetricType> = {
+  Karate: 'intensity',
+  Boxing: 'intensity',
+  HIIT: 'intensity',
+  Yoga: 'intensity',
+  Swim: 'laps',
+  Climbing: 'grade',
+};
+
+export function metricTypeFor(activity: string): CardioMetricType {
+  return ACTIVITY_METRIC[activity] ?? 'distance';
+}
+
+// Field config for each primary metric: the label, stepper bounds, whether the
+// speed/pace readouts apply, and an optional display formatter.
+export const METRIC_FIELD: Record<CardioMetricType, { label: string; step: number; min: number; max: number; showSpeed: boolean; format?: (v: number) => string }> = {
+  distance: { label: 'Distance (km)', step: 0.1, min: 0, max: 1000, showSpeed: true },
+  intensity: { label: 'Intensity (1–10)', step: 1, min: 0, max: 10, showSpeed: false },
+  laps: { label: 'Laps', step: 1, min: 0, max: 400, showSpeed: false },
+  grade: { label: 'Top grade (V-scale)', step: 1, min: 0, max: 17, showSpeed: false, format: (v) => `V${Math.round(v)}` },
+};
+
+// Human label for the primary value of an activity (used in toasts).
+export function primaryValueLabel(activity: string, value: number): string {
+  const type = metricTypeFor(activity);
+  const f = METRIC_FIELD[type];
+  if (f.format) return f.format(value);
+  if (type === 'distance') return `${value}km`;
+  if (type === 'laps') return `${Math.round(value)} laps`;
+  return `intensity ${Math.round(value)}`;
+}
 
 // One editable cardio session: the core numbers plus any metrics you define.
 export interface CardioData {

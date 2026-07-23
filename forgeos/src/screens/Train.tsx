@@ -33,7 +33,7 @@ import { useHealth, sortedDays } from '../state/healthStore';
 import { overloadSuggestion, volumeOf } from '../lib/fitness';
 import { scanCardio, type CardioSource } from '../lib/vision';
 import { CardioFields } from '../components/CardioForm';
-import { newCardioData, type CardioData } from '../lib/cardio';
+import { newCardioData, metricTypeFor, primaryValueLabel, type CardioData } from '../lib/cardio';
 import { xpForSet } from '../data/ranks';
 import { haptic } from '../lib/haptics';
 import { personalTips } from '../lib/personalCoach';
@@ -304,9 +304,15 @@ export default function Train() {
   );
 }
 
-// XP reward for cardio — distance + time, like a lift earns from weight × reps.
-function cardioXp(distanceKm: number, durationMin: number, calories = 0) {
-  return Math.round(distanceKm * 15 + durationMin * 4 + calories / 8) + 20;
+// XP reward for a cardio / sport session — the primary metric (distance, laps,
+// climbing grade, or intensity) plus time, like a lift earns from weight × reps.
+function cardioXp(activity: string, primary: number, durationMin: number, calories = 0) {
+  const type = metricTypeFor(activity);
+  const primaryBonus = type === 'distance' ? primary * 15
+    : type === 'laps' ? primary * 3
+    : type === 'grade' ? primary * 10
+    : primary * 8; // intensity
+  return Math.round(primaryBonus + durationMin * 4 + calories / 8) + 20;
 }
 
 function CardioScanCard() {
@@ -326,15 +332,15 @@ function CardioScanCard() {
     const { machine, distanceKm, durationMin, calories, metrics } = d;
     const { distancePR, durationPR } = logCardio(machine, distanceKm, durationMin, calories, metrics);
     registerSession();
-    bumpMetric('volume', Math.round(distanceKm * 1000)); // distance counts toward volume quests
-    const xp = cardioXp(distanceKm, durationMin, calories) + (distancePR ? 60 : 0) + (durationPR ? 40 : 0);
+    if (metricTypeFor(machine) === 'distance') bumpMetric('volume', Math.round(distanceKm * 1000)); // distance counts toward volume quests
+    const xp = cardioXp(machine, distanceKm, durationMin, calories) + (distancePR ? 60 : 0) + (durationPR ? 40 : 0);
     addXp(xp);
     if (distancePR || durationPR) {
       celebrate();
-      toast(`Cardio PR! ${distancePR ? `${distanceKm}km` : `${Math.round(durationMin)}min`} 🏃 +${xp} XP`);
+      toast(`${machine} PR! ${distancePR ? primaryValueLabel(machine, distanceKm) : `${Math.round(durationMin)}min`} 🏆 +${xp} XP`);
     } else {
       haptic('success');
-      toast(`Cardio logged 🏃 ${distanceKm}km · ${Math.round(durationMin)}min · +${xp} XP`);
+      toast(`${machine} logged 🏃 ${primaryValueLabel(machine, distanceKm)} · ${Math.round(durationMin)}min · +${xp} XP`);
     }
   }
 
