@@ -22,14 +22,36 @@ type Tab = 'rank' | 'quests' | 'board' | 'prs';
 export default function Quests() {
   const t = useT();
   const [tab, setTab] = useState<Tab>('rank');
+  const v2 = useSettings((s) => s.designMode === 'v2');
+  const tabDefs: { id: Tab; label: string }[] = [
+    { id: 'rank', label: 'Rank' },
+    { id: 'quests', label: 'Quests' },
+    { id: 'board', label: 'Leaderboard' },
+    { id: 'prs', label: 'PR Hall' },
+  ];
   return (
     <Screen title={t('q.title')} subtitle={t('q.subtitle')}>
-      <div data-noswipe className="flex gap-2 overflow-x-auto no-scrollbar">
-        <Pill active={tab === 'rank'} onClick={() => setTab('rank')}>Rank</Pill>
-        <Pill active={tab === 'quests'} onClick={() => setTab('quests')}>Quests</Pill>
-        <Pill active={tab === 'board'} onClick={() => setTab('board')}>Leaderboard</Pill>
-        <Pill active={tab === 'prs'} onClick={() => setTab('prs')}>PR Hall</Pill>
-      </div>
+      {v2 ? (
+        <div data-noswipe className="flex gap-5 border-b border-line overflow-x-auto no-scrollbar">
+          {tabDefs.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => setTab(d.id)}
+              className={`relative shrink-0 pt-1 pb-2 text-sm uppercase tracking-wide ${tab === d.id ? 'text-text font-semibold' : 'text-muted'}`}
+            >
+              {d.label}
+              {tab === d.id && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-accent" />}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div data-noswipe className="flex gap-2 overflow-x-auto no-scrollbar">
+          <Pill active={tab === 'rank'} onClick={() => setTab('rank')}>Rank</Pill>
+          <Pill active={tab === 'quests'} onClick={() => setTab('quests')}>Quests</Pill>
+          <Pill active={tab === 'board'} onClick={() => setTab('board')}>Leaderboard</Pill>
+          <Pill active={tab === 'prs'} onClick={() => setTab('prs')}>PR Hall</Pill>
+        </div>
+      )}
       {tab === 'rank' && <RankPanel />}
       {tab === 'quests' && <QuestBoard />}
       {tab === 'board' && <Leaderboard />}
@@ -50,22 +72,45 @@ function RankPanel() {
   const rate = useSettings((s) => s.xpToCoinRate);
   const gambling = useSettings((s) => s.streakGambling);
   const { tier, next } = rankForXp(xp);
+  const v2 = useSettings((s) => s.designMode === 'v2');
   const [convertOpen, setConvertOpen] = useState(false);
   const [wagerOpen, setWagerOpen] = useState(false);
 
   return (
     <div className="space-y-3">
-      <Card className="flex items-center gap-4">
-        <Ring value={progressToNext(xp)} max={1} color={tier.color}>
-          <span className="text-lg font-bold">{tier.sub}</span>
-          <span className="text-[9px] text-muted">tier</span>
-        </Ring>
-        <div className="flex-1">
-          <p className="text-xl font-extrabold" style={{ color: tier.color }}>{rankLabel(tier)}</p>
-          <CountUp value={xp} className="text-sm text-muted block" format={(n) => `${n.toLocaleString()} XP`} />
-          {next && <p className="text-[11px] text-muted/70">{(next.minXp - xp).toLocaleString()} XP to {rankLabel(next)}</p>}
-        </div>
-      </Card>
+      {v2 ? (
+        <Card>
+          <div className="flex items-start justify-between">
+            <div>
+              <p className="text-[10px] uppercase tracking-[0.12em] text-muted">Rank</p>
+              <p className="text-3xl font-bold uppercase italic leading-none mt-1" style={{ color: tier.color }}>{rankLabel(tier)}</p>
+              <CountUp value={xp} className="text-sm text-muted block mt-1" format={(n) => `${n.toLocaleString()} XP`} />
+            </div>
+            <span className="font-mono font-bold text-3xl leading-none" style={{ color: tier.color }}>{tier.sub}</span>
+          </div>
+          {next && (
+            <>
+              <div className="v2-meter mt-3" style={{ height: 12 }}>
+                <div className="v2-meter-fill" style={{ width: `${Math.round(progressToNext(xp) * 100)}%`, background: tier.color }} />
+                <div className="v2-meter-seg" />
+              </div>
+              <p className="text-[11px] text-muted mt-2">{(next.minXp - xp).toLocaleString()} XP to {rankLabel(next)}</p>
+            </>
+          )}
+        </Card>
+      ) : (
+        <Card className="flex items-center gap-4">
+          <Ring value={progressToNext(xp)} max={1} color={tier.color}>
+            <span className="text-lg font-bold">{tier.sub}</span>
+            <span className="text-[9px] text-muted">tier</span>
+          </Ring>
+          <div className="flex-1">
+            <p className="text-xl font-extrabold" style={{ color: tier.color }}>{rankLabel(tier)}</p>
+            <CountUp value={xp} className="text-sm text-muted block" format={(n) => `${n.toLocaleString()} XP`} />
+            {next && <p className="text-[11px] text-muted/70">{(next.minXp - xp).toLocaleString()} XP to {rankLabel(next)}</p>}
+          </div>
+        </Card>
+      )}
 
       <div className="grid grid-cols-2 gap-3">
         <Card className="flex items-center gap-3">

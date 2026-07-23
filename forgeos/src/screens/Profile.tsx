@@ -190,7 +190,7 @@ export default function Profile() {
         </Card>
       )}
 
-      {/* Identity card with equipped cosmetics */}
+      {/* Identity card with equipped cosmetics — V2 adds a rank·XP console line */}
       <Card className="flex items-center gap-3">
         <div className="w-14 h-14 rounded-full p-[3px]" style={{ background: frame ?? 'rgb(var(--line))' }}>
           <div className="w-full h-full rounded-full bg-surface-2 flex items-center justify-center text-lg font-extrabold text-accent">
@@ -212,15 +212,18 @@ export default function Profile() {
           ) : (
             <button
               onClick={() => { setNameDraft(profile?.name ?? ''); setEditingName(true); haptic('tap'); }}
-              className="flex items-center gap-1.5 font-bold text-left"
+              className={`flex items-center gap-1.5 text-left font-bold ${s.designMode === 'v2' ? 'uppercase italic text-lg leading-tight' : ''}`}
             >
               <span className="truncate">{profile?.name ?? 'You'}</span>
               <Pencil size={13} className="text-muted shrink-0" />
             </button>
           )}
+          {s.designMode === 'v2' && (
+            <p className="text-[12px] mt-0.5" style={{ color: tier.color }}>{rankLabel(tier)} · <span className="font-mono text-muted">{xp.toLocaleString()} XP</span></p>
+          )}
           {title && <p className="text-xs text-accent-2 font-semibold">“{title}”</p>}
         </div>
-        <Button variant="ghost" className="py-1.5" onClick={() => navigate('/shop')}>Shop</Button>
+        <Button variant="ghost" className="py-1.5 shrink-0" onClick={() => navigate('/shop')}>Shop</Button>
       </Card>
 
       {/* Theme switcher */}
