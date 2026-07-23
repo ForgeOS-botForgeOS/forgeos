@@ -58,6 +58,7 @@ export default function Train() {
   const rec = useMemo(() => recommendBlock(history), [history]);
   const loadWarning = useMemo(() => trainingLoadWarning(history), [history]);
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
+  const v2 = useSettings((s) => s.designMode === 'v2');
   const healthDays = useHealth((s) => s.days);
   const readiness = useMemo(() => (recoveryEnabled ? readinessFromDays(sortedDays(healthDays)) : null), [recoveryEnabled, healthDays]);
   const otRisk = useMemo(
@@ -81,7 +82,69 @@ export default function Train() {
 
   return (
     <Screen title={t('train.title')} subtitle={t('train.subtitle')}>
-      {/* Today's plan */}
+      {/* V2 "Readiness console" pre-workout top: readiness meter + compact launcher
+          + coaching ledger. Same data/handlers as Legacy, reorganised. */}
+      {v2 && (
+        <>
+          {readiness && (() => {
+            const guide = trainingGuidance(readiness.level);
+            const pct = Math.round((guide.multiplier - 1) * 100);
+            const loadLabel = guide.multiplier === 0 ? 'rest day' : pct === 0 ? 'as planned' : `${pct > 0 ? '+' : ''}${pct}%`;
+            return (
+              <Card>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-muted">Readiness</p>
+                    <div className="flex items-baseline gap-2 mt-1">
+                      <span className="font-mono font-bold text-3xl leading-none">{readiness.score}</span>
+                      <span className="uppercase tracking-wide text-sm" style={{ color: readiness.color }}>{readiness.label}</span>
+                    </div>
+                  </div>
+                  <Badge color={readiness.color}>load: {loadLabel}</Badge>
+                </div>
+                <div className="v2-meter mt-3" style={{ height: 12 }}>
+                  <div className="v2-meter-fill" style={{ width: `${readiness.score}%`, background: readiness.color }} />
+                  <div className="v2-meter-seg" />
+                </div>
+                <p className="text-sm mt-2 font-semibold" style={{ color: readiness.color }}>{guide.headline}</p>
+                <p className="text-[12px] text-muted">{guide.detail}</p>
+                {(readiness.level === 'rundown' || readiness.level === 'rest') && lightDay && todayPlan && !todayPlan.rest && lightDay.label !== todayPlan.label && (
+                  <Button variant="outline" className="w-full justify-center mt-2 py-1.5" onClick={() => { startWorkout(`${lightDay.label} (light)`, lightDay.exerciseIds, { targets: lightDay.targets, maxWeightKg: gymMax }); haptic('success'); toast(`Swapped to ${lightDay.label} — listen to your body 🙏`); }}>
+                    Swap today for {lightDay.label} ({lightDay.exerciseIds.length} lifts)
+                  </Button>
+                )}
+              </Card>
+            );
+          })()}
+
+          <Card className="flex items-center justify-between">
+            <div className="min-w-0">
+              <p className="text-[10px] uppercase tracking-[0.12em] text-muted">Today</p>
+              <p className="font-bold uppercase italic text-xl leading-tight truncate">{todayPlan && !todayPlan.rest ? todayPlan.label : todayPlan?.rest ? 'Rest day' : 'No plan'}</p>
+            </div>
+            {todayPlan && !todayPlan.rest ? (
+              <Button className="shrink-0" onClick={() => { startWorkout(todayPlan.label, todayPlan.exerciseIds, { targets: todayPlan.targets, maxWeightKg: gymMax }); haptic('success'); }}>
+                <span className="flex items-center gap-1.5"><Dumbbell size={15} /> Start</span>
+              </Button>
+            ) : (
+              <Button variant="outline" className="shrink-0" onClick={() => { startWorkout('Freestyle session'); haptic('success'); }}>Start</Button>
+            )}
+          </Card>
+          <Button variant="ghost" className="w-full justify-center" onClick={() => setCustomOpen(true)}>
+            <span className="flex items-center gap-2"><Plus size={16} /> Start a custom workout</span>
+          </Button>
+
+          <Card>
+            <p className="text-[10px] uppercase tracking-[0.12em] text-muted mb-1">Coaching</p>
+            <LedgerRow k="Next block" v={<span className="capitalize">{rec.nextBlock}</span>} />
+            <LedgerRow k="Avg RPE" v={rec.avgRpe || '—'} />
+            <LedgerRow k="Volume · wk" v={`${rec.weeklyVolume.toLocaleString()} kg`} />
+          </Card>
+        </>
+      )}
+
+      {/* Today's plan (Legacy) */}
+      {!v2 && (
       <Card>
         <SectionTitle>{t('train.todaySession')}</SectionTitle>
         {todayPlan && !todayPlan.rest ? (
@@ -104,6 +167,7 @@ export default function Train() {
           <span className="flex items-center gap-2"><Plus size={16} /> Start a custom workout</span>
         </Button>
       </Card>
+      )}
 
       <CustomWorkoutSheet open={customOpen} onClose={() => setCustomOpen(false)} onStart={(name) => { startWorkout(name); setCustomOpen(false); haptic('success'); toast(`“${name}” started 💪`); }} />
 
@@ -134,8 +198,9 @@ export default function Train() {
         </Card>
       )}
 
-      {/* Recovery readiness — last night's data steering today's effort */}
-      {readiness && (() => {
+      {/* Recovery readiness — last night's data steering today's effort (Legacy;
+          V2 shows this as the readiness console at the top). */}
+      {!v2 && readiness && (() => {
         const guide = trainingGuidance(readiness.level);
         const pct = Math.round((guide.multiplier - 1) * 100);
         const loadLabel = guide.multiplier === 0 ? 'rest day' : pct === 0 ? 'load: as planned' : `load: ${pct > 0 ? '+' : ''}${pct}%`;
@@ -184,7 +249,8 @@ export default function Train() {
         </Card>
       )}
 
-      {/* Adaptive periodisation */}
+      {/* Adaptive periodisation (Legacy — V2 folds this into the coaching ledger) */}
+      {!v2 && (
       <Card className="flex gap-3 items-start">
         <Brain size={18} className="text-accent-2 mt-0.5 shrink-0" />
         <div>
@@ -194,6 +260,7 @@ export default function Train() {
           <p className="text-[11px] text-muted/70 mt-1">avg RPE {rec.avgRpe || '—'} · ~{rec.weeklyVolume.toLocaleString()} kg/wk</p>
         </div>
       </Card>
+      )}
 
       {/* Plateau breaker */}
       {plateaus.length > 0 && (
@@ -645,6 +712,17 @@ function Sortable({ id, children }: { id: string; children: (handle: Record<stri
   return (
     <div ref={setNodeRef} style={style}>
       {children({ ...attributes, ...listeners })}
+    </div>
+  );
+}
+
+// Leader-dot "ledger" row for the V2 Train coaching panel.
+function LedgerRow({ k, v }: { k: string; v: ReactNode }) {
+  return (
+    <div className="flex items-baseline gap-2 py-2">
+      <span className="text-[11px] uppercase tracking-wide text-muted whitespace-nowrap">{k}</span>
+      <span className="flex-1 self-center border-b border-dotted border-line" />
+      <span className="text-sm font-mono whitespace-nowrap">{v}</span>
     </div>
   );
 }
