@@ -9,9 +9,11 @@ import type { Exercise } from '../types';
 
 interface ExerciseState {
   custom: Exercise[];
+  favouriteIds: string[]; // exercise ids the user pinned — surfaced first in the picker
   addCustom: (ex: Omit<Exercise, 'id'>) => Exercise;
   updateCustom: (id: string, patch: Partial<Exercise>) => void;
   removeCustom: (id: string) => void;
+  toggleFavourite: (id: string) => void;
 }
 
 const uid = () => `cus-${Math.random().toString(36).slice(2, 10)}`;
@@ -20,6 +22,13 @@ export const useExercises = create<ExerciseState>()(
   persist(
     (set, get) => ({
       custom: [],
+      favouriteIds: [],
+
+      toggleFavourite: (id) => set({
+        favouriteIds: get().favouriteIds.includes(id)
+          ? get().favouriteIds.filter((x) => x !== id)
+          : [...get().favouriteIds, id],
+      }),
 
       addCustom: (ex) => {
         const created: Exercise = { ...ex, id: uid() };

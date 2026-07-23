@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon, HeartPulse } from 'lucide-react';
+import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon, HeartPulse, Star } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -24,6 +24,7 @@ import { useUser } from '../state/userStore';
 import { useSettings } from '../state/settingsStore';
 import { useGami } from '../state/gamificationStore';
 import { useSocial } from '../state/socialStore';
+import { useExercises } from '../state/exerciseStore';
 import { EXERCISES, exerciseById, substitutesFor, EXERCISE_CATEGORIES } from '../data/exercises';
 import { detectPlateaus, recommendBlock, trainingLoadWarning } from '../lib/analytics';
 import { readinessFromDays, trainingGuidance, recoveryTrend, overtrainingRisk } from '../lib/readiness';
@@ -406,7 +407,11 @@ function CardioScanCard() {
 
 function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: { open: boolean; onClose: () => void; onStart: (name: string) => void; pastWorkouts: Workout[]; onRepeat: (id: string) => void }) {
   const [name, setName] = useState('');
+  const favouriteIds = useWorkout((s) => s.favouriteIds);
+  const toggleFavourite = useWorkout((s) => s.toggleFavourite);
   const suggestions = ['Push', 'Pull', 'Legs', 'Upper', 'Lower', 'Full Body', 'Arms', 'Chest & Back', 'Conditioning'];
+  // Favourites float to the top of the list.
+  const sortedPast = [...pastWorkouts].sort((a, b) => Number(favouriteIds.includes(b.id)) - Number(favouriteIds.includes(a.id)));
   return (
     <Sheet open={open} onClose={onClose} title="Custom workout">
       <div className="space-y-3">
@@ -422,19 +427,25 @@ function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: 
         </div>
         <Button className="w-full justify-center" disabled={!name.trim()} onClick={() => onStart(name.trim())}>Start workout</Button>
 
-        {pastWorkouts.length > 0 && (
+        {sortedPast.length > 0 && (
           <div className="pt-3 border-t border-line space-y-2">
-            <p className="text-[11px] uppercase tracking-wide text-muted">Or repeat a past session — weights pre-filled</p>
+            <p className="text-[11px] uppercase tracking-wide text-muted">Or repeat a past session — ★ to favourite, weights pre-filled</p>
             <div className="space-y-1.5 max-h-56 overflow-y-auto no-scrollbar">
-              {pastWorkouts.map((w) => (
-                <button key={w.id} onClick={() => onRepeat(w.id)} className="w-full flex items-center justify-between rounded-xl bg-surface-2 px-3 py-2.5 text-left">
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{w.name}</p>
-                    <p className="text-[11px] text-muted">{w.exercises.length} exercises · {new Date(w.date).toLocaleDateString()}</p>
+              {sortedPast.map((w) => {
+                const fav = favouriteIds.includes(w.id);
+                return (
+                  <div key={w.id} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
+                    <button onClick={() => { toggleFavourite(w.id); haptic('tap'); }} aria-label={fav ? 'Unfavourite' : 'Favourite'} className={fav ? 'text-accent-2 shrink-0' : 'text-muted shrink-0'}>
+                      <Star size={16} className={fav ? 'fill-accent-2' : ''} />
+                    </button>
+                    <button onClick={() => onRepeat(w.id)} className="flex-1 min-w-0 text-left">
+                      <p className="text-sm font-medium truncate">{w.name}</p>
+                      <p className="text-[11px] text-muted">{w.exercises.length} exercises · {new Date(w.date).toLocaleDateString()}</p>
+                    </button>
+                    <span className="flex items-center gap-1 text-xs text-accent shrink-0"><Repeat size={13} /> Load</span>
                   </div>
-                  <span className="flex items-center gap-1 text-xs text-accent shrink-0"><Repeat size={13} /> Load</span>
-                </button>
-              ))}
+                );
+              })}
             </div>
           </div>
         )}
@@ -782,24 +793,77 @@ function LedgerRow({ k, v }: { k: string; v: ReactNode }) {
 function ExercisePicker({ onPick }: { onPick: (id: string) => void }) {
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<string>('All');
+  const history = useWorkout((s) => s.history);
+  const favIds = useExercises((s) => s.favouriteIds);
+  const toggleFav = useExercises((s) => s.toggleFavourite);
+
   const list = EXERCISES.filter(
     (e) => (cat === 'All' || e.category === cat) && e.name.toLowerCase().includes(q.toLowerCase()),
   ).slice(0, 40);
+
+  // Quick-pick rails (only when you're not searching/filtering): the exercises
+  // you use most recently, and the ones you starred.
+  const recent = useMemo(() => {
+    const seen = new Set<string>();
+    const out: typeof EXERCISES = [];
+    for (const w of history) {
+      for (const we of w.exercises) {
+        if (seen.has(we.exerciseId)) continue;
+        seen.add(we.exerciseId);
+        const ex = exerciseById(we.exerciseId);
+        if (ex) out.push(ex);
+        if (out.length >= 8) return out;
+      }
+    }
+    return out;
+  }, [history]);
+  const favourites = useMemo(
+    () => favIds.map((id) => exerciseById(id)).filter((e): e is NonNullable<typeof e> => !!e),
+    [favIds],
+  );
+  const showQuick = q.trim() === '' && cat === 'All';
+
   return (
     <div className="space-y-3">
       <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search exercises…" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+
+      {showQuick && favourites.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5 flex items-center gap-1"><Star size={11} className="text-accent-2" /> Favourites</p>
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+            {favourites.map((e) => <button key={e.id} onClick={() => onPick(e.id)} className="whitespace-nowrap rounded-full bg-accent-2/15 text-accent-2 px-3 py-1 text-xs">{e.name}</button>)}
+          </div>
+        </div>
+      )}
+      {showQuick && recent.length > 0 && (
+        <div>
+          <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">Recent</p>
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+            {recent.map((e) => <button key={e.id} onClick={() => onPick(e.id)} className="whitespace-nowrap rounded-full bg-surface-2 text-muted px-3 py-1 text-xs">{e.name}</button>)}
+          </div>
+        </div>
+      )}
+
       <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
         {['All', ...EXERCISE_CATEGORIES].map((c) => (
           <button key={c} onClick={() => setCat(c)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${cat === c ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>{c}</button>
         ))}
       </div>
       <div className="space-y-1.5 max-h-72 overflow-y-auto no-scrollbar">
-        {list.map((e) => (
-          <button key={e.id} onClick={() => onPick(e.id)} className="w-full text-left rounded-xl bg-surface-2 px-4 py-2.5">
-            <p className="text-sm font-medium">{e.name}</p>
-            <p className="text-xs text-muted">{e.primary} · {e.equipment}</p>
-          </button>
-        ))}
+        {list.map((e) => {
+          const fav = favIds.includes(e.id);
+          return (
+            <div key={e.id} className="flex items-center gap-2 rounded-xl bg-surface-2 px-4 py-2.5">
+              <button onClick={() => onPick(e.id)} className="flex-1 text-left min-w-0">
+                <p className="text-sm font-medium">{e.name}</p>
+                <p className="text-xs text-muted">{e.primary} · {e.equipment}</p>
+              </button>
+              <button onClick={() => { toggleFav(e.id); haptic('tap'); }} aria-label={fav ? 'Unfavourite' : 'Favourite'} className={fav ? 'text-accent-2 shrink-0' : 'text-muted shrink-0'}>
+                <Star size={16} className={fav ? 'fill-accent-2' : ''} />
+              </button>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

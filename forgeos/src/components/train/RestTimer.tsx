@@ -1,9 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Timer, X, Plus, Minus } from 'lucide-react';
+import { Timer, X, Plus, Minus, Pause, Play } from 'lucide-react';
 import { haptic } from '../../lib/haptics';
-
-const PRESETS = [60, 90, 180, 300];
 
 // A short two-tone beep so you hear rest is over even with the phone face-down.
 // Created lazily on first use — autoplay policies allow it after a tap.
@@ -69,74 +67,64 @@ export function RestTimer({ open, onClose, autoStartSec = 0, nonce }: { open: bo
     };
   }, [running, remaining]);
 
+  // Once rest is actually over, tidy up on its own so the pill never lingers.
+  useEffect(() => {
+    if (open && total > 0 && remaining === 0 && !running) {
+      const id = window.setTimeout(onClose, 4500);
+      return () => window.clearTimeout(id);
+    }
+  }, [open, total, remaining, running, onClose]);
+
   if (!open) return null;
   const mm = String(Math.floor(remaining / 60)).padStart(2, '0');
   const ss = String(remaining % 60).padStart(2, '0');
   const done = remaining === 0 && !running;
-
-  // Ring geometry — depletes as the clock runs down.
-  const SIZE = 120;
-  const STROKE = 8;
-  const R = (SIZE - STROKE) / 2;
-  const C = 2 * Math.PI * R;
   const frac = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
 
+  // Adjust the clock; snapping to 0 stops it (no more stuck "running at 0:00").
+  const bump = (delta: number) => {
+    setRemaining((r) => {
+      const n = Math.max(0, r + delta);
+      if (n === 0) setRunning(false);
+      return n;
+    });
+    if (delta > 0) { setTotal((t) => Math.max(t, remaining + delta)); setRunning(true); }
+    haptic('tap');
+  };
+  const toggle = () => {
+    if (remaining === 0) { const t = total || 60; setTotal(t); setRemaining(t); setRunning(true); }
+    else setRunning((r) => !r);
+    haptic('tap');
+  };
+
+  // A slim pill that floats just above the tab bar — present but out of the way.
   return (
     <motion.div
-      className="absolute inset-x-0 bottom-0 z-40 p-4"
-      initial={{ y: 40, opacity: 0 }}
+      className="absolute inset-x-0 bottom-0 z-40 px-3 pb-3"
+      initial={{ y: 60, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      transition={{ type: 'spring', stiffness: 380, damping: 32 }}
+      exit={{ y: 60, opacity: 0 }}
+      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
     >
-      <div className="rounded-2xl bg-surface-2 border border-line p-4 shadow-glow">
-        <div className="flex items-center justify-between mb-3">
-          <span className="flex items-center gap-2 text-sm font-semibold"><Timer size={16} className="text-accent" /> Rest timer</span>
-          <button onClick={onClose} className="text-muted"><X size={16} /></button>
-        </div>
-        <div className="flex items-center justify-center gap-4 mb-3">
-          <button onClick={() => { setRemaining((r) => Math.max(0, r - 15)); haptic('tap'); }} className="rounded-full bg-surface w-9 h-9 flex items-center justify-center text-muted shrink-0" title="-15s"><Minus size={16} /></button>
-          <motion.div
-            className="relative inline-flex items-center justify-center"
-            style={{ width: SIZE, height: SIZE }}
-            animate={done ? { scale: [1, 1.06, 1] } : { scale: 1 }}
-            transition={done ? { duration: 1.1, repeat: Infinity, ease: 'easeInOut' } : { duration: 0.2 }}
-          >
-            <svg width={SIZE} height={SIZE} className="-rotate-90">
-              <circle cx={SIZE / 2} cy={SIZE / 2} r={R} fill="none" stroke="rgb(var(--surface))" strokeWidth={STROKE} />
-              <motion.circle
-                cx={SIZE / 2}
-                cy={SIZE / 2}
-                r={R}
-                fill="none"
-                stroke={done ? 'rgb(var(--success))' : 'rgb(var(--accent))'}
-                strokeWidth={STROKE}
-                strokeLinecap="round"
-                strokeDasharray={C}
-                animate={{ strokeDashoffset: C * (1 - frac) }}
-                transition={{ duration: 0.9, ease: 'linear' }}
-              />
-            </svg>
-            <p className={`absolute font-mono text-3xl font-bold tabular-nums ${done ? 'text-success' : ''}`}>{mm}:{ss}</p>
-          </motion.div>
-          <button onClick={() => { setRemaining((r) => r + 15); setTotal((t) => Math.max(t, remaining + 15)); setRunning(true); haptic('tap'); }} className="rounded-full bg-surface w-9 h-9 flex items-center justify-center text-muted shrink-0" title="+15s"><Plus size={16} /></button>
-        </div>
-        {done && <p className="text-center text-xs text-success mb-2 font-semibold">Rest done — next set 💪</p>}
-        <div className="grid grid-cols-4 gap-2 mb-3">
-          {PRESETS.map((p) => (
-            <button
-              key={p}
-              onClick={() => { setRemaining(p); setTotal(p); setRunning(true); haptic('tap'); }}
-              className="rounded-lg bg-surface py-2 text-xs font-medium"
-            >
-              {p >= 60 ? `${p / 60}m` : `${p}s`}
-            </button>
-          ))}
-        </div>
-        <div className="flex gap-2">
-          <button onClick={() => setRunning((r) => !r)} className="flex-1 rounded-lg bg-accent text-black py-2 text-sm font-semibold">
-            {running ? 'Pause' : remaining > 0 ? 'Resume' : 'Start'}
+      <div className="mx-auto max-w-sm relative overflow-hidden rounded-full bg-surface-2/95 border border-line backdrop-blur px-2 py-1.5 flex items-center gap-2 shadow-lg">
+        {/* subtle depleting fill so progress reads at a glance */}
+        <motion.div
+          className={`absolute inset-y-0 left-0 ${done ? 'bg-success/20' : 'bg-accent/15'}`}
+          animate={{ width: `${frac * 100}%` }}
+          transition={{ duration: 0.9, ease: 'linear' }}
+        />
+        <span className="relative flex items-center gap-1.5 pl-2">
+          <Timer size={14} className={done ? 'text-success' : 'text-accent'} />
+          <span className={`font-mono font-bold tabular-nums text-lg leading-none ${done ? 'text-success' : ''}`}>{mm}:{ss}</span>
+        </span>
+        <span className="relative text-[11px] text-muted">{done ? 'go 💪' : 'rest'}</span>
+        <div className="relative ml-auto flex items-center gap-0.5">
+          <button onClick={() => bump(-15)} aria-label="Minus 15 seconds" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><Minus size={15} /></button>
+          <button onClick={() => bump(15)} aria-label="Plus 15 seconds" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><Plus size={15} /></button>
+          <button onClick={toggle} aria-label={running ? 'Pause' : 'Start'} className="w-8 h-8 rounded-full bg-accent text-black flex items-center justify-center active:scale-90">
+            {running ? <Pause size={15} /> : <Play size={15} />}
           </button>
-          <button onClick={() => { setRemaining(0); setRunning(false); }} className="rounded-lg bg-surface px-4 py-2 text-sm">Reset</button>
+          <button onClick={onClose} aria-label="Close rest timer" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><X size={15} /></button>
         </div>
       </div>
     </motion.div>

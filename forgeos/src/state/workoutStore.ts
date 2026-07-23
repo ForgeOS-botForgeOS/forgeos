@@ -16,6 +16,8 @@ interface WorkoutState {
   active: Workout | null;
   prs: PR[];
   customExerciseIds: string[];
+  favouriteIds: string[]; // history workout ids the user pinned as go-to routines
+  toggleFavourite: (id: string) => void;
 
   startWorkout: (
     name: string,
@@ -100,6 +102,13 @@ export const useWorkout = create<WorkoutState>()(
       active: null,
       prs: [],
       customExerciseIds: [],
+      favouriteIds: [],
+
+      toggleFavourite: (id) => set({
+        favouriteIds: get().favouriteIds.includes(id)
+          ? get().favouriteIds.filter((x) => x !== id)
+          : [...get().favouriteIds, id],
+      }),
 
       startWorkout: (name, exerciseIds = [], opts = {}) => {
         const seedWeight = opts.maxWeightKg ? Math.min(20, opts.maxWeightKg) : 20;

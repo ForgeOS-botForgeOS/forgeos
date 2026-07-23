@@ -732,6 +732,15 @@ function NumberRow({
   max: number;
   step: number;
 }) {
+  // Local text draft so you can type a multi-digit number freely; it commits
+  // (clamped to the valid range) on blur/Enter, and re-syncs if the slider moves.
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => { setDraft(String(value)); }, [value]);
+  const commit = () => {
+    const n = Number(draft);
+    if (draft.trim() === '' || Number.isNaN(n)) { setDraft(String(value)); return; }
+    set(Math.min(max, Math.max(min, n)));
+  };
   return (
     <div className="flex items-center justify-between gap-3">
       <span className="text-sm font-medium w-16">{label}</span>
@@ -744,7 +753,22 @@ function NumberRow({
         onChange={(e) => set(Number(e.target.value))}
         className="flex-1 accent-[rgb(var(--accent))]"
       />
-      <span className="font-mono text-sm w-20 text-right">{value} {unit}</span>
+      <div className="flex items-center gap-1 w-24 justify-end">
+        <input
+          type="number"
+          inputMode="decimal"
+          min={min}
+          max={max}
+          step={step}
+          value={draft}
+          aria-label={label}
+          onChange={(e) => setDraft(e.target.value)}
+          onBlur={commit}
+          onKeyDown={(e) => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur(); }}
+          className="w-14 rounded-lg bg-surface-2 border border-line px-2 py-1 text-sm font-mono text-right"
+        />
+        <span className="text-[11px] text-muted w-6">{unit}</span>
+      </div>
     </div>
   );
 }
