@@ -42,21 +42,45 @@ export default function Social() {
     return wanted === 'friends' || wanted === 'race' || wanted === 'market' ? wanted : 'feed';
   });
   const marketEnabled = useSettings((s) => s.marketplaceEnabled);
+  const v2 = useSettings((s) => s.designMode === 'v2');
   const requests = useSocial((s) => s.requests);
   const incoming = requests.filter((r) => r.direction === 'incoming').length;
 
+  const tabDefs: { id: Tab; label: string; badge: number }[] = [
+    { id: 'feed', label: t('s.feed'), badge: 0 },
+    { id: 'friends', label: t('s.friends'), badge: incoming },
+    { id: 'race', label: t('s.race'), badge: 0 },
+    ...(marketEnabled ? [{ id: 'market' as Tab, label: t('s.market'), badge: 0 }] : []),
+  ];
+
   return (
     <Screen title={t('nav.social')} subtitle="Iron sharpens iron.">
-      <div data-noswipe className="flex gap-2 overflow-x-auto no-scrollbar">
-        <Pill active={tab === 'feed'} onClick={() => setTab('feed')}>{t('s.feed')}</Pill>
-        <Pill active={tab === 'friends'} onClick={() => setTab('friends')}>
-          {t('s.friends')}{incoming > 0 && <span className="ml-1 rounded-full bg-accent px-1.5 text-[10px] font-bold text-black">{incoming}</span>}
-        </Pill>
-        <Pill active={tab === 'race'} onClick={() => setTab('race')}>{t('s.race')}</Pill>
-        {marketEnabled && <Pill active={tab === 'market'} onClick={() => setTab('market')}>{t('s.market')}</Pill>}
-      </div>
+      {v2 ? (
+        <div data-noswipe className="flex gap-5 border-b border-line overflow-x-auto no-scrollbar">
+          {tabDefs.map((d) => (
+            <button
+              key={d.id}
+              onClick={() => setTab(d.id)}
+              className={`relative shrink-0 pt-1 pb-2 text-sm uppercase tracking-wide ${tab === d.id ? 'text-text font-semibold' : 'text-muted'}`}
+            >
+              {d.label}
+              {d.badge > 0 && <span className="ml-1 rounded-full bg-accent-2 px-1.5 text-[10px] font-bold text-black">{d.badge}</span>}
+              {tab === d.id && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-accent" />}
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div data-noswipe className="flex gap-2 overflow-x-auto no-scrollbar">
+          <Pill active={tab === 'feed'} onClick={() => setTab('feed')}>{t('s.feed')}</Pill>
+          <Pill active={tab === 'friends'} onClick={() => setTab('friends')}>
+            {t('s.friends')}{incoming > 0 && <span className="ml-1 rounded-full bg-accent px-1.5 text-[10px] font-bold text-black">{incoming}</span>}
+          </Pill>
+          <Pill active={tab === 'race'} onClick={() => setTab('race')}>{t('s.race')}</Pill>
+          {marketEnabled && <Pill active={tab === 'market'} onClick={() => setTab('market')}>{t('s.market')}</Pill>}
+        </div>
+      )}
 
-      {tab === 'feed' && <Feed />}
+      {tab === 'feed' && <Feed onRace={() => setTab('race')} />}
       {tab === 'friends' && <Friends />}
       {tab === 'race' && <Race />}
       {tab === 'market' && marketEnabled && <Marketplace />}
@@ -66,16 +90,34 @@ export default function Social() {
 
 /* ------------------------------- FEED ------------------------------- */
 
-function Feed() {
+function Feed({ onRace }: { onRace: () => void }) {
   const feed = useSocial((s) => s.feed);
   const refreshFeed = useSocial((s) => s.refreshFeed);
+  const friends = useSocial((s) => s.friends);
+  const v2 = useSettings((s) => s.designMode === 'v2');
   const [filter, setFilter] = useState<'all' | 'friends' | 'mine'>('all');
   const [shareOpen, setShareOpen] = useState(false);
 
   const shown = feed.filter((p) => (filter === 'mine' ? p.mine : filter === 'friends' ? !p.mine : true));
+  const liveFriends = friends.filter((f) => f.trainingNow);
 
   return (
     <div className="space-y-3">
+      {/* V2 "live-first": a training-now strip that jumps to the Race tab */}
+      {v2 && liveFriends.length > 0 && (
+        <button
+          onClick={onRace}
+          className="w-full flex items-center gap-2.5 rounded-lg px-3 py-2.5 text-left"
+          style={{ border: '1px solid rgb(var(--success) / 0.35)', background: 'rgb(var(--success) / 0.06)' }}
+        >
+          <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'rgb(var(--success))', boxShadow: '0 0 0 3px rgb(var(--success) / 0.2)' }} />
+          <span className="text-[13px] flex-1">
+            <b className="text-success">{liveFriends[0].name}</b>
+            {liveFriends.length > 1 ? ` & ${liveFriends.length - 1} others are` : ' is'} training now
+          </span>
+          <span className="text-[10px] uppercase tracking-wide text-accent shrink-0">Race ▸</span>
+        </button>
+      )}
       <StoriesRow />
       <Composer onShareCard={() => setShareOpen(true)} />
 
