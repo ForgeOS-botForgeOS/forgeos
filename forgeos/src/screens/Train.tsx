@@ -44,7 +44,7 @@ export default function Train() {
   const history = useWorkout((s) => s.history);
   const profile = useUser((s) => s.profile);
   const weekPlan = useUser((s) => s.weekPlan);
-  const tips = useMemo(() => personalTips(profile), [profile]);
+  const tips = useMemo(() => personalTips(profile, 3), [profile]);
   const gymMax = useSettings((s) => s.gym.maxWeightKg);
   const startWorkout = useWorkout((s) => s.startWorkout);
   const repeatWorkout = useWorkout((s) => s.repeatWorkout);

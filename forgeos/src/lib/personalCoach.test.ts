@@ -43,4 +43,20 @@ describe('personalTips', () => {
     const tips = personalTips(profile({ about: 'I am really busy and short on time' }));
     expect(tips.some((t) => t.text.toLowerCase().includes('fast') || t.text.toLowerCase().includes('time'))).toBe(true);
   });
+
+  it('turns every extra quiz answer into a tip — nothing is collected and ignored', () => {
+    // fixed seed for determinism; a wide max so the whole flavour pool shows.
+    const tips = personalTips(
+      profile({ quizAnswers: { music: 'Hip-hop', food: 'Chaos', reward: 'Hitting PRs', pace: 'Aggressive, I’ll grind', social: 'With a partner', why: 'Compete one day' } }),
+      12,
+      0,
+    );
+    const all = tips.map((t) => t.text).join(' | ');
+    expect(all).toContain('PR Energy'); // music
+    expect(all).toContain('protein'); // food = Chaos
+    expect(all).toContain('PR Hall'); // reward
+    expect(all).toContain('grind'); // pace = Aggressive
+    expect(all).toContain('live race'); // social = With a partner
+    expect(all).toContain('practice'); // why = Compete
+  });
 });
