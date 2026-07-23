@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { PhoneFrame } from './components/PhoneFrame';
+import { NowPlayingCD } from './components/NowPlayingCD';
 import { TabBar } from './components/TabBar';
 import { RankUpWatcher } from './components/Celebrate';
 import { Tutorial } from './components/Tutorial';
@@ -126,6 +127,7 @@ function AppShell() {
       </main>
       <RankUpWatcher />
       <Tutorial />
+      <NowPlayingCD />
       <TabBar />
     </div>
   );

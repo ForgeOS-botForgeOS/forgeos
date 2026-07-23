@@ -302,6 +302,14 @@ button {
   --ease-out-quart: cubic-bezier(0.25, 1, 0.5, 1);
 }
 
+/* Vinyl/CD spin for the music player disc (own keyframe so it never depends on
+   a Tailwind animate-spin utility being present). Reduced-motion freezes it. */
+@keyframes cd-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
