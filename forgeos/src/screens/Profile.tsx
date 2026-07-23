@@ -326,6 +326,9 @@ export default function Profile() {
           <Row label="Pre-fill from last time" desc="New sets start at your last weights and reps">
             <Toggle checked={s.prefillWeights} onChange={(v) => s.set('prefillWeights', v)} />
           </Row>
+          <Row label="Rest timer" desc="Auto-open the rest countdown after each set">
+            <Toggle checked={s.restTimerEnabled} onChange={(v) => s.set('restTimerEnabled', v)} />
+          </Row>
           <Row label={t('p.marketplace')} desc="Buy & sell programs">
             <Toggle checked={s.marketplaceEnabled} onChange={(v) => s.set('marketplaceEnabled', v)} />
           </Row>

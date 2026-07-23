@@ -1,6 +1,10 @@
 import type { CardioMetric } from '../types';
 
-export const CARDIO_MACHINES = ['Run', 'Treadmill', 'Rower', 'Bike', 'Ski-erg', 'Elliptical', 'Stairmaster', 'Swim', 'Walk'];
+export const CARDIO_MACHINES = ['Run', 'Treadmill', 'Rower', 'Bike', 'Ski-erg', 'Elliptical', 'Stairmaster', 'Swim', 'Walk', 'Parkour', 'Karate'];
+
+// Karate is scored by intensity, not distance — the form swaps the distance
+// field for an intensity dial (1–10) and hides the speed/pace readouts.
+export const INTENSITY_ACTIVITIES = ['Karate'];
 
 // One editable cardio session: the core numbers plus any metrics you define.
 export interface CardioData {

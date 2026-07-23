@@ -411,7 +411,6 @@ export const EXERCISES: Exercise[] = [
   ex('Hindu Push-Up', 'Calisthenics', 'Chest', ['Shoulders'], 'Bodyweight'),
   ex('Pike Push-Up (Elevated)', 'Calisthenics', 'Shoulders', ['Triceps'], 'Box'),
   ex('Wall Handstand Hold', 'Calisthenics', 'Shoulders', ['Core'], 'Wall'),
-  ex('Chest-to-Bar Pull-Up', 'Calisthenics', 'Back', ['Biceps'], 'Bar'),
   ex('Wide-Grip Pull-Up', 'Calisthenics', 'Back', ['Biceps'], 'Bar'),
   ex('Commando Pull-Up', 'Calisthenics', 'Back', ['Biceps'], 'Bar'),
   ex('Typewriter Pull-Up', 'Calisthenics', 'Back', ['Biceps'], 'Bar'),
@@ -621,52 +620,25 @@ export const EXERCISES: Exercise[] = [
   ex('Reverse Hyperextension', 'Bodybuilding', 'Glutes', ['Hamstrings', 'Back'], 'Reverse Hyper'),
   ex('Bodyweight Hyperextension', 'Calisthenics', 'Glutes', ['Back', 'Hamstrings'], 'Bodyweight'),
   ex('GHD Back Extension', 'CrossFit', 'Hamstrings', ['Glutes', 'Back'], 'GHD'),
-  ex('Superman Hold', 'Calisthenics', 'Back', ['Glutes', 'Hamstrings'], 'Bodyweight'),
 
   // ---------------- Hamstrings (more variety) ----------------
   ex('Single-Leg Romanian Deadlift', 'Bodybuilding', 'Hamstrings', ['Glutes'], 'Dumbbell'),
   ex('Stability Ball Leg Curl', 'Bodybuilding', 'Hamstrings', ['Glutes'], 'Stability Ball'),
-  ex('Cable Pull-Through', 'Bodybuilding', 'Glutes', ['Hamstrings'], 'Cable'),
   ex('Glute-Ham Raise', 'Calisthenics', 'Hamstrings', ['Glutes'], 'GHD'),
 
   // ---------------- Biceps (more variety) ----------------
-  ex('Incline Dumbbell Curl', 'Bodybuilding', 'Biceps', [], 'Dumbbell'),
-  ex('Preacher Curl', 'Bodybuilding', 'Biceps', [], 'EZ Bar'),
-  ex('Hammer Curl', 'Bodybuilding', 'Biceps', [], 'Dumbbell'),
-  ex('Concentration Curl', 'Bodybuilding', 'Biceps', [], 'Dumbbell'),
-  ex('Cable Curl', 'Bodybuilding', 'Biceps', [], 'Cable'),
-  ex('Chin-Up', 'Calisthenics', 'Biceps', ['Back'], 'Bodyweight'),
 
   // ---------------- Triceps (more variety) ----------------
   ex('Overhead Cable Extension', 'Bodybuilding', 'Triceps', [], 'Cable'),
-  ex('Skull Crusher', 'Bodybuilding', 'Triceps', [], 'EZ Bar'),
   ex('Triceps Pushdown', 'Bodybuilding', 'Triceps', [], 'Cable'),
   ex('Overhead Dumbbell Extension', 'Bodybuilding', 'Triceps', [], 'Dumbbell'),
-  ex('Diamond Push-Up', 'Calisthenics', 'Triceps', ['Chest'], 'Bodyweight'),
-  ex('Bench Dip', 'Calisthenics', 'Triceps', ['Shoulders'], 'Bodyweight'),
 
   // ---------------- Calves & core (more variety) ----------------
-  ex('Standing Calf Raise', 'Bodybuilding', 'Calves', [], 'Machine'),
-  ex('Seated Calf Raise', 'Bodybuilding', 'Calves', [], 'Machine'),
-  ex('Hanging Leg Raise', 'Calisthenics', 'Core', [], 'Pull-up Bar'),
-  ex('Cable Crunch', 'Bodybuilding', 'Core', [], 'Cable'),
 
   // ---------------- More variety (round out to 600) ----------------
-  ex('Cable Fly', 'Bodybuilding', 'Chest', [], 'Cable'),
-  ex('Incline Cable Fly', 'Bodybuilding', 'Chest', ['Shoulders'], 'Cable'),
-  ex('Chest-Supported Row', 'Bodybuilding', 'Back', ['Biceps'], 'Machine'),
-  ex('Meadows Row', 'Bodybuilding', 'Back', ['Biceps'], 'Landmine'),
-  ex('Straight-Arm Pulldown', 'Bodybuilding', 'Back', [], 'Cable'),
-  ex('Cable Lateral Raise', 'Bodybuilding', 'Shoulders', [], 'Cable'),
-  ex('Reverse Pec Deck', 'Bodybuilding', 'Shoulders', ['Back'], 'Machine'),
-  ex('Sissy Squat', 'Calisthenics', 'Quads', [], 'Bodyweight'),
-  ex('Walking Lunge', 'Bodybuilding', 'Quads', ['Glutes'], 'Dumbbell'),
   ex('Cable Glute Kickback', 'Bodybuilding', 'Glutes', ['Hamstrings'], 'Cable'),
-  ex('Curtsy Lunge', 'Bodybuilding', 'Glutes', ['Quads'], 'Dumbbell'),
-  ex('Spider Curl', 'Bodybuilding', 'Biceps', [], 'Dumbbell'),
   ex('Tate Press', 'Bodybuilding', 'Triceps', [], 'Dumbbell'),
   ex('Pallof Press', 'Bodybuilding', 'Core', [], 'Cable'),
-  ex('Ab Wheel Rollout', 'Calisthenics', 'Core', [], 'Ab Wheel'),
   ex('Dead Bug', 'Calisthenics', 'Core', [], 'Bodyweight'),
   ex('Donkey Calf Raise', 'Bodybuilding', 'Calves', [], 'Machine'),
   ex('Copenhagen Plank', 'Calisthenics', 'Core', ['Glutes'], 'Bodyweight'),

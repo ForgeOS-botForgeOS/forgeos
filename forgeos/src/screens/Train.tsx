@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon, HeartPulse } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
@@ -35,7 +36,7 @@ import { newCardioData, type CardioData } from '../lib/cardio';
 import { xpForSet } from '../data/ranks';
 import { haptic } from '../lib/haptics';
 import { personalTips } from '../lib/personalCoach';
-import type { SetEntry } from '../types';
+import type { SetEntry, Workout } from '../types';
 
 export default function Train() {
   const active = useWorkout((s) => s.active);
@@ -169,7 +170,13 @@ export default function Train() {
       </Card>
       )}
 
-      <CustomWorkoutSheet open={customOpen} onClose={() => setCustomOpen(false)} onStart={(name) => { startWorkout(name); setCustomOpen(false); haptic('success'); toast(`“${name}” started 💪`); }} />
+      <CustomWorkoutSheet
+        open={customOpen}
+        onClose={() => setCustomOpen(false)}
+        onStart={(name) => { startWorkout(name); setCustomOpen(false); haptic('success'); toast(`“${name}” started 💪`); }}
+        pastWorkouts={history.filter((w) => !w.cardio && w.exercises.length > 0).slice(0, 8)}
+        onRepeat={(id) => { if (repeatWorkout(id)) { setCustomOpen(false); haptic('success'); toast('Loaded a past session 💪'); } }}
+      />
 
       {/* Your coach — tailored to what you told us at sign-up (goal, experience, the words you typed) */}
       {tips.length > 0 && (
@@ -397,13 +404,13 @@ function CardioScanCard() {
   );
 }
 
-function CustomWorkoutSheet({ open, onClose, onStart }: { open: boolean; onClose: () => void; onStart: (name: string) => void }) {
+function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: { open: boolean; onClose: () => void; onStart: (name: string) => void; pastWorkouts: Workout[]; onRepeat: (id: string) => void }) {
   const [name, setName] = useState('');
   const suggestions = ['Push', 'Pull', 'Legs', 'Upper', 'Lower', 'Full Body', 'Arms', 'Chest & Back', 'Conditioning'];
   return (
     <Sheet open={open} onClose={onClose} title="Custom workout">
       <div className="space-y-3">
-        <p className="text-[11px] text-muted">Name your session — add exercises as you go.</p>
+        <p className="text-[11px] text-muted">Name a fresh session — add exercises as you go.</p>
         <input
           autoFocus value={name} onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && name.trim()) onStart(name.trim()); }}
@@ -414,8 +421,49 @@ function CustomWorkoutSheet({ open, onClose, onStart }: { open: boolean; onClose
           {suggestions.map((s) => <Pill key={s} active={name === s} onClick={() => setName(s)}>{s}</Pill>)}
         </div>
         <Button className="w-full justify-center" disabled={!name.trim()} onClick={() => onStart(name.trim())}>Start workout</Button>
+
+        {pastWorkouts.length > 0 && (
+          <div className="pt-3 border-t border-line space-y-2">
+            <p className="text-[11px] uppercase tracking-wide text-muted">Or repeat a past session — weights pre-filled</p>
+            <div className="space-y-1.5 max-h-56 overflow-y-auto no-scrollbar">
+              {pastWorkouts.map((w) => (
+                <button key={w.id} onClick={() => onRepeat(w.id)} className="w-full flex items-center justify-between rounded-xl bg-surface-2 px-3 py-2.5 text-left">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{w.name}</p>
+                    <p className="text-[11px] text-muted">{w.exercises.length} exercises · {new Date(w.date).toLocaleDateString()}</p>
+                  </div>
+                  <span className="flex items-center gap-1 text-xs text-accent shrink-0"><Repeat size={13} /> Load</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </Sheet>
+  );
+}
+
+// A big celebratory PR moment when a session sets new records.
+function PrBurstOverlay({ data }: { data: { label: string; count: number } }) {
+  return (
+    <motion.div
+      className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+    >
+      <motion.div
+        className="flex flex-col items-center text-center px-8"
+        initial={{ scale: 0.5, opacity: 0, y: 24 }}
+        animate={{ scale: 1, opacity: 1, y: 0 }}
+        transition={{ type: 'spring', stiffness: 260, damping: 15 }}
+      >
+        <motion.div className="text-6xl mb-3" animate={{ rotate: [0, -14, 12, -6, 0], scale: [1, 1.25, 1] }} transition={{ duration: 0.9, ease: 'easeOut' }}>🏆</motion.div>
+        <p className="text-4xl font-extrabold italic uppercase tracking-tight text-accent-2 drop-shadow">New PR!</p>
+        <p className="text-lg font-semibold mt-1">{data.label}</p>
+        {data.count > 1 && <p className="text-sm text-muted mt-1">{data.count} records this session</p>}
+      </motion.div>
+    </motion.div>
   );
 }
 
@@ -472,6 +520,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   const bumpMetric = useGami((s) => s.bumpMetric);
   const recordHeavyLift = useGami((s) => s.recordHeavyLift);
   const heavyQuotesEnabled = useSettings((s) => s.heavyQuotesEnabled);
+  const restTimerEnabled = useSettings((s) => s.restTimerEnabled);
   const navigate = useNavigate();
 
   const [restOpen, setRestOpen] = useState(false);
@@ -483,6 +532,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   const [linkMode, setLinkMode] = useState<string[]>([]);
   const [celebrating, setCelebrating] = useState(false);
   const [drop, setDrop] = useState<Drop | null>(null);
+  const [prBurst, setPrBurst] = useState<{ label: string; count: number } | null>(null);
 
   const totalVolume = active.exercises.reduce(
     (sum, we) => sum + we.sets.filter((s) => s.completed).reduce((a, s) => a + volumeOf(s.weightKg, s.reps), 0),
@@ -513,10 +563,10 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       if (heavyQuotesEnabled) {
         const ex = exerciseById(active.exercises.find((e) => e.id === weId)?.exerciseId ?? '');
         setDrop({ quote: pickHeavyQuote(ex), rarity: rollRarity(), exercise: ex?.name ?? 'Lift', weightKg: set.weightKg });
-      } else {
+      } else if (restTimerEnabled) {
         openRest(restSec);
       }
-    } else {
+    } else if (restTimerEnabled) {
       openRest(restSec);
     }
   }
@@ -538,6 +588,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
         ? `New PR! ${newPrs[0].exerciseName} ${Math.round(newPrs[0].e1rm)}kg 🏆`
         : `${newPrs.length} new PRs this session 🏆`;
       celebrate();
+      setPrBurst({ label: newPrs.length === 1 ? `${newPrs[0].exerciseName} · ${newPrs[0].weightKg}kg` : `${newPrs.length} new records`, count: newPrs.length });
       toast(`${headline} · +${newPrs.length * 75} XP`);
       // Share the win with friends (respects the Share-activity preference).
       if (useSettings.getState().shareActivity) {
@@ -555,6 +606,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   return (
     <div className="px-4 pt-12 pb-32 space-y-4">
       {celebrating && <Confetti />}
+      <AnimatePresence>{prBurst && <PrBurstOverlay data={prBurst} />}</AnimatePresence>
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold">{active.name}</h1>
@@ -652,7 +704,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       </div>
 
       <RestTimer open={restOpen} onClose={() => setRestOpen(false)} autoStartSec={restSeed} nonce={restNonce} />
-      <HeavyDrop drop={drop} onClose={() => { setDrop(null); openRest(90); }} />
+      <HeavyDrop drop={drop} onClose={() => { setDrop(null); if (restTimerEnabled) openRest(90); }} />
 
       {/* Exercise picker */}
       <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="Add exercise">

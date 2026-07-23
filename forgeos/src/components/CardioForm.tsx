@@ -1,6 +1,6 @@
 import { Plus, X } from 'lucide-react';
 import { Pill } from './ui';
-import { speedKmh, paceLabel, CARDIO_MACHINES, type CardioData } from '../lib/cardio';
+import { speedKmh, paceLabel, CARDIO_MACHINES, INTENSITY_ACTIVITIES, type CardioData } from '../lib/cardio';
 import { haptic } from '../lib/haptics';
 import type { CardioMetric } from '../types';
 
@@ -53,25 +53,34 @@ export function MetricsEditor({ metrics, onChange }: { metrics: CardioMetric[]; 
 // live-derived speed + pace, and your own metrics.
 export function CardioFields({ data, onChange }: { data: CardioData; onChange: (d: CardioData) => void }) {
   const set = (patch: Partial<CardioData>) => onChange({ ...data, ...patch });
+  // Intensity-scored activities (karate) swap distance for a 1–10 intensity dial
+  // and drop the speed/pace readouts, which don't apply.
+  const intensity = INTENSITY_ACTIVITIES.includes(data.machine);
   return (
     <div className="space-y-3">
       <div className="flex gap-2 flex-wrap">
         {CARDIO_MACHINES.map((m) => <Pill key={m} active={data.machine === m} onClick={() => set({ machine: m })}>{m}</Pill>)}
       </div>
       <input value={data.machine} onChange={(e) => set({ machine: e.target.value })} placeholder="Activity name" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm font-semibold" />
-      <CRow label="Distance (km)" v={data.distanceKm} step={0.1} onChange={(v) => set({ distanceKm: v })} />
+      {intensity ? (
+        <CRow label="Intensity (1–10)" v={data.distanceKm} step={1} onChange={(v) => set({ distanceKm: Math.max(0, Math.min(10, v)) })} />
+      ) : (
+        <CRow label="Distance (km)" v={data.distanceKm} step={0.1} onChange={(v) => set({ distanceKm: v })} />
+      )}
       <CRow label="Time (min)" v={data.durationMin} step={1} onChange={(v) => set({ durationMin: v })} />
       <CRow label="Calories" v={data.calories} step={10} onChange={(v) => set({ calories: v })} />
-      <div className="flex gap-2">
-        <div className="flex-1 rounded-xl bg-surface-2 py-2 text-center">
-          <p className="font-mono font-bold text-sm">{speedKmh(data.distanceKm, data.durationMin) || '—'}<span className="text-[10px] text-muted font-sans"> km/h</span></p>
-          <p className="text-[10px] text-muted">avg speed</p>
+      {!intensity && (
+        <div className="flex gap-2">
+          <div className="flex-1 rounded-xl bg-surface-2 py-2 text-center">
+            <p className="font-mono font-bold text-sm">{speedKmh(data.distanceKm, data.durationMin) || '—'}<span className="text-[10px] text-muted font-sans"> km/h</span></p>
+            <p className="text-[10px] text-muted">avg speed</p>
+          </div>
+          <div className="flex-1 rounded-xl bg-surface-2 py-2 text-center">
+            <p className="font-mono font-bold text-sm">{paceLabel(data.distanceKm, data.durationMin)}</p>
+            <p className="text-[10px] text-muted">pace</p>
+          </div>
         </div>
-        <div className="flex-1 rounded-xl bg-surface-2 py-2 text-center">
-          <p className="font-mono font-bold text-sm">{paceLabel(data.distanceKm, data.durationMin)}</p>
-          <p className="text-[10px] text-muted">pace</p>
-        </div>
-      </div>
+      )}
       <MetricsEditor metrics={data.metrics} onChange={(metrics) => set({ metrics })} />
     </div>
   );
