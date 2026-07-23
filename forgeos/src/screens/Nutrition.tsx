@@ -30,6 +30,7 @@ export default function Nutrition() {
   const log = useMemo(() => rawLog.filter((e) => e.date.slice(0, 10) === today), [rawLog, today]);
   // Last night's sleep, if it was short (<6h) — drives the fuelling banner.
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
+  const v2 = useSettings((s) => s.designMode === 'v2');
   const healthDays = useHealth((s) => s.days);
   const shortNight = useMemo(() => {
     if (!recoveryEnabled) return null;
@@ -146,6 +147,36 @@ export default function Nutrition() {
         </Card>
       )}
 
+      {/* V2 "log-first": the Scan CTA leads, then quick actions + a compact totals strip */}
+      {v2 && (
+        <>
+          <Button className="w-full flex items-center justify-center py-4" disabled={scanning} onClick={() => fileRef.current?.click()}>
+            <span className="flex items-center gap-2 text-base">{scanning ? <Sparkles size={18} className="animate-pulse" /> : <Camera size={18} />} {scanning ? 'Analysing photo…' : 'Scan a meal'}</span>
+          </Button>
+          <div className="grid grid-cols-4 gap-2">
+            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setBarcodeOpen(true)}><Barcode size={16} /><span className="text-[10px] uppercase tracking-wide">Barcode</span></Button>
+            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setManualOpen(true)}><span className="text-lg leading-none">＋</span><span className="text-[10px] uppercase tracking-wide">Manual</span></Button>
+            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setRecipesOpen(true)}><ChefHat size={16} /><span className="text-[10px] uppercase tracking-wide">Recipes</span></Button>
+            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setRecompOpen(true)}><Calculator size={16} /><span className="text-[10px] uppercase tracking-wide">Calc</span></Button>
+          </div>
+          <Card>
+            <div className="grid grid-cols-4 gap-2 text-center">
+              <Tot label="kcal" value={Math.round(totals.calories)} target={macros.calories} />
+              <Tot label="protein" value={Math.round(totals.proteinG)} target={macros.proteinG} />
+              <Tot label="carbs" value={Math.round(totals.carbsG)} target={macros.carbsG} />
+              <Tot label="fat" value={Math.round(totals.fatG)} target={macros.fatG} />
+            </div>
+            <div className="v2-meter mt-3" style={{ height: 10 }}>
+              <div className="v2-meter-fill" style={{ width: `${Math.min(100, macros.calories > 0 ? (totals.calories / macros.calories) * 100 : 0)}%`, background: 'rgb(var(--accent))' }} />
+              <div className="v2-meter-seg" />
+            </div>
+          </Card>
+        </>
+      )}
+
+      {/* Legacy scanner + totals (V2 shows the log-first block above) */}
+      {!v2 && (
+      <>
       <Card className="space-y-3">
         <div className="flex items-center justify-between">
           <SectionTitle>AI macro scanner</SectionTitle>
@@ -173,6 +204,8 @@ export default function Nutrition() {
           <Tot label="fat" value={Math.round(totals.fatG)} target={macros.fatG} />
         </div>
       </Card>
+      </>
+      )}
 
       {/* Water tracker */}
       <Card className="space-y-2">
@@ -208,14 +241,18 @@ export default function Nutrition() {
         </div>
       )}
 
-      <Button variant="ghost" className="w-full justify-center" onClick={() => setRecipesOpen(true)}>
-        <span className="flex items-center gap-2"><ChefHat size={16} /> Recipe library ({RECIPES.length}) — goal-aligned</span>
-      </Button>
+      {!v2 && (
+        <Button variant="ghost" className="w-full justify-center" onClick={() => setRecipesOpen(true)}>
+          <span className="flex items-center gap-2"><ChefHat size={16} /> Recipe library ({RECIPES.length}) — goal-aligned</span>
+        </Button>
+      )}
 
-      <div className="flex gap-2">
-        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setManualOpen(true)}>+ Manual entry</Button>
-        <Button variant="ghost" className="justify-center" onClick={() => setRecompOpen(true)}><Calculator size={16} /></Button>
-      </div>
+      {!v2 && (
+        <div className="flex gap-2">
+          <Button variant="ghost" className="flex-1 justify-center" onClick={() => setManualOpen(true)}>+ Manual entry</Button>
+          <Button variant="ghost" className="justify-center" onClick={() => setRecompOpen(true)}><Calculator size={16} /></Button>
+        </div>
+      )}
 
       {/* Food log */}
       <div>
