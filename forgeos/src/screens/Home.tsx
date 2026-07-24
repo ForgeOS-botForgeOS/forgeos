@@ -195,30 +195,28 @@ export default function Home() {
         <WeeklyReviewCard />
         <WeeklyRecap />
 
-        {/* Weekly volume — V2 surfaces this in the bento grid above */}
-        {!v2 && (
-          <div>
-            <SectionTitle action={<span className="text-xs text-muted flex items-center gap-1"><TrendingUp size={12} /> this week</span>}>
-              Weekly volume
-            </SectionTitle>
-            <Card>
-              <div className="h-36">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={weeklyVolume}>
-                    <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
-                    <YAxis hide />
-                    <Tooltip
-                      cursor={{ fill: 'rgb(var(--surface-2))' }}
-                      contentStyle={{ background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 12, fontSize: 12 }}
-                      formatter={(v) => [`${Number(v).toLocaleString()} kg`, 'Volume']}
-                    />
-                    <Bar dataKey="volume" fill="rgb(var(--accent))" radius={[6, 6, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </Card>
-          </div>
-        )}
+        {/* Weekly volume — shown on every design (V2 also has a quick total in the rail) */}
+        <div>
+          <SectionTitle action={<span className="text-xs text-muted flex items-center gap-1"><TrendingUp size={12} /> this week</span>}>
+            Weekly volume
+          </SectionTitle>
+          <Card>
+            <div className="h-36">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={weeklyVolume}>
+                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
+                  <YAxis hide />
+                  <Tooltip
+                    cursor={{ fill: 'rgb(var(--surface-2))' }}
+                    contentStyle={{ background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 12, fontSize: 12 }}
+                    formatter={(v) => [`${Number(v).toLocaleString()} kg`, 'Volume']}
+                  />
+                  <Bar dataKey="volume" fill="rgb(var(--accent))" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Card>
+        </div>
 
         {/* Weigh-in tracker */}
         <div>

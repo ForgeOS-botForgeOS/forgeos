@@ -115,9 +115,9 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
             <button
               onClick={onComplete}
               aria-label="Complete set"
-              className="ml-auto flex items-center gap-1.5 h-11 px-4 rounded-lg bg-success/20 text-success font-semibold active:scale-95 transition"
+              className="ml-auto shrink-0 grid place-items-center h-11 w-11 rounded-lg bg-success/20 text-success active:scale-95 transition"
             >
-              <Check size={20} strokeWidth={3} /> <span className="text-sm">Done</span>
+              <Check size={22} strokeWidth={3} />
             </button>
           )}
           {set.completed && <span className="ml-auto font-mono text-xs text-accent">e1RM {e1rm(set.weightKg, set.reps)}</span>}

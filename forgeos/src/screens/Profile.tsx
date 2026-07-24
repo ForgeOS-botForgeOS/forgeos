@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift } from 'lucide-react';
+import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { pushMyActivity } from '../lib/activitySync';
@@ -30,8 +30,16 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { shareProfile, generateProfileCard, type PublicProfile } from '../lib/profileShare';
 import { downloadDataUrl } from '../lib/shareCard';
 import { EXERCISES } from '../data/exercises';
-import type { DesignMode, ThemeId } from '../types';
+import type { DesignMode, ThemeId, Goal } from '../types';
 import { haptic } from '../lib/haptics';
+
+const GOALS: { id: Goal; label: string; emoji: string }[] = [
+  { id: 'lose', label: 'Lose fat', emoji: '🔥' },
+  { id: 'maintain', label: 'Maintain', emoji: '🧭' },
+  { id: 'gain', label: 'Build muscle', emoji: '📈' },
+  { id: 'recomp', label: 'Recomp', emoji: '⚖️' },
+  { id: 'strength', label: 'Get stronger', emoji: '🏋️' },
+];
 
 const DESIGN_MODES: { id: DesignMode; name: string; emoji: string; desc: string }[] = [
   { id: 'v2', name: 'V2 · Tempo (preview)', emoji: '📡', desc: 'In-progress redesign — broadcast-sport telemetry: condensed italic type, signal accent, live meters' },
@@ -225,6 +233,30 @@ export default function Profile() {
         </div>
         <Button variant="ghost" className="py-1.5 shrink-0" onClick={() => navigate('/shop')}>Shop</Button>
       </Card>
+
+      {/* Goal — changing it recalculates your calories & macros */}
+      <div>
+        <SectionTitle action={<Target size={14} className="text-muted" />}>Your goal</SectionTitle>
+        <div className="grid grid-cols-2 gap-2">
+          {GOALS.map((g) => {
+            const active = profile?.goal === g.id;
+            return (
+              <button
+                key={g.id}
+                onClick={() => { updateProfile({ goal: g.id }); haptic('success'); toast(`Goal set to ${g.label} — macros recalculated`); }}
+                className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm text-left transition active:scale-[0.99] ${active ? 'border-accent bg-accent/10' : 'border-line bg-surface'}`}
+              >
+                <span>{g.emoji}</span>
+                <span className="flex-1">{g.label}</span>
+                {active && <Check size={14} className="text-accent shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+        {profile?.macros && (
+          <p className="text-[11px] text-muted mt-2">Now targeting <span className="font-mono text-text">{profile.macros.calories.toLocaleString()} kcal</span> · {profile.macros.proteinG}g protein — recalculated from your goal.</p>
+        )}
+      </div>
 
       {/* Theme switcher */}
       <div>

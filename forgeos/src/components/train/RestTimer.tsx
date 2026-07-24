@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion } from 'framer-motion';
+import { motion, useMotionValue } from 'framer-motion';
 import { Timer, X, Plus, Minus, Pause, Play } from 'lucide-react';
 import { haptic } from '../../lib/haptics';
+
+// Remembers where you last dragged the pill, so it stays put across the
+// back-to-back re-opens between sets (module-scoped = one workout session).
+let lastPos = { x: 0, y: 0 };
 
 // A short two-tone beep so you hear rest is over even with the phone face-down.
 // Created lazily on first use — autoplay policies allow it after a tap.
@@ -37,6 +41,10 @@ export function RestTimer({ open, onClose, autoStartSec = 0, nonce }: { open: bo
   const [total, setTotal] = useState(0); // the countdown we started from — drives the ring
   const [running, setRunning] = useState(false);
   const ref = useRef<number | null>(null);
+  const frameRef = useRef<HTMLElement | null>(null);
+  const x = useMotionValue(lastPos.x);
+  const y = useMotionValue(lastPos.y);
+  useEffect(() => { frameRef.current = document.getElementById('phone-root'); }, []);
 
   // Each time the timer is (re)opened after a set, auto-start from the preset.
   useEffect(() => {
@@ -100,13 +108,19 @@ export function RestTimer({ open, onClose, autoStartSec = 0, nonce }: { open: bo
   // A slim pill that floats just above the tab bar — present but out of the way.
   return (
     <motion.div
-      className="absolute inset-x-0 bottom-0 z-40 px-3 pb-3"
-      initial={{ y: 60, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      exit={{ y: 60, opacity: 0 }}
+      drag
+      dragMomentum={false}
+      dragElastic={0.08}
+      dragConstraints={frameRef}
+      style={{ x, y }}
+      onDragEnd={() => { lastPos = { x: x.get(), y: y.get() }; }}
+      initial={{ opacity: 0, scale: 0.92 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.92 }}
       transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+      className="absolute left-3 right-3 bottom-3 z-40 mx-auto max-w-sm touch-none cursor-grab active:cursor-grabbing"
     >
-      <div className="mx-auto max-w-sm relative overflow-hidden rounded-full bg-surface-2/95 border border-line backdrop-blur px-2 py-1.5 flex items-center gap-2 shadow-lg">
+      <div className="relative overflow-hidden rounded-full bg-surface-2/95 border border-line backdrop-blur px-2 py-1.5 flex items-center gap-2 shadow-lg">
         {/* subtle depleting fill so progress reads at a glance */}
         <motion.div
           className={`absolute inset-y-0 left-0 ${done ? 'bg-success/20' : 'bg-accent/15'}`}
