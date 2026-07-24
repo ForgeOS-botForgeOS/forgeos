@@ -93,7 +93,7 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
         onPointerLeave={endPress}
         className={`relative border rounded-xl px-3 py-2.5 ${set.completed ? 'border-success/50' : 'border-line'}`}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap gap-y-2">
           <span className={`w-6 h-6 shrink-0 rounded-md text-xs flex items-center justify-center font-bold ${set.completed ? 'bg-success text-black' : 'bg-surface-2 text-muted'}`}>
             {index + 1}
           </span>
@@ -152,13 +152,13 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
 
 function Stepper({ value, step, unit, onChange }: { value: number; step: number; unit: string; onChange: (v: number) => void }) {
   return (
-    <div className="flex items-center gap-1">
-      <button onClick={() => { onChange(value - step); haptic('tap'); }} className="w-7 h-7 rounded-md bg-surface-2 text-muted">−</button>
-      <div className="w-12 text-center">
+    <div className="flex items-center gap-1 shrink-0">
+      <button onClick={() => { onChange(value - step); haptic('tap'); }} className="w-7 h-7 shrink-0 rounded-md bg-surface-2 text-muted">−</button>
+      <div className="w-10 text-center">
         <span className="font-mono font-bold text-sm">{value}</span>
         <span className="text-[9px] text-muted block leading-none">{unit}</span>
       </div>
-      <button onClick={() => { onChange(value + step); haptic('tap'); }} className="w-7 h-7 rounded-md bg-surface-2 text-muted">+</button>
+      <button onClick={() => { onChange(value + step); haptic('tap'); }} className="w-7 h-7 shrink-0 rounded-md bg-surface-2 text-muted">+</button>
     </div>
   );
 }
