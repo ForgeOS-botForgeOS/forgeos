@@ -445,6 +445,10 @@ export interface AppLock {
 // Every mode drives off the theme variables, so all colour themes keep working.
 export type DesignMode = 'classic' | 'nova' | 'bolt' | 'v2';
 
+// What fills the space under each set in a workout: the sub-target controls, or
+// a big readout of the weight / reps for that set.
+export type SetRowDetail = 'subtarget' | 'weight' | 'reps';
+
 export interface Settings {
   language: Language;
   gym: GymConfig;
@@ -472,6 +476,7 @@ export interface Settings {
   restTimerEnabled: boolean; // auto-open the rest countdown after completing a set
   voiceCoach: boolean; // speak the next set aloud ("Bench Press, 60 kilos, 8 reps")
   showProgressCharts: boolean; // show the PR timeline + XP growth curve on Quests
+  setRowDetail: SetRowDetail; // what fills the space under each set: sub-targets / big weight / big reps
   units: 'metric';
 }
 

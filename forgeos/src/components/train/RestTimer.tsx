@@ -40,11 +40,33 @@ export function RestTimer({ open, onClose, autoStartSec = 0, nonce }: { open: bo
   const [remaining, setRemaining] = useState(0);
   const [total, setTotal] = useState(0); // the countdown we started from — drives the ring
   const [running, setRunning] = useState(false);
+  // When the pill is parked against an edge it shrinks to a tidy chip that
+  // tucks into the corner instead of sitting big in the middle of the workout.
+  const [compact, setCompact] = useState(false);
+  const [side, setSide] = useState<'left' | 'right' | 'top' | 'none'>('none');
   const ref = useRef<number | null>(null);
   const frameRef = useRef<HTMLElement | null>(null);
+  const pillRef = useRef<HTMLDivElement | null>(null);
   const x = useMotionValue(lastPos.x);
   const y = useMotionValue(lastPos.y);
   useEffect(() => { frameRef.current = document.getElementById('phone-root'); }, []);
+
+  // Decide whether the pill is hugging an edge, from its live position within
+  // the phone frame. Transform-origin follows the docking side so the scale-down
+  // pulls *away* from the edge, keeping that edge anchored (no jitter).
+  const senseEdge = () => {
+    const f = frameRef.current?.getBoundingClientRect();
+    const p = pillRef.current?.getBoundingClientRect();
+    if (!f || !p) return;
+    const EDGE = 20;
+    const nearLeft = p.left - f.left < EDGE;
+    const nearRight = f.right - p.right < EDGE;
+    const nearTop = p.top - f.top < EDGE;
+    setSide(nearLeft ? 'left' : nearRight ? 'right' : nearTop ? 'top' : 'none');
+    setCompact(nearLeft || nearRight || nearTop);
+  };
+  // Restore the docked/compact look when the timer re-opens at a saved position.
+  useEffect(() => { if (open) senseEdge(); }, [open, nonce]);
 
   // Each time the timer is (re)opened after a set, auto-start from the preset.
   useEffect(() => {
@@ -105,42 +127,51 @@ export function RestTimer({ open, onClose, autoStartSec = 0, nonce }: { open: bo
     haptic('tap');
   };
 
+  // Scale toward whichever edge it's docking to, so shrinking pulls it neatly
+  // into the corner rather than away from it.
+  const originClass = side === 'left' ? 'origin-left' : side === 'right' ? 'origin-right' : side === 'top' ? 'origin-top' : 'origin-bottom';
+
   // A slim pill that floats just above the tab bar — present but out of the way.
+  // Drag it anywhere; park it against an edge and it shrinks into a tidy chip.
   return (
-    <motion.div
-      drag
-      dragMomentum={false}
-      dragElastic={0.08}
-      dragConstraints={frameRef}
-      style={{ x, y }}
-      onDragEnd={() => { lastPos = { x: x.get(), y: y.get() }; }}
-      initial={{ opacity: 0, scale: 0.92 }}
-      animate={{ opacity: 1, scale: 1 }}
-      exit={{ opacity: 0, scale: 0.92 }}
-      transition={{ type: 'spring', stiffness: 420, damping: 34 }}
-      className="absolute left-3 right-3 bottom-3 z-40 mx-auto max-w-sm touch-none cursor-grab active:cursor-grabbing"
-    >
-      <div className="relative overflow-hidden rounded-full bg-surface-2/95 border border-line backdrop-blur px-2 py-1.5 flex items-center gap-2 shadow-lg">
-        {/* subtle depleting fill so progress reads at a glance */}
-        <motion.div
-          className={`absolute inset-y-0 left-0 ${done ? 'bg-success/20' : 'bg-accent/15'}`}
-          animate={{ width: `${frac * 100}%` }}
-          transition={{ duration: 0.9, ease: 'linear' }}
-        />
-        <span className="relative flex items-center gap-1.5 pl-2">
-          <Timer size={14} className={done ? 'text-success' : 'text-accent'} />
-          <span className={`font-mono font-bold tabular-nums text-lg leading-none ${done ? 'text-success' : ''}`}>{mm}:{ss}</span>
-        </span>
-        <span className="relative text-[11px] text-muted">{done ? 'go 💪' : 'rest'}</span>
-        <div className="relative ml-auto flex items-center gap-0.5">
-          <button onClick={() => bump(-15)} aria-label="Minus 15 seconds" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><Minus size={15} /></button>
-          <button onClick={() => bump(15)} aria-label="Plus 15 seconds" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><Plus size={15} /></button>
-          <button onClick={toggle} aria-label={running ? 'Pause' : 'Start'} className="w-8 h-8 rounded-full bg-accent text-black flex items-center justify-center active:scale-90">
-            {running ? <Pause size={15} /> : <Play size={15} />}
-          </button>
-          <button onClick={onClose} aria-label="Close rest timer" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><X size={15} /></button>
+    <div className="pointer-events-none absolute inset-x-0 bottom-3 z-40 flex justify-center">
+      <motion.div
+        ref={pillRef}
+        drag
+        dragMomentum={false}
+        dragElastic={0.06}
+        dragConstraints={frameRef}
+        style={{ x, y }}
+        onDrag={senseEdge}
+        onDragEnd={() => { lastPos = { x: x.get(), y: y.get() }; senseEdge(); }}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: compact ? 0.82 : 1 }}
+        exit={{ opacity: 0, scale: 0.9 }}
+        transition={{ type: 'spring', stiffness: 420, damping: 34 }}
+        className={`pointer-events-auto max-w-sm touch-none cursor-grab active:cursor-grabbing ${originClass}`}
+      >
+        <div className="relative overflow-hidden rounded-full bg-surface-2/95 border border-line backdrop-blur px-2 py-1.5 flex items-center gap-2 shadow-lg">
+          {/* subtle depleting fill so progress reads at a glance */}
+          <motion.div
+            className={`absolute inset-y-0 left-0 ${done ? 'bg-success/20' : 'bg-accent/15'}`}
+            animate={{ width: `${frac * 100}%` }}
+            transition={{ duration: 0.9, ease: 'linear' }}
+          />
+          <span className="relative flex items-center gap-1.5 pl-2">
+            <Timer size={14} className={done ? 'text-success' : 'text-accent'} />
+            <span className={`font-mono font-bold tabular-nums text-lg leading-none ${done ? 'text-success' : ''}`}>{mm}:{ss}</span>
+          </span>
+          {!compact && <span className="relative text-[11px] text-muted">{done ? 'go 💪' : 'rest'}</span>}
+          <div className="relative ml-auto flex items-center gap-0.5">
+            {!compact && <button onClick={() => bump(-15)} aria-label="Minus 15 seconds" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><Minus size={15} /></button>}
+            {!compact && <button onClick={() => bump(15)} aria-label="Plus 15 seconds" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><Plus size={15} /></button>}
+            <button onClick={toggle} aria-label={running ? 'Pause' : 'Start'} className="w-8 h-8 rounded-full bg-accent text-black flex items-center justify-center active:scale-90">
+              {running ? <Pause size={15} /> : <Play size={15} />}
+            </button>
+            <button onClick={onClose} aria-label="Close rest timer" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><X size={15} /></button>
+          </div>
         </div>
-      </div>
-    </motion.div>
+      </motion.div>
+    </div>
   );
 }

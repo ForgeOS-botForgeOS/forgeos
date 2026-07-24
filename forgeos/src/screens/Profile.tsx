@@ -30,7 +30,7 @@ import { ACHIEVEMENTS } from '../data/achievements';
 import { shareProfile, generateProfileCard, type PublicProfile } from '../lib/profileShare';
 import { downloadDataUrl } from '../lib/shareCard';
 import { EXERCISES } from '../data/exercises';
-import type { DesignMode, ThemeId, Goal } from '../types';
+import type { DesignMode, ThemeId, Goal, SetRowDetail } from '../types';
 import { buildWeekPlan } from './onboarding/planGenerator';
 import { phaseSpans, goalNudge, GOAL_LABEL } from '../lib/goalPhases';
 import { haptic } from '../lib/haptics';
@@ -48,6 +48,12 @@ const DESIGN_MODES: { id: DesignMode; name: string; emoji: string; desc: string 
   { id: 'bolt', name: 'Bolt', emoji: '⚡', desc: 'Bold editorial redesign — grotesque type, flat high-contrast blocks, hard shadows' },
   { id: 'nova', name: 'Nova', emoji: '🌈', desc: 'Gradient-glass redesign — new type, vivid gradients, glass nav' },
   { id: 'classic', name: 'Classic', emoji: '⚙️', desc: 'The original ForgeOS look' },
+];
+
+const SET_FOCUS: { id: SetRowDetail; label: string }[] = [
+  { id: 'subtarget', label: 'Sub-targets' },
+  { id: 'weight', label: 'Big weight' },
+  { id: 'reps', label: 'Big reps' },
 ];
 
 const THEMES: { id: ThemeId; name: string; locked: boolean; unlockRank: string }[] = [
@@ -408,6 +414,15 @@ export default function Profile() {
           <Row label="Rest timer" desc="Auto-open the rest countdown after each set">
             <Toggle checked={s.restTimerEnabled} onChange={(v) => s.set('restTimerEnabled', v)} />
           </Row>
+          <div className="py-3" data-noswipe>
+            <p className="text-sm">Set card focus</p>
+            <p className="text-[11px] text-muted mb-2">What fills the space under each set</p>
+            <div className="flex gap-2">
+              {SET_FOCUS.map((o) => (
+                <Pill key={o.id} active={s.setRowDetail === o.id} onClick={() => { s.set('setRowDetail', o.id); haptic('tap'); }}>{o.label}</Pill>
+              ))}
+            </div>
+          </div>
           <Row label="Voice cues" desc="Speak the next set aloud during a workout">
             <Toggle checked={s.voiceCoach} onChange={(v) => s.set('voiceCoach', v)} />
           </Row>

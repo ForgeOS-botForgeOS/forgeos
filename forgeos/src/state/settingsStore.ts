@@ -36,6 +36,7 @@ const DEFAULTS: Settings = {
   restTimerEnabled: true,
   voiceCoach: false,
   showProgressCharts: true,
+  setRowDetail: 'subtarget',
   units: 'metric',
 };
 

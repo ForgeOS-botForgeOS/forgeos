@@ -4,6 +4,7 @@ import { Check, Trash2 } from 'lucide-react';
 import type { SetEntry } from '../../types';
 import { e1rm } from '../../lib/fitness';
 import { haptic } from '../../lib/haptics';
+import { useSettings } from '../../state/settingsStore';
 
 interface Props {
   set: SetEntry;
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLongPress }: Props) {
+  const detail = useSettings((s) => s.setRowDetail);
   const x = useMotionValue(0);
   const bg = useTransform(x, [-80, 0, 80], ['rgb(var(--danger))', 'rgb(var(--surface))', 'rgb(var(--success))']);
   const pressTimer = useRef<number | null>(null);
@@ -144,7 +146,11 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
           </p>
         )}
 
-        <SubTarget set={set} onChange={onChange} />
+        {/* The space under the set is yours to spend (Settings → Set card focus):
+            the sub-target controls, or a big readout of the weight / reps. */}
+        {detail === 'subtarget'
+          ? <SubTarget set={set} onChange={onChange} />
+          : <BigMetric set={set} metric={detail} />}
       </motion.div>
     </motion.div>
   );
@@ -163,12 +169,28 @@ function Stepper({ value, step, unit, onChange }: { value: number; step: number;
   );
 }
 
+// The alternative to sub-targets: turn the space under the set into a big,
+// glanceable readout of that set's weight or reps — easier to read mid-lift.
+function BigMetric({ set, metric }: { set: SetEntry; metric: 'weight' | 'reps' }) {
+  const value = metric === 'weight' ? set.weightKg : set.reps;
+  const unit = metric === 'weight' ? 'kg' : 'reps';
+  return (
+    <div className="mt-1.5 flex items-baseline gap-1.5">
+      <span className="font-mono font-extrabold tabular-nums leading-none text-[2rem] text-accent">{value}</span>
+      <span className="text-xs font-semibold text-muted">{unit}</span>
+    </div>
+  );
+}
+
 function SubTarget({ set, onChange }: { set: SetEntry; onChange: (patch: Partial<SetEntry>) => void }) {
   const [open, setOpen] = useState(false);
   const kind = set.subKind ?? 'none';
   return (
     <div className="mt-1">
-      <button onClick={() => setOpen((o) => !o)} className="text-[10px] text-accent-2">
+      <button
+        onClick={() => setOpen((o) => !o)}
+        className="inline-flex items-center rounded-full bg-accent-2/12 px-2.5 py-1 text-xs font-medium text-accent-2 active:scale-95 transition"
+      >
         {kind === 'none' ? '+ sub-target' : `sub-target: ${kind}`}
       </button>
       {open && (
