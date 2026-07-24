@@ -38,6 +38,8 @@ import { xpForSet } from '../data/ranks';
 import { haptic } from '../lib/haptics';
 import { personalTips } from '../lib/personalCoach';
 import { speak, setCue } from '../lib/speech';
+import { usePlayer } from '../state/playerStore';
+import { MOCK_TRACKS } from '../lib/spotify';
 import type { SetEntry, Workout } from '../types';
 
 export default function Train() {
@@ -602,7 +604,9 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
 
   function finish() {
     raceWorkoutEnded(); // report final progress / leave an undecided race
-    const res = finishWorkout();
+    // Auto-tag any PRs with whatever's playing in the CD player ("...to Till I Collapse").
+    const nowPlaying = usePlayer.getState().active ? MOCK_TRACKS[usePlayer.getState().index] : null;
+    const res = finishWorkout(nowPlaying);
     if (!res) return;
     reportDuelWorkout(res.workout); // active duels advance by what you really did
     const { newPrs } = res;
@@ -621,9 +625,10 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       toast(`${headline} · +${newPrs.length * 75} XP`);
       // Share the win with friends (respects the Share-activity preference).
       if (useSettings.getState().shareActivity) {
-        const body = newPrs.length === 1
+        const base = newPrs.length === 1
           ? `🏆 New PR: ${newPrs[0].exerciseName} — ${newPrs[0].weightKg}kg × ${newPrs[0].reps} (e1RM ${Math.round(newPrs[0].e1rm)}kg)`
           : `🏆 Smashed ${newPrs.length} PRs: ${newPrs.map((p) => p.exerciseName).join(', ')}`;
+        const body = nowPlaying ? `${base} 🎧 to ${nowPlaying.title}` : base;
         useSocial.getState().publishPost(body);
       }
     } else {
