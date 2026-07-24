@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon, HeartPulse, Star } from 'lucide-react';
+import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon, HeartPulse, Star, Volume2, VolumeX } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -37,6 +37,7 @@ import { newCardioData, metricTypeFor, primaryValueLabel, type CardioData } from
 import { xpForSet } from '../data/ranks';
 import { haptic } from '../lib/haptics';
 import { personalTips } from '../lib/personalCoach';
+import { speak, setCue } from '../lib/speech';
 import type { SetEntry, Workout } from '../types';
 
 export default function Train() {
@@ -538,6 +539,8 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   const recordHeavyLift = useGami((s) => s.recordHeavyLift);
   const heavyQuotesEnabled = useSettings((s) => s.heavyQuotesEnabled);
   const restTimerEnabled = useSettings((s) => s.restTimerEnabled);
+  const voiceCoach = useSettings((s) => s.voiceCoach);
+  const setSetting = useSettings((s) => s.set);
   const navigate = useNavigate();
 
   const [restOpen, setRestOpen] = useState(false);
@@ -586,6 +589,15 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
     } else if (restTimerEnabled) {
       openRest(restSec);
     }
+
+    // Voice cue: read the next set aloud, hands-free.
+    if (useSettings.getState().voiceCoach) {
+      const a = useWorkout.getState().active;
+      for (const we2 of a?.exercises ?? []) {
+        const nextSet = we2.sets.find((st) => !st.completed);
+        if (nextSet) { speak(setCue(exerciseById(we2.exerciseId)?.name ?? 'Next set', nextSet.weightKg, nextSet.reps)); break; }
+      }
+    }
   }
 
   function finish() {
@@ -629,7 +641,16 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
           <h1 className="text-2xl font-extrabold">{active.name}</h1>
           <p className="text-sm text-muted">{completedSets} sets · {Math.round(totalVolume).toLocaleString()} kg</p>
         </div>
-        <Badge color="rgb(var(--success))">LIVE</Badge>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => { const v = !voiceCoach; setSetting('voiceCoach', v); haptic('tap'); if (v) speak('Voice cues on'); }}
+            aria-label={voiceCoach ? 'Turn off voice cues' : 'Turn on voice cues'}
+            className="p-1"
+          >
+            {voiceCoach ? <Volume2 size={18} className="text-accent" /> : <VolumeX size={18} className="text-muted" />}
+          </button>
+          <Badge color="rgb(var(--success))">LIVE</Badge>
+        </div>
       </header>
 
       <RaceBar />

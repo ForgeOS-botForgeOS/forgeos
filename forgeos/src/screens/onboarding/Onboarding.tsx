@@ -21,6 +21,7 @@ import { parseAbout, parsedFieldCount, type ParsedProfile } from '../../lib/prof
 import type { ActivityLevel, ExperienceLevel, Goal, Sex, UserProfile } from '../../types';
 import { buildWeekPlan } from './planGenerator';
 import { FitnessTest } from './FitnessTest';
+import { VoiceDictate } from '../../components/VoiceDictate';
 
 type Step = 'signin' | 'quiz' | 'metrics' | 'test' | 'plan';
 
@@ -667,12 +668,24 @@ function ManualIntro({
       </p>
 
       <textarea
-        autoFocus
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder="e.g. I’m 16, 178cm, around 72kg. Total beginner, want to build muscle, can train 4 days a week. Bad knees so nothing that aggravates them."
         className="w-full rounded-xl bg-surface border border-line px-4 py-3 text-sm h-40"
       />
+
+      {/* Voice-to-text: dictate your plan instead of typing (where supported) */}
+      <div className="flex items-center gap-2">
+        <VoiceDictate onText={(t) => setText((prev) => (prev.trim() ? `${prev.trim()} ${t}` : t))} label="Say it instead" />
+        {text.trim() !== '' && <button onClick={() => setText('')} className="text-[11px] text-muted/70">clear</button>}
+      </div>
+
+      {/* If nothing parsed, ask for the specifics we still need. */}
+      {text.trim() !== '' && caught === 0 && (
+        <p className="text-[12px] text-warn/90 bg-warn/10 rounded-xl px-3 py-2">
+          I couldn’t pick out the details yet — try including your <b>goal</b> (lose fat / build muscle / get stronger), your <b>age, height &amp; weight</b>, and <b>how many days a week</b> you can train.
+        </p>
+      )}
 
       <input
         value={name}

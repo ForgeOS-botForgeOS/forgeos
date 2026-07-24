@@ -34,6 +34,7 @@ const DEFAULTS: Settings = {
   autoImportWorkouts: true,
   prefillWeights: true,
   restTimerEnabled: true,
+  voiceCoach: false,
   units: 'metric',
 };
 

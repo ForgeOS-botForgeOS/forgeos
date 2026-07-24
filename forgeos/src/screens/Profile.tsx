@@ -361,6 +361,9 @@ export default function Profile() {
           <Row label="Rest timer" desc="Auto-open the rest countdown after each set">
             <Toggle checked={s.restTimerEnabled} onChange={(v) => s.set('restTimerEnabled', v)} />
           </Row>
+          <Row label="Voice cues" desc="Speak the next set aloud during a workout">
+            <Toggle checked={s.voiceCoach} onChange={(v) => s.set('voiceCoach', v)} />
+          </Row>
           <Row label={t('p.marketplace')} desc="Buy & sell programs">
             <Toggle checked={s.marketplaceEnabled} onChange={(v) => s.set('marketplaceEnabled', v)} />
           </Row>
