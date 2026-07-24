@@ -22,6 +22,7 @@ import { Heatmap } from '../components/Heatmap';
 import { useHealth, sortedDays } from '../state/healthStore';
 import { useSettings } from '../state/settingsStore';
 import { readinessFromDays, type Readiness } from '../lib/readiness';
+import { muscleVolume, neglectedMuscles } from '../lib/muscleVolume';
 import { ReadinessCard } from '../components/Readiness';
 import { weekendNudge } from '../lib/nudges';
 
@@ -70,6 +71,7 @@ export default function Home() {
 
   const macros = profile?.macros ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 };
   const v2 = useSettings((s) => s.designMode === 'v2');
+  const muscleLoads = useMemo(() => muscleVolume(history, new Date(Date.now() - 7 * 86400000).toISOString()), [history]);
 
   // Extra data the V2 "A×C" Home surfaces (gauges + rails). All from existing
   // stores — no behaviour change.
@@ -217,6 +219,34 @@ export default function Home() {
             </div>
           </Card>
         </div>
+
+        {/* Muscle-group volume with productive-range (MEV–MRV) guidance */}
+        {muscleLoads.some((m) => m.sets > 0) && (
+          <div>
+            <SectionTitle>Muscle volume · this week</SectionTitle>
+            <Card className="space-y-2">
+              {muscleLoads.filter((m) => m.sets > 0).map((m) => {
+                const color = m.status === 'good' ? 'rgb(var(--success))' : m.status === 'high' ? 'rgb(var(--danger))' : m.status === 'low' ? 'rgb(var(--warn))' : 'rgb(var(--muted))';
+                const pct = Math.min(100, (m.sets / m.mrv) * 100);
+                return (
+                  <div key={m.muscle}>
+                    <div className="flex justify-between text-[11px] mb-0.5">
+                      <span className="text-muted">{m.muscle}</span>
+                      <span className="font-mono">{m.sets} sets <span className="text-muted/70">/ {m.mev}–{m.mrv}</span></span>
+                    </div>
+                    <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
+                      <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
+                    </div>
+                  </div>
+                );
+              })}
+              {(() => {
+                const n = neglectedMuscles(muscleLoads);
+                return n.length > 0 ? <p className="text-[11px] text-warn/90 pt-1">⚠ Light this week: {n.slice(0, 4).join(', ')}{n.length > 4 ? '…' : ''}</p> : null;
+              })()}
+            </Card>
+          </div>
+        )}
 
         {/* Weigh-in tracker */}
         <div>

@@ -31,6 +31,8 @@ import { shareProfile, generateProfileCard, type PublicProfile } from '../lib/pr
 import { downloadDataUrl } from '../lib/shareCard';
 import { EXERCISES } from '../data/exercises';
 import type { DesignMode, ThemeId, Goal } from '../types';
+import { buildWeekPlan } from './onboarding/planGenerator';
+import { phaseSpans, goalNudge, GOAL_LABEL } from '../lib/goalPhases';
 import { haptic } from '../lib/haptics';
 
 const GOALS: { id: Goal; label: string; emoji: string }[] = [
@@ -78,6 +80,10 @@ export default function Profile() {
   const profile = useUser((u) => u.profile);
   const reset = useUser((u) => u.reset);
   const updateProfile = useUser((u) => u.updateProfile);
+  const weekPlan = useUser((u) => u.weekPlan);
+  const setWeekPlan = useUser((u) => u.setWeekPlan);
+  const weighIns = useUser((u) => u.weighIns);
+  const goalHistory = useUser((u) => u.goalHistory);
   const [editingName, setEditingName] = useState(false);
   const [nameDraft, setNameDraft] = useState('');
   const xp = useGami((g) => g.xp);
@@ -256,6 +262,47 @@ export default function Profile() {
         {profile?.macros && (
           <p className="text-[11px] text-muted mt-2">Now targeting <span className="font-mono text-text">{profile.macros.calories.toLocaleString()} kcal</span> · {profile.macros.proteinG}g protein — recalculated from your goal.</p>
         )}
+        <Button
+          variant="ghost"
+          className="w-full justify-center mt-2"
+          onClick={() => {
+            const days = weekPlan?.days.filter((d) => !d.rest).length || s.weeklyGoal || 4;
+            const style = profile?.quizAnswers?.['style']?.split(' · ')[0] ?? 'A bit of everything';
+            setWeekPlan(buildWeekPlan(days, style, profile?.goal ?? 'recomp', { includeCardio: true }));
+            haptic('success');
+            toast('Week plan re-tuned to your goal 🔁');
+            navigate('/plan');
+          }}
+        >
+          <span className="flex items-center gap-2"><RefreshCw size={15} /> Re-tune my week plan to this goal</span>
+        </Button>
+
+        {/* Auto-suggest: nudge a goal switch when the weight trend stops matching */}
+        {profile && goalNudge(profile.goal, weighIns) && (
+          <div className="mt-2 rounded-xl bg-accent-2/10 border border-accent-2/30 px-3 py-2 text-[12px] flex gap-2">
+            <span className="shrink-0">💡</span>
+            <span>{goalNudge(profile.goal, weighIns)}</span>
+          </div>
+        )}
+
+        {/* Phase history — your bulk / cut / maintain timeline */}
+        {(goalHistory.length > 0 || profile) && (() => {
+          const hist = goalHistory.length ? goalHistory : profile ? [{ goal: profile.goal, startISO: new Date().toISOString() }] : [];
+          const spans = phaseSpans(hist);
+          if (spans.length === 0) return null;
+          return (
+            <div className="mt-3">
+              <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">Your phases</p>
+              <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                {spans.map((sp, i) => (
+                  <span key={i} className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] ${sp.current ? 'bg-accent/15 text-accent' : 'bg-surface-2 text-muted'}`}>
+                    {GOAL_LABEL[sp.goal].emoji} {GOAL_LABEL[sp.goal].label} · {sp.current ? 'now' : `${sp.weeks} wk`}
+                  </span>
+                ))}
+              </div>
+            </div>
+          );
+        })()}
       </div>
 
       {/* Theme switcher */}

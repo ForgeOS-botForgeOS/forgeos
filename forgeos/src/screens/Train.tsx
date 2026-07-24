@@ -817,15 +817,20 @@ function LedgerRow({ k, v }: { k: string; v: ReactNode }) {
   );
 }
 
+const EQUIP_PRESETS = ['Any', 'Home', 'Barbell', 'Dumbbell', 'Machine', 'Cable', 'Bodyweight'];
+const HOME_OK = ['Bodyweight', 'Dumbbell', 'Band', 'Kettlebell', 'Rings'];
+
 function ExercisePicker({ onPick }: { onPick: (id: string) => void }) {
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<string>('All');
+  const [equip, setEquip] = useState<string>('Any');
   const history = useWorkout((s) => s.history);
   const favIds = useExercises((s) => s.favouriteIds);
   const toggleFav = useExercises((s) => s.toggleFavourite);
 
+  const equipOk = (eq: string) => equip === 'Any' || (equip === 'Home' ? HOME_OK.includes(eq) : eq === equip);
   const list = EXERCISES.filter(
-    (e) => (cat === 'All' || e.category === cat) && e.name.toLowerCase().includes(q.toLowerCase()),
+    (e) => (cat === 'All' || e.category === cat) && equipOk(e.equipment) && e.name.toLowerCase().includes(q.toLowerCase()),
   ).slice(0, 40);
 
   // Quick-pick rails (only when you're not searching/filtering): the exercises
@@ -848,7 +853,7 @@ function ExercisePicker({ onPick }: { onPick: (id: string) => void }) {
     () => favIds.map((id) => exerciseById(id)).filter((e): e is NonNullable<typeof e> => !!e),
     [favIds],
   );
-  const showQuick = q.trim() === '' && cat === 'All';
+  const showQuick = q.trim() === '' && cat === 'All' && equip === 'Any';
 
   return (
     <div className="space-y-3">
@@ -871,6 +876,11 @@ function ExercisePicker({ onPick }: { onPick: (id: string) => void }) {
         </div>
       )}
 
+      <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
+        {EQUIP_PRESETS.map((eqp) => (
+          <button key={eqp} onClick={() => setEquip(eqp)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${equip === eqp ? 'bg-accent-2 text-black' : 'bg-surface-2 text-muted'}`}>{eqp === 'Home' ? '🏠 Home' : eqp}</button>
+        ))}
+      </div>
       <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
         {['All', ...EXERCISE_CATEGORIES].map((c) => (
           <button key={c} onClick={() => setCat(c)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${cat === c ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>{c}</button>

@@ -1,9 +1,13 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { motion, useMotionValue } from 'framer-motion';
 import { Play, Pause, SkipForward, X } from 'lucide-react';
 import { usePlayer } from '../state/playerStore';
 import { MOCK_TRACKS } from '../lib/spotify';
 import { haptic } from '../lib/haptics';
+
+// Remembers where you dragged the player this session.
+let cdPos = { x: 0, y: 0 };
 
 // A floating "now playing" CD player that lives in the app shell, so music
 // follows you across every screen. A spinning vinyl (paused when paused), the
@@ -20,6 +24,10 @@ export function NowPlayingCD() {
   const dismiss = usePlayer((s) => s.dismiss);
   const setProgress = usePlayer((s) => s.setProgress);
   const navigate = useNavigate();
+  const frameRef = useRef<HTMLElement | null>(null);
+  const x = useMotionValue(cdPos.x);
+  const y = useMotionValue(cdPos.y);
+  useEffect(() => { frameRef.current = document.getElementById('phone-root'); }, []);
 
   // Simulated playback clock: advance ~1s at a time while playing, and roll to
   // the next track when the current one ends. Reads live state each tick so the
@@ -40,7 +48,15 @@ export function NowPlayingCD() {
   const pct = Math.min(100, (progressMs / track.durationMs) * 100);
 
   return (
-    <div className="shrink-0 px-3 pb-1">
+    <motion.div
+      drag
+      dragMomentum={false}
+      dragElastic={0.08}
+      dragConstraints={frameRef}
+      style={{ x, y }}
+      onDragEnd={() => { cdPos = { x: x.get(), y: y.get() }; }}
+      className="absolute left-3 right-3 bottom-[74px] z-40 mx-auto max-w-sm touch-none cursor-grab active:cursor-grabbing"
+    >
       <div className="relative overflow-hidden rounded-2xl bg-surface-2/95 border border-line backdrop-blur flex items-center gap-3 px-3 py-2 shadow-lg">
         {/* Spinning vinyl with the album look as the centre label */}
         <div
@@ -75,6 +91,6 @@ export function NowPlayingCD() {
         {/* Progress line */}
         <div className="absolute left-0 bottom-0 h-0.5 bg-accent" style={{ width: `${pct}%`, transition: 'width 1s linear' }} />
       </div>
-    </div>
+    </motion.div>
   );
 }

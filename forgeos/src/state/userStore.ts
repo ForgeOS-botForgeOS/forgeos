@@ -13,6 +13,7 @@ interface UserState {
   weighIns: WeighIn[];
   bodyStats: BodyStat[];
   savedPlans: SavedPlan[];
+  goalHistory: { goal: UserProfile['goal']; startISO: string }[]; // bulk/cut/maintain phases over time
   setProfile: (p: UserProfile) => void;
   updateProfile: (patch: Partial<UserProfile>) => void;
   recompute: () => void;
@@ -33,16 +34,24 @@ export const useUser = create<UserState>()(
       weighIns: [],
       bodyStats: [],
       savedPlans: [],
+      goalHistory: [],
       setProfile: (p) => {
         // Every profile carries its own unique friend code; mint one if absent.
         const profile = { ...p, friendCode: p.friendCode || generateFriendCode() };
-        set({ profile });
+        set({
+          profile,
+          goalHistory: get().goalHistory.length ? get().goalHistory : [{ goal: profile.goal, startISO: new Date().toISOString() }],
+        });
         void upsertProfile(profile); // no-op in mock mode
       },
       updateProfile: (patch) => {
         const cur = get().profile;
         if (!cur) return;
-        set({ profile: { ...cur, ...patch } });
+        const changingGoal = patch.goal !== undefined && patch.goal !== cur.goal;
+        set({
+          profile: { ...cur, ...patch },
+          goalHistory: changingGoal ? [...get().goalHistory, { goal: patch.goal!, startISO: new Date().toISOString() }] : get().goalHistory,
+        });
         get().recompute();
       },
       recompute: () => {
