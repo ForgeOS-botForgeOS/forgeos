@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { PhoneFrame } from './components/PhoneFrame';
 import { NowPlayingCD } from './components/NowPlayingCD';
+import { handleSpotifyCallback } from './lib/spotify';
 import { TabBar } from './components/TabBar';
 import { RankUpWatcher } from './components/Celebrate';
 import { Tutorial } from './components/Tutorial';
@@ -162,6 +163,9 @@ export default function App() {
   const seedFeed = useSocial((s) => s.seedIfEmpty);
   const onboarded = useUser((s) => s.profile?.onboarded);
   const [locked, setLocked] = useState(() => appLock.enabled && !!appLock.code);
+
+  // Complete a Spotify login if we just came back from its consent screen.
+  useEffect(() => { void handleSpotifyCallback(); }, []);
 
   // A friend invite opened before sign-up is stashed; apply it once onboarded.
   useEffect(() => {

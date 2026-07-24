@@ -1,7 +1,7 @@
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Play, Pause, SkipBack, SkipForward, Music } from 'lucide-react';
 import { Card, Button, Badge } from '../components/ui';
-import { MOCK_PLAYLISTS, MOCK_TRACKS, spotifyIsLive, getAuthUrl } from '../lib/spotify';
+import { MOCK_PLAYLISTS, MOCK_TRACKS, spotifyIsLive, spotifyConnected, spotifyRedirectUri, beginSpotifyAuth, spotifyLogout } from '../lib/spotify';
 import { usePlayer } from '../state/playerStore';
 import { haptic } from '../lib/haptics';
 
@@ -16,6 +16,7 @@ export default function Spotify() {
   const prev = usePlayer((s) => s.prev);
   const track = MOCK_TRACKS[index];
   const isPlaying = active && playing;
+  const connected = spotifyConnected();
 
   return (
     <div className="px-4 pt-12 pb-6 space-y-4">
@@ -24,17 +25,35 @@ export default function Spotify() {
       </button>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-extrabold">Spotify</h1>
-        {spotifyIsLive ? <Badge color="rgb(var(--success))">Connected</Badge> : <Badge color="rgb(var(--warn))">Mock</Badge>}
+        {connected ? <Badge color="rgb(var(--success))">Connected</Badge> : spotifyIsLive ? <Badge color="rgb(var(--warn))">Not logged in</Badge> : <Badge color="rgb(var(--warn))">Setup needed</Badge>}
       </div>
 
-      {!spotifyIsLive && (
+      {!connected && spotifyIsLive && (
         <Card className="text-sm text-muted">
-          Playback is mocked. Register a Spotify Developer App, set the redirect URI, and add
-          <code className="text-text"> VITE_SPOTIFY_CLIENT_ID</code> to go live.
-          <Button variant="outline" className="w-full justify-center mt-3" onClick={() => window.open(getAuthUrl(), '_blank', 'noopener,noreferrer')}>
-            Connect Spotify (OAuth)
+          Log in to link your real Spotify account.
+          <Button className="w-full justify-center mt-3" onClick={() => void beginSpotifyAuth()}>
+            Log in with Spotify
           </Button>
         </Card>
+      )}
+
+      {!spotifyIsLive && (
+        <Card className="text-sm text-muted space-y-2">
+          <p className="font-semibold text-text">Connect Spotify — 2-minute setup</p>
+          <p>Logging in needs a free Spotify app registered to your account — that’s the piece that was missing, so the login had nothing to connect to.</p>
+          <ol className="list-decimal ml-4 space-y-1">
+            <li>Open <span className="text-text">developer.spotify.com/dashboard</span> → <b>Create app</b>.</li>
+            <li>Add this <b>Redirect URI</b> exactly: <code className="text-accent break-all">{spotifyRedirectUri}</code></li>
+            <li>Copy the <b>Client ID</b> and add it as a build secret <code className="text-text">VITE_SPOTIFY_CLIENT_ID</code> — or send it to me and I’ll wire it in.</li>
+          </ol>
+          <p className="text-[11px] text-muted/70">Until then the player runs in demo mode (the disc spins and tracks advance, but there’s no real audio — real playback also needs Spotify Premium).</p>
+        </Card>
+      )}
+
+      {connected && (
+        <Button variant="ghost" className="w-full justify-center" onClick={() => { spotifyLogout(); window.location.reload(); }}>
+          Log out of Spotify
+        </Button>
       )}
 
       {/* Now playing — a big spinning vinyl */}
