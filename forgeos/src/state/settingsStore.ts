@@ -35,6 +35,7 @@ const DEFAULTS: Settings = {
   prefillWeights: true,
   restTimerEnabled: true,
   voiceCoach: false,
+  showProgressCharts: true,
   units: 'metric',
 };
 

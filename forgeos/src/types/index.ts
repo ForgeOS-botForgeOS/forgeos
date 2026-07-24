@@ -471,6 +471,7 @@ export interface Settings {
   prefillWeights: boolean; // new sets start at last time's weights AND reps, set for set
   restTimerEnabled: boolean; // auto-open the rest countdown after completing a set
   voiceCoach: boolean; // speak the next set aloud ("Bench Press, 60 kilos, 8 reps")
+  showProgressCharts: boolean; // show the PR timeline + XP growth curve on Quests
   units: 'metric';
 }
 

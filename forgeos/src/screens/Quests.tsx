@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { LineChart, Line, ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { prTimelineData, prSeriesByLift, xpCurveData, type PrPoint } from '../lib/progressCharts';
 import { Trophy, Flame, Coins, Dice5, Crown, Music } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Pill, Badge, SectionTitle, Ring, Sheet } from '../components/ui';
@@ -18,6 +20,21 @@ import { CountUp } from '../components/CountUp';
 import { useT } from '../lib/i18n';
 
 type Tab = 'rank' | 'quests' | 'board' | 'prs';
+
+const TIP = { background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 10, fontSize: 12 } as const;
+const PALETTE = ['rgb(var(--accent))', 'rgb(var(--accent-2))', 'rgb(var(--success))', 'rgb(var(--warn))', '#a78bfa', '#f472b6', '#38bdf8', '#fb923c'];
+
+function PrTooltip({ active, payload }: { active?: boolean; payload?: { payload: PrPoint }[] }) {
+  if (!active || !payload || !payload.length) return null;
+  const p = payload[0].payload;
+  return (
+    <div className="rounded-lg bg-surface-2 border border-line px-2.5 py-1.5 text-[11px]">
+      <p className="font-semibold">{p.exercise}</p>
+      <p className="text-muted">{p.e1rm}kg e1RM · {p.label}</p>
+      <p className="text-muted/70">{new Date(p.t).toLocaleDateString()}</p>
+    </div>
+  );
+}
 
 export default function Quests() {
   const t = useT();
@@ -71,7 +88,10 @@ function RankPanel() {
   const startWager = useGami((s) => s.startWager);
   const rate = useSettings((s) => s.xpToCoinRate);
   const gambling = useSettings((s) => s.streakGambling);
+  const showCharts = useSettings((s) => s.showProgressCharts);
+  const history = useWorkout((s) => s.history);
   const { tier, next } = rankForXp(xp);
+  const xpCurve = useMemo(() => xpCurveData(history, xp), [history, xp]);
   const v2 = useSettings((s) => s.designMode === 'v2');
   const [convertOpen, setConvertOpen] = useState(false);
   const [wagerOpen, setWagerOpen] = useState(false);
@@ -110,6 +130,28 @@ function RankPanel() {
             {next && <p className="text-[11px] text-muted/70">{(next.minXp - xp).toLocaleString()} XP to {rankLabel(next)}</p>}
           </div>
         </Card>
+      )}
+
+      {showCharts && xpCurve.length > 1 && (
+        <div>
+          <SectionTitle>XP progression</SectionTitle>
+          <Card>
+            <div className="h-40">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={xpCurve} margin={{ left: -6, right: 10, top: 8, bottom: 0 }}>
+                  <XAxis dataKey="t" type="number" domain={['dataMin', 'dataMax']} scale="time" tickFormatter={(t) => new Date(Number(t)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} minTickGap={28} />
+                  <YAxis tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} width={34} tickFormatter={(v) => (Number(v) >= 1000 ? `${Math.round(Number(v) / 1000)}k` : `${v}`)} />
+                  <Tooltip contentStyle={TIP} formatter={(v) => [`${Number(v).toLocaleString()} XP`, 'XP']} labelFormatter={(t) => new Date(Number(t)).toLocaleDateString()} />
+                  {next && next.minXp <= xp * 1.4 && (
+                    <ReferenceLine y={next.minXp} stroke="rgb(var(--accent-2))" strokeDasharray="4 4" label={{ value: rankLabel(next), position: 'insideTopRight', fontSize: 9, fill: 'rgb(var(--accent-2))' }} />
+                  )}
+                  <Line type="monotone" dataKey="xp" stroke="rgb(var(--accent))" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+            <p className="text-[10px] text-muted/70 mt-1">Estimated from your training history · ends at your real {xp.toLocaleString()} XP{next ? ` · next: ${rankLabel(next)} at ${next.minXp.toLocaleString()}` : ''}</p>
+          </Card>
+        </div>
       )}
 
       <div className="grid grid-cols-2 gap-3">
@@ -294,6 +336,9 @@ function PrHall() {
   // PRs hold an optional attached track; allow attaching one of the mock tracks.
   const setPrs = useWorkout.setState;
   const allPrs = useWorkout((s) => s.prs);
+  const showCharts = useSettings((s) => s.showProgressCharts);
+  const points = useMemo(() => prTimelineData(prs), [prs]);
+  const series = useMemo(() => prSeriesByLift(points), [points]);
 
   function attachTrack(prId: string, trackId: string) {
     const track = MOCK_TRACKS.find((t) => t.id === trackId) ?? null;
@@ -315,6 +360,26 @@ function PrHall() {
 
   return (
     <div className="space-y-2">
+      {showCharts && points.length > 1 && (
+        <Card>
+          <p className="text-[10px] uppercase tracking-wide text-muted mb-1">PR timeline · e1RM over time</p>
+          <div className="h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <ScatterChart margin={{ left: -8, right: 10, top: 8, bottom: 0 }}>
+                <XAxis dataKey="t" type="number" domain={['dataMin', 'dataMax']} scale="time" tickFormatter={(t) => new Date(Number(t)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} minTickGap={28} />
+                <YAxis dataKey="e1rm" type="number" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} width={34} />
+                <Tooltip content={<PrTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgb(var(--line))' }} />
+                {series.map((se, i) => <Scatter key={se.exercise} name={se.exercise} data={se.points} fill={PALETTE[i % PALETTE.length]} />)}
+              </ScatterChart>
+            </ResponsiveContainer>
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1.5">
+            {series.slice(0, 8).map((se, i) => (
+              <span key={se.exercise} className="text-[10px] text-muted flex items-center gap-1"><span className="w-2 h-2 rounded-full" style={{ background: PALETTE[i % PALETTE.length] }} />{se.exercise}</span>
+            ))}
+          </div>
+        </Card>
+      )}
       {[...prs].sort((a, b) => b.e1rm - a.e1rm).map((pr) => (
         <Card key={pr.id} className="space-y-1">
           <div className="flex items-center justify-between">

@@ -411,6 +411,9 @@ export default function Profile() {
           <Row label="Voice cues" desc="Speak the next set aloud during a workout">
             <Toggle checked={s.voiceCoach} onChange={(v) => s.set('voiceCoach', v)} />
           </Row>
+          <Row label="Progress charts" desc="PR timeline & XP growth curve on the Quests screen">
+            <Toggle checked={s.showProgressCharts} onChange={(v) => s.set('showProgressCharts', v)} />
+          </Row>
           <Row label={t('p.marketplace')} desc="Buy & sell programs">
             <Toggle checked={s.marketplaceEnabled} onChange={(v) => s.set('marketplaceEnabled', v)} />
           </Row>
