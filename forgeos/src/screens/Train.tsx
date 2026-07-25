@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon, HeartPulse, Star, Volume2, VolumeX } from 'lucide-react';
+import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon, HeartPulse, Star, Volume2, VolumeX, Crosshair, ChevronRight } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -10,6 +10,7 @@ import { Screen } from '../components/Screen';
 import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
 import { SetRow } from '../components/train/SetRow';
 import { RestTimer } from '../components/train/RestTimer';
+import { FocusHud } from '../components/train/FocusHud';
 import { RaceBar } from '../components/train/RaceBar';
 import { reportRaceProgress, raceWorkoutEnded } from '../lib/raceSession';
 import { reportDuelWorkout } from '../lib/duelSync';
@@ -555,6 +556,9 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   const [celebrating, setCelebrating] = useState(false);
   const [drop, setDrop] = useState<Drop | null>(null);
   const [prBurst, setPrBurst] = useState<{ label: string; count: number } | null>(null);
+  // Focus mode: the HUD takes the whole screen for one set at a time.
+  const [focusMode, setFocusMode] = useState(false);
+  const t = useT();
 
   const totalVolume = active.exercises.reduce(
     (sum, we) => sum + we.sets.filter((s) => s.completed).reduce((a, s) => a + volumeOf(s.weightKg, s.reps), 0),
@@ -648,6 +652,14 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
         </div>
         <div className="flex items-center gap-2">
           <button
+            onClick={() => { setFocusMode(true); haptic('tap'); }}
+            aria-label={t('focus.enter')}
+            title={t('focus.enter')}
+            className="p-1"
+          >
+            <Crosshair size={18} className="text-accent-2" />
+          </button>
+          <button
             onClick={() => { const v = !voiceCoach; setSetting('voiceCoach', v); haptic('tap'); if (v) speak('Voice cues on'); }}
             aria-label={voiceCoach ? 'Turn off voice cues' : 'Turn on voice cues'}
             className="p-1"
@@ -673,7 +685,12 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <button {...handle} className="text-muted cursor-grab active:cursor-grabbing touch-none" title="Drag to reorder"><GripVertical size={16} /></button>
-                <span className="font-semibold">{ex?.name ?? 'Exercise'}</span>
+                {/* The lift's name is the way into its detail page — cues, your
+                    history, PR and progression for exactly this movement. */}
+                <button onClick={() => navigate(`/exercise/${we.exerciseId}`)} className="flex items-center gap-0.5 text-left">
+                  <span className="font-semibold">{ex?.name ?? 'Exercise'}</span>
+                  <ChevronRight size={14} className="text-muted" />
+                </button>
                 {we.supersetGroup && <Badge color="rgb(var(--accent-2))">superset</Badge>}
               </div>
               <div className="flex items-center gap-2 text-muted">
@@ -745,6 +762,13 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
         <Button variant="outline" className="flex-1 justify-center" onClick={() => { raceWorkoutEnded(); discardWorkout(); navigate('/home'); }}>Discard</Button>
         <Button className="flex-1 justify-center" onClick={finish}>Finish 🔥</Button>
       </div>
+
+      <FocusHud
+        open={focusMode}
+        onExit={() => setFocusMode(false)}
+        onComplete={handleComplete}
+        onFinish={() => { setFocusMode(false); finish(); }}
+      />
 
       <RestTimer open={restOpen} onClose={() => setRestOpen(false)} autoStartSec={restSeed} nonce={restNonce} />
       <HeavyDrop drop={drop} onClose={() => { setDrop(null); if (restTimerEnabled) openRest(90); }} />

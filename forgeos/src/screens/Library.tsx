@@ -1,15 +1,11 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Search, Nfc, Play, Plus, Trash2 } from 'lucide-react';
-import { Card, Sheet, Badge, Button } from '../components/ui';
+import { ChevronLeft, Search, Nfc, Plus, Trash2 } from 'lucide-react';
+import { Card, Badge, Button } from '../components/ui';
 import { EXERCISES, EXERCISE_CATEGORIES } from '../data/exercises';
 import { useExercises } from '../state/exerciseStore';
 import { CreateExerciseSheet } from '../components/CreateExercise';
-import { MUSCLE_CUES } from '../data/tips';
-import { cuesFor } from '../data/cues';
-import { useWorkout } from '../state/workoutStore';
-import { e1rm, warmupSets } from '../lib/fitness';
-import type { Exercise, MuscleGroup } from '../types';
+import type { MuscleGroup } from '../types';
 import { haptic } from '../lib/haptics';
 
 const MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Full Body'];
@@ -35,7 +31,6 @@ export default function Library() {
   const [cat, setCat] = useState<string>('All');
   const [muscle, setMuscle] = useState<string>('All');
   const [equip, setEquip] = useState<string>('All');
-  const [detail, setDetail] = useState<Exercise | null>(null);
   const [nfcMsg, setNfcMsg] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
   const custom = useExercises((s) => s.custom);
@@ -130,7 +125,7 @@ export default function Library() {
       </div>
       <div className="space-y-2">
         {list.map((e) => (
-          <Card key={e.id} onClick={() => setDetail(e)} className="flex items-center justify-between">
+          <Card key={e.id} onClick={() => navigate(`/exercise/${e.id}`)} className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">{e.name}</p>
               <p className="text-xs text-muted">{e.primary}{e.secondary.length ? ` · ${e.secondary.join(', ')}` : ''}</p>
@@ -149,92 +144,6 @@ export default function Library() {
 
       <CreateExerciseSheet open={createOpen} onClose={() => setCreateOpen(false)} />
 
-      <Sheet open={!!detail} onClose={() => setDetail(null)} title={detail?.name}>
-        {detail && (
-          <div className="space-y-3">
-            <div className="flex flex-wrap gap-2">
-              <Badge color="rgb(var(--accent-2))">{detail.category}</Badge>
-              <Badge>{detail.primary}</Badge>
-              {detail.secondary.map((m) => <Badge key={m} color="rgb(var(--muted))">{m}</Badge>)}
-            </div>
-            <p className="text-sm text-muted">Equipment: {detail.equipment}</p>
-            <ExerciseStats exercise={detail} />
-            {(() => {
-              const c = cuesFor(detail);
-              return (
-                <div className="rounded-xl bg-surface-2 p-3 space-y-2.5">
-                  <div className="flex items-center justify-between">
-                    <p className="text-[11px] uppercase tracking-wide text-accent-2">How to do it</p>
-                    <Badge color="rgb(var(--muted))">{c.pattern}</Badge>
-                  </div>
-                  <ol className="space-y-1.5">
-                    {c.steps.map((step, i) => (
-                      <li key={i} className="flex gap-2 text-sm">
-                        <span className="shrink-0 w-5 h-5 rounded-full bg-accent/20 text-accent text-[11px] font-bold flex items-center justify-center">{i + 1}</span>
-                        <span>{step}</span>
-                      </li>
-                    ))}
-                  </ol>
-                  <p className="text-xs"><span className="text-accent">🫁 Breathing.</span> {c.breathing}</p>
-                  <p className="text-xs"><span className="text-warn">⚠️ Common mistake.</span> {c.mistake}</p>
-                  <p className="text-xs text-muted border-t border-line pt-2"><span className="text-accent-2">🎯 {detail.primary}.</span> {MUSCLE_CUES[detail.primary] ?? 'Control the weight through a full range of motion.'}</p>
-                </div>
-              );
-            })()}
-            <Button variant="outline" className="w-full justify-center" onClick={() => window.open(detail.videoUrl, '_blank')}>
-              <span className="flex items-center gap-2"><Play size={16} /> Watch form video</span>
-            </Button>
-            <p className="text-[11px] text-muted/70">NFC: tap a machine’s tag to jump straight here. Falls back to this in-app video where Web NFC is unavailable.</p>
-          </div>
-        )}
-      </Sheet>
-    </div>
-  );
-}
-
-function ExerciseStats({ exercise }: { exercise: Exercise }) {
-  const history = useWorkout((s) => s.history);
-  const stats = (() => {
-    let times = 0;
-    let best: { weightKg: number; reps: number } | null = null;
-    let last: { weightKg: number; reps: number; date: string } | null = null;
-    for (const w of history) {
-      const we = w.exercises.find((e) => e.exerciseId === exercise.id);
-      const done = we?.sets.filter((s) => s.completed) ?? [];
-      if (!done.length) continue;
-      times += 1;
-      const top = done.reduce((a, b) => (b.weightKg * b.reps > a.weightKg * a.reps ? b : a));
-      if (!last) last = { weightKg: top.weightKg, reps: top.reps, date: w.date };
-      if (!best || e1rm(top.weightKg, top.reps) > e1rm(best.weightKg, best.reps)) best = { weightKg: top.weightKg, reps: top.reps };
-    }
-    return { times, best, last };
-  })();
-
-  const working = stats.best ? stats.best.weightKg : 60;
-  const warm = warmupSets(working);
-
-  return (
-    <div className="rounded-xl bg-surface-2 p-3 space-y-2">
-      <p className="text-[11px] uppercase tracking-wide text-accent mb-1">Your stats</p>
-      {stats.times === 0 ? (
-        <p className="text-sm text-muted">No history yet — log this lift and your PB & progress show up here.</p>
-      ) : (
-        <div className="grid grid-cols-3 gap-2 text-center">
-          <div><p className="font-mono font-bold">{stats.times}</p><p className="text-[10px] text-muted">sessions</p></div>
-          <div><p className="font-mono font-bold">{stats.best ? e1rm(stats.best.weightKg, stats.best.reps) : '—'}</p><p className="text-[10px] text-muted">best e1RM</p></div>
-          <div><p className="font-mono font-bold">{stats.last ? `${stats.last.weightKg}×${stats.last.reps}` : '—'}</p><p className="text-[10px] text-muted">last set</p></div>
-        </div>
-      )}
-      <div>
-        <p className="text-[11px] uppercase tracking-wide text-muted mt-1 mb-1">Warm-up to {working}kg</p>
-        <div className="flex gap-2">
-          {warm.map((s) => (
-            <span key={s.pct} className="flex-1 text-center rounded-lg bg-surface py-1.5 text-xs">
-              <b className="font-mono">{s.kg}</b><span className="text-muted"> · {s.pct}%</span>
-            </span>
-          ))}
-        </div>
-      </div>
     </div>
   );
 }

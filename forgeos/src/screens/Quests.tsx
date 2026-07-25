@@ -383,7 +383,10 @@ function PrHall() {
       {[...prs].sort((a, b) => b.e1rm - a.e1rm).map((pr) => (
         <Card key={pr.id} className="space-y-1">
           <div className="flex items-center justify-between">
-            <p className="font-semibold text-sm flex items-center gap-2"><Trophy size={14} className="text-accent-2" /> {pr.exerciseName}</p>
+            {/* Straight from the record to that lift's full detail page. */}
+            <button onClick={() => navigate(`/exercise/${pr.exerciseId}`)} className="font-semibold text-sm flex items-center gap-2 text-left">
+              <Trophy size={14} className="text-accent-2" /> {pr.exerciseName}
+            </button>
             <span className="font-mono text-sm">{pr.weightKg}kg × {pr.reps}</span>
           </div>
           <p className="text-[11px] text-muted">e1RM {pr.e1rm}kg · {new Date(pr.date).toLocaleDateString()}</p>

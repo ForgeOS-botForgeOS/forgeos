@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Dumbbell, TrendingUp, Plus, Copy, Activity, Trash2, Share2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Dumbbell, TrendingUp, Plus, Copy, Activity, Trash2, Share2 } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
 import { Card, Badge, Pill, Button, Sheet } from '../components/ui';
 import { useWorkout } from '../state/workoutStore';
@@ -112,7 +112,13 @@ function Sessions() {
             </p>
             <div className="flex flex-wrap gap-1 pt-1">
               {w.exercises.slice(0, 6).map((e) => (
-                <span key={e.id} className="text-[10px] rounded-full bg-surface-2 px-2 py-0.5 text-muted">{exerciseById(e.exerciseId)?.name ?? '—'}</span>
+                <button
+                  key={e.id}
+                  onClick={() => navigate(`/exercise/${e.exerciseId}`)}
+                  className="text-[10px] rounded-full bg-surface-2 px-2 py-0.5 text-muted"
+                >
+                  {exerciseById(e.exerciseId)?.name ?? '—'}
+                </button>
               ))}
             </div>
           </Card>
@@ -179,6 +185,7 @@ function CardioEditSheet({ workout, onClose }: { workout: Workout | null; onClos
 function Lifts() {
   const history = useWorkout((s) => s.history);
   const bodyweight = useUser((s) => s.profile?.weightKg ?? 80);
+  const navigate = useNavigate();
 
   // Distinct exercises seen across history, most-trained first.
   const lifts = useMemo(() => {
@@ -199,7 +206,10 @@ function Lifts() {
         return (
           <Card key={id} className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="font-semibold text-sm">{ex?.name ?? id}</p>
+              <button onClick={() => navigate(`/exercise/${id}`)} className="flex items-center gap-1 text-left text-sm font-semibold">
+                {ex?.name ?? id}
+                <ChevronRight size={14} className="text-muted" />
+              </button>
               <Badge color={badge.color}>{badge.name}</Badge>
             </div>
             <div className="flex items-center gap-3">
