@@ -4,6 +4,7 @@ import { APP_HELP, helpContext, searchHelp } from './knowledge';
 import { SHARED_RULES, SPECIALIST_LIST, STARTERS, buildSystemPrompt, pickSpecialist } from './specialists';
 import { screenQuestion } from './guardrails';
 import { offlineAnswer } from './offline';
+import { classifyProbe } from './index';
 import { TRAINER_AGREEMENT, TRAINER_AGREEMENT_VERSION } from '../../data/trainerAgreement';
 import type { PR, Workout } from '../../types';
 
@@ -331,5 +332,29 @@ describe('the user agreement', () => {
     expect(exclusions).toContain('email');
     expect(exclusions).toContain('friend code');
     expect(exclusions).toContain('photo');
+  });
+});
+
+describe('trainer link probe', () => {
+  it('reads a validation error as proof the trainer route is deployed', () => {
+    expect(classifyProbe({ error: 'missing system prompt' })).toBe('live');
+    expect(classifyProbe({ error: 'missing messages' })).toBe('live');
+  });
+
+  it('reads the old vision-only worker as offline', () => {
+    // The exact reply the meal-scanner build gives on the same host — the case
+    // that made the app claim "full trainer on" while answering on-device.
+    expect(classifyProbe({ error: 'no image' })).toBe('offline');
+  });
+
+  it('treats an unreachable or non-JSON worker as offline', () => {
+    expect(classifyProbe(null)).toBe('offline');
+    expect(classifyProbe({})).toBe('offline');
+    expect(classifyProbe('<html>404</html>')).toBe('offline');
+    expect(classifyProbe({ error: 404 })).toBe('offline');
+  });
+
+  it('never reads a successful chat reply as offline', () => {
+    expect(classifyProbe({ reply: 'Squat depth matters more than load.' })).toBe('offline');
   });
 });

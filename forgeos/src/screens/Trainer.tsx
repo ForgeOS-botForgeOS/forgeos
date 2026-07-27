@@ -4,7 +4,8 @@ import { ChevronLeft, Send, Sparkles, ShieldCheck, Trash2, Brain, WifiOff, X, Pl
 import { Card, Button, Sheet, Badge, Pill, SectionTitle } from '../components/ui';
 import { useTrainerSnapshot } from '../state/useTrainerSnapshot';
 import { useTrainer } from '../state/trainerStore';
-import { SPECIALISTS, STARTERS, askTrainer, contextDisclosure, trainerIsLive } from '../lib/trainer';
+import { SPECIALISTS, STARTERS, askTrainer, contextDisclosure, trainerConfigured } from '../lib/trainer';
+import { useTrainerLink } from '../state/useTrainerLink';
 import { TRAINER_AGREEMENT, TRAINER_AGREEMENT_SUMMARY } from '../data/trainerAgreement';
 import { useT } from '../lib/i18n';
 import { haptic } from '../lib/haptics';
@@ -41,7 +42,9 @@ export default function Trainer() {
   const endRef = useRef<HTMLDivElement | null>(null);
 
   const disclosure = useMemo(() => contextDisclosure(snapshot), [snapshot]);
-  const online = hasConsent && trainerIsLive;
+  const link = useTrainerLink(hasConsent);
+  const online = hasConsent && link === 'live';
+  const checking = hasConsent && trainerConfigured && link === 'unknown';
 
   useEffect(() => {
     endRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
@@ -99,9 +102,15 @@ export default function Trainer() {
 
         {/* Where answers are coming from — never a mystery */}
         <button onClick={() => setAgreementOpen(true)} className="flex w-full items-center gap-2 rounded-xl bg-surface-2 px-3 py-2 text-left">
-          {online ? <ShieldCheck size={14} className="shrink-0 text-success" /> : <WifiOff size={14} className="shrink-0 text-warn" />}
+          {online ? <ShieldCheck size={14} className="shrink-0 text-success" /> : <WifiOff size={14} className={`shrink-0 ${checking ? 'text-muted' : 'text-warn'}`} />}
           <span className="flex-1 text-[11px] leading-snug text-muted">
-            {online ? t('trainer.modeOnline') : hasConsent ? t('trainer.modeNoWorker') : t('trainer.modeOffline')}
+            {online
+              ? t('trainer.modeOnline')
+              : checking
+                ? t('trainer.modeChecking')
+                : hasConsent
+                  ? t('trainer.modeNoWorker')
+                  : t('trainer.modeOffline')}
           </span>
           <Info size={13} className="shrink-0 text-muted" />
         </button>

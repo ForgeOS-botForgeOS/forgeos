@@ -16,8 +16,56 @@ export * from './specialists';
 // an error message.
 const WORKER_URL = import.meta.env.VITE_VISION_API_URL as string | undefined;
 const TIMEOUT_MS = 25000;
+const PROBE_TIMEOUT_MS = 6000;
 
-export const trainerIsLive = !!WORKER_URL;
+/** A worker URL exists in this build. Says nothing about whether it answers. */
+export const trainerConfigured = !!WORKER_URL;
+
+/**
+ * Whether the full trainer actually works, as opposed to merely being configured.
+ *
+ * A URL in the build is not proof of anything: the same worker also serves the
+ * meal scanner, so an older deploy answers on that host without having a
+ * /trainer route at all. Claiming "full trainer on" because a string exists
+ * meant the UI could promise AI answers while every reply came from the
+ * on-device trainer. This is measured instead — and it re-measures, so the day
+ * the worker is deployed the app upgrades itself with no new build.
+ */
+export type TrainerLink = 'unknown' | 'live' | 'offline';
+
+let link: TrainerLink = WORKER_URL ? 'unknown' : 'offline';
+const linkListeners = new Set<() => void>();
+
+export function trainerLink(): TrainerLink {
+  return link;
+}
+
+export function subscribeTrainerLink(fn: () => void): () => void {
+  linkListeners.add(fn);
+  return () => {
+    linkListeners.delete(fn);
+  };
+}
+
+function setLink(next: TrainerLink): void {
+  if (next === link) return;
+  link = next;
+  for (const fn of linkListeners) fn();
+}
+
+/**
+ * Read a probe response. Pure so it can be tested without a network.
+ *
+ * The probe deliberately posts an empty body: a worker with the trainer route
+ * rejects it with a validation error, which is a cheap, side-effect-free and
+ * key-free proof that the route is there. Anything else — the vision handler's
+ * "no image", a 404, an HTML error page — means no trainer on that host.
+ */
+export function classifyProbe(body: unknown): TrainerLink {
+  const error = (body as { error?: unknown } | null)?.error;
+  if (typeof error !== 'string') return 'offline';
+  return /system prompt|messages/i.test(error) ? 'live' : 'offline';
+}
 
 export interface ChatTurn {
   role: 'user' | 'assistant';
@@ -36,6 +84,31 @@ export interface TrainerReply {
 
 function trainerEndpoint(base: string): string {
   return `${base.replace(/\/+$/, '')}/trainer`;
+}
+
+/** Ask the worker whether it can be a trainer. Never throws; updates the link. */
+export async function probeTrainer(): Promise<TrainerLink> {
+  if (!WORKER_URL) {
+    setLink('offline');
+    return 'offline';
+  }
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), PROBE_TIMEOUT_MS);
+  try {
+    const res = await fetch(trainerEndpoint(WORKER_URL), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: '{}',
+      signal: ctrl.signal,
+    });
+    setLink(classifyProbe(await res.json().catch(() => null)));
+  } catch {
+    // Offline phone, blocked host, worker down — all the same to the user.
+    setLink('offline');
+  } finally {
+    clearTimeout(timer);
+  }
+  return link;
 }
 
 /**
@@ -90,8 +163,11 @@ export async function askTrainer(opts: {
     if (!res.ok || !data?.reply) {
       throw new Error(data?.error || `worker ${res.status}`);
     }
+    setLink('live');
     return { text: data.reply.trim(), specialist, source: data.provider ?? 'ai', model: data.model };
   } catch (e) {
+    // A real answer is the strongest evidence either way, so it wins over the probe.
+    setLink('offline');
     const local = offlineAnswer(question, snapshot);
     return {
       text: local.text,
