@@ -38,6 +38,7 @@ const DEFAULTS: Settings = {
   showProgressCharts: true,
   setRowDetail: 'subtarget',
   units: 'metric',
+  diet: 'omnivore',
 };
 
 export const useSettings = create<SettingsState>()(

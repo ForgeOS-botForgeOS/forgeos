@@ -1,12 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
-import { Camera, Trash2, Sparkles, Calculator, ChefHat, Clock, Star, Check, Barcode, Moon } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Camera, Trash2, Sparkles, Calculator, ChefHat, ClipboardList, Star, Check, Barcode, Moon } from 'lucide-react';
 import { Screen } from '../components/Screen';
-import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
+import { Card, Button, Sheet, Badge, SectionTitle } from '../components/ui';
 import { useNutrition } from '../state/nutritionStore';
 import { useUser } from '../state/userStore';
 import { scanMeal, visionIsLive, estimateMock } from '../lib/vision';
-import { RECIPES, MEAL_TYPES, type Recipe, type MealType } from '../data/recipes';
-import { RECIPES_SK, MEAL_TYPE_SK } from '../data/recipes.sk';
+import { RECIPES } from '../data/recipes';
 import { useSettings } from '../state/settingsStore';
 import { useT } from '../lib/i18n';
 import { haptic } from '../lib/haptics';
@@ -17,6 +17,7 @@ import type { ScanResult, FoodItem } from '../types';
 
 export default function Nutrition() {
   const t = useT();
+  const navigate = useNavigate();
   const profile = useUser((s) => s.profile);
   // Subscribe to raw state so the component re-renders the instant it changes.
   // (The old code selected the getter *function* — a stable ref — so taps only
@@ -59,7 +60,6 @@ export default function Nutrition() {
   const [scanNote, setScanNote] = useState<string | null>(null);
   const [recompOpen, setRecompOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
-  const [recipesOpen, setRecipesOpen] = useState(false);
   const [barcodeOpen, setBarcodeOpen] = useState(false);
 
   const macros = profile?.macros ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 };
@@ -156,7 +156,7 @@ export default function Nutrition() {
           <div className="grid grid-cols-4 gap-2">
             <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setBarcodeOpen(true)}><Barcode size={16} /><span className="text-[10px] uppercase tracking-wide">Barcode</span></Button>
             <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setManualOpen(true)}><span className="text-lg leading-none">＋</span><span className="text-[10px] uppercase tracking-wide">Manual</span></Button>
-            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setRecipesOpen(true)}><ChefHat size={16} /><span className="text-[10px] uppercase tracking-wide">Recipes</span></Button>
+            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => navigate('/cookbook')}><ChefHat size={16} /><span className="text-[10px] uppercase tracking-wide">Recipes</span></Button>
             <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setRecompOpen(true)}><Calculator size={16} /><span className="text-[10px] uppercase tracking-wide">Calc</span></Button>
           </div>
           <Card>
@@ -241,11 +241,15 @@ export default function Nutrition() {
         </div>
       )}
 
-      {!v2 && (
-        <Button variant="ghost" className="w-full justify-center" onClick={() => setRecipesOpen(true)}>
-          <span className="flex items-center gap-2"><ChefHat size={16} /> Recipe library ({RECIPES.length}) — goal-aligned</span>
+      {/* The cookbook and the goal plan are full screens now */}
+      <div className="grid grid-cols-2 gap-2">
+        <Button variant="ghost" className="justify-center" onClick={() => navigate('/cookbook')}>
+          <span className="flex items-center gap-1.5 text-xs"><ChefHat size={15} /> {t('cook.title')} ({RECIPES.length})</span>
         </Button>
-      )}
+        <Button variant="ghost" className="justify-center" onClick={() => navigate('/nutrition-plan')}>
+          <span className="flex items-center gap-1.5 text-xs"><ClipboardList size={15} /> {t('plan.title')}</span>
+        </Button>
+      </div>
 
       {!v2 && (
         <div className="flex gap-2">
@@ -323,16 +327,6 @@ export default function Nutrition() {
       <BarcodeScanner open={barcodeOpen} onClose={() => setBarcodeOpen(false)} onAdd={(it) => { addEntry({ ...it, source: 'scan' }); learn(it); }} />
       <ManualEntry open={manualOpen} onClose={() => setManualOpen(false)} onAdd={(e) => { addEntry({ ...e, source: 'manual' }); setManualOpen(false); }} />
       <RecompCalc open={recompOpen} onClose={() => setRecompOpen(false)} />
-      <RecipeBrowser
-        open={recipesOpen}
-        onClose={() => setRecipesOpen(false)}
-        userGoal={profile?.goal ?? 'recomp'}
-        onAdd={(rec) => {
-          addEntry({ name: rec.name, calories: rec.kcal, proteinG: rec.protein, carbsG: rec.carbs, fatG: rec.fat, sugarG: 0, source: 'manual' });
-          haptic('success');
-          setRecipesOpen(false);
-        }}
-      />
     </Screen>
   );
 }
@@ -436,83 +430,4 @@ function Slider({ label, min, max, step, value, onChange }: { label: string; min
 
 function RC({ label, v }: { label: string; v: string }) {
   return <div className="rounded-xl bg-surface-2 py-3"><p className="text-xs text-muted">{label}</p><p className="font-mono font-bold">{v}</p></div>;
-}
-
-function RecipeBrowser({
-  open,
-  onClose,
-  userGoal,
-  onAdd,
-}: {
-  open: boolean;
-  onClose: () => void;
-  userGoal: string;
-  onAdd: (r: Recipe) => void;
-}) {
-  const t = useT();
-  const lang = useSettings((s) => s.language);
-  const [meal, setMeal] = useState<MealType | 'All'>('All');
-  const [onlyGoal, setOnlyGoal] = useState(true);
-  const [openId, setOpenId] = useState<string | null>(null);
-
-  // Merge Slovak translation over the recipe when in SK mode.
-  const loc = (r: Recipe): Recipe => (lang === 'sk' && RECIPES_SK[r.id] ? { ...r, ...RECIPES_SK[r.id] } : r);
-  const mealLabel = (m: string) => (lang === 'sk' ? MEAL_TYPE_SK[m] ?? m : m);
-
-  const list = RECIPES.filter(
-    (r) => (meal === 'All' || r.meal === meal) && (!onlyGoal || r.goals.includes(userGoal as Recipe['goals'][number])),
-  ).map(loc);
-
-  return (
-    <Sheet open={open} onClose={onClose} title={t('nut.recipes')}>
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-xs text-muted">{list.length} {lang === 'sk' ? 'receptov' : 'recipes'}</p>
-          <button onClick={() => setOnlyGoal((v) => !v)} className={`text-[11px] rounded-full px-2 py-1 ${onlyGoal ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>
-            {onlyGoal ? `matched to: ${userGoal}` : 'showing all goals'}
-          </button>
-        </div>
-        <div className="flex gap-1.5 overflow-x-auto no-scrollbar">
-          {(['All', ...MEAL_TYPES] as const).map((m) => (
-            <Pill key={m} active={meal === m} onClick={() => setMeal(m)}>{m === 'All' ? (lang === 'sk' ? 'Všetky' : 'All') : mealLabel(m)}</Pill>
-          ))}
-        </div>
-        <div className="space-y-2 max-h-[55vh] overflow-y-auto no-scrollbar">
-          {list.map((r) => {
-            const expanded = openId === r.id;
-            return (
-              <div key={r.id} className="rounded-xl bg-surface-2 p-3">
-                <button className="w-full text-left" onClick={() => setOpenId(expanded ? null : r.id)}>
-                  <div className="flex items-center justify-between">
-                    <p className="font-semibold text-sm">{r.name}</p>
-                    <Badge color="rgb(var(--accent-2))">{mealLabel(r.meal)}</Badge>
-                  </div>
-                  <p className="text-xs text-muted mt-1 flex items-center gap-2">
-                    <span className="font-mono">{r.kcal} kcal</span> · P{r.protein} C{r.carbs} F{r.fat}
-                    <span className="flex items-center gap-0.5"><Clock size={11} /> {r.minutes}m</span>
-                  </p>
-                </button>
-                {expanded && (
-                  <div className="mt-2 space-y-2">
-                    <div className="flex flex-wrap gap-1">
-                      {r.goals.map((g) => <Badge key={g}>{g}</Badge>)}
-                    </div>
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Ingredients</p>
-                      <p className="text-xs">{r.ingredients.join(' · ')}</p>
-                    </div>
-                    <div>
-                      <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Method</p>
-                      <p className="text-xs">{r.steps}</p>
-                    </div>
-                    <Button className="w-full justify-center py-2" onClick={() => onAdd(r)}>Add to today’s log</Button>
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </Sheet>
-  );
 }

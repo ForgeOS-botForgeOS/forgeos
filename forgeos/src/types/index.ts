@@ -418,6 +418,8 @@ export type ThemeId =
   | 'daybreak-light'
   | 'paper-light';
 export type QuoteGenre = 'stoic' | 'biblical' | 'zen' | 'warrior';
+/** What you eat — filters the cookbook and changes which nutrients need attention. */
+export type Diet = 'omnivore' | 'vegetarian' | 'vegan';
 
 export interface GymConfig {
   name: string;
@@ -479,6 +481,7 @@ export interface Settings {
   showProgressCharts: boolean; // show the PR timeline + XP growth curve on Quests
   setRowDetail: SetRowDetail; // what fills the space under each set: sub-targets / big weight / big reps
   units: 'metric';
+  diet: Diet; // filters the cookbook and shifts which nutrients need attention
 }
 
 // ---- Quotes ----
