@@ -21,6 +21,8 @@ interface GamiState {
   bestStreak: number; // longest day-streak ever reached (also set by imports)
   quests: UserQuest[];
   wager: StreakWager | null;
+  /** Achievement ids whose reward has already been paid out. */
+  claimedAchievements: string[];
 
   addXp: (amount: number) => void;
   addCoins: (amount: number) => void;
@@ -35,6 +37,10 @@ interface GamiState {
   // Sync recovery-quest progress to absolute values from health data.
   syncHealthQuests: (days: HealthDay[]) => void;
   claimQuest: (questId: string) => void;
+  // Pay out an achievement's reward exactly once. The caller passes the reward
+  // (data/achievements `rewardFor`) so this store stays independent of the
+  // achievement catalogue and its stats snapshot.
+  claimAchievement: (id: string, xp: number, coins: number) => boolean;
   claimAllQuests: () => { count: number; xp: number; coins: number };
   // Count a (possibly past-dated) session toward an active bet + this week's streak.
   countSession: (dateISO: string) => void;
@@ -68,6 +74,7 @@ export const useGami = create<GamiState>()(
       bestStreak: 0,
       quests: [],
       wager: null,
+      claimedAchievements: [],
 
       addXp: (amount) => set({ xp: get().xp + Math.max(0, Math.round(amount)) }),
 
@@ -220,6 +227,16 @@ export const useGami = create<GamiState>()(
             return { ...uq, progress: completed ? Math.max(progress, uq.progress) : progress, completed };
           }),
         });
+      },
+
+      claimAchievement: (id, xp, coins) => {
+        if (get().claimedAchievements.includes(id)) return false;
+        set({
+          xp: get().xp + xp,
+          coins: get().coins + coins,
+          claimedAchievements: [...get().claimedAchievements, id],
+        });
+        return true;
       },
 
       claimQuest: (questId) => {

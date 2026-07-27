@@ -18,6 +18,7 @@ import { QUOTE_GENRES } from '../data/quotes';
 import { requestNotifyPermission } from '../lib/reminders';
 import { exportData, importData } from '../lib/backup';
 import { useCosmetics } from '../state/cosmeticsStore';
+import { useAchievements } from '../state/useAchievements';
 import { cosmeticById } from '../data/cosmetics';
 import { openTutorial } from '../components/Tutorial';
 import { ChangePasswordSheet, PasscodeSheet } from '../components/SecuritySheets';
@@ -76,6 +77,7 @@ const THEMES: { id: ThemeId; name: string; locked: boolean; unlockRank: string }
   { id: 'synthwave', name: 'Synthwave', locked: true, unlockRank: 'Legend' },
   { id: 'blood-moon', name: 'Blood Moon', locked: true, unlockRank: 'Legend' },
   { id: 'solar-flare', name: 'Solar Flare', locked: true, unlockRank: 'Strongman' },
+  { id: 'champions-forge', name: 'Champion’s Forge', locked: true, unlockRank: 'Apex Forged 🏆' },
 ];
 
 const RANK_ORDER = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Legend', 'Strongman'];
@@ -118,6 +120,7 @@ export default function Profile() {
   const equippedTitle = useCosmetics((c) => c.equippedTitle);
   const equippedFrame = useCosmetics((c) => c.equippedFrame);
   const ownedCosmetics = useCosmetics((c) => c.owned);
+  const pendingAchievements = useAchievements().pending.count;
 
   function saveName() {
     const next = nameDraft.trim();
@@ -188,8 +191,11 @@ export default function Profile() {
 
   function themeUnlocked(t: (typeof THEMES)[number]) {
     if (!t.locked) return true;
-    if (rankIdx >= RANK_ORDER.indexOf(t.unlockRank)) return true;
-    // Or bought in the Forge Shop.
+    // An unknown `unlockRank` must never unlock anything: indexOf returns -1 and
+    // every rank index is >= -1, which would hand out achievement-only themes.
+    const needRank = RANK_ORDER.indexOf(t.unlockRank);
+    if (needRank >= 0 && rankIdx >= needRank) return true;
+    // Or bought in the Forge Shop / granted by an achievement.
     return ownedCosmetics.some((id) => cosmeticById(id)?.type === 'theme' && cosmeticById(id)?.value === t.id);
   }
 
@@ -493,8 +499,11 @@ export default function Profile() {
         <Badge>{t('common.open')}</Badge>
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/achievements')}>
-        <div className="flex items-center gap-2"><Trophy size={16} className="text-muted" /><span className="text-sm">Achievements</span></div>
-        <Badge>{t('common.open')}</Badge>
+        <div className="flex items-center gap-2"><Trophy size={16} className="text-muted" /><span className="text-sm">{t('ach.title')}</span></div>
+        {/* Rewards you've earned but not collected shouldn't stay invisible. */}
+        {pendingAchievements > 0
+          ? <Badge color="rgb(var(--accent-2))">{t('ach.rowPending', { n: pendingAchievements })}</Badge>
+          : <Badge>{t('common.open')}</Badge>}
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/wrapped')}>
         <div className="flex items-center gap-2"><Gift size={16} className="text-muted" /><span className="text-sm">Forge Wrapped — last month's recap</span></div>

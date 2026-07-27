@@ -4,6 +4,10 @@ export interface Cosmetic {
   type: 'title' | 'frame' | 'theme';
   price: number;
   value: string; // title text, CSS colour/gradient for frames, or ThemeId for themes
+  /** Achievement-only: never for sale, no matter how many coins you have. */
+  exclusive?: true;
+  /** What you have to do to earn it (shown in the shop while it's locked). */
+  earnedBy?: string;
 }
 
 export const COSMETICS: Cosmetic[] = [
@@ -37,4 +41,21 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'theme-solar-flare', name: 'Solar Flare', type: 'theme', price: 750, value: 'solar-flare' },
 ];
 
-export const cosmeticById = (id: string) => COSMETICS.find((c) => c.id === id);
+// ---- Achievement-only rewards ----
+// The point of these: coins can be farmed, these cannot. Each one is bound to a
+// single legendary achievement (see data/achievements.ts `cosmeticId`), so
+// wearing it says exactly what you did. Price 0 + `exclusive` keeps the shop
+// from ever selling them.
+export const EXCLUSIVE_COSMETICS: Cosmetic[] = [
+  { id: 'x-title-unbreakable', name: 'Unbreakable Will', type: 'title', price: 0, value: 'Unbreakable Will', exclusive: true, earnedBy: '100-day streak' },
+  { id: 'x-title-yearofiron', name: 'Year of Iron', type: 'title', price: 0, value: 'Year of Iron', exclusive: true, earnedBy: '365 workouts' },
+  { id: 'x-title-tectonic', name: 'Tectonic', type: 'title', price: 0, value: 'Tectonic', exclusive: true, earnedBy: '2,500,000 kg lifted' },
+  { id: 'x-frame-ironmountain', name: 'Iron Mountain Frame', type: 'frame', price: 0, value: 'linear-gradient(90deg,#6b7280,#d1d5db,#6b7280)', exclusive: true, earnedBy: '1,000,000 kg lifted' },
+  { id: 'x-frame-titan', name: 'Titan Frame', type: 'frame', price: 0, value: 'linear-gradient(90deg,#92400e,#f59e0b,#92400e)', exclusive: true, earnedBy: '250 sets at 100 kg+' },
+  { id: 'x-frame-laurel', name: 'Laurel Frame', type: 'frame', price: 0, value: 'linear-gradient(90deg,#14532d,#4ade80,#14532d)', exclusive: true, earnedBy: 'Complete Athlete' },
+  { id: 'x-theme-champions-forge', name: 'Champion’s Forge', type: 'theme', price: 0, value: 'champions-forge', exclusive: true, earnedBy: 'the highest rank' },
+];
+
+export const ALL_COSMETICS: Cosmetic[] = [...COSMETICS, ...EXCLUSIVE_COSMETICS];
+
+export const cosmeticById = (id: string) => ALL_COSMETICS.find((c) => c.id === id);

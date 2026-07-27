@@ -521,6 +521,22 @@ button {
   --warn: 251 191 36;
   --danger: 244 63 94;
 }
+/* Champion's Forge — the only theme you cannot buy. Granted by the Apex Forged
+   achievement (highest rank): burnished gold on forge-black. */
+[data-theme='champions-forge'] {
+  --bg: 14 11 6;
+  --surface: 26 20 10;
+  --surface-2: 40 31 15;
+  --line: 66 51 22;
+  --text: 253 246 227;
+  --muted: 190 168 116;
+  --accent: 255 199 74; /* champion gold */
+  --accent-2: 255 122 41; /* ember */
+  --success: 74 222 128;
+  --warn: 250 204 21;
+  --danger: 248 113 113;
+}
+
 [data-theme='sunset-blaze'] {
   --bg: 18 10 12;
   --surface: 30 16 18;

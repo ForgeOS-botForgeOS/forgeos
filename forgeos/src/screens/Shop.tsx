@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Coins, Check } from 'lucide-react';
+import { ChevronLeft, Coins, Check, Lock } from 'lucide-react';
 import { Card, Button, Pill, Badge } from '../components/ui';
-import { COSMETICS, type Cosmetic } from '../data/cosmetics';
+import { ALL_COSMETICS, type Cosmetic } from '../data/cosmetics';
 import { useCosmetics } from '../state/cosmeticsStore';
 import { useGami } from '../state/gamificationStore';
 import { useSettings } from '../state/settingsStore';
@@ -25,11 +25,14 @@ export default function Shop() {
   const curTheme = useSettings((s) => s.theme);
   const [tab, setTab] = useState<'title' | 'frame' | 'theme'>('title');
 
-  const list = COSMETICS.filter((c) => c.type === tab);
+  // Exclusives sit at the end of their tab: visible (so you know they exist and
+  // what earns them) but never for sale.
+  const list = ALL_COSMETICS.filter((c) => c.type === tab).sort((a, b) => Number(!!a.exclusive) - Number(!!b.exclusive));
 
   function buy(id: string, price: number) {
     if (owned.includes(id)) return;
-    const c = COSMETICS.find((x) => x.id === id);
+    const c = ALL_COSMETICS.find((x) => x.id === id);
+    if (c?.exclusive) { haptic('warning'); toast('That one is earned, not bought — check Achievements.', 'error'); return; }
     if (spend(price)) { own(id); celebrate(); toast(`Unlocked ${c?.name ?? 'item'} 🎉`); } else { haptic('warning'); toast(`Not enough coins — need 🪙${price}.`, 'error'); }
   }
   function applyOrEquip(c: Cosmetic) {
@@ -75,6 +78,11 @@ export default function Shop() {
                 <Button variant={equipped ? 'primary' : 'ghost'} className="w-full justify-center py-1.5" onClick={() => applyOrEquip(c)}>
                   {equipped ? <span className="flex items-center gap-1"><Check size={14} /> {c.type === 'theme' ? 'Active' : 'Equipped'}</span> : (c.type === 'theme' ? 'Apply' : 'Equip')}
                 </Button>
+              ) : c.exclusive ? (
+                <div className="rounded-xl border border-dashed border-accent-2/60 px-2 py-1.5">
+                  <p className="flex items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-accent-2"><Lock size={10} /> achievement</p>
+                  <p className="text-[10px] leading-tight text-muted">{c.earnedBy}</p>
+                </div>
               ) : (
                 <Button variant="outline" className="w-full justify-center py-1.5" disabled={coins < c.price} onClick={() => buy(c.id, c.price)}>🪙 {c.price}</Button>
               )}

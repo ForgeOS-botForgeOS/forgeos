@@ -414,6 +414,7 @@ export type ThemeId =
   | 'solar-flare'
   | 'nebula'
   | 'sunset-blaze'
+  | 'champions-forge'
   | 'daybreak-light'
   | 'paper-light';
 export type QuoteGenre = 'stoic' | 'biblical' | 'zen' | 'warrior';
