@@ -6,3 +6,12 @@ workers_dev = true
 # Free Workers AI binding — runs vision models with no credit card.
 [ai]
 binding = "AI"
+
+# ---- Talk to your trainer (POST /trainer) ----
+# Works with zero configuration: with no keys set it answers on Workers AI via
+# the [ai] binding above. Optional, better models — set as SECRETS, never here:
+#   npx wrangler secret put GROQ_API_KEY      # free tier, EU-accessible, fastest
+#   npx wrangler secret put GEMINI_API_KEY    # Google AI Studio key
+# Optional plain vars to change behaviour:
+#   TRAINER_PROVIDER = "gemini,groq,cf"       # try Gemini first
+#   GROQ_MODEL / GEMINI_MODEL / CF_MODEL      # override a model id

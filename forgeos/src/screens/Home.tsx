@@ -1,6 +1,6 @@
 import { useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Flame, TrendingUp, Lightbulb, ChevronRight, Watch, Moon, Footprints } from 'lucide-react';
+import { Flame, TrendingUp, Lightbulb, ChevronRight, Watch, Moon, Footprints, MessageCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine } from 'recharts';
 import { Screen } from '../components/Screen';
 import { Card, Ring, SectionTitle, Badge } from '../components/ui';
@@ -172,6 +172,15 @@ export default function Home() {
 
         {/* Sleep & steps at a glance — V2 surfaces this in the recovery rail above */}
         {!v2 && <HealthGlance />}
+
+        {/* Ask the trainer — the fastest route to an answer about anything */}
+        <Card onClick={() => navigate('/trainer')} className="flex items-center gap-3">
+          <MessageCircle size={18} className="shrink-0 text-accent" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">{t('trainer.homeCard')}</p>
+            <p className="text-xs text-muted">{t('trainer.subtitle')}</p>
+          </div>
+        </Card>
 
         {/* Progress shortcut */}
         <Card onClick={() => navigate('/progress')} className="flex items-center justify-between">

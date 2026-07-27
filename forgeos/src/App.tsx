@@ -46,6 +46,7 @@ const ExerciseDetail = lazy(() => import('./screens/ExerciseDetail'));
 const Cookbook = lazy(() => import('./screens/Cookbook'));
 const RecipeDetail = lazy(() => import('./screens/RecipeDetail'));
 const NutritionPlanScreen = lazy(() => import('./screens/NutritionPlan'));
+const TrainerScreen = lazy(() => import('./screens/Trainer'));
 const Nutrition = lazy(() => import('./screens/Nutrition'));
 const Social = lazy(() => import('./screens/Social'));
 const Quests = lazy(() => import('./screens/Quests'));
@@ -305,6 +306,7 @@ export default function App() {
             <Route path="/cookbook" element={<Cookbook />} />
             <Route path="/recipe/:id" element={<RecipeDetail />} />
             <Route path="/nutrition-plan" element={<NutritionPlanScreen />} />
+            <Route path="/trainer" element={<TrainerScreen />} />
             <Route path="/progress" element={<Progress />} />
             <Route path="/health" element={<Health />} />
             <Route path="/import-progress" element={<ImportProgress />} />

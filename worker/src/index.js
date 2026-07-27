@@ -1,3 +1,9 @@
+// ForgeOS Worker — two endpoints, both keyless-by-default on Cloudflare:
+//   POST /          → vision (meal / cardio / progress photos), LLaVA
+//   POST /trainer   → "Talk to your trainer" chat (see ./trainer.js)
+// The vision endpoint keeps the bare-root path it always had, so older app
+// builds calling VITE_VISION_API_URL keep working untouched.
+//
 // ForgeOS vision Worker — free Cloudflare Workers AI (LLaVA, EU-permitted).
 // Food: the model identifies items + portion grams; macros are computed from a
 // built-in per-100g nutrition table for accuracy. Cardio: reads the console.
@@ -5,6 +11,8 @@
 // embedding it to burn your free AI quota. Native app / curl ignore CORS, but
 // they aren't the at-scale abuse vector; add a Cloudflare rate-limit rule for
 // that (free). Add your custom domain here if you set one.
+import { handleTrainer } from './trainer.js';
+
 const ALLOWED_ORIGINS = [
   'https://forgeos-botforgeos.github.io',
   'http://localhost:5173',
@@ -284,6 +292,11 @@ export default {
     const cors = corsHeaders(request);
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
     if (request.method !== 'POST') return json({ error: 'POST only' }, 405, cors);
+
+    // The trainer chat is a different shape of request entirely — route it out
+    // before any of the image handling below touches the body.
+    const path = new URL(request.url).pathname.replace(/\/+$/, '');
+    if (path.endsWith('/trainer')) return handleTrainer(request, env, cors);
 
     try {
       const { image, mode, source } = await request.json();

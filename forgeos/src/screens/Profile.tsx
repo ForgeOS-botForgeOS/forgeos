@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target } from 'lucide-react';
+import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target, MessageCircle } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { pushMyActivity } from '../lib/activitySync';
@@ -19,6 +19,7 @@ import { requestNotifyPermission } from '../lib/reminders';
 import { exportData, importData } from '../lib/backup';
 import { useCosmetics } from '../state/cosmeticsStore';
 import { useAchievements } from '../state/useAchievements';
+import { useTrainer } from '../state/trainerStore';
 import { cosmeticById } from '../data/cosmetics';
 import { openTutorial } from '../components/Tutorial';
 import { ChangePasswordSheet, PasscodeSheet } from '../components/SecuritySheets';
@@ -121,6 +122,7 @@ export default function Profile() {
   const equippedFrame = useCosmetics((c) => c.equippedFrame);
   const ownedCosmetics = useCosmetics((c) => c.owned);
   const pendingAchievements = useAchievements().pending.count;
+  const trainerConsent = useTrainer((s) => s.hasConsent)();
 
   function saveName() {
     const next = nameDraft.trim();
@@ -497,6 +499,10 @@ export default function Profile() {
       <Card className="flex items-center justify-between" onClick={() => navigate('/calendar')}>
         <div className="flex items-center gap-2"><CalendarDays size={16} className="text-muted" /><span className="text-sm">Workout calendar</span></div>
         <Badge>{t('common.open')}</Badge>
+      </Card>
+      <Card className="flex items-center justify-between" onClick={() => navigate('/trainer')}>
+        <div className="flex items-center gap-2"><MessageCircle size={16} className="text-muted" /><span className="text-sm">{t('trainer.profileRow')}</span></div>
+        <Badge color={trainerConsent ? 'rgb(var(--success))' : 'rgb(var(--muted))'}>{trainerConsent ? 'AI' : t('trainer.offlineTag')}</Badge>
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/achievements')}>
         <div className="flex items-center gap-2"><Trophy size={16} className="text-muted" /><span className="text-sm">{t('ach.title')}</span></div>
