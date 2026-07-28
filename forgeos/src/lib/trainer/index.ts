@@ -10,15 +10,25 @@ export * from './knowledge';
 export * from './offline';
 export * from './specialists';
 
-// The chat goes through the same Cloudflare Worker as the meal scanner, because
-// this repo is public and a key in the bundle is a published key. No worker
-// configured → the offline trainer answers instead, which is a real answer, not
-// an error message.
-const WORKER_URL = import.meta.env.VITE_VISION_API_URL as string | undefined;
+// The chat goes through a server, never straight to a provider: this repo is
+// public, so a key in the bundle is a published key. Nothing reachable → the
+// offline trainer answers instead, which is a real answer, not an error message.
+//
+// Deliberately NOT the meal scanner's Cloudflare Worker. That Worker could not
+// be deployed from here (no wrangler session, and `wrangler login` needs a
+// browser callback it cannot receive), so the endpoint was ported to Vercel,
+// where a deploy was possible. `worker/src/trainer.js` and
+// `vercel-trainer/api/trainer.js` implement an identical contract, so this can
+// point at either — set VITE_TRAINER_API_URL to override the default.
+//
+// A URL is still not a promise: `probeTrainer()` below decides at runtime
+// whether whatever is configured actually answers.
+const DEFAULT_TRAINER_URL = 'https://forgeos-trainer.vercel.app/api';
+const WORKER_URL = (import.meta.env.VITE_TRAINER_API_URL as string | undefined) || DEFAULT_TRAINER_URL;
 const TIMEOUT_MS = 25000;
 const PROBE_TIMEOUT_MS = 6000;
 
-/** A worker URL exists in this build. Says nothing about whether it answers. */
+/** An endpoint is configured. Says nothing about whether it answers — see below. */
 export const trainerConfigured = !!WORKER_URL;
 
 /**
