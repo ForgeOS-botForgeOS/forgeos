@@ -324,7 +324,7 @@ export default function Nutrition() {
         )}
       </Sheet>
 
-      <BarcodeScanner open={barcodeOpen} onClose={() => setBarcodeOpen(false)} onAdd={(it) => { addEntry({ ...it, source: 'scan' }); learn(it); }} />
+      <BarcodeScanner open={barcodeOpen} onClose={() => setBarcodeOpen(false)} onAdd={(it) => { addEntry({ ...it, source: 'scan' }); learn(it); }} onManualEntry={() => setManualOpen(true)} />
       <ManualEntry open={manualOpen} onClose={() => setManualOpen(false)} onAdd={(e) => { addEntry({ ...e, source: 'manual' }); setManualOpen(false); }} />
       <RecompCalc open={recompOpen} onClose={() => setRecompOpen(false)} />
     </Screen>

@@ -42,7 +42,10 @@ class WebUpdatePlugin : Plugin() {
     companion object {
         // Bump whenever android/ code changes in a way the web bundle depends on.
         // CI greps this value into version.json.
-        const val NATIVE_VERSION = 7
+        // 8: CAMERA permission for the barcode scanner. Older APKs must not
+        // receive the scanner web bundle — Android would refuse the camera and
+        // the app would blame a setting the user has no way to change.
+        const val NATIVE_VERSION = 8
 
         const val PREFS = "forgeos-webupdate"
         const val KEY_PATH = "path"

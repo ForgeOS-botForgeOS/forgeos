@@ -68,6 +68,15 @@
          system installer (the user still confirms every install). -->
     <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
 
+    <!-- Barcode scanning in the nutrition screen. Capacitor's WebChromeClient
+         asks Android for CAMERA the moment the page calls getUserMedia, and
+         Android denies any permission that is not declared here — so without
+         this line the in-app scanner can never open the camera at all. -->
+    <uses-permission android:name="android.permission.CAMERA" />
+    <!-- Declared not-required so the Play listing never excludes a camera-less device. -->
+    <uses-feature android:name="android.hardware.camera" android:required="false" />
+    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
+
     <!-- Health Connect: read-only access to the data Garmin Connect writes. -->
     <uses-permission android:name="android.permission.health.READ_SLEEP" />
     <uses-permission android:name="android.permission.health.READ_STEPS" />

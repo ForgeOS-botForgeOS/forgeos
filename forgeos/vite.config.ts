@@ -49,6 +49,17 @@ export default defineConfig({
         navigateFallback: 'index.html',
         // recharts + vendor chunks can exceed the default 2 MiB precache limit
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+        runtimeCaching: [
+          {
+            // The ZXing barcode decoder (~1 MB of WebAssembly). Deliberately NOT
+            // precached: only browsers without a native BarcodeDetector ever
+            // fetch it, so it is cached on first use instead of costing every
+            // visitor a megabyte up front.
+            urlPattern: ({ url }) => url.pathname.endsWith('.wasm'),
+            handler: 'CacheFirst',
+            options: { cacheName: 'forgeos-wasm', expiration: { maxEntries: 4 } },
+          },
+        ],
       },
     }),
   ],
