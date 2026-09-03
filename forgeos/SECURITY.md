@@ -26,9 +26,24 @@ all** — the backend only adds cross-device sync and real friend activity.
 - **Auth** is handled by Supabase (passwords are hashed/salted server-side; the app
   only ever holds a session token, never a password).
 - **Content-Security-Policy**: scripts can only come from our own bundle (no inline
-  scripts, no `eval`), which neutralises most XSS. See `index.html`.
-- **Vision Worker** only accepts calls from ForgeOS origins and caps upload size.
+  scripts, no `eval` — `'wasm-unsafe-eval'` is present only so the barcode
+  decoder can compile). `connect-src` is an **allowlist of the services the app
+  actually uses**, not `https:` — that is the directive that decides where a
+  successful injection could *send* your data. Images, media and fonts are
+  self/data/blob only. See `index.html`.
+- **Not framable**: `frame-ancestors` is ignored in a `<meta>` CSP and GitHub
+  Pages cannot send headers, so the app refuses to render inside an iframe
+  itself (`src/lib/frameGuard.ts`).
+- **Vision Worker and trainer**: a request from a non-ForgeOS origin is
+  **refused**, not just missing a CORS header — CORS headers are advice to a
+  browser and never stopped a script. Both endpoints rate-limit per IP and
+  globally, cap upload/conversation size, and the trainer prepends a fixed role
+  the caller cannot overwrite, so it cannot be used as a general-purpose LLM.
 - **App lock**: an optional local passcode (Settings) gates the app on-device.
+  The passcode is stored **only as a PBKDF2 hash** with a per-device salt, and
+  it is stripped from every backup export and cloud sync. It is a privacy
+  screen, not device encryption: anything that can already run code on the
+  device can read the data behind it.
 
 ## Keys: what's safe vs secret
 

@@ -234,11 +234,19 @@ drop policy if exists "market author" on marketplace_routines;
 create policy "market author" on marketplace_routines for all using (auth.uid() = author_id) with check (auth.uid() = author_id);
 
 -- Exercises & quests are shared read-only catalogues (no RLS needed; grant select).
-grant select on exercises, quests to anon, authenticated;
+-- Deny-all on purpose: the catalogue ships inside the app bundle and no client
+-- query reads these tables. RLS is enabled with no policy, and write privileges
+-- are revoked so a future policy cannot accidentally re-open them.
+alter table exercises enable row level security;
+alter table quests enable row level security;
+revoke insert, update, delete on exercises, quests from anon, authenticated;
 
 -- ---------- New-user trigger: auto-create a profile ----------
+-- `set search_path` is not optional on a SECURITY DEFINER function: without it,
+-- anything that can create objects earlier on the path can shadow `profiles`
+-- and have its code run as the definer.
 create or replace function public.handle_new_user()
-returns trigger language plpgsql security definer as $$
+returns trigger language plpgsql security definer set search_path = public as $$
 begin
   insert into public.profiles (id, email) values (new.id, new.email)
   on conflict (id) do nothing;
@@ -299,7 +307,11 @@ begin
     on conflict (user_id, friend_id) do update set status = 'accepted';
   return fid;
 end; $$;
+-- Signed-in callers only: an anonymous stranger being able to call this meant
+-- the friend-code space could be brute-forced without even signing up.
+revoke execute on function public.add_friend_by_code(text) from public, anon;
 grant execute on function public.add_friend_by_code(text) to authenticated;
+revoke execute on function public.handle_new_user() from public, anon, authenticated;
 
 -- Accepted friends may read each other's workouts / sets / prs — but only while
 -- the owner is sharing activity. RLS combines these with the owner policies via
@@ -378,7 +390,12 @@ create policy "feed read" on feed_posts for select using (
   )
 );
 
--- Reactions and leaderboard: require an authenticated session (no anon scraping).
+-- Reactions and leaderboard: require a session. NOTE, and it matters: guest mode
+-- uses Supabase *anonymous sign-in*, and an anonymous user counts as
+-- `authenticated` — so "authenticated" here means "anyone who asked the public
+-- anon key for a token", not "someone with an account". Treat anything readable
+-- under this rule as public. See migrations/2026-09-03-security-hardening.sql
+-- (part B) for the tightening that needs an app change first.
 drop policy if exists "reactions read" on reactions;
 create policy "reactions read" on reactions for select using (auth.role() = 'authenticated');
 drop policy if exists "leaderboard read" on leaderboard_entries;
@@ -410,11 +427,49 @@ create policy "duel participants read" on duels for select using (
   auth.uid() = challenger or auth.uid() = opponent
 );
 drop policy if exists "challenger starts duel" on duels;
-create policy "challenger starts duel" on duels for insert with check (auth.uid() = challenger);
+-- A duel needs an accepted friendship: user ids are readable from the public
+-- leaderboard, so "the challenger is me" alone let anyone force a duel row onto
+-- a stranger. (Applied to production in migrations/2026-09-03-security-hardening.sql.)
+create policy "duel insert" on duels for insert with check (
+  auth.uid() = challenger
+  and opponent <> challenger
+  and exists (
+    select 1 from friendships f
+    where f.user_id = auth.uid() and f.friend_id = opponent and f.status = 'accepted'
+  )
+);
 drop policy if exists "participants update progress" on duels;
+-- An UPDATE policy with no WITH CHECK reuses USING for the new row, so this
+-- alone only said "you are still a participant" — the opponent could zero the
+-- challenger's score, move the deadline, or swap in a different rival. Column
+-- grants + the guard trigger below pin it to "your own progress, upwards only".
 create policy "participants update progress" on duels for update using (
   auth.uid() = challenger or auth.uid() = opponent
 );
+revoke update on duels from anon, authenticated;
+grant update (challenger_progress, opponent_progress, updated_at) on duels to authenticated;
+
+create or replace function public.guard_duel_update()
+returns trigger language plpgsql security invoker set search_path = public as $$
+begin
+  if auth.uid() = old.challenger then
+    new.opponent_progress := old.opponent_progress;
+  elsif auth.uid() = old.opponent then
+    new.challenger_progress := old.challenger_progress;
+  else
+    raise exception 'not a duel participant';
+  end if;
+  new.id := old.id; new.challenger := old.challenger; new.opponent := old.opponent;
+  new.metric := old.metric; new.target := old.target; new.ends_at := old.ends_at;
+  new.created_at := old.created_at;
+  new.challenger_progress := greatest(new.challenger_progress, old.challenger_progress);
+  new.opponent_progress := greatest(new.opponent_progress, old.opponent_progress);
+  return new;
+end; $$;
+drop trigger if exists guard_duel_update on duels;
+create trigger guard_duel_update before update on duels
+  for each row execute function public.guard_duel_update();
+revoke execute on function public.guard_duel_update() from public, anon, authenticated;
 
 -- Live feed (2026-07-19): stream new feed_posts to subscribed clients.
 -- RLS still applies — subscribers only receive rows they're allowed to read.

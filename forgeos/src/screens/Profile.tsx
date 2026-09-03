@@ -4,6 +4,7 @@ import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { ModeSwitch } from '../components/ModeSwitch';
+import { hashPasscode } from '../lib/appLock';
 import { pushMyActivity } from '../lib/activitySync';
 import { configureBackgroundSync } from '../lib/healthConnect';
 import { checkForApkUpdate } from '../lib/appUpdate';
@@ -633,7 +634,8 @@ export default function Profile() {
         open={passcodeSheet !== null}
         mode={passcodeSheet ?? 'set'}
         onClose={() => setPasscodeSheet(null)}
-        onSave={(code) => s.set('appLock', { enabled: true, code })}
+        // The passcode is hashed before it touches storage — see lib/appLock.ts.
+        onSave={(code) => { void hashPasscode(code).then((secret) => s.set('appLock', { enabled: true, code: secret })); }}
       />
 
       {/* Backup */}

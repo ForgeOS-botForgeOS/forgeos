@@ -1,7 +1,6 @@
 import type { Workout } from '../types';
 import { toSharedWorkout, decodeWorkout, type SharedWorkout } from './workoutShare';
-
-const uid = () => Math.random().toString(36).slice(2, 10);
+import { randomId } from './rand';
 
 // Three ways to win a live race — the host picks one when creating it:
 //  - workout: everyone does the identical shared workout; first to complete
@@ -53,7 +52,9 @@ export function newRaceConfig(
   // A rematch passes the previous race's already-shared workout back in.
   opts: { targetKg?: number; durationMin?: number; workout?: Workout | SharedWorkout } = {},
 ): RaceConfig | null {
-  const raceId = uid();
+  // The race id IS the channel name and the invite link, so a guessable id is a
+  // public race: anyone who predicted it could read every racer's live progress.
+  const raceId = randomId();
   const base = { raceId, hostId: host.id, hostName: host.name };
   if (mode === 'volume') {
     const targetKg = opts.targetKg ?? 8000;

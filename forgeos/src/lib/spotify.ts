@@ -10,6 +10,7 @@ const redirectUri = typeof window !== 'undefined' ? `${window.location.origin}${
 const SCOPES = ['user-read-playback-state', 'user-modify-playback-state', 'user-read-currently-playing'];
 const TOKEN_KEY = 'forge-spotify-token';
 const VERIFIER_KEY = 'forge-spotify-verifier';
+const STATE_KEY = 'forge-spotify-state';
 
 // A registered client id is required to log in at all — that's the piece that
 // was "missing" (an empty client id makes Spotify reject the request outright).
@@ -35,12 +36,19 @@ async function codeChallenge(verifier: string): Promise<string> {
 export async function beginSpotifyAuth(): Promise<void> {
   if (!clientId) return;
   const verifier = randomString(64);
+  // `state` is the CSRF half of OAuth, and PKCE does not replace it: PKCE stops
+  // a stolen code being redeemed by someone else, while state stops someone
+  // else's code being redeemed by *us* — which is how an attacker silently
+  // links their own Spotify account to your app.
+  const state = randomString(32);
   localStorage.setItem(VERIFIER_KEY, verifier);
+  localStorage.setItem(STATE_KEY, state);
   const params = new URLSearchParams({
     client_id: clientId,
     response_type: 'code',
     redirect_uri: redirectUri,
     scope: SCOPES.join(' '),
+    state,
     code_challenge_method: 'S256',
     code_challenge: await codeChallenge(verifier),
   });
@@ -56,7 +64,18 @@ export async function handleSpotifyCallback(): Promise<boolean> {
   const url = new URL(window.location.href);
   const code = url.searchParams.get('code');
   const verifier = localStorage.getItem(VERIFIER_KEY);
+  const expectedState = localStorage.getItem(STATE_KEY);
   if (!code || !verifier) return false;
+  // A code that did not come back from a flow this app started is somebody
+  // else's code. Drop it, and clear the pending flow so it cannot be reused.
+  if (!expectedState || url.searchParams.get('state') !== expectedState) {
+    localStorage.removeItem(VERIFIER_KEY);
+    localStorage.removeItem(STATE_KEY);
+    url.searchParams.delete('code');
+    url.searchParams.delete('state');
+    window.history.replaceState({}, '', url.toString());
+    return false;
+  }
   try {
     const res = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
@@ -78,6 +97,7 @@ export async function handleSpotifyCallback(): Promise<boolean> {
     /* network / misconfig — fall back to mock */
   } finally {
     localStorage.removeItem(VERIFIER_KEY);
+    localStorage.removeItem(STATE_KEY);
     url.searchParams.delete('code');
     url.searchParams.delete('state');
     window.history.replaceState({}, '', url.toString());

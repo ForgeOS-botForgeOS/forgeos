@@ -26,6 +26,7 @@ import { syncWebUpdate } from './lib/webUpdate';
 import { announceIfUpdated } from './lib/updateNotice';
 import { useHealth } from './state/healthStore';
 import { haptic } from './lib/haptics';
+import { hashPasscode, isLegacyPasscode } from './lib/appLock';
 import { initAuth } from './lib/auth';
 import { startReminderScheduler } from './lib/reminders';
 import { onReconnect, syncQueue } from './lib/offlineQueue';
@@ -272,7 +273,17 @@ export default function App() {
   if (locked) {
     return (
       <PhoneFrame>
-        <LockScreen code={appLock.code} onUnlock={() => setLocked(false)} />
+        <LockScreen
+          code={appLock.code}
+          onUnlock={(entered) => {
+            // A device that still stores the old cleartext PIN upgrades itself
+            // the first time it is unlocked — one unlock, no plaintext left.
+            if (isLegacyPasscode(appLock.code)) {
+              void hashPasscode(entered).then((secret) => useSettings.getState().set('appLock', { enabled: true, code: secret }));
+            }
+            setLocked(false);
+          }}
+        />
       </PhoneFrame>
     );
   }

@@ -160,7 +160,8 @@ export interface RaceChannelHandlers {
   // The set of userIds currently connected to the channel changed.
   onRoster: (racers: RaceBroadcast[], onlineIds: string[]) => void;
   // The host started the race.
-  onStart: (startAt: number) => void;
+  /** `hostId` lets the receiver refuse a start from anyone but the host. */
+  onStart: (startAt: number, hostId?: string) => void;
 }
 
 export interface RaceChannel {
@@ -176,7 +177,10 @@ export function joinRaceChannel(raceId: string, me: RaceBroadcast, handlers: Rac
 
   channel
     .on('broadcast', { event: 'progress' }, ({ payload }) => handlers.onProgress(payload as RaceBroadcast))
-    .on('broadcast', { event: 'start' }, ({ payload }) => handlers.onStart((payload as { startAt: number }).startAt))
+    .on('broadcast', { event: 'start' }, ({ payload }) => {
+      const p = payload as { startAt: number; hostId?: string };
+      handlers.onStart(p.startAt, p.hostId);
+    })
     .on('presence', { event: 'sync' }, () => {
       const state = channel.presenceState<RaceBroadcast>();
       const racers = Object.values(state).map((metas) => metas[0]).filter(Boolean);
@@ -192,7 +196,9 @@ export function joinRaceChannel(raceId: string, me: RaceBroadcast, handlers: Rac
       void channel.send({ type: 'broadcast', event: 'progress', payload: u });
       void channel.track(u); // keep presence meta fresh for late joiners
     },
-    sendStart: (startAt) => void channel.send({ type: 'broadcast', event: 'start', payload: { startAt } }),
+    // Say who sent it: a realtime channel is joinable by anyone who knows its
+    // name, so the receiver — not the sender — decides whether to obey.
+    sendStart: (startAt) => void channel.send({ type: 'broadcast', event: 'start', payload: { startAt, hostId: me.userId } }),
     leave: () => void supabase?.removeChannel(channel),
   };
 }

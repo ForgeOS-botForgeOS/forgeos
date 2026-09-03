@@ -12,13 +12,9 @@
 // they aren't the at-scale abuse vector; add a Cloudflare rate-limit rule for
 // that (free). Add your custom domain here if you set one.
 import { handleTrainer } from './trainer.js';
+import { ALLOWED_ORIGINS } from './origins.js';
 
-const ALLOWED_ORIGINS = [
-  'https://forgeos-botforgeos.github.io',
-  'http://localhost:5173',
-  'https://localhost',
-  'capacitor://localhost',
-];
+export { ALLOWED_ORIGINS } from './origins.js';
 function corsHeaders(request) {
   const origin = request.headers.get('Origin') || '';
   const allow = ALLOWED_ORIGINS.includes(origin) ? origin : ALLOWED_ORIGINS[0];
@@ -227,6 +223,27 @@ const TABLE = {
   'frappuccino': [140, 3, 26, 3, 25], 'acai bowl': [120, 2, 22, 4, 14], 'overnight oats': [130, 5, 20, 4, 6],
 };
 
+// A photo scan costs an AI inference, so it gets the same per-instance rate
+// limiting as the trainer: generous for a person, hopeless for a script.
+const VISION_RATE = { windowMs: 60 * 60 * 1000, perIpKnownOrigin: 60, perIpUnknownOrigin: 10, global: 500 };
+const visionHits = new Map();
+let visionGlobal = [];
+
+function withinVisionRate(ip, knownOrigin) {
+  const now = Date.now();
+  const since = now - VISION_RATE.windowMs;
+  visionGlobal = visionGlobal.filter((t) => t > since);
+  if (visionGlobal.length >= VISION_RATE.global) return false;
+  const mine = (visionHits.get(ip) || []).filter((t) => t > since);
+  const cap = knownOrigin ? VISION_RATE.perIpKnownOrigin : VISION_RATE.perIpUnknownOrigin;
+  if (mine.length >= cap) { visionHits.set(ip, mine); return false; }
+  mine.push(now);
+  visionHits.set(ip, mine);
+  visionGlobal.push(now);
+  if (visionHits.size > 5000) for (const [k, v] of visionHits) if (!v.some((t) => t > since)) visionHits.delete(k);
+  return true;
+}
+
 function json(body, status = 200, cors = {}) {
   return new Response(JSON.stringify(body), { status, headers: { ...cors, 'Content-Type': 'application/json' } });
 }
@@ -309,6 +326,15 @@ export default {
     const cors = corsHeaders(request);
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
     if (request.method !== 'POST') return json({ error: 'POST only' }, 405, cors);
+
+    // CORS headers are advice to a browser — they never stopped a script. A
+    // request that announces an origin we do not serve is refused outright, so
+    // another site cannot quietly spend this Worker's free AI quota.
+    const origin = request.headers.get('Origin') || '';
+    if (origin && !ALLOWED_ORIGINS.includes(origin)) return json({ error: 'forbidden' }, 403, cors);
+    if (!withinVisionRate(request.headers.get('CF-Connecting-IP') || 'unknown', !!origin)) {
+      return json({ error: 'too many requests — try again later' }, 429, cors);
+    }
 
     // The trainer chat is a different shape of request entirely — route it out
     // before any of the image handling below touches the body.

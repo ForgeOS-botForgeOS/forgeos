@@ -736,7 +736,10 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
   useEffect(() => { setConfirmRemove(false); }, [friend]);
   if (!friend || !act) return null;
 
-  const theirPosts = feed.filter((p) => p.authorName === friend.name).slice(0, 3);
+  // By id, never by display name: author_name is denormalised onto the post and
+  // a crafted insert can carry anyone's name, so matching on it would show a
+  // forged post on the impersonated friend's own profile.
+  const theirPosts = feed.filter((p) => p.authorId === friend.id).slice(0, 3);
 
   return (
     <Sheet open={!!friend} onClose={onClose} title={friend.name}>

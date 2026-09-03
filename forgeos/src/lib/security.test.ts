@@ -84,3 +84,88 @@ describe('supabase schema keeps health data server-side gated', () => {
     expect(schema).toContain('revoke all on friend_profiles from anon');
   });
 });
+
+describe('secrets people can guess never come from Math.random', () => {
+  // Friend codes, race ids and OAuth state are all bearer tokens: anyone who
+  // sees one gets in. V8's Math.random state is recoverable from a few observed
+  // outputs, and these values are *meant* to be shared — which hands over the
+  // observations. See lib/rand.ts.
+  const risky = ['friendCode.ts', 'race.ts', 'spotify.ts', 'rand.ts'];
+
+  /** Comments talk *about* Math.random; only code that calls it is a finding. */
+  const withoutComments = (src: string) =>
+    src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:])\/\/.*$/gm, '$1');
+
+  it('uses the CSPRNG in every file that mints one', () => {
+    const bad: string[] = [];
+    for (const name of risky) {
+      const code = withoutComments(readFileSync(join(SRC, 'lib', name), 'utf8'));
+      if (/Math\.random\s*\(/.test(code)) bad.push(name);
+    }
+    expect(bad).toEqual([]);
+  });
+});
+
+describe('the app-lock passcode never leaves the device', () => {
+  it('is only ever stored hashed', () => {
+    const profile = readFileSync(join(SRC, 'screens', 'Profile.tsx'), 'utf8');
+    // The passcode sheet hands over the typed digits; they must be hashed
+    // before they reach the settings store.
+    expect(profile).toMatch(/hashPasscode\(code\)/);
+    expect(profile).not.toMatch(/set\('appLock', \{ enabled: true, code \}\)/);
+  });
+
+  it('is stripped from backups', () => {
+    const backup = readFileSync(join(SRC, 'lib', 'backup.ts'), 'utf8');
+    expect(backup).toContain('delete parsed.state.appLock');
+  });
+});
+
+describe('the Content-Security-Policy stays narrow', () => {
+  const html = readFileSync(join(SRC, '..', 'index.html'), 'utf8');
+  const csp = /content="([^"]*default-src[^"]*)"/.exec(html)?.[1] ?? '';
+
+  it('exists, and still allows the barcode decoder to compile', () => {
+    expect(csp).toContain("script-src 'self'");
+    expect(csp).toContain("'wasm-unsafe-eval'");
+  });
+
+  it('never widens connect-src / img-src back to "anywhere"', () => {
+    // `connect-src https:` is the difference between an injection that can run
+    // and an injection that can also send everything it read to an attacker.
+    expect(csp).not.toMatch(/connect-src[^;]*\shttps:(\s|;)/);
+    expect(csp).not.toMatch(/img-src[^;]*\shttps:(\s|;)/);
+    expect(csp).toContain("connect-src 'self'");
+  });
+
+  it('does not allow inline or eval scripts', () => {
+    expect(csp).not.toContain("'unsafe-inline' https");
+    expect(csp).not.toMatch(/script-src[^;]*'unsafe-eval'/);
+  });
+});
+
+describe('the endpoints refuse strangers rather than just omitting a header', () => {
+  const worker = readFileSync(join(SRC, '..', '..', 'worker', 'src', 'trainer.js'), 'utf8');
+  const vercel = readFileSync(join(SRC, '..', '..', 'vercel-trainer', 'api', 'trainer.js'), 'utf8');
+
+  it('rejects a non-allowlisted Origin outright', () => {
+    for (const src of [worker, vercel]) {
+      expect(src).toMatch(/ALLOWED_ORIGINS\.includes\(origin\)/);
+      expect(src).toMatch(/403/);
+    }
+  });
+
+  it('rate-limits and anchors the role the caller cannot overwrite', () => {
+    for (const src of [worker, vercel]) {
+      expect(src).toContain('withinRate');
+      expect(src).toContain('FIXED_ROLE');
+      expect(src).toContain('anchoredSystem');
+    }
+  });
+
+  it('does not echo provider errors back to an anonymous caller', () => {
+    for (const src of [worker, vercel]) {
+      expect(src).not.toMatch(/all providers failed \(\$\{errors/);
+    }
+  });
+});

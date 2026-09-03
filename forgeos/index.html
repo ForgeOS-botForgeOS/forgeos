@@ -11,10 +11,26 @@
          is governed by script-src, so without it the barcode scanner's ZXing
          decoder cannot load at all (the browser refuses the module and the
          camera reports "nothing here can decode a barcode"). It permits WASM
-         only — plain `eval()` and inline scripts stay blocked. -->
+         only — plain `eval()` and inline scripts stay blocked.
+
+         connect-src is an allowlist of the services this app actually talks to,
+         not `https:`. That is the directive that decides where a successful
+         injection could *send* your data, so "anywhere" was the wrong answer:
+         Supabase (+ its realtime socket), the Cloudflare vision Worker, the
+         Vercel trainer, Open Food Facts, Google sign-in, Spotify and the GitHub
+         release API. The two configurable endpoints are matched by their
+         platform wildcard so a redeployed Worker or trainer keeps working
+         without an index.html change. img/media/font-src are self + data/blob
+         for the same reason — every image the app shows (QR codes, share cards,
+         progress photos) is generated on the device, so a remote image URL
+         arriving from someone else's feed post can never phone home.
+
+         frame-ancestors is deliberately absent: browsers ignore it in a <meta>
+         tag (it needs a real header, which GitHub Pages cannot set), so the
+         clickjacking guard lives in src/main.tsx instead, where it works. -->
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com https://apis.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https:; media-src 'self' blob: https:; font-src 'self' data: https:; connect-src 'self' https: wss:; frame-src https://accounts.google.com; worker-src 'self' blob:; manifest-src 'self'"
+      content="default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; script-src 'self' 'wasm-unsafe-eval' https://accounts.google.com https://apis.google.com https://www.gstatic.com; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' blob:; font-src 'self' data:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.workers.dev https://*.vercel.app https://world.openfoodfacts.org https://accounts.google.com https://www.googleapis.com https://accounts.spotify.com https://api.spotify.com https://api.github.com; frame-src https://accounts.google.com; worker-src 'self' blob:; manifest-src 'self'"
     />
     <meta name="referrer" content="strict-origin-when-cross-origin" />
     <link rel="icon" type="image/png" href="%BASE_URL%icon-192.png" />

@@ -50,7 +50,13 @@ function attachChannel(config: RaceConfig, me: RaceBroadcast): boolean {
       checkOutcome();
     },
     onRoster: (racers, onlineIds) => useRace.getState().setRoster(racers, onlineIds),
-    onStart: (startAt) => handleStart(startAt),
+    // Only the host starts the race. Without this check any joiner — or anyone
+    // who guessed the channel name — could start everyone else's race.
+    // Invites minted before races carried a hostId are trusted as before.
+    onStart: (startAt, hostId) => {
+      if (hostId && config.hostId && hostId !== config.hostId) return;
+      handleStart(startAt);
+    },
   });
   return channel != null;
 }
