@@ -40,6 +40,15 @@ const MOCK_MEALS: ScanResult[] = [
   { name: 'Oats, banana & peanut butter', calories: 430, proteinG: 16, carbsG: 58, fatG: 16, sugarG: 14, confidence: 0.83, tip: 'Great pre-session fuel.' },
 ];
 
+// The note is pasted into a model prompt, so it is trimmed to one plain line
+// of bounded length: braces and newlines would fight the JSON-only instruction
+// the prompt ends with.
+const MAX_NOTE_CHARS = 200;
+export function cleanNote(note?: string): string | undefined {
+  const clean = String(note ?? '').replace(/[{}\r\n]+/g, ' ').replace(/\s+/g, ' ').trim().slice(0, MAX_NOTE_CHARS);
+  return clean || undefined;
+}
+
 function fileToBase64(file: File): Promise<{ data: string; mime: string }> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -68,15 +77,25 @@ export class VisionError extends Error {
   }
 }
 
-export async function scanMeal(file: File): Promise<ScanResult> {
+/**
+ * Read a meal photo.
+ *
+ * `note` is what the user says the food is ("chicken curry, homemade, rice on
+ * the side"). It goes to the model as a hint, because identifying the food is
+ * the half of the job a photo is worst at — the model can still see the
+ * portions. Typing a description with no photo at all is handled entirely
+ * on-device by `lib/foodDescribe.ts`.
+ */
+export async function scanMeal(file: File, note?: string): Promise<ScanResult> {
   const { data, mime } = await fileToBase64(file);
+  const hint = cleanNote(note);
 
   // 1) Free Cloudflare Worker (Workers AI) if configured.
   if (WORKER_URL) {
     const res = await fetch(WORKER_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ image: data, mime, mode: 'food' }),
+      body: JSON.stringify({ image: data, mime, mode: 'food', note: hint }),
     });
     if (!res.ok) throw new VisionError(`Vision worker error ${res.status}.`, res.status);
     const out = await res.json();

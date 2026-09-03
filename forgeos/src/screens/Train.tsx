@@ -555,6 +555,10 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
   const [linkMode, setLinkMode] = useState<string[]>([]);
   const [celebrating, setCelebrating] = useState(false);
   const [drop, setDrop] = useState<Drop | null>(null);
+  // The rest preset of the exercise whose 100kg+ lift raised a quote drop: the
+  // timer waits for the drop to be dismissed, and then has to start from the
+  // right number rather than a hardcoded 90s.
+  const pendingRestSec = useRef(90);
   const [prBurst, setPrBurst] = useState<{ label: string; count: number } | null>(null);
   // Focus mode: the HUD takes the whole screen for one set at a time.
   const [focusMode, setFocusMode] = useState(false);
@@ -588,6 +592,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       addXp(50);
       if (heavyQuotesEnabled) {
         const ex = exerciseById(active.exercises.find((e) => e.id === weId)?.exerciseId ?? '');
+        pendingRestSec.current = restSec;
         setDrop({ quote: pickHeavyQuote(ex), rarity: rollRarity(), exercise: ex?.name ?? 'Lift', weightKg: set.weightKg });
       } else if (restTimerEnabled) {
         openRest(restSec);
@@ -771,7 +776,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       />
 
       <RestTimer open={restOpen} onClose={() => setRestOpen(false)} autoStartSec={restSeed} nonce={restNonce} />
-      <HeavyDrop drop={drop} onClose={() => { setDrop(null); if (restTimerEnabled) openRest(90); }} />
+      <HeavyDrop drop={drop} onClose={() => { setDrop(null); if (restTimerEnabled) openRest(pendingRestSec.current); }} />
 
       {/* Exercise picker */}
       <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="Add exercise">

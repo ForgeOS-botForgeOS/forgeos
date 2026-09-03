@@ -133,8 +133,12 @@ export function RestTimer({ open, onClose, autoStartSec = 0, nonce }: { open: bo
 
   // A slim pill that floats just above the tab bar — present but out of the way.
   // Drag it anywhere; park it against an edge and it shrinks into a tidy chip.
+  //
+  // The 74px offset is what "above the tab bar" costs (the same one the
+  // now-playing pill uses): this is positioned against the phone frame, which
+  // *contains* the tab bar, so a small `bottom` sat the timer on the tab labels.
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-3 z-40 flex justify-center">
+    <div className="pointer-events-none absolute inset-x-0 bottom-[74px] z-40 flex justify-center">
       <motion.div
         ref={pillRef}
         drag

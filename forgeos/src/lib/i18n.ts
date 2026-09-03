@@ -72,6 +72,10 @@ const EN: Dict = {
   'nut.analysing': 'Analysing photo…',
   'nut.recipes': 'Recipe library',
   'nut.manual': '+ Manual entry',
+  'desc.label': 'What is it? (helps the AI)',
+  'desc.placeholder': 'e.g. 200g chicken breast, 150g rice and a banana',
+  'desc.hint': 'Sent with the photo so the AI does not have to guess the food — or log it straight from the text, no photo needed.',
+  'desc.use': 'Log from text',
   'nut.foodLog': 'Food log',
   'nut.nothingLogged': 'Nothing logged yet today.',
   // quests
@@ -486,6 +490,10 @@ const SK: Dict = {
   'nut.analysing': 'Analyzujem fotku…',
   'nut.recipes': 'Knižnica receptov',
   'nut.manual': '+ Manuálny záznam',
+  'desc.label': 'Čo to je? (pomôže AI)',
+  'desc.placeholder': 'napr. 200g kuracie prsia, 150g ryža a banán',
+  'desc.hint': 'Pošle sa s fotkou, aby AI nemusela hádať, čo to je — alebo zaznamenaj priamo z textu, aj bez fotky.',
+  'desc.use': 'Zaznamenať z textu',
   'nut.foodLog': 'Denník jedál',
   'nut.nothingLogged': 'Dnes ešte nič nezaznamenané.',
   // quests

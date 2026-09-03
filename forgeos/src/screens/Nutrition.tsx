@@ -1,11 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Camera, Trash2, Sparkles, Calculator, ChefHat, ClipboardList, Star, Check, Barcode, Moon } from 'lucide-react';
+import { Camera, Trash2, Sparkles, Calculator, ChefHat, ClipboardList, Star, Check, Barcode, Moon, Pencil, Loader2 } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Sheet, Badge, SectionTitle } from '../components/ui';
 import { useNutrition } from '../state/nutritionStore';
 import { useUser } from '../state/userStore';
 import { scanMeal, visionIsLive, estimateMock } from '../lib/vision';
+import { scanDescription } from '../lib/foodDescribe';
 import { RECIPES } from '../data/recipes';
 import { useSettings } from '../state/settingsStore';
 import { useT } from '../lib/i18n';
@@ -55,6 +56,10 @@ export default function Nutrition() {
   const getLearned = useNutrition((s) => s.getLearned);
 
   const [scanning, setScanning] = useState(false);
+  // What the user says the food is. Sent with the photo as a hint for the AI,
+  // and enough on its own to log a meal with no photo at all.
+  const [desc, setDesc] = useState('');
+  const [describing, setDescribing] = useState(false);
   const [items, setItems] = useState<FoodItem[] | null>(null);
   const [selected, setSelected] = useState<Set<number>>(new Set());
   const [scanNote, setScanNote] = useState<string | null>(null);
@@ -64,7 +69,7 @@ export default function Nutrition() {
 
   const macros = profile?.macros ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 };
 
-  function openItems(r: ScanResult) {
+  function openItems(r: ScanResult, note?: string) {
     let learnedCount = 0;
     // Apply learned corrections to any item the user has fixed before.
     const list = (r.items ?? [r]).map((it) => {
@@ -74,7 +79,8 @@ export default function Nutrition() {
     });
     setItems(list);
     setSelected(new Set(list.map((_, i) => i)));
-    if (learnedCount) setScanNote(`Auto-corrected ${learnedCount} item(s) from your past edits.`);
+    const learnedNote = learnedCount ? `Auto-corrected ${learnedCount} item(s) from your past edits.` : '';
+    setScanNote([note, learnedNote].filter(Boolean).join(' ') || null);
   }
 
   async function onFile(e: React.ChangeEvent<HTMLInputElement>) {
@@ -83,7 +89,7 @@ export default function Nutrition() {
     setScanning(true);
     setScanNote(null);
     try {
-      openItems(await scanMeal(file));
+      openItems(await scanMeal(file, desc), desc.trim() ? 'Your description was sent with the photo.' : undefined);
       haptic('success');
     } catch (err) {
       openItems(estimateMock(file));
@@ -92,6 +98,26 @@ export default function Nutrition() {
     } finally {
       setScanning(false);
       e.target.value = '';
+    }
+  }
+
+  // Log straight from the description — no photo, no AI, no network needed:
+  // the foods are matched against the built-in per-100g table on the device,
+  // with Open Food Facts as a fallback for anything unusual.
+  async function logFromDescription() {
+    setDescribing(true);
+    setScanNote(null);
+    try {
+      const result = await scanDescription(desc);
+      if (!result) {
+        setScanNote('No food found in that text — try "200g chicken, 150g rice".');
+        haptic('warning');
+        return;
+      }
+      openItems(result, result.tip);
+      haptic('success');
+    } finally {
+      setDescribing(false);
     }
   }
 
@@ -120,6 +146,7 @@ export default function Nutrition() {
     });
     haptic('success');
     setItems(null);
+    setDesc('');
   }
 
   const goalText: Record<string, string> = {
@@ -153,6 +180,7 @@ export default function Nutrition() {
           <Button className="w-full flex items-center justify-center py-4" disabled={scanning} onClick={() => fileRef.current?.click()}>
             <span className="flex items-center gap-2 text-base">{scanning ? <Sparkles size={18} className="animate-pulse" /> : <Camera size={18} />} {scanning ? 'Analysing photo…' : 'Scan a meal'}</span>
           </Button>
+          <DescribeFood value={desc} onChange={setDesc} busy={describing || scanning} onUse={() => void logFromDescription()} />
           <div className="grid grid-cols-4 gap-2">
             <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setBarcodeOpen(true)}><Barcode size={16} /><span className="text-[10px] uppercase tracking-wide">Barcode</span></Button>
             <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setManualOpen(true)}><span className="text-lg leading-none">＋</span><span className="text-[10px] uppercase tracking-wide">Manual</span></Button>
@@ -188,6 +216,7 @@ export default function Nutrition() {
             {scanning ? 'Analysing photo…' : 'Scan a meal photo'}
           </span>
         </Button>
+        <DescribeFood value={desc} onChange={setDesc} busy={describing || scanning} onUse={() => void logFromDescription()} />
         <Button variant="ghost" className="w-full justify-center" onClick={() => setBarcodeOpen(true)}>
           <span className="flex items-center gap-2"><Barcode size={16} /> Scan a barcode (exact macros)</span>
         </Button>
@@ -328,6 +357,41 @@ export default function Nutrition() {
       <ManualEntry open={manualOpen} onClose={() => setManualOpen(false)} onAdd={(e) => { addEntry({ ...e, source: 'manual' }); setManualOpen(false); }} />
       <RecompCalc open={recompOpen} onClose={() => setRecompOpen(false)} />
     </Screen>
+  );
+}
+
+/**
+ * "What is it?" — the description that turns a photo guess into a real log.
+ *
+ * It does two things with one line of text: it rides along with the photo as a
+ * hint for the vision model, and it can log the meal on its own (matched
+ * against the built-in food table on the device), which is faster than a photo
+ * for anything home-cooked and works with no signal at all.
+ */
+function DescribeFood({ value, onChange, busy, onUse }: { value: string; onChange: (v: string) => void; busy: boolean; onUse: () => void }) {
+  const t = useT();
+  return (
+    <div className="rounded-xl bg-surface-2 border border-line p-3 space-y-2" data-noswipe>
+      <label htmlFor="food-desc" className="text-[11px] uppercase tracking-wide text-muted flex items-center gap-1.5">
+        <Pencil size={11} /> {t('desc.label')}
+      </label>
+      <textarea
+        id="food-desc"
+        rows={2}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={t('desc.placeholder')}
+        className="w-full resize-none rounded-lg bg-surface border border-line px-3 py-2 text-sm outline-none focus:border-accent/60"
+      />
+      <div className="flex items-center gap-2">
+        <p className="flex-1 text-[11px] text-muted/80">{t('desc.hint')}</p>
+        <Button variant="ghost" className="shrink-0 justify-center py-1.5" disabled={busy || !value.trim()} onClick={onUse}>
+          <span className="flex items-center gap-1.5 text-xs">
+            {busy ? <Loader2 size={13} className="animate-spin" /> : <Sparkles size={13} />} {t('desc.use')}
+          </span>
+        </Button>
+      </div>
+    </div>
   );
 }
 
