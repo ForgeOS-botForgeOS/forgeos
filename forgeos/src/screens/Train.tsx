@@ -65,6 +65,10 @@ export default function Train() {
   const loadWarning = useMemo(() => trainingLoadWarning(history), [history]);
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
   const v2 = useSettings((s) => s.designMode === 'v2');
+  // Apprentice Mode keeps the one thing this screen is for — starting today's
+  // session — and hides the coaching layers that only mean something once you
+  // have months of data: readiness, periodisation, plateaus, load warnings.
+  const simple = useSettings((s) => s.apprentice);
   const healthDays = useHealth((s) => s.days);
   const readiness = useMemo(() => (recoveryEnabled ? readinessFromDays(sortedDays(healthDays)) : null), [recoveryEnabled, healthDays]);
   const otRisk = useMemo(
@@ -184,7 +188,7 @@ export default function Train() {
       />
 
       {/* Your coach — tailored to what you told us at sign-up (goal, experience, the words you typed) */}
-      {tips.length > 0 && (
+      {!simple && tips.length > 0 && (
         <Card className="space-y-2 border-accent-2/30 bg-accent-2/5">
           <p className="text-xs uppercase tracking-wide text-muted">Your coach</p>
           {tips.map((tip) => (
@@ -212,7 +216,7 @@ export default function Train() {
 
       {/* Recovery readiness — last night's data steering today's effort (Legacy;
           V2 shows this as the readiness console at the top). */}
-      {!v2 && readiness && (() => {
+      {!v2 && !simple && readiness && (() => {
         const guide = trainingGuidance(readiness.level);
         const pct = Math.round((guide.multiplier - 1) * 100);
         const loadLabel = guide.multiplier === 0 ? 'rest day' : pct === 0 ? 'load: as planned' : `load: ${pct > 0 ? '+' : ''}${pct}%`;
@@ -239,7 +243,7 @@ export default function Train() {
       })()}
 
       {/* Overtraining alarm — sustained recovery red flags, not one bad night */}
-      {otRisk && otRisk.level !== 'ok' && (
+      {!simple && otRisk && otRisk.level !== 'ok' && (
         <Card className={`flex gap-3 items-start ${otRisk.level === 'high' ? 'border-danger/60' : 'border-warn/50'}`}>
           <HeartPulse size={18} className={`mt-0.5 shrink-0 ${otRisk.level === 'high' ? 'text-danger' : 'text-warn'}`} />
           <div>
@@ -251,7 +255,7 @@ export default function Train() {
       )}
 
       {/* Deload / overtraining watch */}
-      {loadWarning && (
+      {!simple && loadWarning && (
         <Card className={`flex gap-3 items-start ${loadWarning.level === 'spike' ? 'border-danger/50' : 'border-warn/50'}`}>
           <AlertTriangle size={18} className={`mt-0.5 shrink-0 ${loadWarning.level === 'spike' ? 'text-danger' : 'text-warn'}`} />
           <div>
@@ -262,7 +266,7 @@ export default function Train() {
       )}
 
       {/* Adaptive periodisation (Legacy — V2 folds this into the coaching ledger) */}
-      {!v2 && (
+      {!v2 && !simple && (
       <Card className="flex gap-3 items-start">
         <Brain size={18} className="text-accent-2 mt-0.5 shrink-0" />
         <div>
@@ -275,7 +279,7 @@ export default function Train() {
       )}
 
       {/* Plateau breaker */}
-      {plateaus.length > 0 && (
+      {!simple && plateaus.length > 0 && (
         <div>
           <SectionTitle>Plateau breaker</SectionTitle>
           {plateaus.map((p) => (
@@ -291,15 +295,17 @@ export default function Train() {
       )}
 
       <div className="flex gap-2">
-        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setToolsOpen(true)}>
-          <span className="flex items-center gap-2"><Wrench size={16} /> Tools</span>
-        </Button>
+        {!simple && (
+          <Button variant="ghost" className="flex-1 justify-center" onClick={() => setToolsOpen(true)}>
+            <span className="flex items-center gap-2"><Wrench size={16} /> Tools</span>
+          </Button>
+        )}
         <Button variant="ghost" className="flex-1 justify-center" onClick={() => navigate('/history')}>
           <span className="flex items-center gap-2"><History size={16} /> History</span>
         </Button>
       </div>
 
-      <CardioScanCard />
+      {!simple && <CardioScanCard />}
 
       <Sheet open={toolsOpen} onClose={() => setToolsOpen(false)} title="Lifting tools">
         <Tools />

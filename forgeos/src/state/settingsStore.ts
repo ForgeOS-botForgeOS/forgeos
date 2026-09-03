@@ -39,6 +39,9 @@ const DEFAULTS: Settings = {
   setRowDetail: 'subtarget',
   units: 'metric',
   diet: 'omnivore',
+  // Off by default: an existing user must never wake up in a different app.
+  // New users are offered it by name on the first-run card (components/Tutorial).
+  apprentice: false,
 };
 
 export const useSettings = create<SettingsState>()(

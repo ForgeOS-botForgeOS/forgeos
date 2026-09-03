@@ -33,6 +33,9 @@ export default function Nutrition() {
   // Last night's sleep, if it was short (<6h) — drives the fuelling banner.
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
   const v2 = useSettings((s) => s.designMode === 'v2');
+  // Apprentice Mode: scan / describe / barcode / water / log stay; the recomp
+  // calculator (the one control here that needs explaining) steps aside.
+  const simple = useSettings((s) => s.apprentice);
   const healthDays = useHealth((s) => s.days);
   const shortNight = useMemo(() => {
     if (!recoveryEnabled) return null;
@@ -283,7 +286,7 @@ export default function Nutrition() {
       {!v2 && (
         <div className="flex gap-2">
           <Button variant="ghost" className="flex-1 justify-center" onClick={() => setManualOpen(true)}>+ Manual entry</Button>
-          <Button variant="ghost" className="justify-center" onClick={() => setRecompOpen(true)}><Calculator size={16} /></Button>
+          {!simple && <Button variant="ghost" className="justify-center" onClick={() => setRecompOpen(true)}><Calculator size={16} /></Button>}
         </div>
       )}
 

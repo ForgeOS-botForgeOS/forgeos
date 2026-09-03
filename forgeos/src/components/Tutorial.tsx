@@ -1,7 +1,10 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { Home, Dumbbell, Apple, Users, Trophy, User, Flame, X, Watch, Link2, ShieldCheck, Gauge } from 'lucide-react';
+import { Home, Dumbbell, Apple, Users, Trophy, User, Flame, X, Watch, Link2, ShieldCheck, Gauge, GraduationCap } from 'lucide-react';
 import { Button } from './ui';
+import { useSettings } from '../state/settingsStore';
+import { useT } from '../lib/i18n';
+import { haptic } from '../lib/haptics';
 
 const SEEN = 'forge-tutorial-seen';
 
@@ -23,6 +26,16 @@ const MAIN_SLIDES = [
   { icon: User, title: 'You', text: '15 themes & languages, edit your week plan, set a gym & reminders, spend coins in the Shop, achievements, calendar and backup.' },
 ];
 
+// The same tour, cut to the app an Apprentice actually has in front of them:
+// four tabs, and the two habits that make the rest findable.
+const APPRENTICE_SLIDES = [
+  { icon: GraduationCap, title: 'Apprentice Mode', text: 'You are in the simple ForgeOS: four tabs, and one thing to do at a time. Nothing is missing — the rest is waiting behind one switch in You.' },
+  { icon: Home, title: 'Home', text: '“Do this next” tells you the single thing worth doing right now. Under it, “Find it fast” says where everything lives — and it is the same place in the full app.' },
+  { icon: Dumbbell, title: 'Train', text: 'Start today’s session or an empty one. Log a set by tapping ✓ (or swipe the row →). History is at the bottom of this tab.' },
+  { icon: Apple, title: 'Food', text: 'Photograph a meal, scan a barcode, or just type what you ate — then track your water. Recipes live here too, in the Cookbook.' },
+  { icon: User, title: 'You', text: 'Your goal, your name, your theme — and the switch to Full Forge when you want everything. You can come back any time; nothing is ever lost.' },
+];
+
 const GARMIN_SLIDES = [
   { icon: Watch, title: 'Garmin auto-sync', text: 'Wear your watch as normal. ForgeOS pulls in your sleep, steps, resting heart rate and calories — and workouts you record on the watch join your history with XP. Automatically, no typing ever.' },
   { icon: Link2, title: 'How it works', text: 'Garmin Connect saves your data into Android Health Connect. ForgeOS just reads it from there — everything stays on your phone, nothing is uploaded.' },
@@ -36,6 +49,7 @@ const TOURS: Record<TourId, { slides: typeof MAIN_SLIDES; done: string }> = {
 };
 
 export function Tutorial() {
+  const apprentice = useSettings((s) => s.apprentice);
   const [phase, setPhase] = useState<'closed' | 'ask' | 'tour'>('closed');
   const [tour, setTour] = useState<TourId>('main');
   const [i, setI] = useState(0);
@@ -71,13 +85,18 @@ export function Tutorial() {
             <Button variant="outline" className="flex-1 justify-center" onClick={finish}>Skip</Button>
             <Button className="flex-1 justify-center" onClick={() => { setI(0); setPhase('tour'); }}>Show me</Button>
           </div>
+          {/* The offer that matters more than the tour: a tour is forgotten by
+              the second screen, a smaller app is still smaller tomorrow. */}
+          <StartSimple onChosen={finish} />
         </div>
       </Overlay>
     );
   }
 
-  const { slides, done } = TOURS[tour];
-  const s = slides[i];
+  const { slides: fullSlides, done } = TOURS[tour];
+  // Never tour someone through tabs their app does not show.
+  const slides = tour === 'main' && apprentice ? APPRENTICE_SLIDES : fullSlides;
+  const s = slides[Math.min(i, slides.length - 1)];
   const Icon = s.icon;
   const last = i === slides.length - 1;
   return (
@@ -96,6 +115,26 @@ export function Tutorial() {
         </div>
       </div>
     </Overlay>
+  );
+}
+
+/** First-run offer of Apprentice Mode, by name, with the way back stated up front. */
+function StartSimple({ onChosen }: { onChosen: () => void }) {
+  const t = useT();
+  const set = useSettings((s) => s.set);
+  return (
+    <div className="pt-3 border-t border-line text-left">
+      <button
+        onClick={() => { set('apprentice', true); haptic('success'); onChosen(); }}
+        className="w-full rounded-xl border border-accent/50 bg-accent/10 p-3 flex items-start gap-2.5 text-left active:scale-[0.99] transition"
+      >
+        <GraduationCap size={17} className="text-accent shrink-0 mt-0.5" />
+        <span>
+          <span className="block text-sm font-semibold">{t('app.startSimple')}</span>
+          <span className="block text-[11px] text-muted leading-snug">{t('app.startSimpleBody')}</span>
+        </span>
+      </button>
+    </div>
   );
 }
 

@@ -18,6 +18,7 @@ import { useGami } from './state/gamificationStore';
 import { useSocial } from './state/socialStore';
 import { useWorkout } from './state/workoutStore';
 import { watchGym } from './lib/geo';
+import { tabOrder } from './lib/apprentice';
 import { configureBackgroundSync, drainHealthCache, readHealthConnect } from './lib/healthConnect';
 import { ingestGarminWorkouts } from './lib/garminWorkouts';
 import { checkForApkUpdate } from './lib/appUpdate';
@@ -40,6 +41,7 @@ import { toast, celebrate } from './lib/toast';
 // Code-split every screen so the initial route loads a small chunk.
 const Onboarding = lazy(() => import('./screens/onboarding/Onboarding'));
 const Home = lazy(() => import('./screens/Home'));
+const ApprenticeHome = lazy(() => import('./screens/ApprenticeHome'));
 const Train = lazy(() => import('./screens/Train'));
 const Library = lazy(() => import('./screens/Library'));
 const ExerciseDetail = lazy(() => import('./screens/ExerciseDetail'));
@@ -71,12 +73,13 @@ const AddFriend = lazy(() => import('./screens/AddFriend'));
 const RaceJoin = lazy(() => import('./screens/RaceJoin'));
 const Wrapped = lazy(() => import('./screens/Wrapped'));
 
-// Left→right order of the bottom tabs; swiping moves to the neighbour.
-const TAB_ORDER = ['/home', '/train', '/nutrition', '/social', '/quests', '/profile'];
+// Left→right order of the bottom tabs comes from lib/apprentice, so the swipe
+// gesture can never carry someone to a tab their bottom bar does not show.
 
 function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
+  const tabs = tabOrder(useSettings((s) => s.apprentice));
   const touch = useRef<{ x: number; y: number; ok: boolean } | null>(null);
   const geofenceEnabled = useSettings((s) => s.geofenceEnabled);
   const gym = useSettings((s) => s.gym);
@@ -116,12 +119,12 @@ function AppShell() {
     const dx = e.changedTouches[0].clientX - t.x;
     const dy = e.changedTouches[0].clientY - t.y;
     if (Math.abs(dx) < 90 || Math.abs(dx) < Math.abs(dy) * 1.8) return; // mostly-horizontal only
-    const idx = TAB_ORDER.indexOf(location.pathname);
+    const idx = tabs.indexOf(location.pathname);
     if (idx === -1) return; // only on main tab screens
     // Natural carousel feel, works both ways: swipe left → next tab (to the
     // right), swipe right → previous tab (to the left).
     const next = dx < 0 ? idx + 1 : idx - 1;
-    if (next >= 0 && next < TAB_ORDER.length) navigate(TAB_ORDER[next]);
+    if (next >= 0 && next < tabs.length) navigate(tabs[next]);
   }
 
   return (
@@ -151,6 +154,16 @@ function PublicShell() {
       </Suspense>
     </div>
   );
+}
+
+/**
+ * The Home tab is the one screen Apprentice Mode replaces outright rather than
+ * trimming: a beginner's dashboard is a different screen, not a shorter one.
+ * Both are lazy, so only the one in use is downloaded.
+ */
+function HomeRoute() {
+  const apprentice = useSettings((s) => s.apprentice);
+  return apprentice ? <ApprenticeHome /> : <Home />;
 }
 
 function RequireOnboarding({ children }: { children: React.ReactNode }) {
@@ -285,7 +298,7 @@ export default function App() {
               </RequireOnboarding>
             }
           >
-            <Route path="/home" element={<Home />} />
+            <Route path="/home" element={<HomeRoute />} />
             <Route path="/train" element={<Train />} />
             <Route path="/library" element={<Library />} />
             <Route path="/nutrition" element={<Nutrition />} />

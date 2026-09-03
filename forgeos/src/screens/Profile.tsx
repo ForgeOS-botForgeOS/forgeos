@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target, MessageCircle } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
+import { ModeSwitch } from '../components/ModeSwitch';
 import { pushMyActivity } from '../lib/activitySync';
 import { configureBackgroundSync } from '../lib/healthConnect';
 import { checkForApkUpdate } from '../lib/appUpdate';
@@ -254,6 +255,10 @@ export default function Profile() {
         <Button variant="ghost" className="py-1.5 shrink-0" onClick={() => navigate('/shop')}>Shop</Button>
       </Card>
 
+      {/* How much app you want — Apprentice Mode lives here for everyone, so the
+          way in and the way out are the same control in the same place. */}
+      <ModeSwitch />
+
       {/* Goal — changing it recalculates your calories & macros */}
       <div>
         <SectionTitle action={<Target size={14} className="text-muted" />}>Your goal</SectionTitle>
@@ -355,7 +360,7 @@ export default function Profile() {
           </div>
           <Toggle checked={s.autoTheme} onChange={(v) => s.set('autoTheme', v)} />
         </div>
-        <div className="mt-3">
+        <div className={s.apprentice ? 'hidden' : 'mt-3'}>
           <p className="text-sm font-medium mb-2 flex items-center gap-1.5">App design <span className="text-[10px] rounded-full bg-accent/15 text-accent px-1.5 py-0.5 font-semibold">NEW</span></p>
           <div className="space-y-2" data-noswipe>
             {DESIGN_MODES.map((m) => {
@@ -390,7 +395,7 @@ export default function Profile() {
       </div>
 
       {/* Quote genre */}
-      <div>
+      <div className={s.apprentice ? 'hidden' : undefined}>
         <SectionTitle action={<BookOpen size={14} className="text-muted" />}>{t('p.quoteGenre')}</SectionTitle>
         <div className="flex gap-2 flex-wrap" data-noswipe>
           {QUOTE_GENRES.map((g) => (
@@ -404,7 +409,7 @@ export default function Profile() {
       </div>
 
       {/* Toggles */}
-      <div>
+      <div className={s.apprentice ? 'hidden' : undefined}>
         <SectionTitle>{t('p.preferences')}</SectionTitle>
         <Card className="divide-y divide-line">
           <Row label={t('p.publicLeaderboard')} desc="Show your rank to others">
@@ -463,7 +468,7 @@ export default function Profile() {
       </div>
 
       {/* XP -> coin exchange rate */}
-      <div>
+      <div className={s.apprentice ? 'hidden' : undefined}>
         <SectionTitle>XP → Forge Coin rate</SectionTitle>
         <Card>
           <input type="range" min={50} max={300} step={10} value={s.xpToCoinRate} onChange={(e) => s.set('xpToCoinRate', Number(e.target.value))} className="w-full accent-[rgb(var(--accent))]" />

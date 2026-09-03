@@ -482,6 +482,7 @@ export interface Settings {
   setRowDetail: SetRowDetail; // what fills the space under each set: sub-targets / big weight / big reps
   units: 'metric';
   diet: Diet; // filters the cookbook and shifts which nutrients need attention
+  apprentice: boolean; // Apprentice Mode — the simple ForgeOS (4 tabs, one action per screen)
 }
 
 // ---- Quotes ----
