@@ -4,6 +4,7 @@ import { ChevronRight, Dumbbell, Apple, Droplets, Scale, Check, Play, Graduation
 import { Screen } from '../components/Screen';
 import { Card, Button } from '../components/ui';
 import { ModeSwitch } from '../components/ModeSwitch';
+import { FeedbackLink } from '../components/Feedback';
 import { useT } from '../lib/i18n';
 import { useUser } from '../state/userStore';
 import { useWorkout } from '../state/workoutStore';
@@ -110,6 +111,7 @@ export default function ApprenticeHome() {
       <p className="flex items-center justify-center gap-1.5 text-[11px] text-muted/70">
         <GraduationCap size={12} /> {t('app.mode')}
       </p>
+      <FeedbackLink />
     </Screen>
   );
 }

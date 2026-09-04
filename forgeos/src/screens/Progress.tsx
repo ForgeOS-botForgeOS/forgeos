@@ -10,6 +10,7 @@ import { useGami } from '../state/gamificationStore';
 import { useSettings } from '../state/settingsStore';
 import { haptic } from '../lib/haptics';
 import { toast } from '../lib/toast';
+import { prepareImage, uploadErrorMessage } from '../lib/upload';
 import { e1rmSeries } from '../lib/analytics';
 import { exerciseById } from '../data/exercises';
 import { useHealth, sortedDays } from '../state/healthStore';
@@ -192,10 +193,18 @@ function BodyPanel() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    const dataUrl = await compressImage(file, 480, 0.7);
-    addBodyStat({ photo: dataUrl });
-    haptic('success');
-    toast('Progress photo saved 📸');
+    try {
+      // Checked, downscaled and re-encoded (which also strips the GPS tag the
+      // camera wrote into it) before it is stored. A file that will not decode
+      // now says so instead of saving a blank photo.
+      const { dataUrl } = await prepareImage(file, 480, 0.7);
+      addBodyStat({ photo: dataUrl });
+      haptic('success');
+      toast('Progress photo saved 📸');
+    } catch (err) {
+      haptic('warning');
+      toast(uploadErrorMessage(err), 'error');
+    }
   }
 
   return (
@@ -561,25 +570,3 @@ function ConsistencyHeatmap() {
 
 /* ------------------------------ helpers ------------------------------ */
 
-// Downscale + compress an image to a small data URL so progress photos fit in
-// localStorage without bloating it.
-function compressImage(file: File, maxSize: number, quality: number): Promise<string> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    const url = URL.createObjectURL(file);
-    img.onload = () => {
-      const scale = Math.min(1, maxSize / Math.max(img.width, img.height));
-      const w = Math.round(img.width * scale);
-      const h = Math.round(img.height * scale);
-      const canvas = document.createElement('canvas');
-      canvas.width = w;
-      canvas.height = h;
-      const ctx = canvas.getContext('2d');
-      ctx?.drawImage(img, 0, 0, w, h);
-      URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL('image/jpeg', quality));
-    };
-    img.onerror = () => resolve('');
-    img.src = url;
-  });
-}

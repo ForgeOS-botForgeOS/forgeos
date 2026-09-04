@@ -8,6 +8,7 @@ import {
 import { Card, Button, Badge, SectionTitle } from '../components/ui';
 import { useHealth, sortedDays } from '../state/healthStore';
 import { parseHealthText, HEALTH_CSV_TEMPLATE, sleepToMinutes } from '../lib/health';
+import { readTextFile, uploadErrorMessage } from '../lib/upload';
 import { readinessFromDays, recoveryTrend } from '../lib/readiness';
 import { coachInsights, daysUntilInsights } from '../lib/coach';
 import { useWorkout } from '../state/workoutStore';
@@ -339,7 +340,12 @@ function ManualImport({ onImport }: { onImport: (rows: HealthDay[]) => void }) {
         {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? 'Copied' : 'Copy the CSV template'}
       </button>
       <input ref={fileRef} type="file" accept=".csv,.json,.txt,text/csv,application/json,text/plain" className="hidden"
-        onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) analyze(await f.text()); }} />
+        onChange={async (e) => {
+          const f = e.target.files?.[0];
+          e.target.value = '';
+          if (!f) return;
+          try { analyze(await readTextFile(f)); } catch (err) { toast(uploadErrorMessage(err), 'error'); }
+        }} />
     </Card>
   );
 }

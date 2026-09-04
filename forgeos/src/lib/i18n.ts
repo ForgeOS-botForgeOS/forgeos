@@ -66,6 +66,19 @@ const EN: Dict = {
   'train.exercise': 'Exercise',
   'train.rest': 'Rest',
   // nutrition
+  // ---- Feedback (quiet link at the bottom of You and the Apprentice home) ----
+  'fb.link': 'Found a bug, or want something added?',
+  'fb.title': 'Tell us',
+  'fb.bug': 'Something is broken',
+  'fb.idea': 'Idea for the app',
+  'fb.bugHint': 'What happened, and what were you doing when it happened?',
+  'fb.ideaHint': 'What should ForgeOS do that it does not do yet?',
+  'fb.attached': 'Sends your message, the screen you are on and the app version.',
+  'fb.send': 'Send',
+  'fb.thanks': 'Sent — thank you.',
+  'fb.queued': 'Saved. It will send itself when you are back online.',
+  'fb.tooShort': 'A few more words, so it can actually be fixed.',
+  'fb.tooFast': 'One at a time — try again in a moment.',
   // ---- Apprentice Mode (the simple ForgeOS) ----
   'app.mode': 'Apprentice Mode',
   'app.modeSub': 'The simple ForgeOS — one thing at a time',
@@ -528,6 +541,19 @@ const SK: Dict = {
   'train.exercise': 'Cvik',
   'train.rest': 'Pauza',
   // nutrition
+  // ---- Spätná väzba ----
+  'fb.link': 'Našiel si chybu alebo ti niečo chýba?',
+  'fb.title': 'Napíš nám',
+  'fb.bug': 'Niečo je pokazené',
+  'fb.idea': 'Nápad do appky',
+  'fb.bugHint': 'Čo sa stalo a čo si práve robil?',
+  'fb.ideaHint': 'Čo by mal ForgeOS vedieť, čo zatiaľ nevie?',
+  'fb.attached': 'Pošle sa tvoja správa, obrazovka, na ktorej si, a verzia appky.',
+  'fb.send': 'Odoslať',
+  'fb.thanks': 'Odoslané — vďaka.',
+  'fb.queued': 'Uložené. Odošle sa samo, keď budeš online.',
+  'fb.tooShort': 'Napíš ešte pár slov, nech sa to dá opraviť.',
+  'fb.tooFast': 'Po jednom — skús o chvíľu.',
   // ---- Režim Učeň (jednoduchý ForgeOS) ----
   'app.mode': 'Režim Učeň',
   'app.modeSub': 'Jednoduchý ForgeOS — jedna vec naraz',

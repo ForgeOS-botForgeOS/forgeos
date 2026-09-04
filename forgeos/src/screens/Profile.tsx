@@ -4,6 +4,7 @@ import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { ModeSwitch } from '../components/ModeSwitch';
+import { FeedbackLink } from '../components/Feedback';
 import { hashPasscode } from '../lib/appLock';
 import { pushMyActivity } from '../lib/activitySync';
 import { configureBackgroundSync } from '../lib/healthConnect';
@@ -702,6 +703,19 @@ export default function Profile() {
       }}>
         <span className="flex items-center gap-2"><LogOut size={16} /> Sign out</span>
       </Button>
+
+      {/* Quiet on purpose: the last line above the version number, where
+          somebody annoyed enough to report a bug will look, and nobody else. */}
+      <FeedbackLink />
+
+      {/* Required for publishing, and the honest place for them: one line, at
+          the bottom, pointing at pages that live outside the app so they work
+          even when someone has not installed it. */}
+      <p className="text-center text-[11px] text-muted/70">
+        <a href={`${import.meta.env.BASE_URL}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">Privacy</a>
+        {' · '}
+        <a href={`${import.meta.env.BASE_URL}terms.html`} target="_blank" rel="noopener noreferrer" className="underline">Terms</a>
+      </p>
 
       <p className="text-center text-[11px] text-muted pb-2">
         ForgeOS {__APP_VERSION__ === 'dev' ? 'dev build' : `v${__APP_VERSION__}`}

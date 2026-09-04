@@ -1,4 +1,5 @@
 import type { FoodItem } from '../types';
+import { displayTitle } from './sanitize';
 import { cachedProduct, rememberProduct } from './barcodeCache';
 
 // Real, exact macros via barcode — no AI guessing. Uses Open Food Facts (free,
@@ -138,7 +139,9 @@ export async function lookupBarcode(raw: string): Promise<LookupResult> {
     if (!data || data.status !== 1 || !data.product) return { ok: false, reason: 'not-found' };
 
     const p = data.product;
-    const name: string = p.product_name || p.product_name_en || p.generic_name || '';
+    // Open Food Facts is crowd-sourced: the product name is a string a stranger
+    // typed, on its way to a screen and to the food log.
+    const name: string = displayTitle(p.product_name || p.product_name_en || p.generic_name || '');
     const servingG = n(p.serving_quantity) || undefined;
     const per100g = readNutriments(p.nutriments ?? {}, servingG);
 
@@ -152,7 +155,7 @@ export async function lookupBarcode(raw: string): Promise<LookupResult> {
     const product: BarcodeProduct = {
       code,
       name: name || 'Unknown product',
-      brand: p.brands?.split(',')[0]?.trim() || undefined,
+      brand: displayTitle(p.brands?.split(',')[0] ?? '') || undefined,
       per100g,
       servingG,
     };

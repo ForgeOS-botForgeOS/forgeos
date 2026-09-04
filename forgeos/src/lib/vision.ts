@@ -1,4 +1,6 @@
 import type { ScanResult, CardioScan } from '../types';
+import { prepareImage } from './upload';
+import { displayTitle } from './sanitize';
 
 // Meal-photo macro counting via the Cloudflare Worker proxy (VITE_VISION_API_URL).
 // AI keys live server-side in the Worker — never in this bundle, where anyone
@@ -13,7 +15,9 @@ export type CardioSource = 'machine' | 'watch';
 // fitness watch / phone activity screen. Needs the Worker for real reads;
 // returns a believable sample otherwise.
 export async function scanCardio(file: File, source: CardioSource = 'machine'): Promise<CardioScan> {
-  const { data, mime } = await fileToBase64(file);
+  // Validated, downscaled and re-encoded before it leaves the phone — see
+  // lib/upload.ts. Throws UploadError for a file that is not a readable image.
+  const { base64: data, mime } = await prepareImage(file);
   if (!WORKER_URL) {
     await new Promise((r) => setTimeout(r, 700));
     return source === 'watch'
@@ -29,6 +33,10 @@ export async function scanCardio(file: File, source: CardioSource = 'machine'): 
   const out = await res.json();
   if (out.error) throw new VisionError(String(out.error));
   out.confidence = Math.max(0, Math.min(1, out.confidence ?? 0.5));
+  // Model output is text from somewhere else, and it is rendered on a screen.
+  out.machine = displayTitle(out.machine, 'Cardio');
+  out.tip = displayTitle(out.tip);
+  out.avgPace = displayTitle(out.avgPace).slice(0, 20);
   return out as CardioScan;
 }
 
@@ -49,20 +57,22 @@ export function cleanNote(note?: string): string | undefined {
   return clean || undefined;
 }
 
-function fileToBase64(file: File): Promise<{ data: string; mime: string }> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const res = reader.result as string;
-      resolve({ data: res.split(',')[1], mime: file.type || 'image/jpeg' });
-    };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
-
 export function estimateMock(file: File): ScanResult {
   return withItems(MOCK_MEALS[file.size % MOCK_MEALS.length]);
+}
+
+/**
+ * Names and tips come back from a model that was itself fed a photo and a user
+ * note, so they are third-party text on a direct path to the screen — capped
+ * and stripped of anything invisible before anyone sees them.
+ */
+function sanitiseScan(r: ScanResult): ScanResult {
+  return {
+    ...r,
+    name: displayTitle(r.name, 'Meal'),
+    tip: displayTitle(r.tip),
+    items: r.items?.map((it) => ({ ...it, name: displayTitle(it.name, 'Item') })),
+  };
 }
 
 // Guarantee a per-item breakdown (fallback: the whole result as one item).
@@ -87,7 +97,7 @@ export class VisionError extends Error {
  * on-device by `lib/foodDescribe.ts`.
  */
 export async function scanMeal(file: File, note?: string): Promise<ScanResult> {
-  const { data, mime } = await fileToBase64(file);
+  const { base64: data, mime } = await prepareImage(file);
   const hint = cleanNote(note);
 
   // 1) Free Cloudflare Worker (Workers AI) if configured.
@@ -101,7 +111,7 @@ export async function scanMeal(file: File, note?: string): Promise<ScanResult> {
     const out = await res.json();
     if (out.error) throw new VisionError(String(out.error));
     out.confidence = Math.max(0, Math.min(1, out.confidence ?? 0.6));
-    return withItems(out as ScanResult);
+    return withItems(sanitiseScan(out as ScanResult));
   }
 
   // 2) No Worker configured → honest mock so the screen still works offline.

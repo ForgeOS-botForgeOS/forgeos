@@ -17,6 +17,7 @@ import { reportDuelWorkout } from '../lib/duelSync';
 import { Tools } from '../components/train/Tools';
 import { Confetti } from '../components/Celebrate';
 import { toast, celebrate } from '../lib/toast';
+import { UploadError, uploadErrorMessage } from '../lib/upload';
 import { HeavyDrop, type Drop } from '../components/HeavyDrop';
 import { pickHeavyQuote, rollRarity } from '../data/heavyQuotes';
 import { useT } from '../lib/i18n';
@@ -524,8 +525,11 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       const cx = EXERCISES.find((x) => x.category === 'Cardio' && c.machine.toLowerCase().includes(x.name.split(' ')[0].toLowerCase())) ?? EXERCISES.find((x) => x.category === 'Cardio')!;
       addCardioToActive(cx.id, c.durationMin, `${c.distanceKm}km · ${c.calories}kcal${c.avgPace ? ' · ' + c.avgPace : ''}`);
       haptic('success');
-    } catch {
+    } catch (err) {
       haptic('warning');
+      // A refused file has a reason worth reading; anything else stays quiet
+      // because the screen already offers manual entry.
+      if (err instanceof UploadError) toast(uploadErrorMessage(err), 'error');
     } finally {
       setCardioBusy(false);
       e.target.value = '';

@@ -476,3 +476,47 @@ revoke execute on function public.guard_duel_update() from public, anon, authent
 do $$ begin
   alter publication supabase_realtime add table feed_posts;
 exception when duplicate_object then null; end $$;
+
+-- ---------------------------------------------------------------------------
+-- Feedback: bug reports and ideas sent from inside the app.
+--
+-- Insert-only on purpose. A phone can post one and can never read any — not
+-- even its own — because there is no select policy at all; only the service
+-- role (dashboard/operator) sees the box. The rate-limit trigger must be
+-- SECURITY DEFINER for exactly that reason: as the caller it would count zero
+-- rows every time and never fire.
+-- ---------------------------------------------------------------------------
+create table if not exists feedback (
+  id uuid primary key default gen_random_uuid(),
+  created_at timestamptz not null default now(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  kind text not null check (kind in ('bug','idea')),
+  body text not null check (char_length(body) between 3 and 1200),
+  screen text check (screen is null or char_length(screen) <= 60),
+  app_version text check (app_version is null or char_length(app_version) <= 32),
+  platform text check (platform is null or char_length(platform) <= 16),
+  mode text check (mode is null or char_length(mode) <= 16),
+  handled boolean not null default false
+);
+create index if not exists feedback_created_idx on feedback (created_at desc);
+create index if not exists feedback_user_idx on feedback (user_id);
+alter table feedback enable row level security;
+drop policy if exists "feedback insert" on feedback;
+create policy "feedback insert" on feedback for insert with check (auth.uid() = user_id);
+revoke update, delete on feedback from anon, authenticated;
+
+create or replace function public.limit_feedback_rate()
+returns trigger language plpgsql security definer set search_path = public as $$
+begin
+  if (select count(*) from public.feedback
+      where user_id = new.user_id and created_at > now() - interval '1 hour') >= 10 then
+    raise exception 'too many messages — try again later';
+  end if;
+  new.created_at := now();   -- the client does not choose the timestamp
+  new.handled := false;
+  return new;
+end; $$;
+drop trigger if exists limit_feedback_rate on feedback;
+create trigger limit_feedback_rate before insert on feedback
+  for each row execute function public.limit_feedback_rate();
+revoke execute on function public.limit_feedback_rate() from public, anon, authenticated;

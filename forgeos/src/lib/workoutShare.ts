@@ -1,4 +1,5 @@
 import type { CardioLog, SubTargetKind, Workout, WorkoutExercise } from '../types';
+import { displayTitle } from './sanitize';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -40,7 +41,7 @@ function fromBase64Url(code: string): string {
 export function toSharedWorkout(w: Workout): SharedWorkout {
   const groupTag = new Map<string, number>();
   return {
-    name: w.name,
+    name: displayTitle(w.name, 'Shared workout'),
     exercises: w.exercises.map((e) => {
       let tag: number | undefined;
       if (e.supersetGroup) {

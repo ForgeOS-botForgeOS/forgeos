@@ -27,6 +27,7 @@ import { announceIfUpdated } from './lib/updateNotice';
 import { useHealth } from './state/healthStore';
 import { haptic } from './lib/haptics';
 import { hashPasscode, isLegacyPasscode } from './lib/appLock';
+import { flushFeedbackQueue } from './lib/feedback';
 import { initAuth } from './lib/auth';
 import { startReminderScheduler } from './lib/reminders';
 import { onReconnect, syncQueue } from './lib/offlineQueue';
@@ -185,6 +186,9 @@ export default function App() {
 
   // Complete a Spotify login if we just came back from its consent screen.
   useEffect(() => { void handleSpotifyCallback(); }, []);
+
+  // Anything that could not be sent last time (no signal, no session) goes now.
+  useEffect(() => { void flushFeedbackQueue(); }, []);
 
   // A friend invite opened before sign-up is stashed; apply it once onboarded.
   useEffect(() => {

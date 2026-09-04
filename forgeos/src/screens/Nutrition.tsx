@@ -7,6 +7,7 @@ import { useNutrition } from '../state/nutritionStore';
 import { useUser } from '../state/userStore';
 import { scanMeal, visionIsLive, estimateMock } from '../lib/vision';
 import { scanDescription } from '../lib/foodDescribe';
+import { UploadError, uploadErrorMessage } from '../lib/upload';
 import { RECIPES } from '../data/recipes';
 import { useSettings } from '../state/settingsStore';
 import { useT } from '../lib/i18n';
@@ -95,6 +96,13 @@ export default function Nutrition() {
       openItems(await scanMeal(file, desc), desc.trim() ? 'Your description was sent with the photo.' : undefined);
       haptic('success');
     } catch (err) {
+      if (err instanceof UploadError) {
+        // A file we refused to send is not an AI failure — say what happened
+        // instead of inventing a meal from a mock.
+        setScanNote(uploadErrorMessage(err));
+        haptic('warning');
+        return;
+      }
       openItems(estimateMock(file));
       setScanNote(err instanceof Error ? `${err.message} Showing an estimate instead.` : 'AI unavailable — showing an estimate.');
       haptic('warning');

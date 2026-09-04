@@ -1,3 +1,4 @@
+import { prepareImage, readTextFile } from '../upload';
 import { LANE_TRUST, type LaneId, type TrustLevel } from './canonical';
 
 // One ingestion interface for all three lanes. Each returns a STRUCTURED object
@@ -39,7 +40,9 @@ function xmlToObj(node: Element): unknown {
 }
 
 async function parseFile(file: File): Promise<unknown> {
-  const text = await file.text();
+  // Checked before it is read: an 800 MB "export" should be a sentence on the
+  // screen, not a dead tab.
+  const text = await readTextFile(file);
   const name = file.name.toLowerCase();
   if (name.endsWith('.json') || text.trim().startsWith('{') || text.trim().startsWith('[')) return JSON.parse(text);
   if (name.endsWith('.xml') || text.trim().startsWith('<')) {
@@ -102,11 +105,8 @@ function safeJson(s: string): unknown {
   const m = s.match(/\{[\s\S]*\}/);
   try { return JSON.parse(m ? m[0] : s); } catch { return null; }
 }
-function fileToBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const r = new FileReader();
-    r.onload = () => resolve(String(r.result).split(',')[1] ?? '');
-    r.onerror = reject;
-    r.readAsDataURL(file);
-  });
+/** Screenshots take the same route as every other upload: checked, downscaled,
+ *  re-encoded (EXIF and its GPS tag dropped) before any of it leaves the phone. */
+async function fileToBase64(file: File): Promise<string> {
+  return (await prepareImage(file)).base64;
 }

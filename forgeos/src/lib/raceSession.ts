@@ -1,4 +1,5 @@
 import type { Workout } from '../types';
+import { displayName } from './sanitize';
 import { joinRaceChannel, type RaceChannel } from './supabase';
 import {
   hasFinished, newRaceConfig, raceEndsAt, resolveWinner,
@@ -45,7 +46,9 @@ function myRacer(): RaceBroadcast {
 function attachChannel(config: RaceConfig, me: RaceBroadcast): boolean {
   channel = joinRaceChannel(config.raceId, me, {
     onProgress: (u) => {
-      useRace.getState().applyUpdate(u);
+      // A racer's name arrives over a channel anyone who knows its id can join,
+      // so it is cleaned before it reaches the leaderboard on screen.
+      useRace.getState().applyUpdate({ ...u, name: displayName(u.name) });
       armTimedEnd();
       checkOutcome();
     },

@@ -1,4 +1,6 @@
 import type { Friend } from '../types';
+import { displayName, displayTitle } from './sanitize';
+import { randomId } from './rand';
 
 // Friend invites without a backend: the inviter's real profile snapshot is
 // packed into the share link itself, so when another ForgeOS user opens it we
@@ -57,13 +59,15 @@ export function tryExtractInvite(raw: string): InvitePayload | null {
 }
 
 export function friendFromInvite(p: InvitePayload): Friend {
+  // Every field here was decoded from a link a stranger can write by hand.
+  const name = displayName(p.name);
   return {
-    id: Math.random().toString(36).slice(2, 10),
-    name: p.name,
-    rank: p.rank,
+    id: randomId(),
+    name,
+    rank: displayTitle(p.rank, 'Bronze I'),
     xp: p.xp,
     online: false,
-    avatarSeed: p.seed || p.name.slice(0, 2).toUpperCase(),
+    avatarSeed: displayTitle(p.seed).slice(0, 2).toUpperCase() || name.slice(0, 2).toUpperCase(),
     streak: p.streak,
     lastActiveISO: new Date().toISOString(),
     friendCode: p.code,

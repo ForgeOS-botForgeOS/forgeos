@@ -1,3 +1,5 @@
+import { readTextFile } from './upload';
+
 // One-tap backup/restore of all ForgeOS data (everything lives under forge-* in
 // localStorage). Export downloads a JSON file; import restores then reloads.
 // The same dump powers cloud sync (see lib/cloudSync.ts).
@@ -94,7 +96,9 @@ export function exportData(): void {
 }
 
 export async function importData(file: File): Promise<void> {
-  const dump = JSON.parse(await file.text()) as BackupDump;
+  // Type and size are checked before the file is read; applyDump then validates
+  // every blob inside it, and refuses to let a file change the app lock.
+  const dump = JSON.parse(await readTextFile(file)) as BackupDump;
   applyDump(dump);
   location.reload(); // re-hydrate every store from restored data
 }

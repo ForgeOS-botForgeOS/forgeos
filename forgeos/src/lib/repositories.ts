@@ -1,4 +1,5 @@
 import { supabase, isBackendLive } from './supabase';
+import { displayBody, displayName, LIMITS } from './sanitize';
 import type { FeedPost, Friend, PR, UserProfile, Workout } from '../types';
 import type { FriendActivity, FriendSession } from './friendActivity';
 import { rankForXp, rankLabel } from '../data/ranks';
@@ -57,6 +58,11 @@ export async function pushWorkout(userId: string, w: Workout): Promise<boolean> 
   return true;
 }
 
+// Everything below reads rows other people wrote. Names and bodies are cleaned
+// at this boundary — one place to audit, rather than at every place they are
+// rendered. (React escapes markup already; this is about invisible characters,
+// impersonation and length. See lib/sanitize.ts.)
+
 // ---- Feed ----
 export async function fetchFeed(): Promise<FeedPost[] | null> {
   if (!isBackendLive || !supabase) return null;
@@ -67,13 +73,13 @@ export async function fetchFeed(): Promise<FeedPost[] | null> {
     .limit(50);
   if (error || !data) return null;
   return data.map((r) => {
-    const name = (r as { author_name?: string }).author_name ?? 'Athlete';
+    const name = displayName((r as { author_name?: string }).author_name);
     return {
       id: r.id,
       authorId: r.author_id,
       authorName: name,
       avatarSeed: name.slice(0, 2).toUpperCase(),
-      body: r.body ?? '',
+      body: displayBody(r.body, LIMITS.post),
       workoutSummary: r.workout_summary ?? undefined,
       createdAt: r.created_at,
       reactions: {},
@@ -233,7 +239,7 @@ type Row = Record<string, unknown>;
 function rowToProfile(r: Row): UserProfile {
   return {
     id: String(r.id),
-    name: (r.name as string) ?? 'Athlete',
+    name: displayName(r.name),
     email: (r.email as string) ?? undefined,
     sex: (r.sex as UserProfile['sex']) ?? 'male',
     age: (r.age as number) ?? 28,
