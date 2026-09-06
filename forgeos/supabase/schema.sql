@@ -417,7 +417,11 @@ create table if not exists duels (
   opponent_progress numeric not null default 0 check (opponent_progress >= 0),
   ends_at timestamptz not null,
   created_at timestamptz not null default now(),
-  updated_at timestamptz not null default now()
+  updated_at timestamptz not null default now(),
+  -- A challenge is an offer: it counts nothing until the opponent accepts.
+  -- Defaults to 'active' so duels that predate this column keep running.
+  -- (Applied to production in migrations/2026-09-06-duel-accept-decline.sql.)
+  state text not null default 'active' check (state in ('pending', 'active', 'declined'))
 );
 create index if not exists duels_challenger_idx on duels (challenger);
 create index if not exists duels_opponent_idx on duels (opponent);
@@ -447,23 +451,37 @@ create policy "participants update progress" on duels for update using (
   auth.uid() = challenger or auth.uid() = opponent
 );
 revoke update on duels from anon, authenticated;
-grant update (challenger_progress, opponent_progress, updated_at) on duels to authenticated;
+grant update (challenger_progress, opponent_progress, state, updated_at) on duels to authenticated;
 
+-- Who may write `state` is the whole point of it, so the trigger decides by
+-- whom and to what: the challenger can never answer their own challenge, and
+-- the opponent answers exactly once, only out of 'pending'.
 create or replace function public.guard_duel_update()
 returns trigger language plpgsql security invoker set search_path = public as $$
 begin
   if auth.uid() = old.challenger then
     new.opponent_progress := old.opponent_progress;
+    new.state := old.state;
   elsif auth.uid() = old.opponent then
     new.challenger_progress := old.challenger_progress;
+    if old.state <> 'pending' or new.state not in ('active', 'declined') then
+      new.state := old.state;
+    end if;
   else
     raise exception 'not a duel participant';
   end if;
   new.id := old.id; new.challenger := old.challenger; new.opponent := old.opponent;
   new.metric := old.metric; new.target := old.target; new.ends_at := old.ends_at;
   new.created_at := old.created_at;
-  new.challenger_progress := greatest(new.challenger_progress, old.challenger_progress);
-  new.opponent_progress := greatest(new.opponent_progress, old.opponent_progress);
+  -- Accepting starts the contest from zero; every other write may only raise a
+  -- score, never lower one.
+  if old.state = 'pending' and new.state = 'active' then
+    new.challenger_progress := 0;
+    new.opponent_progress := 0;
+  else
+    new.challenger_progress := greatest(new.challenger_progress, old.challenger_progress);
+    new.opponent_progress := greatest(new.opponent_progress, old.opponent_progress);
+  end if;
   return new;
 end; $$;
 drop trigger if exists guard_duel_update on duels;

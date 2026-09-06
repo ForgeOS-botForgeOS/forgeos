@@ -364,7 +364,7 @@ export default function Onboarding() {
             <p className="text-sm font-semibold">Special requests</p>
             <div className="flex items-center justify-between">
               <span className="text-sm">Don’t train on weekends</span>
-              <Toggle checked={noWeekends} onChange={setNoWeekends} />
+              <Toggle label="Don’t train on weekends" checked={noWeekends} onChange={setNoWeekends} />
             </div>
             <textarea
               value={specialRequest}

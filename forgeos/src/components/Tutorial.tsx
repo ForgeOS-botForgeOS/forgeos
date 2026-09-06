@@ -101,7 +101,7 @@ export function Tutorial() {
   const last = i === slides.length - 1;
   return (
     <Overlay>
-      <button className="absolute top-3 right-3 text-muted" onClick={finish}><X size={18} /></button>
+      <button aria-label="Close the tour" className="absolute top-3 right-3 text-muted" onClick={finish}><X size={18} /></button>
       <div className="text-center space-y-3">
         <div className="mx-auto w-14 h-14 rounded-2xl bg-accent/15 flex items-center justify-center"><Icon className="text-accent" size={26} /></div>
         <h3 className="text-lg font-bold">{s.title}</h3>

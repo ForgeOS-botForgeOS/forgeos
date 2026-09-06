@@ -1,7 +1,8 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { CardioLog, CardioMetric, PR, SetEntry, SpotifyTrack, Workout, WorkoutExercise } from '../types';
+import type { CardioLog, CardioMetric, PR, Routine, SetEntry, SpotifyTrack, Workout, WorkoutExercise } from '../types';
 import { e1rm, volumeOf } from '../lib/fitness';
+import { markRoutineUsed, routineFromWorkout, routinesFromFavourites, suggestRoutineName } from '../lib/routines';
 import { exerciseById, EXERCISES } from '../data/exercises';
 import { enqueue } from '../lib/offlineQueue';
 import { pushPRsRemote } from '../lib/repositories';
@@ -10,14 +11,23 @@ import { useGami } from './gamificationStore';
 import { useSettings } from './settingsStore';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+const cleanName = (n: string) => n.replace(/\s+/g, ' ').trim().slice(0, 40);
 
 interface WorkoutState {
   history: Workout[];
   active: Workout | null;
   prs: PR[];
   customExerciseIds: string[];
-  favouriteIds: string[]; // history workout ids the user pinned as go-to routines
-  toggleFavourite: (id: string) => void;
+  /** Named, reusable sessions. Replaced the old starred-history favourites. */
+  routines: Routine[];
+  /** Save a finished session (or the live one) as a named routine. */
+  saveRoutine: (workoutId: string, name: string) => Routine | null;
+  /** Start a fresh session from a routine — its sets/reps/weights pre-filled. */
+  startRoutine: (id: string) => boolean;
+  renameRoutine: (id: string, name: string) => void;
+  deleteRoutine: (id: string) => void;
+  /** The name to offer in the "save as routine" box for a given workout. */
+  suggestName: (workoutId: string) => string;
 
   startWorkout: (
     name: string,
@@ -102,13 +112,35 @@ export const useWorkout = create<WorkoutState>()(
       active: null,
       prs: [],
       customExerciseIds: [],
-      favouriteIds: [],
+      routines: [],
 
-      toggleFavourite: (id) => set({
-        favouriteIds: get().favouriteIds.includes(id)
-          ? get().favouriteIds.filter((x) => x !== id)
-          : [...get().favouriteIds, id],
+      saveRoutine: (workoutId, name) => {
+        const source = get().history.find((w) => w.id === workoutId) ?? (get().active?.id === workoutId ? get().active : null);
+        if (!source) return null;
+        const routine = routineFromWorkout(source, name, uid());
+        if (routine.exerciseIds.length === 0) return null;
+        set({ routines: [routine, ...get().routines] });
+        return routine;
+      },
+
+      startRoutine: (id) => {
+        const r = get().routines.find((x) => x.id === id);
+        if (!r || r.exerciseIds.length === 0) return false;
+        get().startWorkout(r.name, r.exerciseIds, { targets: r.targets });
+        set({ routines: get().routines.map((x) => (x.id === id ? markRoutineUsed(x) : x)) });
+        return true;
+      },
+
+      renameRoutine: (id, name) => set({
+        routines: get().routines.map((r) => (r.id === id ? { ...r, name: cleanName(name) || r.name } : r)),
       }),
+
+      deleteRoutine: (id) => set({ routines: get().routines.filter((r) => r.id !== id) }),
+
+      suggestName: (workoutId) => {
+        const w = get().history.find((x) => x.id === workoutId) ?? (get().active?.id === workoutId ? get().active : null);
+        return w ? suggestRoutineName(w, (exId) => exerciseById(exId)?.name) : 'My routine';
+      },
 
       startWorkout: (name, exerciseIds = [], opts = {}) => {
         const seedWeight = opts.maxWeightKg ? Math.min(20, opts.maxWeightKg) : 20;
@@ -409,6 +441,23 @@ export const useWorkout = create<WorkoutState>()(
         return pr?.e1rm ?? 0;
       },
     }),
-    { name: 'forge-workouts' },
+    {
+      name: 'forge-workouts',
+      version: 1,
+      // v0 -> v1: starred history rows become real, named routines. A favourite
+      // was only a pin on a session that history could later drop; a routine
+      // owns its own copy, so nothing pinned is lost when history is trimmed.
+      migrate: (persisted, from) => {
+        const state = (persisted ?? {}) as Partial<WorkoutState> & { favouriteIds?: string[] };
+        if (from >= 1 || !state.favouriteIds?.length) return state as WorkoutState;
+        const migrated = routinesFromFavourites(
+          state.favouriteIds,
+          state.history ?? [],
+          (exId) => exerciseById(exId)?.name,
+          () => Math.random().toString(36).slice(2, 10),
+        );
+        return { ...state, routines: [...(state.routines ?? []), ...migrated], favouriteIds: undefined } as WorkoutState;
+      },
+    },
   ),
 );

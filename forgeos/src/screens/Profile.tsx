@@ -27,6 +27,7 @@ import { cosmeticById } from '../data/cosmetics';
 import { openTutorial } from '../components/Tutorial';
 import { ChangePasswordSheet, PasscodeSheet } from '../components/SecuritySheets';
 import { toast } from '../lib/toast';
+import { askConfirm } from '../lib/dialog';
 import { pushCloudBackup, pullCloudBackup, cloudSyncAvailable } from '../lib/cloudSync';
 import { signOutEverywhere } from '../lib/supabase';
 import { useWorkout } from '../state/workoutStore';
@@ -360,7 +361,7 @@ export default function Profile() {
             <p className="text-sm">Auto day / night</p>
             <p className="text-[11px] text-muted">Light by day, dark at night</p>
           </div>
-          <Toggle checked={s.autoTheme} onChange={(v) => s.set('autoTheme', v)} />
+          <Toggle label="Auto day / night" checked={s.autoTheme} onChange={(v) => s.set('autoTheme', v)} />
         </div>
         <div className={s.apprentice ? 'hidden' : 'mt-3'}>
           <p className="text-sm font-medium mb-2 flex items-center gap-1.5">App design <span className="text-[10px] rounded-full bg-accent/15 text-accent px-1.5 py-0.5 font-semibold">NEW</span></p>
@@ -415,19 +416,19 @@ export default function Profile() {
         <SectionTitle>{t('p.preferences')}</SectionTitle>
         <Card className="divide-y divide-line">
           <Row label={t('p.publicLeaderboard')} desc="Show your rank to others">
-            <Toggle checked={s.leaderboardPublic} onChange={(v) => s.set('leaderboardPublic', v)} />
+            <Toggle label={t('p.publicLeaderboard')} checked={s.leaderboardPublic} onChange={(v) => s.set('leaderboardPublic', v)} />
           </Row>
           <Row label="Share activity" desc="Let friends see your real sessions & PRs">
-            <Toggle checked={s.shareActivity} onChange={(v) => { s.set('shareActivity', v); void pushMyActivity(); }} />
+            <Toggle label="Share activity" checked={s.shareActivity} onChange={(v) => { s.set('shareActivity', v); void pushMyActivity(); }} />
           </Row>
           <Row label={t('p.streakGambling')} desc="Wager coins on session targets">
-            <Toggle checked={s.streakGambling} onChange={(v) => s.set('streakGambling', v)} />
+            <Toggle label={t('p.streakGambling')} checked={s.streakGambling} onChange={(v) => s.set('streakGambling', v)} />
           </Row>
           <Row label="Pre-fill from last time" desc="New sets start at your last weights and reps">
-            <Toggle checked={s.prefillWeights} onChange={(v) => s.set('prefillWeights', v)} />
+            <Toggle label="Pre-fill from last time" checked={s.prefillWeights} onChange={(v) => s.set('prefillWeights', v)} />
           </Row>
           <Row label="Rest timer" desc="Auto-open the rest countdown after each set">
-            <Toggle checked={s.restTimerEnabled} onChange={(v) => s.set('restTimerEnabled', v)} />
+            <Toggle label="Rest timer" checked={s.restTimerEnabled} onChange={(v) => s.set('restTimerEnabled', v)} />
           </Row>
           <div className="py-3" data-noswipe>
             <p className="text-sm">Set card focus</p>
@@ -439,31 +440,36 @@ export default function Profile() {
             </div>
           </div>
           <Row label="Voice cues" desc="Speak the next set aloud during a workout">
-            <Toggle checked={s.voiceCoach} onChange={(v) => s.set('voiceCoach', v)} />
+            <Toggle label="Voice cues" checked={s.voiceCoach} onChange={(v) => s.set('voiceCoach', v)} />
           </Row>
           <Row label="Progress charts" desc="PR timeline & XP growth curve on the Quests screen">
-            <Toggle checked={s.showProgressCharts} onChange={(v) => s.set('showProgressCharts', v)} />
+            <Toggle label="Progress charts" checked={s.showProgressCharts} onChange={(v) => s.set('showProgressCharts', v)} />
           </Row>
           <Row label={t('p.marketplace')} desc="Buy & sell programs">
-            <Toggle checked={s.marketplaceEnabled} onChange={(v) => s.set('marketplaceEnabled', v)} />
+            <Toggle label={t('p.marketplace')} checked={s.marketplaceEnabled} onChange={(v) => s.set('marketplaceEnabled', v)} />
           </Row>
           <Row label={t('p.haptics')} desc="Vibration feedback">
-            <Toggle checked={s.hapticsEnabled} onChange={(v) => s.set('hapticsEnabled', v)} />
+            <Toggle label={t('p.haptics')} checked={s.hapticsEnabled} onChange={(v) => s.set('hapticsEnabled', v)} />
+          </Row>
+          {/* Independent of Apprentice Mode on purpose: gloves, cold hands and
+              long nails are a different problem from being new to the app. */}
+          <Row label={t('p.bigControls')} desc={t('p.bigControlsDesc')}>
+            <Toggle label={t('p.bigControls')} checked={s.a11yLargeTargets} onChange={(v) => { s.set('a11yLargeTargets', v); haptic('tap'); }} />
           </Row>
           <Row label={t('p.geofence')} desc="“Welcome to the Forge” check-in">
-            <Toggle checked={s.geofenceEnabled} onChange={(v) => s.set('geofenceEnabled', v)} />
+            <Toggle label={t('p.geofence')} checked={s.geofenceEnabled} onChange={(v) => s.set('geofenceEnabled', v)} />
           </Row>
           <Row label="Health & recovery" desc="Sleep, readiness & Garmin sync">
-            <Toggle checked={s.recoveryEnabled} onChange={(v) => { s.set('recoveryEnabled', v); void configureBackgroundSync(v, { bedtime: s.bedtimeNudge }); }} />
+            <Toggle label="Health & recovery" checked={s.recoveryEnabled} onChange={(v) => { s.set('recoveryEnabled', v); void configureBackgroundSync(v, { bedtime: s.bedtimeNudge }); }} />
           </Row>
           {s.recoveryEnabled && (
             <Row label="Bedtime reminder" desc="Evening nudge when sleep debt builds">
-              <Toggle checked={s.bedtimeNudge} onChange={(v) => { s.set('bedtimeNudge', v); void configureBackgroundSync(true, { bedtime: v }); }} />
+              <Toggle label="Bedtime reminder" checked={s.bedtimeNudge} onChange={(v) => { s.set('bedtimeNudge', v); void configureBackgroundSync(true, { bedtime: v }); }} />
             </Row>
           )}
           {s.recoveryEnabled && (
             <Row label="Import watch workouts" desc="Garmin runs & sessions join your history">
-              <Toggle checked={s.autoImportWorkouts} onChange={(v) => s.set('autoImportWorkouts', v)} />
+              <Toggle label="Import watch workouts" checked={s.autoImportWorkouts} onChange={(v) => s.set('autoImportWorkouts', v)} />
             </Row>
           )}
         </Card>
@@ -556,7 +562,7 @@ export default function Profile() {
           <p className="text-[11px] text-muted -mt-1">Your streak counts <b>weeks</b> you hit this many planned sessions — not daily gym days.</p>
           <div className="flex items-center justify-between">
             <div><p className="text-sm">Heavy-set quote drops</p><p className="text-[11px] text-muted">Rare/legendary quotes past 100 kg</p></div>
-            <Toggle checked={s.heavyQuotesEnabled} onChange={(v) => s.set('heavyQuotesEnabled', v)} />
+            <Toggle label="Heavy-set quote drops" checked={s.heavyQuotesEnabled} onChange={(v) => s.set('heavyQuotesEnabled', v)} />
           </div>
         </Card>
       </div>
@@ -571,7 +577,7 @@ export default function Profile() {
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm">Daily reminder</span>
-            <Toggle checked={s.reminder.enabled} onChange={async (v) => { if (v) { const ok = await requestNotifyPermission(); if (!ok) { toast('Enable notifications in your browser to use reminders.', 'error'); return; } } s.set('reminder', { ...s.reminder, enabled: v }); }} />
+            <Toggle label="Daily reminder" checked={s.reminder.enabled} onChange={async (v) => { if (v) { const ok = await requestNotifyPermission(); if (!ok) { toast('Enable notifications in your browser to use reminders.', 'error'); return; } } s.set('reminder', { ...s.reminder, enabled: v }); }} />
           </div>
           {s.reminder.enabled && (
             <>
@@ -599,7 +605,7 @@ export default function Profile() {
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
             <div><p className="text-sm">Shareable profile</p><p className="text-[11px] text-muted">Let others view your rank & stats via a link</p></div>
-            <Toggle checked={s.publicProfile} onChange={(v) => s.set('publicProfile', v)} />
+            <Toggle label="Shareable profile" checked={s.publicProfile} onChange={(v) => s.set('publicProfile', v)} />
           </div>
           {s.publicProfile ? (
             <div className="flex gap-2">
@@ -618,7 +624,7 @@ export default function Profile() {
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
             <div><p className="text-sm">App passcode lock</p><p className="text-[11px] text-muted">Ask for a code on launch</p></div>
-            <Toggle checked={s.appLock.enabled} onChange={(v) => {
+            <Toggle label="App passcode lock" checked={s.appLock.enabled} onChange={(v) => {
               if (v) setPasscodeSheet('set');
               else s.set('appLock', { enabled: false, code: '' });
             }} />
@@ -696,7 +702,12 @@ export default function Profile() {
       </div>
 
       <Button variant="outline" className="w-full justify-center text-danger" onClick={async () => {
-        if (!confirm('Sign out and reset this device’s profile? Your cloud account stays saved.')) return;
+        if (!(await askConfirm({
+          title: 'Sign out of this device?',
+          body: 'This device’s profile is cleared. Your cloud account and everything synced to it stay saved.',
+          confirmLabel: 'Sign out',
+          tone: 'danger',
+        }))) return;
         await signOutEverywhere(); // kill the Supabase session + block auto re-sign-in
         reset();
         navigate('/onboarding', { replace: true });

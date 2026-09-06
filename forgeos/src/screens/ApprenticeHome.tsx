@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronRight, Dumbbell, Apple, Droplets, Scale, Check, Play, GraduationCap } from 'lucide-react';
+import { Dumbbell, Apple, Droplets, Scale, Check, Play, GraduationCap } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button } from '../components/ui';
+import { ActionRow } from '../components/ActionList';
 import { ModeSwitch } from '../components/ModeSwitch';
 import { FeedbackLink } from '../components/Feedback';
+import { SearchBar } from '../components/AppSearch';
 import { useT } from '../lib/i18n';
 import { useUser } from '../state/userStore';
 import { useWorkout } from '../state/workoutStore';
@@ -57,6 +59,11 @@ export default function ApprenticeHome() {
 
   return (
     <Screen title={`${t('app.hi')}, ${profile?.name ?? 'Athlete'}`} subtitle={t('app.modeSub')}>
+      {/* 0 — one box that finds anything. Above the fold because "where is it?"
+             is the question this whole mode exists to answer; the habit map
+             below is the same answer for the six things people ask for most. */}
+      <SearchBar />
+
       {/* 1 — the one thing to do, in one sentence, with one button */}
       <Card className="space-y-3 border-accent/40 bg-accent/5">
         <p className="text-[11px] uppercase tracking-wide text-muted">{t('app.next')}</p>
@@ -83,19 +90,9 @@ export default function ApprenticeHome() {
       <Card className="space-y-1">
         <p className="text-sm font-bold">{t('app.find')}</p>
         <p className="text-[11px] text-muted pb-1">{t('app.findSub')}</p>
-        <div className="divide-y divide-line">
+        <div className="divide-y divide-line/70">
           {FIND_IT.map((e) => (
-            <button
-              key={e.id}
-              onClick={() => navigate(e.route)}
-              className="w-full flex items-center gap-3 py-2.5 text-left active:opacity-70"
-            >
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium">{t(e.labelKey)}</p>
-                <p className="text-[11px] text-muted truncate">{t(e.whereKey)}</p>
-              </div>
-              <ChevronRight size={15} className="text-muted shrink-0" />
-            </button>
+            <ActionRow key={e.id} title={t(e.labelKey)} detail={t(e.whereKey)} onClick={() => navigate(e.route)} />
           ))}
         </div>
       </Card>

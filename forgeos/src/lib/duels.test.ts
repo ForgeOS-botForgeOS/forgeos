@@ -1,6 +1,21 @@
-import { describe, expect, test } from 'vitest';
+import { describe, expect, it, test } from 'vitest';
 import type { Duel, Workout } from '../types';
-import { applyMyGain, duelGainFromWorkout, isLiveDuel, mergeTheirProgress, settleAtDeadline } from './duels';
+import {
+  acceptDuel,
+  activeDuels,
+  applyMyGain,
+  declineDuel,
+  duelGainFromWorkout,
+  expireIfUnanswered,
+  incomingDuels,
+  isAwaitingMyAnswer,
+  isAwaitingTheirAnswer,
+  isFinished,
+  isLiveDuel,
+  mergeTheirProgress,
+  respondByFrom,
+  settleAtDeadline,
+} from './duels';
 
 const IN_AN_HOUR = new Date(Date.now() + 3_600_000).toISOString();
 
@@ -121,5 +136,93 @@ describe('isLiveDuel', () => {
   test('live means a table side is assigned', () => {
     expect(isLiveDuel(duel())).toBe(false);
     expect(isLiveDuel(duel({ side: 'challenger', opponentId: 'x' }))).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Accept / decline: a challenge is an offer, not a fact.
+// ---------------------------------------------------------------------------
+describe('answering a challenge', () => {
+  const pending = (over: Partial<Duel> = {}): Duel => ({
+    id: 'd1',
+    opponentName: 'Rival',
+    opponentAvatar: 'RI',
+    metric: 'volume',
+    target: 10000,
+    myProgress: 0,
+    theirProgress: 0,
+    createdAt: '2026-09-01T00:00:00.000Z',
+    endsAt: '2026-09-08T00:00:00.000Z',
+    status: 'pending',
+    side: 'opponent',
+    ...over,
+  });
+
+  it('is waiting on me when they challenged me, and on them when I challenged', () => {
+    expect(isAwaitingMyAnswer(pending())).toBe(true);
+    expect(isAwaitingTheirAnswer(pending())).toBe(false);
+    expect(isAwaitingMyAnswer(pending({ side: 'challenger' }))).toBe(false);
+    expect(isAwaitingTheirAnswer(pending({ side: 'challenger' }))).toBe(true);
+  });
+
+  it('scores nothing while it is unanswered — you cannot lose a duel you never took', () => {
+    const after = applyMyGain(pending(), 9999, true);
+    expect(after.myProgress).toBe(0);
+    expect(after.status).toBe('pending');
+    expect(mergeTheirProgress(pending(), 9999).theirProgress).toBe(0);
+  });
+
+  it('starts both sides from zero on accept, whenever the challenge was sent', () => {
+    const accepted = acceptDuel(pending({ myProgress: 400, theirProgress: 900 }));
+    expect(accepted.status).toBe('active');
+    expect(accepted.myProgress).toBe(0);
+    expect(accepted.theirProgress).toBe(0);
+  });
+
+  it('counts progress only after it has been accepted', () => {
+    const after = applyMyGain(acceptDuel(pending()), 500, false);
+    expect(after.myProgress).toBe(500);
+  });
+
+  it('declining ends it with no winner and no score', () => {
+    const declined = declineDuel(pending());
+    expect(declined.status).toBe('declined');
+    expect(isFinished(declined)).toBe(true);
+  });
+
+  it('cannot accept or decline a duel that already resolved', () => {
+    const won = pending({ status: 'won' });
+    expect(acceptDuel(won)).toBe(won);
+    expect(declineDuel(won)).toBe(won);
+  });
+
+  it('lapses an unanswered challenge instead of handing the challenger a walkover', () => {
+    const d = pending({ respondBy: '2026-09-03T00:00:00.000Z' });
+    expect(expireIfUnanswered(d, Date.parse('2026-09-02T00:00:00.000Z')).status).toBe('pending');
+    const lapsed = expireIfUnanswered(d, Date.parse('2026-09-04T00:00:00.000Z'));
+    expect(lapsed.status).toBe('expired');
+    expect(lapsed.myProgress).toBe(0);
+  });
+
+  it('falls back to 48 hours from creation for a duel saved before respondBy existed', () => {
+    const d = pending({ respondBy: undefined, createdAt: '2026-09-01T00:00:00.000Z' });
+    expect(expireIfUnanswered(d, Date.parse('2026-09-02T00:00:00.000Z')).status).toBe('pending');
+    expect(expireIfUnanswered(d, Date.parse('2026-09-04T00:00:00.000Z')).status).toBe('expired');
+  });
+
+  it('never expires or settles a duel that is already under way', () => {
+    const live = pending({ status: 'active' });
+    expect(expireIfUnanswered(live, Date.now()).status).toBe('active');
+    expect(settleAtDeadline(pending(), Date.parse('2026-09-09T00:00:00.000Z')).status).toBe('pending');
+  });
+
+  it('splits a list into what needs an answer and what is really running', () => {
+    const list = [pending(), pending({ id: 'd2', status: 'active' }), pending({ id: 'd3', status: 'declined' })];
+    expect(incomingDuels(list).map((d) => d.id)).toEqual(['d1']);
+    expect(activeDuels(list).map((d) => d.id)).toEqual(['d2']);
+  });
+
+  it('gives a challenge sent now a 48-hour window', () => {
+    expect(respondByFrom('2026-09-01T00:00:00.000Z')).toBe('2026-09-03T00:00:00.000Z');
   });
 });

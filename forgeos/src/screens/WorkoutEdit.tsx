@@ -7,6 +7,7 @@ import { useSettings } from '../state/settingsStore';
 import { EXERCISES, EXERCISE_CATEGORIES, exerciseById } from '../data/exercises';
 import type { Workout, WorkoutExercise, SetEntry } from '../types';
 import { haptic } from '../lib/haptics';
+import { askConfirm } from '../lib/dialog';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -55,8 +56,14 @@ export default function WorkoutEdit() {
     haptic('success');
     navigate(-1);
   }
-  function del() {
-    if (confirm('Delete this workout permanently?')) { deleteHistoryWorkout(draft!.id); navigate(-1); }
+  async function del() {
+    const ok = await askConfirm({
+      title: 'Delete this workout?',
+      body: 'The session, its sets and its volume are removed for good. Records it set stay in your PR Hall.',
+      confirmLabel: 'Delete',
+      tone: 'danger',
+    });
+    if (ok) { deleteHistoryWorkout(draft!.id); navigate(-1); }
   }
 
   return (

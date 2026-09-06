@@ -26,7 +26,8 @@ import { generateFriendCode } from '../lib/friendCode';
 import { buildInviteLink, tryExtractInvite } from '../lib/invite';
 import { friendActivity, whenLabel } from '../lib/friendActivity';
 import { useFriendActivity } from '../lib/friendData';
-import { challengeFriend, syncDuels } from '../lib/duelSync';
+import { answerDuel, challengeFriend, syncDuels } from '../lib/duelSync';
+import { incomingDuels, isAwaitingMyAnswer } from '../lib/duels';
 import { useT } from '../lib/i18n';
 import type { Duel, DuelMetric, FeedPost, Friend } from '../types';
 
@@ -467,7 +468,7 @@ function StoryViewer({ groups, start, onClose }: { groups: StoryGroup[]; start: 
         <div className="absolute top-6 inset-x-3 flex items-center gap-2 z-10">
           <Avatar seed={group.avatarSeed} small />
           <span className="text-sm font-semibold text-white drop-shadow">{group.mine ? 'Your story' : group.name}</span>
-          <button onClick={onClose} className="ml-auto text-white/90 p-1"><X size={20} /></button>
+          <button onClick={onClose} aria-label="Close story" className="ml-auto text-white/90 p-1"><X size={20} /></button>
         </div>
 
         {/* tap zones */}
@@ -963,6 +964,11 @@ function Duels() {
   const rivalry = useSocial((s) => s.rivalry);
   const [open, setOpen] = useState(false);
 
+  // Challenges awaiting my answer are pulled out of the list entirely: they are
+  // a decision, not a scoreboard, and they belong at the top.
+  const incoming = useMemo(() => incomingDuels(duels), [duels]);
+  const rest = useMemo(() => duels.filter((d) => !isAwaitingMyAnswer(d)), [duels]);
+
   function rematch(d: Duel) {
     const friend = friends.find((f) => f.id === d.opponentId) ?? {
       // Local/simulated rival — a pseudo-friend routes challengeFriend to the local path.
@@ -988,8 +994,41 @@ function Duels() {
         <Button variant="ghost" className="px-3 py-1.5" onClick={() => setOpen(true)} disabled={friends.length === 0}><span className="text-xs flex items-center gap-1"><Swords size={14} /> {t('duel.new')}</span></Button>
       </div>
       {duels.length === 0 && <p className="text-sm text-muted">{t('duel.none')}</p>}
-      {duels.map((d) => {
-        const ended = d.status !== 'active';
+
+      {/* Challenges waiting on you, above everything else. A duel used to start
+          the instant somebody sent it — you could be losing a contest, against
+          a target they chose, without ever having said yes. */}
+      {incoming.length > 0 && (
+        <Card className="space-y-3 border-accent/50 bg-accent/5">
+          <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-accent">
+            <Swords size={13} aria-hidden="true" /> {t('duel.incoming')}
+          </p>
+          {incoming.map((d) => (
+            <div key={d.id} className="space-y-2">
+              <div>
+                <p className="text-sm font-semibold">{t('duel.incomingOne', { name: d.opponentName })}</p>
+                <p className="text-[11px] text-muted">
+                  {t('duel.firstTo', { target: d.target.toLocaleString(), metric: duelMetricLabel(t, d.metric) })}
+                  {' · '}{daysLeft(t, d.endsAt)}
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button className="flex-1 justify-center" onClick={() => { haptic('success'); void answerDuel(d.id, 'accept'); }}>
+                  <span className="flex items-center gap-1.5 text-sm"><Check size={15} /> {t('duel.accept')}</span>
+                </Button>
+                <Button variant="ghost" className="flex-1 justify-center" onClick={() => { haptic('warning'); void answerDuel(d.id, 'decline'); }}>
+                  <span className="flex items-center gap-1.5 text-sm"><X size={15} /> {t('duel.decline')}</span>
+                </Button>
+              </div>
+            </div>
+          ))}
+          <p className="text-[11px] text-muted">{t('duel.startsOnAccept')}</p>
+        </Card>
+      )}
+
+      {rest.map((d) => {
+        const ended = d.status !== 'active' && d.status !== 'pending';
+        const waiting = d.status === 'pending';
         const rivalry_ = rivalryLabel(t, rivalry[d.opponentName], d.opponentName);
         return (
           <Card key={d.id} className="space-y-2">
@@ -1003,6 +1042,9 @@ function Duels() {
                   </motion.span>
                 )}
                 {d.status === 'lost' && <Badge color="rgb(var(--danger))">{t('duel.lost')}</Badge>}
+                {d.status === 'declined' && <Badge color="rgb(var(--muted))">{t('duel.declined')}</Badge>}
+                {d.status === 'expired' && <Badge color="rgb(var(--muted))">{t('duel.expired')}</Badge>}
+                {waiting && <Badge color="rgb(var(--warn))">{t('duel.pending')}</Badge>}
                 {d.status === 'active' && <Badge>{daysLeft(t, d.endsAt)}</Badge>}
               </span>
             </div>
@@ -1010,16 +1052,29 @@ function Duels() {
               {t('duel.firstTo', { target: d.target.toLocaleString(), metric: duelMetricLabel(t, d.metric) })}
               {rivalry_ && <> · {rivalry_}</>}
             </p>
-            <DuelBar label={t('duel.you')} value={d.myProgress} target={d.target} me />
-            <DuelBar label={d.opponentName} value={d.theirProgress} target={d.target} />
-            {ended
+            {/* No bars on an unanswered challenge — there is nothing to show,
+                and two empty bars read as "you are losing 0-0". */}
+            {!waiting && (
+              <>
+                <DuelBar label={t('duel.you')} value={d.myProgress} target={d.target} me />
+                <DuelBar label={d.opponentName} value={d.theirProgress} target={d.target} />
+              </>
+            )}
+            {waiting
               ? (
-                <div className="flex gap-2">
-                  <Button className="flex-1 justify-center" onClick={() => rematch(d)}>{t('duel.rematch')}</Button>
-                  <Button variant="ghost" className="flex-1 justify-center" onClick={() => clearDuel(d.id)}>{t('duel.clear')}</Button>
+                <div className="flex items-center justify-between gap-2 py-1">
+                  <p className="text-[11px] text-muted">{t('duel.sentWaiting', { name: d.opponentName })}</p>
+                  <Button variant="ghost" className="shrink-0 px-3 py-1.5 text-xs" onClick={() => clearDuel(d.id)}>{t('duel.clear')}</Button>
                 </div>
               )
-              : <p className="text-[11px] text-muted text-center py-1">{t('duel.autoProgress')}</p>}
+              : ended
+                ? (
+                  <div className="flex gap-2">
+                    <Button className="flex-1 justify-center" onClick={() => rematch(d)}>{t('duel.rematch')}</Button>
+                    <Button variant="ghost" className="flex-1 justify-center" onClick={() => clearDuel(d.id)}>{t('duel.clear')}</Button>
+                  </div>
+                )
+                : <p className="text-[11px] text-muted text-center py-1">{t('duel.autoProgress')}</p>}
           </Card>
         );
       })}

@@ -9,6 +9,7 @@ import { Tutorial } from './components/Tutorial';
 import { LockScreen } from './components/LockScreen';
 import { UpdatePrompt } from './components/UpdatePrompt';
 import { Toaster } from './components/Toaster';
+import { DialogHost } from './components/DialogHost';
 import { PasswordReset } from './components/PasswordReset';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ScreenSkeleton } from './components/Skeleton';
@@ -296,6 +297,7 @@ export default function App() {
     <PhoneFrame>
       <UpdatePrompt />
       <Toaster />
+      <DialogHost />
       <PasswordReset />
       <ErrorBoundary>
       <HashRouter>

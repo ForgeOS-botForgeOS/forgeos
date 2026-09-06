@@ -1012,3 +1012,69 @@ button {
   text-transform: uppercase;
   letter-spacing: 0.04em;
 }
+
+/* ---------------------------------------------------------------------------
+   Accessibility: bigger, calmer controls  (settings.a11yLargeTargets)
+
+   One class on <html>, the same mechanism as the design modes, so it composes
+   with every theme and every look instead of forking them. It changes SIZE and
+   MOTION only — never colour, never layout — because a mode that rearranges the
+   screen would undo the muscle memory it is supposed to support.
+
+   48px is Android's minimum touch target (44pt on iOS); everything interactive
+   is floored at that, and text steps up one notch so the labels inside those
+   bigger controls stay in proportion.
+   --------------------------------------------------------------------------- */
+.ui-a11y {
+  font-size: 17px; /* base for every rem-derived size below */
+}
+
+.ui-a11y button,
+.ui-a11y [role='button'],
+.ui-a11y a[href],
+.ui-a11y summary {
+  min-height: 48px;
+  min-width: 48px;
+}
+
+/* Rows and chips inside scrolling lists are the exception: forcing 48px on an
+   inline chip would break the line. They get generous padding instead. */
+.ui-a11y .fx-pill,
+.ui-a11y [data-a11y-inline] {
+  min-height: 40px;
+  min-width: 0;
+  padding-inline: 0.9rem;
+}
+
+.ui-a11y input,
+.ui-a11y select,
+.ui-a11y textarea {
+  min-height: 48px;
+  font-size: 1rem;
+}
+
+/* Small print is where this mode pays off most: the 10-11px captions the app
+   uses for context lines are the first thing to become unreadable. */
+.ui-a11y .text-\[10px\],
+.ui-a11y .text-\[11px\] {
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ui-a11y .text-xs { font-size: 14px; }
+.ui-a11y .text-sm { font-size: 15.5px; }
+
+/* Focus has to be visible: this mode is also the keyboard/switch-control mode. */
+.ui-a11y :focus-visible {
+  outline: 3px solid rgb(var(--accent));
+  outline-offset: 2px;
+  border-radius: 6px;
+}
+
+/* Decorative motion off. Meaningful motion (a sheet sliding in, which tells you
+   where it came from) is left alone — that is what prefers-reduced-motion is
+   for, and the app already honours it. */
+.ui-a11y .animate-fade-in-up,
+.ui-a11y .animate-pulse {
+  animation: none !important;
+}

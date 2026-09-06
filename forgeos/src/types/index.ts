@@ -262,6 +262,26 @@ export interface FeedComment {
 
 export type DuelMetric = 'volume' | 'sessions' | 'sets';
 
+/**
+ * A named, reusable session shape — "my Monday Push" — saved from a workout you
+ * actually finished. Separate from the workout it came from, so clearing old
+ * history never deletes the routine built out of it. See lib/routines.ts.
+ */
+export interface Routine {
+  id: string;
+  name: string;
+  /** Movements in order. One entry per exercise. */
+  exerciseIds: string[];
+  /** Sets/reps/weight to pre-fill, keyed by exercise id. */
+  targets: Record<string, ExerciseTarget>;
+  createdAt: string;
+  /** The finished workout it was built from, if that workout still exists. */
+  sourceWorkoutId?: string;
+  /** How many sessions have started from it — drives the ordering. */
+  uses: number;
+  lastUsedAt?: string;
+}
+
 export interface Duel {
   id: string;
   opponentName: string;
@@ -272,7 +292,15 @@ export interface Duel {
   theirProgress: number;
   endsAt: string;
   createdAt: string;
-  status: 'active' | 'won' | 'lost';
+  /**
+   * 'pending' = a challenge waiting for the opponent to accept. A pending duel
+   * never accrues progress for either side, so nobody can be quietly losing a
+   * contest they have not agreed to. 'declined' and 'expired' are ends without
+   * a winner — neither counts towards the rivalry record.
+   */
+  status: 'pending' | 'active' | 'won' | 'lost' | 'declined' | 'expired';
+  /** How long an unanswered challenge stays open. Absent on older duels. */
+  respondBy?: string;
   /** Real friend's profile id — present only on live (Supabase-synced) duels. */
   opponentId?: string;
   /** Which duels-table column is mine; absent = local duel with a simulated opponent. */
@@ -483,6 +511,13 @@ export interface Settings {
   units: 'metric';
   diet: Diet; // filters the cookbook and shifts which nutrients need attention
   apprentice: boolean; // Apprentice Mode — the simple ForgeOS (4 tabs, one action per screen)
+  /**
+   * Bigger, calmer controls: every tap target grows to the 48px Android
+   * minimum, body text steps up, and decorative motion is dropped. Independent
+   * of Apprentice Mode — plenty of experienced lifters have cold hands, gloves
+   * or long nails, and that is a different problem from being new.
+   */
+  a11yLargeTargets: boolean;
 }
 
 // ---- Quotes ----

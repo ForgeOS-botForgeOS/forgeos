@@ -6,6 +6,7 @@ import { decodeWorkout, sharedToExercises } from '../lib/workoutShare';
 import { useWorkout } from '../state/workoutStore';
 import { exerciseById } from '../data/exercises';
 import { haptic } from '../lib/haptics';
+import { askConfirm } from '../lib/dialog';
 import { toast } from '../lib/toast';
 
 export default function ImportWorkout() {
@@ -19,9 +20,14 @@ export default function ImportWorkout() {
   const code = params.get('w') ?? '';
   const shared = useMemo(() => (code ? decodeWorkout(code) : null), [code]);
 
-  function startIt() {
+  async function startIt() {
     if (!shared) return;
-    if (active && !confirm('You already have a workout in progress. Replace it with this one?')) return;
+    if (active && !(await askConfirm({
+      title: 'Replace your current workout?',
+      body: 'You already have a session in progress. Starting this one discards it.',
+      confirmLabel: 'Replace it',
+      tone: 'danger',
+    }))) return;
     startSharedWorkout(shared.name, sharedToExercises(shared));
     setDone(true);
     haptic('success');

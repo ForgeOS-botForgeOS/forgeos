@@ -10,12 +10,74 @@ import { computeVolume } from '../state/workoutStore';
 export const DUEL_WIN_XP = 150;
 export const DUEL_WIN_COINS = 20;
 
+/**
+ * How long an unanswered challenge stays on the table. A challenge used to be
+ * accepted for you the instant it arrived — you could be losing a contest you
+ * never agreed to, against a target somebody else chose. Now it waits here.
+ * Two days is long enough to see it, short enough that a dead challenge does
+ * not sit at the top of Social for a fortnight.
+ */
+export const DUEL_RESPOND_HOURS = 48;
+
+/** Statuses where nothing is happening any more. */
+const FINISHED: readonly Duel['status'][] = ['won', 'lost', 'declined', 'expired'];
+
+export function isFinished(d: Duel): boolean {
+  return FINISHED.includes(d.status);
+}
+
+/** A challenge someone sent me that I have not answered yet. */
+export function isAwaitingMyAnswer(d: Duel): boolean {
+  return d.status === 'pending' && d.side !== 'challenger';
+}
+
+/** A challenge I sent that the other person has not answered yet. */
+export function isAwaitingTheirAnswer(d: Duel): boolean {
+  return d.status === 'pending' && d.side === 'challenger';
+}
+
+/** Only accepted duels are contests; everything else is noise on the screen. */
+export function activeDuels(list: readonly Duel[]): Duel[] {
+  return list.filter((d) => d.status === 'active');
+}
+
+export function incomingDuels(list: readonly Duel[]): Duel[] {
+  return list.filter(isAwaitingMyAnswer);
+}
+
+/** Say yes. Progress starts from zero, now — not from when they challenged. */
+export function acceptDuel(d: Duel): Duel {
+  if (d.status !== 'pending') return d;
+  return { ...d, status: 'active', myProgress: 0, theirProgress: 0 };
+}
+
+/** Say no. Nothing is scored and the rivalry record is untouched. */
+export function declineDuel(d: Duel): Duel {
+  return d.status === 'pending' ? { ...d, status: 'declined' } : d;
+}
+
+/**
+ * An unanswered challenge lapses instead of hanging around for ever. Separate
+ * from settleAtDeadline because a challenge nobody accepted has no winner —
+ * awarding the challenger a walkover would reward spamming challenges.
+ */
+export function expireIfUnanswered(d: Duel, now: number): Duel {
+  if (d.status !== 'pending') return d;
+  const deadline = d.respondBy ? new Date(d.respondBy).getTime() : new Date(d.createdAt).getTime() + DUEL_RESPOND_HOURS * 3_600_000;
+  return now >= deadline ? { ...d, status: 'expired' } : d;
+}
+
 // The simulated opponent grinds at 60–130% of your pace (legacy behavior).
 const SIM_PACE_MIN = 0.6;
 const SIM_PACE_SPREAD = 0.7;
 
 export function isLiveDuel(d: Duel): boolean {
   return d.side != null;
+}
+
+/** When a challenge sent now stops waiting for an answer. */
+export function respondByFrom(createdAt: string): string {
+  return new Date(new Date(createdAt).getTime() + DUEL_RESPOND_HOURS * 3_600_000).toISOString();
 }
 
 /** What a finished workout is worth for a duel metric. */

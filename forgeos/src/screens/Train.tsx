@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon, HeartPulse, Star, Volume2, VolumeX, Crosshair, ChevronRight } from 'lucide-react';
+import { Dumbbell, Plus, Wrench, Link2, Repeat, AlertTriangle, Brain, Flag, History, GripVertical, Camera, Watch, Moon, HeartPulse, Star, BookmarkPlus, Volume2, VolumeX, Crosshair, ChevronRight } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -17,6 +17,9 @@ import { reportDuelWorkout } from '../lib/duelSync';
 import { Tools } from '../components/train/Tools';
 import { Confetti } from '../components/Celebrate';
 import { toast, celebrate } from '../lib/toast';
+import { askText } from '../lib/dialog';
+import { ROUTINE_NAME_MAX } from '../lib/routines';
+import { RoutinesCard } from '../components/train/RoutinesCard';
 import { UploadError, uploadErrorMessage } from '../lib/upload';
 import { HeavyDrop, type Drop } from '../components/HeavyDrop';
 import { pickHeavyQuote, rollRarity } from '../data/heavyQuotes';
@@ -201,19 +204,9 @@ export default function Train() {
         </Card>
       )}
 
-      {/* Repeat your last session — same lifts, last weights pre-filled */}
-      {lastStrength && (
-        <Card className="flex items-center justify-between">
-          <div className="min-w-0">
-            <p className="text-xs uppercase tracking-wide text-muted">Do it again</p>
-            <p className="font-semibold truncate">{lastStrength.name}</p>
-            <p className="text-[11px] text-muted">{lastStrength.exercises.length} exercises · weights pre-filled</p>
-          </div>
-          <Button variant="outline" className="py-1.5 shrink-0" onClick={() => { if (repeatWorkout(lastStrength.id)) { haptic('success'); toast('Repeating your last session 💪'); } }}>
-            <span className="flex items-center gap-1.5"><Repeat size={15} /> Repeat</span>
-          </Button>
-        </Card>
-      )}
+      {/* Your routines — named, reusable sessions. This replaced a "Do it again"
+          card that could only ever offer the single most recent workout. */}
+      <RoutinesCard lastStrength={lastStrength} />
 
       {/* Recovery readiness — last night's data steering today's effort (Legacy;
           V2 shows this as the readiness console at the top). */}
@@ -424,11 +417,25 @@ function CardioScanCard() {
 
 function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: { open: boolean; onClose: () => void; onStart: (name: string) => void; pastWorkouts: Workout[]; onRepeat: (id: string) => void }) {
   const [name, setName] = useState('');
-  const favouriteIds = useWorkout((s) => s.favouriteIds);
-  const toggleFavourite = useWorkout((s) => s.toggleFavourite);
+  const saveRoutine = useWorkout((s) => s.saveRoutine);
+  const suggestName = useWorkout((s) => s.suggestName);
   const suggestions = ['Push', 'Pull', 'Legs', 'Upper', 'Lower', 'Full Body', 'Arms', 'Chest & Back', 'Conditioning'];
-  // Favourites float to the top of the list.
-  const sortedPast = [...pastWorkouts].sort((a, b) => Number(favouriteIds.includes(b.id)) - Number(favouriteIds.includes(a.id)));
+
+  // Saving a past session as a routine used to be a star that only reordered
+  // this list. Now it names the thing and puts it on the Train screen.
+  async function keep(w: Workout) {
+    const chosen = await askText({
+      title: 'Name this routine',
+      body: 'It appears at the top of Train, ready to start in one tap.',
+      defaultValue: suggestName(w.id),
+      confirmLabel: 'Save',
+      required: true,
+      maxLength: ROUTINE_NAME_MAX,
+    });
+    if (!chosen) return;
+    const saved = saveRoutine(w.id, chosen);
+    if (saved) { haptic('success'); toast(`“${saved.name}” saved as a routine 📌`); }
+  }
   return (
     <Sheet open={open} onClose={onClose} title="Custom workout">
       <div className="space-y-3">
@@ -444,25 +451,26 @@ function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: 
         </div>
         <Button className="w-full justify-center" disabled={!name.trim()} onClick={() => onStart(name.trim())}>Start workout</Button>
 
-        {sortedPast.length > 0 && (
+        {pastWorkouts.length > 0 && (
           <div className="pt-3 border-t border-line space-y-2">
-            <p className="text-[11px] uppercase tracking-wide text-muted">Or repeat a past session — ★ to favourite, weights pre-filled</p>
+            <p className="text-[11px] uppercase tracking-wide text-muted">Or repeat a past session — weights pre-filled</p>
             <div className="space-y-1.5 max-h-56 overflow-y-auto no-scrollbar">
-              {sortedPast.map((w) => {
-                const fav = favouriteIds.includes(w.id);
-                return (
-                  <div key={w.id} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
-                    <button onClick={() => { toggleFavourite(w.id); haptic('tap'); }} aria-label={fav ? 'Unfavourite' : 'Favourite'} className={fav ? 'text-accent-2 shrink-0' : 'text-muted shrink-0'}>
-                      <Star size={16} className={fav ? 'fill-accent-2' : ''} />
-                    </button>
-                    <button onClick={() => onRepeat(w.id)} className="flex-1 min-w-0 text-left">
-                      <p className="text-sm font-medium truncate">{w.name}</p>
-                      <p className="text-[11px] text-muted">{w.exercises.length} exercises · {new Date(w.date).toLocaleDateString()}</p>
-                    </button>
-                    <span className="flex items-center gap-1 text-xs text-accent shrink-0"><Repeat size={13} /> Load</span>
-                  </div>
-                );
-              })}
+              {pastWorkouts.map((w) => (
+                <div key={w.id} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
+                  <button onClick={() => onRepeat(w.id)} className="flex-1 min-w-0 text-left">
+                    <p className="text-sm font-medium truncate">{w.name}</p>
+                    <p className="text-[11px] text-muted">{w.exercises.length} exercises · {new Date(w.date).toLocaleDateString()}</p>
+                  </button>
+                  <span className="flex items-center gap-1 text-xs text-accent shrink-0"><Repeat size={13} /> Load</span>
+                  <button
+                    onClick={() => void keep(w)}
+                    aria-label={`Save ${w.name} as a routine`}
+                    className="shrink-0 rounded-lg p-1.5 text-muted active:bg-line"
+                  >
+                    <BookmarkPlus size={16} />
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -699,7 +707,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
             <Card className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <button {...handle} className="text-muted cursor-grab active:cursor-grabbing touch-none" title="Drag to reorder"><GripVertical size={16} /></button>
+                <button {...handle} aria-label="Drag to reorder this exercise" className="text-muted cursor-grab active:cursor-grabbing touch-none" title="Drag to reorder"><GripVertical size={16} /></button>
                 {/* The lift's name is the way into its detail page — cues, your
                     history, PR and progression for exactly this movement. */}
                 <button onClick={() => navigate(`/exercise/${we.exerciseId}`)} className="flex items-center gap-0.5 text-left">

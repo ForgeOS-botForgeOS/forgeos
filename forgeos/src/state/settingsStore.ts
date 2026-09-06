@@ -7,6 +7,7 @@ interface SettingsState extends Settings {
   set: <K extends keyof Settings>(key: K, value: Settings[K]) => void;
   applyTheme: (theme: ThemeId) => void;
   applyDesign: (mode: DesignMode) => void;
+  applyA11y: (large: boolean) => void;
 }
 
 const DEFAULTS: Settings = {
@@ -42,6 +43,7 @@ const DEFAULTS: Settings = {
   // Off by default: an existing user must never wake up in a different app.
   // New users are offered it by name on the first-run card (components/Tutorial).
   apprentice: false,
+  a11yLargeTargets: false,
 };
 
 export const useSettings = create<SettingsState>()(
@@ -53,6 +55,13 @@ export const useSettings = create<SettingsState>()(
         if (key === 'hapticsEnabled') setHapticsEnabled(value as boolean);
         if (key === 'theme') get().applyTheme(value as ThemeId);
         if (key === 'designMode') get().applyDesign(value as DesignMode);
+        if (key === 'a11yLargeTargets') get().applyA11y(value as boolean);
+      },
+      // One class on <html>, exactly like the design modes — so the whole app
+      // grows at once and turning it off restores the original sizing exactly.
+      applyA11y: (large) => {
+        if (typeof document === 'undefined') return;
+        document.documentElement.classList.toggle('ui-a11y', large);
       },
       applyTheme: (theme) => {
         if (typeof document !== 'undefined') {
@@ -101,6 +110,7 @@ export const useSettings = create<SettingsState>()(
         if (state) {
           state.applyTheme(state.theme);
           state.applyDesign(state.designMode);
+          state.applyA11y(state.a11yLargeTargets);
           setHapticsEnabled(state.hapticsEnabled);
         }
       },

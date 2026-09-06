@@ -1,3 +1,4 @@
+import { forwardRef, useEffect } from 'react';
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
@@ -29,7 +30,11 @@ type BtnProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onAnimationStart'
   variant?: 'primary' | 'ghost' | 'outline' | 'danger';
 };
 const PRESS = { type: 'spring' as const, stiffness: 500, damping: 30 };
-export function Button({ variant = 'primary', className = '', children, ...rest }: BtnProps) {
+// forwardRef so callers can move focus to a button — the dialog focuses its
+// confirm action on open, which a modal must do to be usable by keyboard.
+export const Button = forwardRef<HTMLButtonElement, BtnProps>(function Button(
+  { variant = 'primary', className = '', children, ...rest }, ref,
+) {
   const styles: Record<string, string> = {
     primary: 'fx-primary bg-accent text-black font-semibold hover:brightness-110',
     ghost: 'bg-surface-2 text-text hover:bg-line',
@@ -38,6 +43,7 @@ export function Button({ variant = 'primary', className = '', children, ...rest 
   };
   return (
     <motion.button
+      ref={ref}
       whileTap={rest.disabled ? undefined : { scale: 0.95 }}
       transition={PRESS}
       className={`rounded-xl px-4 py-2.5 text-sm transition-colors disabled:opacity-40 ${styles[variant]} ${className}`}
@@ -46,7 +52,7 @@ export function Button({ variant = 'primary', className = '', children, ...rest 
       {children}
     </motion.button>
   );
-}
+});
 
 export function Pill({ children, active = false, onClick }: { children: ReactNode; active?: boolean; onClick?: () => void }) {
   return (
@@ -173,6 +179,15 @@ export function Sheet({
   // Portal to the phone root so the sheet always covers the FULL frame. Screen
   // wrappers animate `y` (a CSS transform), which would otherwise trap this
   // `absolute` sheet inside the screen's (often short) box and cut it off.
+  // Escape closes it. A sheet is a dialog; leaving it keyboard-inescapable was
+  // the one thing separating it from the real modal in DialogHost.
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [open, onClose]);
+
   const root = (typeof document !== 'undefined' && document.getElementById('phone-root')) || null;
   const tree = (
     <AnimatePresence>
@@ -185,6 +200,9 @@ export function Sheet({
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
           />
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label={title}
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
@@ -216,13 +234,20 @@ export function Sheet({
   return root ? createPortal(tree, root) : tree;
 }
 
-export function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+// A switch, not a decorated div: `role="switch"` + `aria-checked` is what makes
+// a screen reader say "Vibration feedback, switch, on" instead of "button".
+// `label` is required because the control has no text of its own — without it
+// every setting in the app announced as an anonymous button.
+export function Toggle({ checked, onChange, label }: { checked: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
     <motion.button
       onClick={() => onChange(!checked)}
+      role="switch"
+      aria-checked={checked}
+      aria-label={label}
       whileTap={{ scale: 0.9 }}
       transition={PRESS}
-      className={`relative h-7 w-12 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-surface-2'}`}
+      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-surface-2'}`}
     >
       <motion.span
         layout

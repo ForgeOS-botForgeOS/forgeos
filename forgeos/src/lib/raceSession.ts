@@ -13,6 +13,7 @@ import { useGami } from '../state/gamificationStore';
 import { useSocial } from '../state/socialStore';
 import { useSettings } from '../state/settingsStore';
 import { toast, celebrate } from './toast';
+import { askConfirm } from './dialog';
 import { haptic } from './haptics';
 
 // Owns the live realtime channel for the current race. All serializable race
@@ -58,7 +59,7 @@ function attachChannel(config: RaceConfig, me: RaceBroadcast): boolean {
     // Invites minted before races carried a hostId are trusted as before.
     onStart: (startAt, hostId) => {
       if (hostId && config.hostId && hostId !== config.hostId) return;
-      handleStart(startAt);
+      void handleStart(startAt);
     },
   });
   return channel != null;
@@ -110,12 +111,12 @@ export function startRace(): void {
   if (!a || a.role !== 'host' || a.status !== 'lobby') return;
   const startAt = Date.now();
   channel?.sendStart(startAt);
-  handleStart(startAt);
+  void handleStart(startAt);
   // Ride startAt on a progress update too, for anyone who missed the event.
   channel?.sendProgress({ ...myRacer(), startAt });
 }
 
-function handleStart(startAt: number): void {
+async function handleStart(startAt: number): Promise<void> {
   const a = useRace.getState().active;
   if (!a || a.status !== 'lobby') return;
   const { config } = a;
@@ -124,10 +125,20 @@ function handleStart(startAt: number): void {
     // The start can arrive minutes after joining — never silently overwrite a
     // workout the racer started in the meantime (same guard as ImportWorkout).
     const existing = useWorkout.getState().active;
-    if (existing && !confirm(`Starting the race replaces your current workout "${existing.name}". Race anyway?`)) {
-      toast('You sat this race out 🏳️', 'info');
-      leaveRace();
-      return;
+    if (existing) {
+      const race = await askConfirm({
+        title: 'Race anyway?',
+        body: `Starting the race replaces your current workout "${existing.name}".`,
+        confirmLabel: 'Race',
+      });
+      if (!race) {
+        toast('You sat this race out 🏳️', 'info');
+        leaveRace();
+        return;
+      }
+      // Asking is no longer instant (it used to block the thread), so the race
+      // may have been started, left or ended while the question was on screen.
+      if (useRace.getState().active?.status !== 'lobby') return;
     }
     // Everyone starts the identical shared workout, fresh.
     useWorkout.getState().startSharedWorkout(config.workout.name, sharedToExercises(config.workout));

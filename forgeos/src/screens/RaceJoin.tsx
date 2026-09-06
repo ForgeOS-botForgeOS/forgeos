@@ -9,6 +9,7 @@ import { useWorkout } from '../state/workoutStore';
 import { exerciseById } from '../data/exercises';
 import { haptic } from '../lib/haptics';
 import { toast } from '../lib/toast';
+import { askConfirm } from '../lib/dialog';
 import { useT } from '../lib/i18n';
 
 // Opened from a race invite link (#/race-join?d=...). Shows the rules, then
@@ -23,9 +24,13 @@ export default function RaceJoin() {
   const code = params.get('d') ?? '';
   const config = useMemo(() => (code ? decodeRaceInvite(code) : null), [code]);
 
-  function join() {
+  async function join() {
     if (!config) return;
-    if (config.mode === 'workout' && active && !confirm('You have a workout in progress — the race will replace it when it starts. Join anyway?')) return;
+    if (config.mode === 'workout' && active && !(await askConfirm({
+      title: 'Join the race anyway?',
+      body: 'You have a workout in progress — the race replaces it the moment it starts.',
+      confirmLabel: 'Join race',
+    }))) return;
     if (!joinRaceFromInvite(config)) {
       toast('Live races need an internet connection.', 'error');
       return;

@@ -1,11 +1,13 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Plus, Wand2, Trash2, Search, X, Share2, Save, Play, GripVertical, FolderOpen, Sparkles, Store, ClipboardPaste, History, TrendingDown, AlertTriangle, LayoutGrid } from 'lucide-react';
+import { ChevronLeft, Plus, Wand2, Trash2, Search, X, Share2, Save, Play, GripVertical, FolderOpen, Sparkles, Store, ClipboardPaste, History, TrendingDown, AlertTriangle, LayoutGrid, SlidersHorizontal, Download } from 'lucide-react';
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import type { ReactNode } from 'react';
 import { Card, Button, Sheet, Toggle } from '../components/ui';
+import { ActionGroup, ActionRow } from '../components/ActionList';
+import { askNumber, askText } from '../lib/dialog';
 import { useUser } from '../state/userStore';
 import { useWorkout } from '../state/workoutStore';
 import { useSettings } from '../state/settingsStore';
@@ -76,6 +78,7 @@ export default function PlanEditor() {
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
   const customCount = useExercises((s) => s.custom.length);
   const [createOpen, setCreateOpen] = useState(false);
+  const [toolsOpen, setToolsOpen] = useState(false);
 
   // Week balance: sets per muscle + plain-language warnings, live as you edit.
   const analysis = useMemo(() => (plan ? analyseWeek(plan, exerciseById) : null), [plan, customCount]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -183,8 +186,14 @@ export default function PlanEditor() {
     patch(day, { exerciseIds: ids });
     haptic('tap');
   }
-  function tailor() {
-    const note = specialRequest || prompt('Describe a limitation (e.g. "bad knees", "no overhead", "short on time")') || '';
+  async function tailor() {
+    const note = specialRequest || (await askText({
+      title: 'What should the plan work around?',
+      body: 'Describe a limitation and the week re-tunes itself around it.',
+      placeholder: 'e.g. bad knees, no overhead, short on time',
+      confirmLabel: 'Tailor',
+      required: true,
+    })) || '';
     if (!note.trim()) return;
     const { plan: tailored, notes } = tailorPlan(plan!, note);
     setWeekPlan(tailored);
@@ -222,10 +231,22 @@ export default function PlanEditor() {
     haptic('success');
   }
 
-  function publish() {
-    const title = prompt('Publish your plan as…', 'My Forge Week');
+  async function publish() {
+    const title = await askText({
+      title: 'Publish your plan as…',
+      defaultValue: 'My Forge Week',
+      confirmLabel: 'Next',
+      required: true,
+      maxLength: 60,
+    });
     if (!title) return;
-    const price = Number(prompt('Price in Forge Coins (0 = free)', '0')) || 0;
+    const price = (await askNumber({
+      title: 'Price in Forge Coins',
+      body: 'Leave it at 0 to give the plan away for free.',
+      defaultValue: '0',
+      confirmLabel: 'Publish',
+      maxLength: 6,
+    })) ?? 0;
     const { tier } = rankForXp(xp);
     publishRoutine({ title, priceCoins: price, focus: 'Custom', plan: plan!, author: profile?.name ?? 'You', authorRank: rankLabel(tier) });
     addCoins(25); // publishing bonus
@@ -259,40 +280,80 @@ export default function PlanEditor() {
         </div>
       </div>
 
-      {/* Share / save / templates */}
+      {/* One obvious action, then everything else behind one door.
+          This used to be nine equal ghost buttons in a 3x3 block: every action
+          shouted equally, two of the labels wrapped onto a second line, and the
+          three "paste"-ish ones were indistinguishable. Now the star action is
+          the only filled button on the screen, and the rest are grouped and
+          described in a sheet where each one has room for a sentence. */}
       <div className="flex gap-2">
-        <Button variant="ghost" className="flex-1 justify-center" onClick={async () => { const r = await sharePlan(plan, 'My week'); flash(r === 'shared' ? 'Shared!' : 'Link copied to clipboard'); }}>
-          <span className="flex items-center gap-1 text-xs"><Share2 size={14} /> Share</span>
+        <Button className="flex-[2] justify-center py-2.5" onClick={() => setAiOpen(true)}>
+          <span className="flex items-center gap-1.5 text-sm"><Sparkles size={15} /> AI build a day</span>
         </Button>
-        <Button variant="ghost" className="flex-1 justify-center" onClick={() => { const n = prompt('Save this plan as…', 'My plan'); if (n) { savePlanAs(n); flash('Saved to templates'); } }}>
-          <span className="flex items-center gap-1 text-xs"><Save size={14} /> Save</span>
-        </Button>
-        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setShowSaved(true)}>
-          <span className="flex items-center gap-1 text-xs"><FolderOpen size={14} /> Templates ({savedPlans.length})</span>
+        <Button variant="outline" className="flex-1 justify-center py-2.5" onClick={() => setToolsOpen(true)}>
+          <span className="flex items-center gap-1.5 text-sm"><SlidersHorizontal size={15} /> Tools</span>
         </Button>
       </div>
-      <div className="flex gap-2">
-        <Button variant="ghost" className="flex-1 justify-center" onClick={tailor}>
-          <span className="flex items-center gap-1 text-xs"><Sparkles size={14} /> Tailor to my note</span>
-        </Button>
-        <Button variant="ghost" className="flex-1 justify-center" onClick={publish}>
-          <span className="flex items-center gap-1 text-xs"><Store size={14} /> Publish</span>
-        </Button>
-        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setImportOpen(true)}>
-          <span className="flex items-center gap-1 text-xs"><ClipboardPaste size={14} /> Import</span>
-        </Button>
-      </div>
-      <div className="flex gap-2">
-        <Button className="flex-1 justify-center" onClick={() => setAiOpen(true)}>
-          <span className="flex items-center gap-1 text-xs"><Sparkles size={14} /> AI build a day</span>
-        </Button>
-        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setPasteOpen(true)}>
-          <span className="flex items-center gap-1 text-xs"><ClipboardPaste size={14} /> Paste workout</span>
-        </Button>
-        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setPasteWeekOpen(true)}>
-          <span className="flex items-center gap-1 text-xs"><ClipboardPaste size={14} /> Paste week</span>
-        </Button>
-      </div>
+
+      <Sheet open={toolsOpen} onClose={() => setToolsOpen(false)} title="Plan tools">
+        <ActionGroup title="Build the week">
+          <ActionRow
+            icon={<ClipboardPaste size={15} />} title="Paste a workout"
+            detail="Turn a session written anywhere into one day"
+            onClick={() => { setToolsOpen(false); setPasteOpen(true); }}
+          />
+          <ActionRow
+            icon={<ClipboardPaste size={15} />} title="Paste a whole week"
+            detail="Seven days at once, from text"
+            onClick={() => { setToolsOpen(false); setPasteWeekOpen(true); }}
+          />
+          <ActionRow
+            icon={<Download size={15} />} title="Import a plan code"
+            detail="From a link somebody shared with you"
+            onClick={() => { setToolsOpen(false); setImportOpen(true); }}
+          />
+          <ActionRow
+            icon={<Sparkles size={15} />} title="Tailor to a limitation"
+            detail="Bad knees, no overhead, short on time"
+            onClick={() => { setToolsOpen(false); void tailor(); }}
+          />
+        </ActionGroup>
+
+        <ActionGroup title="Keep &amp; reuse">
+          <ActionRow
+            icon={<Save size={15} />} title="Save as a template"
+            detail="Come back to this exact week whenever"
+            onClick={async () => {
+              setToolsOpen(false);
+              const n = await askText({ title: 'Save this plan as…', defaultValue: 'My plan', confirmLabel: 'Save', required: true, maxLength: 40 });
+              if (n) { savePlanAs(n); flash('Saved to templates'); }
+            }}
+          />
+          <ActionRow
+            icon={<FolderOpen size={15} />} title="My templates"
+            detail={savedPlans.length ? 'Load a week you saved earlier' : 'Nothing saved yet'}
+            trailing={<span className="font-mono text-xs text-muted">{savedPlans.length}</span>}
+            onClick={() => { setToolsOpen(false); setShowSaved(true); }}
+          />
+        </ActionGroup>
+
+        <ActionGroup title="Send it out">
+          <ActionRow
+            icon={<Share2 size={15} />} title="Share this week"
+            detail="A link anyone can open"
+            onClick={async () => {
+              setToolsOpen(false);
+              const r = await sharePlan(plan, 'My week');
+              flash(r === 'shared' ? 'Shared!' : 'Link copied to clipboard');
+            }}
+          />
+          <ActionRow
+            icon={<Store size={15} />} title="Publish to the marketplace"
+            detail="Other lifters can run your plan · +🪙25"
+            onClick={() => { setToolsOpen(false); void publish(); }}
+          />
+        </ActionGroup>
+      </Sheet>
 
       {/* Weights: increment + history fill + deload */}
       <Card className="space-y-2">
@@ -358,10 +419,15 @@ export default function PlanEditor() {
                   onChange={(e) => patch(d.day, { label: e.target.value })}
                   disabled={d.rest}
                   placeholder="Name this day"
-                  className="flex-1 bg-transparent text-sm font-semibold outline-none disabled:text-muted"
+                  aria-label={`Name for ${d.day}`}
+                  className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none disabled:text-muted"
                 />
-                <span className="text-[11px] text-muted">{d.rest ? 'Rest' : `${d.exerciseIds.length} ex · ~${estimateDayMinutes(daySets(d))} min`}</span>
-                <Toggle checked={!d.rest} onChange={() => toggleRest(d)} />
+                {/* nowrap: this used to wrap "2 ex · ~23 min" onto three lines
+                    and stretch the row to triple height. */}
+                <span className="shrink-0 whitespace-nowrap text-[11px] text-muted">
+                  {d.rest ? 'Rest' : `${d.exerciseIds.length} ex · ~${estimateDayMinutes(daySets(d))} min`}
+                </span>
+                <Toggle label={`${d.day}: training day`} checked={!d.rest} onChange={() => toggleRest(d)} />
               </div>
 
               {!d.rest && (
@@ -400,9 +466,9 @@ export default function PlanEditor() {
                                 {(handle) => (
                                   <div className="rounded-lg bg-surface-2 px-3 py-2 space-y-1.5">
                                     <div className="flex items-center gap-2">
-                                      <button {...handle} className="text-muted cursor-grab active:cursor-grabbing touch-none shrink-0"><GripVertical size={15} /></button>
+                                      <button {...handle} aria-label={`Reorder ${ex?.name ?? id}`} className="text-muted cursor-grab active:cursor-grabbing touch-none shrink-0"><GripVertical size={15} /></button>
                                       <span className="text-sm flex-1">{ex?.name ?? id}</span>
-                                      <button onClick={() => removeExercise(d.day, id)} className="text-danger"><Trash2 size={14} /></button>
+                                      <button onClick={() => removeExercise(d.day, id)} aria-label={`Remove ${ex?.name ?? id} from ${d.day}`} className="text-danger"><Trash2 size={14} /></button>
                                     </div>
                                     <div className="flex items-center gap-2 pl-6 flex-wrap">
                                       <Stepper label="sets" value={tgt.sets} min={1} max={10} onChange={(v) => setTarget(d.day, id, { ...tgt, sets: v })} />
