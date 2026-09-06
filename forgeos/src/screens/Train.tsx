@@ -459,7 +459,7 @@ function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: 
                 <div key={w.id} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
                   <button onClick={() => onRepeat(w.id)} className="flex-1 min-w-0 text-left">
                     <p className="text-sm font-medium truncate">{w.name}</p>
-                    <p className="text-[11px] text-muted">{w.exercises.length} exercises · {new Date(w.date).toLocaleDateString()}</p>
+                    <p className="text-[11px] text-muted">{w.exercises.length} {w.exercises.length === 1 ? 'exercise' : 'exercises'} · {new Date(w.date).toLocaleDateString()}</p>
                   </button>
                   <span className="flex items-center gap-1 text-xs text-accent shrink-0"><Repeat size={13} /> Load</span>
                   <button

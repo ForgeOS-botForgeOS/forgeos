@@ -41,7 +41,7 @@ export function SearchBar() {
     <>
       <button
         onClick={() => { setOpen(true); haptic('tap'); }}
-        className="flex w-full items-center gap-2.5 rounded-2xl border border-line bg-surface px-3.5 py-3 text-left transition-colors active:bg-surface-2"
+        className="fx-card flex w-full items-center gap-2.5 rounded-2xl border border-line bg-surface px-3.5 py-3 text-left transition-colors active:bg-surface-2"
       >
         <Search size={16} className="shrink-0 text-muted" aria-hidden="true" />
         <span className="truncate text-sm text-muted">{t('search.open')}</span>
@@ -97,7 +97,7 @@ export function AppSearchSheet({ open, onClose }: { open: boolean; onClose: () =
   return (
     <Sheet open={open} onClose={onClose} title={t('search.title')}>
       <div className="space-y-3">
-        <div className="flex items-center gap-2 rounded-xl border border-line bg-surface-2 px-3 py-2.5 focus-within:border-accent/70">
+        <div className="fx-field flex items-center gap-2 rounded-xl border border-line bg-surface-2 px-3 py-2.5 focus-within:border-accent/70">
           <Search size={15} className="shrink-0 text-muted" aria-hidden="true" />
           <input
             ref={inputRef}

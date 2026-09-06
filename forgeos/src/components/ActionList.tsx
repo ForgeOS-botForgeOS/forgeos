@@ -31,11 +31,11 @@ export function ActionRow({ icon, title, detail, trailing, onClick, tone = 'defa
       onClick={onClick}
       disabled={disabled}
       aria-label={ariaLabel}
-      className="flex w-full items-center gap-3 rounded-xl px-1 py-2.5 text-left transition-colors active:bg-surface-2 disabled:opacity-40"
+      className="fx-row flex w-full items-center gap-3 rounded-xl px-1 py-2.5 text-left transition-colors active:bg-surface-2 disabled:opacity-40"
     >
       {icon && (
         <span
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-muted"
+          className="fx-row-icon flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-surface-2 text-muted"
           aria-hidden="true"
         >
           {icon}
@@ -54,7 +54,7 @@ export function ActionRow({ icon, title, detail, trailing, onClick, tone = 'defa
 export function ActionGroup({ title, children }: { title?: string; children: ReactNode }) {
   return (
     <div className="space-y-0.5">
-      {title && <p className="px-1 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted/70">{title}</p>}
+      {title && <p className="fx-row-group px-1 pb-1 pt-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted/70">{title}</p>}
       <div className="divide-y divide-line/70">{children}</div>
     </div>
   );

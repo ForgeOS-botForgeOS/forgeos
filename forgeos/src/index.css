@@ -1078,3 +1078,67 @@ button {
 .ui-a11y .animate-pulse {
   animation: none !important;
 }
+
+/* ---------------------------------------------------------------------------
+   The shared list row, search field and dialog, in each design mode.
+
+   `ActionRow`, the search box and the dialog are new shared surfaces, and a
+   shared surface that ignores the design modes is exactly how an app starts
+   looking like two apps. Each mode already declares its language through
+   .fx-card / .fx-primary / .fx-sheet; these give the new pieces the same
+   treatment, keyed on the same classes, so Classic still means "no class at
+   all — the original look, exactly".
+   --------------------------------------------------------------------------- */
+
+/* Nova — gradient glass: soft, translucent, generous radii. */
+.ui-nova .fx-row-icon {
+  background: linear-gradient(135deg, rgb(var(--accent) / 0.18), rgb(var(--accent-2, var(--accent)) / 0.12));
+  border-radius: 12px;
+}
+.ui-nova .fx-row:active { background: rgb(var(--accent) / 0.08); }
+.ui-nova .fx-field {
+  border-radius: 14px;
+  background: rgb(var(--surface-2) / 0.7);
+  backdrop-filter: blur(6px);
+}
+
+/* Bolt — editorial/brutalist: squared, keyline borders, no softness. */
+.ui-bolt .fx-row-icon {
+  border-radius: 0;
+  border: 1px solid rgb(var(--line));
+  background: transparent;
+}
+.ui-bolt .fx-row { border-radius: 0; }
+.ui-bolt .fx-row:active { background: rgb(var(--accent) / 0.1); }
+.ui-bolt .fx-row-group {
+  letter-spacing: 0.18em;
+  color: rgb(var(--accent));
+}
+.ui-bolt .fx-field {
+  border-radius: 0;
+  border-width: 1px;
+}
+.ui-bolt .fx-field:focus-within { box-shadow: 3px 3px 0 rgb(var(--accent)); }
+
+/* V2 · Tempo — telemetry: squared panels, condensed uppercase channel labels. */
+.ui-v2 .fx-row-icon {
+  border-radius: 2px;
+  background: rgb(var(--surface-2));
+  border: 1px solid rgb(var(--line));
+}
+.ui-v2 .fx-row { border-radius: 2px; }
+.ui-v2 .fx-row-group {
+  font-family: 'Saira Condensed', system-ui, sans-serif;
+  font-style: italic;
+  letter-spacing: 0.16em;
+  color: rgb(var(--accent));
+}
+.ui-v2 .fx-field {
+  border-radius: 2px;
+  border-width: 1px;
+}
+.ui-v2 .fx-field:focus-within { border-color: rgb(var(--accent)); }
+
+/* Bigger-controls mode: the row is a primary tap target, so it gets the floor
+   too — but as padding, since a list row must not become 48px of empty space. */
+.ui-a11y .fx-row { min-height: 52px; }

@@ -143,3 +143,29 @@ describe('exact matches', () => {
     expect(searchApp(list, 'shop')[0].id).toBe('a');
   });
 });
+
+describe('whole words beat prefixes of longer words', () => {
+  it('puts "Bench Press" above "Pressing Snatch Balance" for "press"', () => {
+    const list = [
+      entry({ id: 'pressing', title: 'Pressing Snatch Balance' }),
+      entry({ id: 'bench', title: 'Bench Press' }),
+    ];
+    expect(searchApp(list, 'press')[0].id).toBe('bench');
+  });
+
+  it('still ranks the whole field above a word inside a longer one', () => {
+    const list = [
+      entry({ id: 'long', title: 'Incline Dumbbell Press' }),
+      entry({ id: 'exact', title: 'Press' }),
+    ];
+    expect(searchApp(list, 'press')[0].id).toBe('exact');
+  });
+
+  it('treats a bracketed word as a word — "(PRs)" contains "prs"', () => {
+    const list = [
+      entry({ id: 'other', title: 'Progress' }),
+      entry({ id: 'prs', title: 'Your records (PRs)' }),
+    ];
+    expect(searchApp(list, 'prs')[0].id).toBe('prs');
+  });
+});

@@ -103,7 +103,7 @@ export function DialogHost() {
               inputMode={req.numeric ? 'decimal' : 'text'}
               placeholder={req.placeholder}
               aria-label={req.title}
-              className="mt-4 w-full rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-accent/70"
+              className="fx-field mt-4 w-full rounded-xl border border-line bg-surface-2 px-3.5 py-2.5 text-sm outline-none transition-colors focus:border-accent/70"
             />
           )}
 

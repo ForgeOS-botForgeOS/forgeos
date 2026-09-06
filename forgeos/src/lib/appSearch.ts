@@ -53,20 +53,31 @@ export function normalise(s: string): string {
   return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim();
 }
 
-/** Score for one field. 0 means "no match at all". */
+/**
+ * Score for one field. 0 means "no match at all".
+ *
+ * The order matters more than the numbers, and it is the order a person means:
+ *   the whole field  >  a whole word in it  >  the field starts with it
+ *   >  a word starts with it  >  it appears somewhere.
+ *
+ * Two of those tiers exist because of real results. "pr" scored the keyword
+ * "profil" exactly as highly as the keyword "pr", so the PR Hall lost its own
+ * search term to a Slovak word — hence exact-over-prefix. And "press" put
+ * "Pressing Snatch Balance" above "Bench Press", because starting with the
+ * query beat containing it as a whole word — hence whole-word-over-prefix.
+ */
 function fieldScore(field: string, q: string, weights: [number, number, number]): number {
   if (!field) return 0;
   const [starts, word, contains] = weights;
-  // An exact hit outranks a prefix of something longer. Without this, typing
-  // "pr" scored the keyword "profil" exactly as highly as the keyword "pr",
-  // and the PR Hall lost its own search term to a Slovak word for "profile".
   if (field === q) return starts + 20;
-  if (field.startsWith(q)) return starts;
-  // A match at a word boundary is nearly as good as at the start: someone
-  // typing "press" means Bench Press.
+  // A whole word: "press" in "Bench Press", but not in "Pressing".
+  const words = field.split(/[\s\-/(),]+/);
+  if (words.includes(q)) return starts + 5;
+  if (field.startsWith(q)) return starts - 5;
   const at = field.indexOf(q);
   if (at < 0) return 0;
-  return field[at - 1] === ' ' || field[at - 1] === '-' ? word : contains;
+  const before = field[at - 1];
+  return before === ' ' || before === '-' ? word : contains;
 }
 
 /**

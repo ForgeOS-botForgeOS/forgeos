@@ -97,7 +97,8 @@ export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
               >
                 <p className="truncate text-sm font-semibold">{r.name}</p>
                 <p className="text-[11px] text-muted">
-                  {r.exerciseIds.length} exercises{r.uses > 0 ? ` · run ${r.uses}×` : ' · never run yet'}
+                  {r.exerciseIds.length} {r.exerciseIds.length === 1 ? 'exercise' : 'exercises'}
+                  {r.uses > 0 ? ` · run ${r.uses}×` : ' · never run yet'}
                 </p>
               </button>
               <Button

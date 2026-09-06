@@ -118,7 +118,9 @@ function Tile({ icon, value, label, onClick }: { icon: React.ReactNode; value: s
     <button onClick={onClick} className="rounded-2xl bg-surface border border-line p-3 text-left active:scale-[0.98] transition">
       <span className="text-muted">{icon}</span>
       <p className="font-mono text-xl font-extrabold leading-tight mt-1">{value}</p>
-      <p className="text-[10px] uppercase tracking-wide text-muted truncate">{label}</p>
+      {/* Two lines rather than an ellipsis: in Slovak, and again in the
+          bigger-controls mode, "TENTO TÝŽDEŇ" was being cut to "TENTO TÝŽ…". */}
+      <p className="text-[10px] uppercase leading-tight tracking-wide text-muted line-clamp-2">{label}</p>
     </button>
   );
 }
