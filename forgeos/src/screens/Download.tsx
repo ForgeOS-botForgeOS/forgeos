@@ -66,16 +66,16 @@ export default function Download() {
       <div className="text-center space-y-2">
         <div className="mx-auto w-fit"><ForgeLogo size={72} tile /></div>
         <h1 className="text-2xl font-extrabold tracking-tight">Get ForgeOS</h1>
-        <p className="text-sm text-muted">Install the app on any device. No app store — downloaded right here.</p>
+        <p className="text-sm text-muted">Install the app on any device. No app store needed. You download it right here.</p>
       </div>
 
       {/* Inside the up-to-date app: no APK download — it updates itself. */}
       {isInstalledApp && !nativeUpdate && (
         <Card className="space-y-1.5 border-success/40 bg-success/5">
-          <p className="font-semibold flex items-center gap-2"><RefreshCcw size={16} className="text-success" /> You're on the app — updates are automatic</p>
+          <p className="font-semibold flex items-center gap-2"><RefreshCcw size={16} className="text-success" /> You're on the app. Updates are automatic</p>
           <p className="text-[11px] text-muted">
             New features install themselves silently every time you open the app. You never
-            need to download the APK again — that's only for putting ForgeOS on a new phone.
+            need to download the APK again. That's only for putting ForgeOS on a new phone.
           </p>
         </Card>
       )}
@@ -88,7 +88,7 @@ export default function Download() {
         </div>
         {isInstalledApp && nativeUpdate && (
           <p className="text-[11px] text-muted">
-            This update changes the app's native core, which the automatic updater can't swap —
+            This update changes the app's native core, which the automatic updater can't swap:
             a one-time download is needed. It installs straight over the old version, nothing is lost.
           </p>
         )}
@@ -116,14 +116,14 @@ export default function Download() {
         </button>
         <p className="text-[11px] text-muted/80 flex items-start gap-1.5">
           <ShieldCheck size={13} className="mt-0.5 shrink-0 text-success" />
-          When Android asks, allow “Install unknown apps” for your browser — the app is distributed directly, not via Google Play.
+          When Android asks, allow “Install unknown apps” for your browser. The app is distributed directly, not via Google Play.
         </p>
       </Card>
 
       {/* PWA install (iOS + desktop + Android) */}
       <Card className="space-y-3">
         <p className="font-semibold flex items-center gap-2"><Apple size={16} className="text-muted" /> iPhone, iPad &amp; desktop</p>
-        <p className="text-[11px] text-muted">Install the web app — it runs full-screen like a native app and works offline.</p>
+        <p className="text-[11px] text-muted">Install the web app. It runs full-screen like a native app and works offline.</p>
         <InstallButton variant="big" />
         <p className="text-[11px] text-muted/80 flex items-start gap-1.5">
           <Share size={13} className="mt-0.5 shrink-0 text-accent-2" />
@@ -131,7 +131,12 @@ export default function Download() {
         </p>
       </Card>
 
-      <p className="text-[11px] text-muted/60 text-center">ForgeOS is also a website — open it in any browser, no install needed.</p>
+      <p className="text-[11px] text-muted/60 text-center">ForgeOS is also a website. Open it in any browser, no install needed.</p>
+      <p className="text-[11px] text-muted/60 text-center">
+        <a href={`${import.meta.env.BASE_URL}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a>
+        {' · '}
+        <a href={`${import.meta.env.BASE_URL}terms.html`} target="_blank" rel="noopener noreferrer" className="underline">Terms of Use</a>
+      </p>
     </div>
   );
 }

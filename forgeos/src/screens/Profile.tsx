@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, History, Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target, MessageCircle } from 'lucide-react';
+import { Activity, Cloud, History, Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target, MessageCircle } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { ModeSwitch } from '../components/ModeSwitch';
@@ -654,8 +654,8 @@ export default function Profile() {
           <div className="flex gap-2 mt-2">
             <Button variant="ghost" className="flex-1 justify-center" onClick={async () => {
               const r = await pushCloudBackup();
-              toast(r === 'ok' ? 'Backed up to the cloud ☁️' : r === 'unauth' ? 'Log in with email to use cloud backup.' : 'Cloud backup failed — try again.', r === 'ok' ? 'success' : 'error');
-            }}>☁️ Back up to cloud</Button>
+              toast(r === 'ok' ? 'Backed up to the cloud.' : r === 'unauth' ? 'Log in with email to use cloud backup.' : 'Cloud backup failed. Try again.', r === 'ok' ? 'success' : 'error');
+            }}><Cloud size={15} aria-hidden /> Back up to cloud</Button>
             <Button variant="ghost" className="flex-1 justify-center" onClick={async () => {
               if (cloudConfirm) {
                 const r = await pullCloudBackup();
@@ -665,6 +665,13 @@ export default function Profile() {
               } else { setCloudConfirm(true); toast('Tap again to replace local data with your cloud backup.', 'info'); }
             }}>{cloudConfirm ? 'Confirm restore' : 'Restore from cloud'}</Button>
           </div>
+        )}
+        {/* GDPR art. 9: health data needs explicit consent, so say what the
+            button uploads before anyone taps it. */}
+        {cloudSyncAvailable() && (
+          <p className="text-[11px] text-muted mt-1.5">
+            A cloud backup includes your health data (sleep, heart rate, weight, measurements). Tapping Back up means you agree to store it on our EU server. Details in the <a href={`${import.meta.env.BASE_URL}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">privacy policy</a>.
+          </p>
         )}
         <input ref={backupFileRef} type="file" accept="application/json" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { try { await importData(f); toast('Backup restored ✅'); } catch { toast('That file is not a valid ForgeOS backup.', 'error'); } } }} />
       </div>

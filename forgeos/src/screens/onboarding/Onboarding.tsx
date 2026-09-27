@@ -287,6 +287,7 @@ export default function Onboarding() {
             <button className="w-full text-sm text-muted pt-2" onClick={async () => { clearSignedOut(); setProvider('guest'); if (!(await restoreExistingAccount())) setStep('quiz'); }}>
               {t('ob.guest')}
             </button>
+            <LegalNote />
           </div>
 
           {isBackendLive && (
@@ -494,9 +495,25 @@ function EmailAuthSheet({ open, initialMode = 'up', onClose, onAuthed }: { open:
         <Button className="w-full justify-center" disabled={busy || !email || pw.length < 6} onClick={submit}>
           {busy ? 'Please wait…' : mode === 'up' ? 'Create account' : 'Sign in'}
         </Button>
-        <p className="text-[11px] text-muted/70">Real accounts via Supabase. Passwords are min. 6 characters. Tap the eye to show what you type — your existing password can’t be displayed (it’s stored encrypted).</p>
+        <p className="text-[11px] text-muted/70">Real accounts via Supabase. Passwords are min. 6 characters. Tap the eye to show what you type. Your existing password can’t be displayed (it’s stored encrypted).</p>
+        <LegalNote />
       </div>
     </Sheet>
+  );
+}
+
+// Shown wherever an account can be created, because agreeing to the terms has
+// to happen before the account exists, not somewhere in Settings afterwards.
+// Under 16 needs a parent's OK in Slovakia (GDPR art. 8), so it says so here.
+function LegalNote() {
+  const base = import.meta.env.BASE_URL;
+  return (
+    <p className="text-[11px] text-muted/80 text-center leading-snug">
+      By continuing you agree to the{' '}
+      <a href={`${base}terms.html`} target="_blank" rel="noopener noreferrer" className="underline">Terms</a> and the{' '}
+      <a href={`${base}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a>.
+      Under 16? Ask a parent before you create an account.
+    </p>
   );
 }
 
