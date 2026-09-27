@@ -45,7 +45,9 @@ class WebUpdatePlugin : Plugin() {
         // 8: CAMERA permission for the barcode scanner. Older APKs must not
         // receive the scanner web bundle — Android would refuse the camera and
         // the app would blame a setting the user has no way to change.
-        const val NATIVE_VERSION = 8
+        // 9 (2026-09-03): allowBackup=false — the manifest changed, so installs
+        // still on 8 must not silently take a web bundle built against 9.
+        const val NATIVE_VERSION = 9
 
         const val PREFS = "forgeos-webupdate"
         const val KEY_PATH = "path"

@@ -1,8 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <!-- allowBackup=false: this app's data directory is the WebView profile,
+         which holds the Supabase session token, Garmin-derived health data, the
+         whole training history and the app-lock secret. With backup on, all of
+         that can be pulled off the device with `adb backup` and synced into
+         Google's cloud backup — which is exactly what the app lock is meant to
+         prevent. Nothing here is worth restoring automatically either: the app
+         has its own export/import and cloud sync. -->
     <application
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
