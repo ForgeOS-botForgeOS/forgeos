@@ -1,7 +1,8 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, TrendingDown, TrendingUp, Camera, Trophy, Footprints, Dumbbell, Target, Flame } from 'lucide-react';
-import { LineChart, Line, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine } from 'recharts';
+import { ComposedChart, Line, BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Area } from 'recharts';
+import { useChartKit } from '../components/chartKit';
 import { Card, Button, Sheet, SectionTitle, Badge, Pill } from '../components/ui';
 import { CountUp } from '../components/CountUp';
 import { useUser } from '../state/userStore';
@@ -89,6 +90,7 @@ const AXIS_TICK = { fontSize: 10, fill: 'rgb(var(--muted))' };
 const TIP_STYLE = { background: 'rgb(var(--surface))', border: '1px solid rgb(var(--line))', borderRadius: 12, fontSize: 12 };
 
 function RecoveryGrowth() {
+  const ck = useChartKit();
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
   const days = useHealth((s) => s.days);
 
@@ -129,12 +131,15 @@ function RecoveryGrowth() {
         ) : undefined}>Readiness (30d)</SectionTitle>
         <div className="h-36">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={series} margin={{ left: -24, right: 6, top: 6 }}>
+            <ComposedChart data={series} margin={{ left: -24, right: 6, top: 6 }}>
+              {ck.defs}
+              {ck.grid}
               <XAxis dataKey="d" tick={AXIS_TICK} interval="preserveStartEnd" />
               <YAxis domain={[0, 100]} tick={AXIS_TICK} />
               <Tooltip contentStyle={TIP_STYLE} formatter={(v) => [`${v}`, 'Readiness']} />
-              <Line type="monotone" dataKey="score" stroke="rgb(var(--accent))" strokeWidth={2.5} dot={false} connectNulls />
-            </LineChart>
+              {ck.v2 && <Area type="monotone" dataKey="score" stroke="none" fill={ck.areaFill('accent')} fillOpacity={1} activeDot={false} tooltipType="none" {...ck.motion} />}
+              <Line type="monotone" dataKey="score" stroke="rgb(var(--accent))" strokeWidth={2.5} dot={false} connectNulls {...ck.motion} />
+            </ComposedChart>
           </ResponsiveContainer>
         </div>
       </Card>
@@ -144,11 +149,13 @@ function RecoveryGrowth() {
         <div className="h-36">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={last14} margin={{ left: -24, right: 6, top: 6 }}>
+              {ck.defs}
+              {ck.grid}
               <XAxis dataKey="d" tick={AXIS_TICK} interval="preserveStartEnd" />
               <YAxis domain={[0, 10]} tick={AXIS_TICK} />
               <Tooltip contentStyle={TIP_STYLE} formatter={(v) => [`${v} h`, 'Sleep']} />
               <ReferenceLine y={8} stroke="rgb(var(--muted))" strokeDasharray="4 4" />
-              <Bar dataKey="sleepH" fill="rgb(var(--accent-2))" radius={[4, 4, 0, 0]} maxBarSize={14} />
+              <Bar dataKey="sleepH" fill={ck.barFill('accent-2', 'rgb(var(--accent-2))')} radius={ck.radius([4, 4, 0, 0])} maxBarSize={14} {...ck.motion} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -159,10 +166,12 @@ function RecoveryGrowth() {
         <div className="h-36">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={last14} margin={{ left: -14, right: 6, top: 6 }}>
+              {ck.defs}
+              {ck.grid}
               <XAxis dataKey="d" tick={AXIS_TICK} interval="preserveStartEnd" />
               <YAxis tick={AXIS_TICK} />
               <Tooltip contentStyle={TIP_STYLE} formatter={(v) => [Number(v).toLocaleString(), 'Steps']} />
-              <Bar dataKey="steps" fill="rgb(var(--success))" radius={[4, 4, 0, 0]} maxBarSize={14} />
+              <Bar dataKey="steps" fill={ck.barFill('success', 'rgb(var(--success))')} radius={ck.radius([4, 4, 0, 0])} maxBarSize={14} {...ck.motion} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -174,6 +183,7 @@ function RecoveryGrowth() {
 /* ------------------------------- BODY ------------------------------- */
 
 function BodyPanel() {
+  const ck = useChartKit();
   const bodyStats = useUser((s) => s.bodyStats);
   const weighIns = useUser((s) => s.weighIns);
   const addBodyStat = useUser((s) => s.addBodyStat);
@@ -243,12 +253,15 @@ function BodyPanel() {
           <SectionTitle>Weight trend</SectionTitle>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={weightSeries} margin={{ left: -20, right: 6, top: 6 }}>
+              <ComposedChart data={weightSeries} margin={{ left: -20, right: 6, top: 6 }}>
+                {ck.defs}
+                {ck.grid}
                 <XAxis dataKey="d" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} interval="preserveStartEnd" />
                 <YAxis domain={['dataMin - 1', 'dataMax + 1']} tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} />
                 <Tooltip contentStyle={{ background: 'rgb(var(--surface))', border: '1px solid rgb(var(--line))', borderRadius: 12, fontSize: 12 }} formatter={(v) => [`${v} kg`, 'Weight']} />
-                <Line type="monotone" dataKey="kg" stroke="rgb(var(--accent))" strokeWidth={2.5} dot={false} />
-              </LineChart>
+                {ck.v2 && <Area type="monotone" dataKey="kg" stroke="none" fill={ck.areaFill('accent')} fillOpacity={1} activeDot={false} tooltipType="none" {...ck.motion} />}
+                <Line type="monotone" dataKey="kg" stroke="rgb(var(--accent))" strokeWidth={2.5} dot={false} {...ck.motion} />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
         </Card>
@@ -339,6 +352,7 @@ function defaultFor(k: keyof BodyStat): number {
 /* ------------------------------ CARDIO ------------------------------ */
 
 function CardioPanel() {
+  const ck = useChartKit();
   const history = useWorkout((s) => s.history);
   const cardio = useMemo(() => history.filter((w) => w.cardio).map((w) => w.cardio!), [history]);
 
@@ -384,10 +398,12 @@ function CardioPanel() {
           <div className="h-36">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={series} margin={{ left: -22, right: 6, top: 6 }}>
+                {ck.defs}
+                {ck.grid}
                 <XAxis dataKey="d" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} />
                 <YAxis tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} />
                 <Tooltip contentStyle={{ background: 'rgb(var(--surface))', border: '1px solid rgb(var(--line))', borderRadius: 12, fontSize: 12 }} formatter={(v) => [`${v} km`, 'Distance']} />
-                <Bar dataKey="km" fill="rgb(var(--accent-2))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="km" fill={ck.barFill('accent-2', 'rgb(var(--accent-2))')} radius={ck.radius([4, 4, 0, 0])} {...ck.motion} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -404,6 +420,7 @@ function BestRow({ label, value }: { label: string; value: string }) {
 /* ----------------------------- STRENGTH ----------------------------- */
 
 function StrengthPanel() {
+  const ck = useChartKit();
   const history = useWorkout((s) => s.history);
   const prs = useWorkout((s) => s.prs);
 
@@ -445,12 +462,15 @@ function StrengthPanel() {
           {e1Series.length > 1 ? (
             <div className="h-40">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={e1Series} margin={{ left: -20, right: 6, top: 6 }}>
+                <ComposedChart data={e1Series} margin={{ left: -20, right: 6, top: 6 }}>
+                  {ck.defs}
+                  {ck.grid}
                   <XAxis dataKey="d" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} interval="preserveStartEnd" />
                   <YAxis domain={['dataMin - 5', 'dataMax + 5']} tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} />
                   <Tooltip contentStyle={{ background: 'rgb(var(--surface))', border: '1px solid rgb(var(--line))', borderRadius: 12, fontSize: 12 }} formatter={(v) => [`${v} kg`, 'est. 1RM']} />
-                  <Line type="monotone" dataKey="kg" stroke="rgb(var(--accent-2))" strokeWidth={2.5} dot={{ r: 2 }} />
-                </LineChart>
+                  {ck.v2 && <Area type="monotone" dataKey="kg" stroke="none" fill={ck.areaFill('accent-2')} fillOpacity={1} activeDot={false} tooltipType="none" {...ck.motion} />}
+                  <Line type="monotone" dataKey="kg" stroke="rgb(var(--accent-2))" strokeWidth={2.5} dot={{ r: 2 }} {...ck.motion} />
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
           ) : (
@@ -465,10 +485,12 @@ function StrengthPanel() {
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={volSeries} margin={{ left: -12, right: 6, top: 6 }}>
+                {ck.defs}
+                {ck.grid}
                 <XAxis dataKey="d" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} />
                 <YAxis tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} tickFormatter={(v) => `${Math.round(v / 1000)}k`} />
                 <Tooltip contentStyle={{ background: 'rgb(var(--surface))', border: '1px solid rgb(var(--line))', borderRadius: 12, fontSize: 12 }} formatter={(v) => [`${Number(v).toLocaleString()} kg`, 'Volume']} />
-                <Bar dataKey="kg" fill="rgb(var(--accent))" radius={[4, 4, 0, 0]} />
+                <Bar dataKey="kg" fill={ck.barFill('accent', 'rgb(var(--accent))')} radius={ck.radius([4, 4, 0, 0])} {...ck.motion} />
               </BarChart>
             </ResponsiveContainer>
           </div>

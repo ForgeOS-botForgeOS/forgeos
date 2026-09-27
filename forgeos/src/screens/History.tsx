@@ -1,7 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Dumbbell, TrendingUp, Plus, Copy, Activity, Trash2, Share2 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Area } from 'recharts';
+import { useChartKit } from '../components/chartKit';
 import { Card, Badge, Pill, Button, Sheet } from '../components/ui';
 import { useWorkout } from '../state/workoutStore';
 import { useUser } from '../state/userStore';
@@ -183,6 +184,7 @@ function CardioEditSheet({ workout, onClose }: { workout: Workout | null; onClos
 }
 
 function Lifts() {
+  const ck = useChartKit();
   const history = useWorkout((s) => s.history);
   const bodyweight = useUser((s) => s.profile?.weightKg ?? 80);
   const navigate = useNavigate();
@@ -220,12 +222,15 @@ function Lifts() {
               {series.length > 1 && (
                 <div className="flex-1 h-16">
                   <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={series}>
+                    <ComposedChart data={series}>
+                      {ck.defs}
+                      {ck.grid}
                       <XAxis dataKey="date" hide />
                       <YAxis domain={['dataMin - 5', 'dataMax + 5']} hide />
                       <Tooltip contentStyle={{ background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 12, fontSize: 12 }} formatter={(v) => [`${v} kg`, 'e1RM']} />
-                      <Line type="monotone" dataKey="e1rm" stroke="rgb(var(--accent))" strokeWidth={2} dot={false} />
-                    </LineChart>
+                      {ck.v2 && <Area type="monotone" dataKey="e1rm" stroke="none" fill={ck.areaFill('accent')} fillOpacity={1} activeDot={false} tooltipType="none" {...ck.motion} />}
+                      <Line type="monotone" dataKey="e1rm" stroke="rgb(var(--accent))" strokeWidth={2} dot={false} {...ck.motion} />
+                    </ComposedChart>
                   </ResponsiveContainer>
                 </div>
               )}

@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Play, TrendingUp, Trophy, Music2 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip } from 'recharts';
+import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Area } from 'recharts';
+import { useChartKit } from '../components/chartKit';
 import { Card, Badge, Button, SectionTitle } from '../components/ui';
 import { exerciseById, substitutesFor } from '../data/exercises';
 import { cuesFor } from '../data/cues';
@@ -19,6 +20,7 @@ import { useT, useLocale } from '../lib/i18n';
  * tapping a lift anywhere (live session, library, history, PR Hall).
  */
 export default function ExerciseDetail() {
+  const ck = useChartKit();
   const { id = '' } = useParams();
   const navigate = useNavigate();
   const t = useT();
@@ -119,12 +121,15 @@ export default function ExerciseDetail() {
           <SectionTitle>{t('ex.progression')}</SectionTitle>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={series} margin={{ left: -22, right: 6, top: 6 }}>
+              <ComposedChart data={series} margin={{ left: -22, right: 6, top: 6 }}>
+                {ck.defs}
+                {ck.grid}
                 <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} interval="preserveStartEnd" />
                 <YAxis domain={['dataMin - 5', 'dataMax + 5']} tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} />
                 <Tooltip contentStyle={{ background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 12, fontSize: 12 }} formatter={(v) => [`${v} kg`, 'e1RM']} />
-                <Line type="monotone" dataKey="e1rm" stroke="rgb(var(--accent))" strokeWidth={2.5} dot={{ r: 2.5 }} />
-              </LineChart>
+                {ck.v2 && <Area type="monotone" dataKey="e1rm" stroke="none" fill={ck.areaFill('accent')} fillOpacity={1} activeDot={false} tooltipType="none" {...ck.motion} />}
+                <Line type="monotone" dataKey="e1rm" stroke="rgb(var(--accent))" strokeWidth={2.5} dot={{ r: 2.5 }} {...ck.motion} />
+              </ComposedChart>
             </ResponsiveContainer>
           </div>
           <p className="text-[11px] text-muted">

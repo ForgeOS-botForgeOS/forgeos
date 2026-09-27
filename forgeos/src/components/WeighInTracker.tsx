@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine } from 'recharts';
+import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Area } from 'recharts';
+import { useChartKit } from './chartKit';
 import { Target, TrendingDown, TrendingUp } from 'lucide-react';
 import { Card, Button } from './ui';
 import { useUser } from '../state/userStore';
@@ -8,6 +9,7 @@ import { haptic } from '../lib/haptics';
 import { toast } from '../lib/toast';
 
 export function WeighInTracker() {
+  const ck = useChartKit();
   const weighIns = useUser((s) => s.weighIns);
   const addWeighIn = useUser((s) => s.addWeighIn);
   const updateProfile = useUser((s) => s.updateProfile);
@@ -41,7 +43,9 @@ export function WeighInTracker() {
       <div className="h-32">
         {data.length > 1 ? (
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={data}>
+            <ComposedChart data={data}>
+              {ck.defs}
+              {ck.grid}
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
               <YAxis domain={[(min: number) => Math.min(min - 1, goalKg ? goalKg - 1 : Infinity), (max: number) => Math.max(max + 1, goalKg ? goalKg + 1 : -Infinity)]} hide />
               <Tooltip
@@ -49,9 +53,10 @@ export function WeighInTracker() {
                 formatter={(v, n) => [`${v} kg`, n === 'avg' ? 'Rolling avg' : 'Weight']}
               />
               {goalKg !== undefined && <ReferenceLine y={goalKg} stroke="rgb(var(--accent-2))" strokeDasharray="4 4" strokeOpacity={0.7} />}
-              <Line type="monotone" dataKey="weight" stroke="rgb(var(--muted))" strokeWidth={1.5} dot={false} />
-              <Line type="monotone" dataKey="avg" stroke="rgb(var(--accent))" strokeWidth={2.5} dot={false} />
-            </LineChart>
+              <Line type="monotone" dataKey="weight" stroke="rgb(var(--muted))" strokeWidth={1.5} dot={false} {...ck.motion} />
+              {ck.v2 && <Area type="monotone" dataKey="avg" stroke="none" fill={ck.areaFill('accent')} fillOpacity={1} activeDot={false} tooltipType="none" {...ck.motion} />}
+              <Line type="monotone" dataKey="avg" stroke="rgb(var(--accent))" strokeWidth={2.5} dot={false} {...ck.motion} />
+            </ComposedChart>
           </ResponsiveContainer>
         ) : (
           <div className="h-full flex items-center justify-center text-sm text-muted">Log a weigh-in to see your trend.</div>

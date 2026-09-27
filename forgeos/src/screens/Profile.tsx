@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target, MessageCircle } from 'lucide-react';
+import { Activity, History, Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target, MessageCircle } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { ModeSwitch } from '../components/ModeSwitch';
@@ -49,11 +49,9 @@ const GOALS: { id: Goal; label: string; emoji: string }[] = [
   { id: 'strength', label: 'Get stronger', emoji: '🏋️' },
 ];
 
-const DESIGN_MODES: { id: DesignMode; name: string; emoji: string; desc: string }[] = [
-  { id: 'v2', name: 'V2 · Tempo (preview)', emoji: '📡', desc: 'In-progress redesign — broadcast-sport telemetry: condensed italic type, signal accent, live meters' },
-  { id: 'bolt', name: 'Bolt', emoji: '⚡', desc: 'Bold editorial redesign — grotesque type, flat high-contrast blocks, hard shadows' },
-  { id: 'nova', name: 'Nova', emoji: '🌈', desc: 'Gradient-glass redesign — new type, vivid gradients, glass nav' },
-  { id: 'classic', name: 'Classic', emoji: '⚙️', desc: 'The original ForgeOS look' },
+const DESIGN_MODES: { id: DesignMode; name: string; icon: typeof Activity; desc: string }[] = [
+  { id: 'v2', name: 'Tempo', icon: Activity, desc: 'Condensed italic type, live meters and sweeping charts' },
+  { id: 'classic', name: 'Legacy', icon: History, desc: 'The original ForgeOS look, kept for comparison' },
 ];
 
 const SET_FOCUS: { id: SetRowDetail; label: string }[] = [
@@ -364,7 +362,7 @@ export default function Profile() {
           <Toggle label="Auto day / night" checked={s.autoTheme} onChange={(v) => s.set('autoTheme', v)} />
         </div>
         <div className={s.apprentice ? 'hidden' : 'mt-3'}>
-          <p className="text-sm font-medium mb-2 flex items-center gap-1.5">App design <span className="text-[10px] rounded-full bg-accent/15 text-accent px-1.5 py-0.5 font-semibold">NEW</span></p>
+          <p className="text-sm font-medium mb-2 flex items-center gap-1.5">App design</p>
           <div className="space-y-2" data-noswipe>
             {DESIGN_MODES.map((m) => {
               const active = s.designMode === m.id;
@@ -374,7 +372,7 @@ export default function Profile() {
                   onClick={() => { s.set('designMode', m.id); haptic('tap'); }}
                   className={`w-full text-left rounded-xl border px-4 py-3 flex items-center gap-3 transition active:scale-[0.99] ${active ? 'border-accent ring-1 ring-accent bg-accent/5' : 'border-line bg-surface hover:bg-surface-2'}`}
                 >
-                  <span className="text-xl shrink-0">{m.emoji}</span>
+                  <m.icon size={20} className={`shrink-0 ${active ? 'text-accent' : 'text-muted'}`} aria-hidden />
                   <span className="flex-1 min-w-0">
                     <span className="text-sm font-semibold block">{m.name}</span>
                     <span className="text-[11px] text-muted block">{m.desc}</span>

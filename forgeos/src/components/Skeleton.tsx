@@ -2,7 +2,7 @@ import { ForgeLogo } from './ForgeLogo';
 
 // Shimmer placeholders shown while a lazy route chunk loads.
 export function SkeletonBar({ className = '' }: { className?: string }) {
-  return <div className={`animate-pulse rounded-xl bg-surface-2 ${className}`} />;
+  return <div className={`fx-skeleton animate-pulse rounded-xl bg-surface-2 ${className}`} />;
 }
 
 export function ScreenSkeleton() {

@@ -2,8 +2,8 @@
 
 > The foundational token layer for the chosen direction (Tempo — broadcast-sport
 > telemetry). Scoped under `.ui-v2`; driven by the theme variables so every colour
-> theme works. Selectable now as **Settings → App design → V2 · Tempo (preview)**;
-> becomes the Legacy⟷V2 default at QA sign-off (Phase 7).
+> theme works. **The default look since 2026-09-27 (Phase 7 done):** Nova and Bolt are
+> retired (a saved value of either is coerced to Tempo), and the picker is Tempo ⟷ Legacy.
 
 ## Colour — default theme re-authored (`forge-dark → tempo`)
 
@@ -54,6 +54,15 @@ no offset shadows, no gradient sheen.
 | `--v2-ease-sweep` | `cubic-bezier(0.22, 1, 0.36, 1)` | Sweeps, card/border transitions |
 | `--v2-dur-fast` | `140ms` | Hover/press/focus |
 | `--v2-dur` | `220ms` | Meter sweeps, entrances |
+| `--v2-dur-enter` | `460ms` | A screen section wiping in |
+| `--v2-stagger` | `45ms` | Gap between sections of one screen |
+
+**Choreography (2026-09-27):** a screen fades in in 160ms and does not move; its direct
+sections wipe in left→right (`clip-path` + 6px slide) one after another, and cards nested in
+a section inherit its delay (`--v2-i`). The screen title's skewed signal bar sweeps out under
+it. Primary buttons get a light band on hover/press; the meter has a bright leading "needle";
+skeletons scan instead of pulse. All of it is off under `prefers-reduced-motion` and in the
+bigger-controls mode (including the delays, which the global rule would otherwise leave).
 
 Global `prefers-reduced-motion` (already app-wide) collapses these. Full meter-sweep and
 count-up choreography lands with the primitives in Phase 4.
@@ -71,13 +80,26 @@ count-up choreography lands with the primitives in Phase 4.
 · `.screen-head h1` / `h1` / `h2` · `input`/`textarea`/`select` · app font · stat numerals ·
 `ForgeLogo` V2 mark (signal-teal tile, heat spark).
 
+## Charts (2026-09-27)
+
+`components/chartKit.tsx` hands every recharts chart its Tempo geometry and paint — a
+gradient area under each trend line, signal bars that fade into the baseline, squared bar
+tops, dashed horizontal baselines, a 900ms reveal. Type and chrome (ticks, the tooltip
+readout panel, the hover cursor, the ringed active dot) are CSS under "Tempo charts". Every
+kit helper returns the Legacy value untouched outside Tempo.
+
+## Radius language
+
+`rounded-2xl`/`-3xl` → 8px and `rounded-xl` → 6px under `.ui-v2`, so hand-built panels and
+buttons match `<Card>`/`<Button>`; `rounded-full` (avatars, dots) is left alone.
+
 ## Deferred to later phases
 
 - **Signature meter** (segmented meter + count-up replacing the `Ring`) → Phase 4 (component
   primitive; can't be pure CSS over an SVG ring).
 - `Pill` / `Toggle` / `Badge` / `Stat` / chart theming refinements → Phase 4.
 - Per-screen composition, empty/loading/error states → Phase 5.
-- Toggle collapse to `legacy | v2`, retire classic/nova/bolt, flip default → Phase 7.
+- ~~Toggle collapse, retire classic/nova/bolt, flip default → Phase 7~~ — done 2026-09-27.
 
 ## Preview specimen
 

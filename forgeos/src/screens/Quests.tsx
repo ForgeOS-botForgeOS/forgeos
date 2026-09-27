@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LineChart, Line, ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
+import { ComposedChart, Line, ScatterChart, Scatter, XAxis, YAxis, Tooltip, ResponsiveContainer, ReferenceLine, Area } from 'recharts';
+import { useChartKit } from '../components/chartKit';
 import { prTimelineData, prSeriesByLift, xpCurveData, type PrPoint } from '../lib/progressCharts';
 import { Trophy, Flame, Coins, Dice5, Crown, Music } from 'lucide-react';
 import { Screen } from '../components/Screen';
@@ -78,6 +79,7 @@ export default function Quests() {
 }
 
 function RankPanel() {
+  const ck = useChartKit();
   const xp = useGami((s) => s.xp);
   const coins = useGami((s) => s.coins);
   const streak = useGami((s) => s.weekStreak);
@@ -138,15 +140,18 @@ function RankPanel() {
           <Card>
             <div className="h-40">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={xpCurve} margin={{ left: -6, right: 10, top: 8, bottom: 0 }}>
+                <ComposedChart data={xpCurve} margin={{ left: -6, right: 10, top: 8, bottom: 0 }}>
+                  {ck.defs}
+                  {ck.grid}
                   <XAxis dataKey="t" type="number" domain={['dataMin', 'dataMax']} scale="time" tickFormatter={(t) => new Date(Number(t)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} minTickGap={28} />
                   <YAxis tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} width={34} tickFormatter={(v) => (Number(v) >= 1000 ? `${Math.round(Number(v) / 1000)}k` : `${v}`)} />
                   <Tooltip contentStyle={TIP} formatter={(v) => [`${Number(v).toLocaleString()} XP`, 'XP']} labelFormatter={(t) => new Date(Number(t)).toLocaleDateString()} />
                   {next && next.minXp <= xp * 1.4 && (
                     <ReferenceLine y={next.minXp} stroke="rgb(var(--accent-2))" strokeDasharray="4 4" label={{ value: rankLabel(next), position: 'insideTopRight', fontSize: 9, fill: 'rgb(var(--accent-2))' }} />
                   )}
-                  <Line type="monotone" dataKey="xp" stroke="rgb(var(--accent))" strokeWidth={2} dot={false} />
-                </LineChart>
+                  {ck.v2 && <Area type="monotone" dataKey="xp" stroke="none" fill={ck.areaFill('accent')} fillOpacity={1} activeDot={false} tooltipType="none" {...ck.motion} />}
+                  <Line type="monotone" dataKey="xp" stroke="rgb(var(--accent))" strokeWidth={2} dot={false} {...ck.motion} />
+                </ComposedChart>
               </ResponsiveContainer>
             </div>
             <p className="text-[10px] text-muted/70 mt-1">Estimated from your training history · ends at your real {xp.toLocaleString()} XP{next ? ` · next: ${rankLabel(next)} at ${next.minXp.toLocaleString()}` : ''}</p>
@@ -330,6 +335,7 @@ function Leaderboard() {
 }
 
 function PrHall() {
+  const ck = useChartKit();
   const prs = useWorkout((s) => s.prs);
   const navigate = useNavigate();
   const [attach, setAttach] = useState<string | null>(null);
@@ -366,6 +372,8 @@ function PrHall() {
           <div className="h-44">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ left: -8, right: 10, top: 8, bottom: 0 }}>
+                {ck.defs}
+                {ck.grid}
                 <XAxis dataKey="t" type="number" domain={['dataMin', 'dataMax']} scale="time" tickFormatter={(t) => new Date(Number(t)).toLocaleDateString(undefined, { month: 'short', day: 'numeric' })} tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} minTickGap={28} />
                 <YAxis dataKey="e1rm" type="number" tick={{ fontSize: 10, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} width={34} />
                 <Tooltip content={<PrTooltip />} cursor={{ strokeDasharray: '3 3', stroke: 'rgb(var(--line))' }} />

@@ -2,6 +2,7 @@ import { useMemo, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Flame, TrendingUp, Lightbulb, ChevronRight, Watch, Moon, Footprints, MessageCircle } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine } from 'recharts';
+import { useChartKit } from '../components/chartKit';
 import { Screen } from '../components/Screen';
 import { Card, Ring, SectionTitle, Badge } from '../components/ui';
 import { CountUp } from '../components/CountUp';
@@ -27,6 +28,7 @@ import { ReadinessCard } from '../components/Readiness';
 import { weekendNudge } from '../lib/nudges';
 
 export default function Home() {
+  const ck = useChartKit();
   const t = useT();
   const profile = useUser((s) => s.profile);
   // Derive today's macro totals from raw state (memoised) so the selector
@@ -215,6 +217,8 @@ export default function Home() {
             <div className="h-36">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyVolume}>
+                  {ck.defs}
+                  {ck.grid}
                   <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
                   <YAxis hide />
                   <Tooltip
@@ -222,7 +226,7 @@ export default function Home() {
                     contentStyle={{ background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 12, fontSize: 12 }}
                     formatter={(v) => [`${Number(v).toLocaleString()} kg`, 'Volume']}
                   />
-                  <Bar dataKey="volume" fill="rgb(var(--accent))" radius={[6, 6, 0, 0]} />
+                  <Bar dataKey="volume" fill={ck.barFill('accent', 'rgb(var(--accent))')} radius={ck.radius([6, 6, 0, 0])} {...ck.motion} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -307,6 +311,7 @@ function WeekendNudge() {
 }
 
 function HealthGlance() {
+  const ck = useChartKit();
   const navigate = useNavigate();
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
   const days = useHealth((s) => s.days);
@@ -349,11 +354,13 @@ function HealthGlance() {
           <div className="h-20">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={glance.rows} margin={{ left: 0, right: 0, top: 4 }}>
+                {ck.defs}
+                {ck.grid}
                 <XAxis dataKey="d" tick={tick} axisLine={false} tickLine={false} interval={0} />
                 <YAxis hide domain={[0, 10]} />
                 <Tooltip cursor={{ fill: 'rgb(var(--surface-2))' }} contentStyle={tip} formatter={(v) => [`${v} h`, 'Sleep']} />
                 <ReferenceLine y={8} stroke="rgb(var(--muted))" strokeDasharray="3 3" />
-                <Bar dataKey="sleepH" fill="rgb(var(--accent-2))" radius={[3, 3, 0, 0]} maxBarSize={10} />
+                <Bar dataKey="sleepH" fill={ck.barFill('accent-2', 'rgb(var(--accent-2))')} radius={ck.radius([3, 3, 0, 0])} maxBarSize={10} {...ck.motion} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -365,10 +372,12 @@ function HealthGlance() {
           <div className="h-20">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={glance.rows} margin={{ left: 0, right: 0, top: 4 }}>
+                {ck.defs}
+                {ck.grid}
                 <XAxis dataKey="d" tick={tick} axisLine={false} tickLine={false} interval={0} />
                 <YAxis hide />
                 <Tooltip cursor={{ fill: 'rgb(var(--surface-2))' }} contentStyle={tip} formatter={(v) => [Number(v).toLocaleString(), 'Steps']} />
-                <Bar dataKey="steps" fill="rgb(var(--success))" radius={[3, 3, 0, 0]} maxBarSize={10} />
+                <Bar dataKey="steps" fill={ck.barFill('success', 'rgb(var(--success))')} radius={ck.radius([3, 3, 0, 0])} maxBarSize={10} {...ck.motion} />
               </BarChart>
             </ResponsiveContainer>
           </div>

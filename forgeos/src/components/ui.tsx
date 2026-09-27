@@ -46,7 +46,7 @@ export const Button = forwardRef<HTMLButtonElement, BtnProps>(function Button(
       ref={ref}
       whileTap={rest.disabled ? undefined : { scale: 0.95 }}
       transition={PRESS}
-      className={`rounded-xl px-4 py-2.5 text-sm transition-colors disabled:opacity-40 ${styles[variant]} ${className}`}
+      className={`fx-btn rounded-xl px-4 py-2.5 text-sm transition-colors disabled:opacity-40 ${styles[variant]} ${className}`}
       {...rest}
     >
       {children}
@@ -247,13 +247,13 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
       aria-label={label}
       whileTap={{ scale: 0.9 }}
       transition={PRESS}
-      className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-surface-2'}`}
+      className={`fx-toggle relative h-7 w-12 shrink-0 rounded-full transition-colors ${checked ? 'bg-accent' : 'bg-surface-2'}`}
     >
       <motion.span
         layout
         animate={{ x: checked ? 20 : 0 }}
         transition={{ type: 'spring', stiffness: 600, damping: 32 }}
-        className="absolute top-1 left-1 h-5 w-5 rounded-full bg-white shadow"
+        className="fx-toggle-thumb absolute top-1 left-1 h-5 w-5 rounded-full bg-white shadow"
       />
     </motion.button>
   );
@@ -262,7 +262,7 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
 export function Badge({ children, color = 'rgb(var(--accent))' }: { children: ReactNode; color?: string }) {
   return (
     <span
-      className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold"
+      className="fx-badge inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold"
       style={{ backgroundColor: `${color}22`, color }}
     >
       {children}

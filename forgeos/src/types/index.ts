@@ -469,12 +469,12 @@ export interface AppLock {
 }
 
 // Design mode = the visual language, orthogonal to the colour `theme`.
-// 'classic' = the original ForgeOS look · 'nova' = the gradient-glass redesign ·
-// 'bolt' = the bold editorial / neo-brutalist redesign · 'v2' = the in-progress
-// "Tempo" broadcast-sport telemetry redesign (selectable preview while it's
-// built; becomes the Legacy⟷V2 default at QA sign-off).
-// Every mode drives off the theme variables, so all colour themes keep working.
-export type DesignMode = 'classic' | 'nova' | 'bolt' | 'v2';
+// 'v2' = "Tempo", the broadcast-sport telemetry design and the default for
+// everyone · 'classic' = the original ForgeOS look, kept as "Legacy" for
+// comparison. Nova and Bolt were retired into Tempo (2026-09-27); a saved
+// value of either is coerced to 'v2' on rehydrate (settingsStore).
+// Both modes drive off the theme variables, so all colour themes keep working.
+export type DesignMode = 'classic' | 'v2';
 
 // What fills the space under each set in a workout: the sub-target controls, or
 // a big readout of the weight / reps for that set.
@@ -491,7 +491,7 @@ export interface Settings {
   reminder: ReminderConfig;
   theme: ThemeId;
   autoTheme: boolean; // day = light, night = dark
-  designMode: DesignMode; // visual language: classic · nova · bolt
+  designMode: DesignMode; // visual language: v2 (Tempo) · classic (Legacy)
   quoteGenre: QuoteGenrePref;
   leaderboardPublic: boolean;
   shareActivity: boolean; // let friends see your real workout activity (live backend)

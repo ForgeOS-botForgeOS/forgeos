@@ -142,7 +142,7 @@ function Overlay({ children }: { children: React.ReactNode }) {
   return (
     <div className="absolute inset-0 z-[75] flex items-center justify-center p-6">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative w-full rounded-2xl bg-surface border border-line p-6">
+      <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="fx-card relative w-full rounded-2xl bg-surface border border-line p-6">
         {children}
       </motion.div>
     </div>

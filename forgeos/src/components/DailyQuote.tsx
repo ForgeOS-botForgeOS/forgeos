@@ -45,7 +45,7 @@ export function DailyQuote() {
       <motion.div
         initial={{ scale: 0.9, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
-        className="relative rounded-2xl bg-surface border border-line p-6 text-center"
+        className="fx-card relative rounded-2xl bg-surface border border-line p-6 text-center"
       >
         <button className="absolute top-3 right-3 text-muted" onClick={() => setOpen(false)}><X size={18} /></button>
         <p className="text-xs uppercase tracking-widest text-accent mb-3">{quote.genre} · today</p>

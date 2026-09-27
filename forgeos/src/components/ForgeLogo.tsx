@@ -1,31 +1,18 @@
-import { useId } from 'react';
 import { useSettings } from '../state/settingsStore';
 
 // The ForgeOS anvil-and-spark mark, as crisp vector — same design as the app
 // icon. `tile` wraps it in the brand square (for splash/branding); without it
-// you get just the mark to drop next to the wordmark. The tile switches with the
-// design mode so in-app branding matches the look: Classic = rounded orange,
-// Nova = rounded violet→magenta→coral gradient, Bolt = sharp ink tile with an
-// electric-yellow spark (editorial/brutalist).
+// you get just the mark to drop next to the wordmark. The tile follows the
+// design mode so in-app branding matches the look: Tempo = signal-teal tile with
+// a heat spark, Legacy = the original rounded orange.
 export function ForgeLogo({ size = 64, tile = false, className = '' }: { size?: number; tile?: boolean; className?: string }) {
   const mode = useSettings((s) => s.designMode);
-  const gradId = useId();
   const markColor = tile ? (mode === 'v2' ? '#0E1116' : '#F5F5F7') : 'currentColor';
-  const spark = mode === 'nova' ? '#FFFFFF' : mode === 'bolt' ? '#FACC15' : mode === 'v2' ? '#FF5A3C' : '#FFD34A';
-  const tileRadius = mode === 'nova' ? 16 : mode === 'bolt' ? 6 : mode === 'v2' ? 8 : 14;
-  const tileFill =
-    mode === 'nova' ? `url(#${gradId})` : mode === 'bolt' ? '#0B0B0D' : mode === 'v2' ? '#2FE6C4' : '#FF5C35';
+  const spark = mode === 'v2' ? '#FF5A3C' : '#FFD34A';
+  const tileRadius = mode === 'v2' ? 8 : 14;
+  const tileFill = mode === 'v2' ? '#2FE6C4' : '#FF5C35';
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" className={className} role="img" aria-label="ForgeOS">
-      {mode === 'nova' && (
-        <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0" stopColor="#7C3AED" />
-            <stop offset="0.5" stopColor="#EC4899" />
-            <stop offset="1" stopColor="#FB7A3C" />
-          </linearGradient>
-        </defs>
-      )}
       {tile && <rect x="0" y="0" width="64" height="64" rx={tileRadius} fill={tileFill} />}
       {/* anvil */}
       <g fill={markColor}>
