@@ -34,6 +34,11 @@ jobs:
           java-version: '17'
 
       - uses: android-actions/setup-android@v3
+        with:
+          # The action's default list asks for the long-removed 'tools' package,
+          # which sdkmanager from cmdline-tools 16 rejects (every build failed
+          # from 2026-09-27). Gradle fetches platforms/build-tools itself.
+          packages: 'platform-tools'
 
       - run: npm ci
 
