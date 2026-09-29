@@ -10,13 +10,15 @@ interface SettingsState extends Settings {
   applyA11y: (large: boolean) => void;
 }
 
+const DESIGN_MODES: readonly DesignMode[] = ['v2', 'nova', 'bolt', 'classic'];
+
 /**
- * Any retired or unknown design value (Nova, Bolt, and the older 'forge' /
- * 'aurora') becomes Tempo — they were folded into it. Someone who explicitly
- * picked Classic keeps it: that is the one look still offered as "Legacy".
+ * Every look still offered (Tempo, Nova, Bolt, Legacy) is kept as saved. Only
+ * retired or unknown values (the old 'forge' / 'aurora', garbage) become
+ * Tempo, the default.
  */
 export function coerceDesign(mode: unknown): DesignMode {
-  return mode === 'classic' ? 'classic' : 'v2';
+  return DESIGN_MODES.includes(mode as DesignMode) ? (mode as DesignMode) : 'v2';
 }
 
 const DEFAULTS: Settings = {
@@ -30,7 +32,7 @@ const DEFAULTS: Settings = {
   reminder: { enabled: false, time: '18:00', days: [0, 1, 2, 3, 4] },
   theme: 'forge-dark',
   autoTheme: false,
-  designMode: 'v2', // Tempo is the app's look; Classic stays selectable as "Legacy" to compare
+  designMode: 'v2', // Tempo is the default look; Nova, Bolt and Legacy stay selectable
   quoteGenre: 'stoic',
   leaderboardPublic: true,
   shareActivity: true,
@@ -83,6 +85,8 @@ export const useSettings = create<SettingsState>()(
       applyDesign: (mode) => {
         if (typeof document === 'undefined') return;
         const root = document.documentElement.classList;
+        root.toggle('ui-nova', mode === 'nova');
+        root.toggle('ui-bolt', mode === 'bolt');
         root.toggle('ui-v2', mode === 'v2');
       },
     }),

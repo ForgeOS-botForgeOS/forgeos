@@ -6,8 +6,9 @@
 // that host, so Tempo's typeface had never loaded at all.
 //
 // Only the latin + latin-ext subsets (latin-ext carries Slovak diacritics) and
-// only the weights the app uses, so the precache stays small. All four
+// only the weights the app uses, so the precache stays small. All six
 // families are SIL Open Font License 1.1, which allows self-hosting.
+// Plus Jakarta Sans is Nova's face and Space Grotesk is Bolt's.
 import '@fontsource/saira/latin-400.css';
 import '@fontsource/saira/latin-ext-400.css';
 import '@fontsource/saira/latin-500.css';
@@ -40,3 +41,21 @@ import '@fontsource/jetbrains-mono/latin-500.css';
 import '@fontsource/jetbrains-mono/latin-ext-500.css';
 import '@fontsource/jetbrains-mono/latin-700.css';
 import '@fontsource/jetbrains-mono/latin-ext-700.css';
+import '@fontsource/plus-jakarta-sans/latin-400.css';
+import '@fontsource/plus-jakarta-sans/latin-ext-400.css';
+import '@fontsource/plus-jakarta-sans/latin-500.css';
+import '@fontsource/plus-jakarta-sans/latin-ext-500.css';
+import '@fontsource/plus-jakarta-sans/latin-600.css';
+import '@fontsource/plus-jakarta-sans/latin-ext-600.css';
+import '@fontsource/plus-jakarta-sans/latin-700.css';
+import '@fontsource/plus-jakarta-sans/latin-ext-700.css';
+import '@fontsource/plus-jakarta-sans/latin-800.css';
+import '@fontsource/plus-jakarta-sans/latin-ext-800.css';
+import '@fontsource/space-grotesk/latin-400.css';
+import '@fontsource/space-grotesk/latin-ext-400.css';
+import '@fontsource/space-grotesk/latin-500.css';
+import '@fontsource/space-grotesk/latin-ext-500.css';
+import '@fontsource/space-grotesk/latin-600.css';
+import '@fontsource/space-grotesk/latin-ext-600.css';
+import '@fontsource/space-grotesk/latin-700.css';
+import '@fontsource/space-grotesk/latin-ext-700.css';

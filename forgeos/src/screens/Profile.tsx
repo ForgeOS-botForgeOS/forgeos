@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Cloud, History, Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target, MessageCircle } from 'lucide-react';
+import { Activity, Cloud, History, Sparkles, Zap, Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target, MessageCircle } from 'lucide-react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { ModeSwitch } from '../components/ModeSwitch';
@@ -51,6 +51,8 @@ const GOALS: { id: Goal; label: string; emoji: string }[] = [
 
 const DESIGN_MODES: { id: DesignMode; name: string; icon: typeof Activity; desc: string }[] = [
   { id: 'v2', name: 'Tempo', icon: Activity, desc: 'Condensed italic type, live meters and sweeping charts' },
+  { id: 'nova', name: 'Nova', icon: Sparkles, desc: 'Gradient glass: soft type, vivid gradients, a floating nav' },
+  { id: 'bolt', name: 'Bolt', icon: Zap, desc: 'Bold editorial: grotesque type, flat high-contrast blocks, hard shadows' },
   { id: 'classic', name: 'Legacy', icon: History, desc: 'The original ForgeOS look, kept for comparison' },
 ];
 
