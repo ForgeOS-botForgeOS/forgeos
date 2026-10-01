@@ -97,7 +97,7 @@ export function overloadSuggestion(
   lastRpe = 8,
 ): { weightKg: number; reps: number; note: string } {
   if (lastReps >= targetReps && lastRpe <= 8) {
-    return { weightKg: lastWeightKg + 2.5, reps: targetReps, note: '+2.5 kg — you earned it last time.' };
+    return { weightKg: lastWeightKg + 2.5, reps: targetReps, note: '+2.5 kg: you earned it last time.' };
   }
   if (lastReps < targetReps) {
     return { weightKg: lastWeightKg, reps: lastReps + 1, note: `Same weight, chase ${lastReps + 1} reps.` };

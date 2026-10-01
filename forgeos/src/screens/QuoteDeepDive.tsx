@@ -23,7 +23,7 @@ export default function QuoteDeepDive() {
         <>
           <p className="text-xs uppercase tracking-widest text-accent">{quote.genre} reflection</p>
           <h1 className="text-2xl font-extrabold leading-snug">“{quote.text}”</h1>
-          <p className="text-sm text-muted">— {quote.source}</p>
+          <p className="text-sm text-muted">– {quote.source}</p>
           <Card className="leading-relaxed text-[15px]">{quote.deepDive}</Card>
         </>
       )}

@@ -28,7 +28,7 @@ export default function RaceJoin() {
     if (!config) return;
     if (config.mode === 'workout' && active && !(await askConfirm({
       title: 'Join the race anyway?',
-      body: 'You have a workout in progress — the race replaces it the moment it starts.',
+      body: 'You have a workout in progress: the race replaces it the moment it starts.',
       confirmLabel: 'Join race',
     }))) return;
     if (!joinRaceFromInvite(config)) {
@@ -66,11 +66,11 @@ export default function RaceJoin() {
             </Card>
           ))}
 
-          {!isBackendLive && <Card><p className="text-sm text-muted">Racing needs the online backend — this build runs in offline demo mode.</p></Card>}
+          {!isBackendLive && <Card><p className="text-sm text-muted">Racing needs the online backend: this build runs in offline demo mode.</p></Card>}
           <Button className="w-full justify-center" onClick={join} disabled={!isBackendLive}>
             <span className="flex items-center gap-2"><Swords size={16} /> {t('s.raceJoin')}</span>
           </Button>
-          <p className="text-[11px] text-muted/70">You'll land in the lobby — the workout starts for everyone when the host hits Start.</p>
+          <p className="text-[11px] text-muted/70">You'll land in the lobby: the workout starts for everyone when the host hits Start.</p>
         </>
       )}
     </div>

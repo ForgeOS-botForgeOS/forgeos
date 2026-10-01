@@ -103,7 +103,7 @@ export default function Collection() {
       </div>
 
       <div className="space-y-2">
-        {list.length === 0 && <p className="text-sm text-muted">{filter === 'fav' ? 'No favourites yet — tap the star on a quote.' : 'Nothing here.'}</p>}
+        {list.length === 0 && <p className="text-sm text-muted">{filter === 'fav' ? 'No favourites yet: tap the star on a quote.' : 'Nothing here.'}</p>}
         {list.map((q) => {
           const owned = collected.includes(q.id);
           if (!owned) {
@@ -111,7 +111,7 @@ export default function Collection() {
               <Card key={q.id} className="flex items-center gap-3 opacity-70">
                 <div className="w-9 h-9 rounded-lg bg-surface-2 flex items-center justify-center shrink-0"><Lock size={16} className="text-muted" /></div>
                 <div className="flex-1">
-                  <p className="text-sm text-muted">Locked — collect the daily quote to unlock</p>
+                  <p className="text-sm text-muted">Locked: collect the daily quote to unlock</p>
                   <Badge color="rgb(var(--muted))">{q.genre}</Badge>
                 </div>
               </Card>
@@ -126,7 +126,7 @@ export default function Collection() {
               </button>
               <button className="flex-1 text-left" onClick={() => navigate(`/quote/${q.id}`)}>
                 <p className="text-sm font-medium leading-snug">“{lq.text}”</p>
-                <p className="text-[11px] text-muted mt-1">— {lq.source}</p>
+                <p className="text-[11px] text-muted mt-1">– {lq.source}</p>
               </button>
               <Badge color="rgb(var(--accent-2))">{q.genre}</Badge>
             </Card>

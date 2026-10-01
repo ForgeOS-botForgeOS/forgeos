@@ -59,7 +59,7 @@ export default function Progress() {
           </div>
           <span className="font-mono text-sm">{Math.min(weekSessions, goal)}/{goal}</span>
         </div>
-        <p className="text-[11px] text-muted">{weekSessions >= 1 ? 'You showed up this week — streak secured 🔥' : 'Train once this week to keep your streak going.'}</p>
+        <p className="text-[11px] text-muted">{weekSessions >= 1 ? 'You showed up this week: streak secured 🔥' : 'Train once this week to keep your streak going.'}</p>
         <div className="flex gap-2 pt-1">
           <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium flex items-center gap-1"><Flame size={12} className="text-accent" /> {weekStreak}-week streak</span>
           <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium flex items-center gap-1"><Flame size={12} className="text-accent-2" /> {dayStreak}-day streak</span>
@@ -235,7 +235,7 @@ function BodyPanel() {
             <Card key={m.key} className="py-3">
               <p className="text-[11px] text-muted">{m.label}</p>
               <div className="flex items-end justify-between">
-                <p className="font-mono font-bold text-lg">{cur != null ? cur : '—'}<span className="text-[10px] text-muted ml-0.5">{cur != null ? m.unit : ''}</span></p>
+                <p className="font-mono font-bold text-lg">{cur != null ? cur : '–'}<span className="text-[10px] text-muted ml-0.5">{cur != null ? m.unit : ''}</span></p>
                 {delta != null && delta !== 0 && (
                   <span className={`text-[10px] flex items-center gap-0.5 ${delta < 0 ? 'text-success' : 'text-accent-2'}`}>
                     {delta < 0 ? <TrendingDown size={11} /> : <TrendingUp size={11} />}{Math.abs(delta)}
@@ -372,7 +372,7 @@ function CardioPanel() {
       <Card className="text-center space-y-2">
         <Footprints className="mx-auto text-muted" />
         <p className="font-semibold">No cardio logged yet</p>
-        <p className="text-sm text-muted">Log a run/row/ride in the Train tab — distance &amp; time earn XP and set PRs.</p>
+        <p className="text-sm text-muted">Log a run/row/ride in the Train tab: distance &amp; time earn XP and set PRs.</p>
       </Card>
     );
   }
@@ -501,7 +501,7 @@ function StrengthPanel() {
 
       <Card className="space-y-2">
         <SectionTitle action={<Trophy size={14} className="text-accent-2" />}>PR hall</SectionTitle>
-        {topPrs.length === 0 && <p className="text-sm text-muted">No PRs yet — your heaviest sets land here.</p>}
+        {topPrs.length === 0 && <p className="text-sm text-muted">No PRs yet: your heaviest sets land here.</p>}
         {topPrs.map((pr) => (
           <div key={pr.id} className="flex items-center justify-between">
             <span className="text-sm">{pr.exerciseName}</span>

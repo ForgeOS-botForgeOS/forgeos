@@ -40,7 +40,7 @@ export function weekendNudge(opts: {
   if (sessions === 0 && opts.weekStreak > 0) {
     return {
       kind: 'streak',
-      message: `Your ${opts.weekStreak}-week streak ends Sunday — one session keeps it alive`,
+      message: `Your ${opts.weekStreak}-week streak ends Sunday: one session keeps it alive`,
     };
   }
   const remaining = opts.weeklyGoal - sessions;

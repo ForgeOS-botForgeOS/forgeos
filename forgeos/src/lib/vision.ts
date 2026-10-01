@@ -21,8 +21,8 @@ export async function scanCardio(file: File, source: CardioSource = 'machine'): 
   if (!WORKER_URL) {
     await new Promise((r) => setTimeout(r, 700));
     return source === 'watch'
-      ? { machine: 'Run', durationMin: 28, distanceKm: 5.2, calories: 340, avgPace: '5:23 /km', avgHr: 148, confidence: 0.3, tip: 'Sample — add a vision Worker to read your watch for real.' }
-      : { machine: 'Treadmill', durationMin: 30, distanceKm: 5, calories: 320, avgPace: '6:00 /km', confidence: 0.3, tip: 'Sample — add a vision Worker to read real consoles.' };
+      ? { machine: 'Run', durationMin: 28, distanceKm: 5.2, calories: 340, avgPace: '5:23 /km', avgHr: 148, confidence: 0.3, tip: 'Sample: add a vision Worker to read your watch for real.' }
+      : { machine: 'Treadmill', durationMin: 30, distanceKm: 5, calories: 320, avgPace: '6:00 /km', confidence: 0.3, tip: 'Sample: add a vision Worker to read real consoles.' };
   }
   const res = await fetch(WORKER_URL, {
     method: 'POST',
@@ -41,9 +41,9 @@ export async function scanCardio(file: File, source: CardioSource = 'machine'): 
 }
 
 const MOCK_MEALS: ScanResult[] = [
-  { name: 'Grilled chicken, rice & broccoli', calories: 540, proteinG: 48, carbsG: 55, fatG: 12, sugarG: 4, confidence: 0.88, tip: 'Solid recomp plate — lean protein with slow carbs.' },
+  { name: 'Grilled chicken, rice & broccoli', calories: 540, proteinG: 48, carbsG: 55, fatG: 12, sugarG: 4, confidence: 0.88, tip: 'Solid recomp plate: lean protein with slow carbs.' },
   { name: 'Salmon poke bowl', calories: 620, proteinG: 38, carbsG: 60, fatG: 24, sugarG: 9, confidence: 0.81, tip: 'Omega-3s aid recovery; watch the sauce sugar.' },
-  { name: 'Beef burger & fries', calories: 980, proteinG: 42, carbsG: 78, fatG: 52, sugarG: 11, confidence: 0.74, tip: 'High calorie — great on a hard training day.' },
+  { name: 'Beef burger & fries', calories: 980, proteinG: 42, carbsG: 78, fatG: 52, sugarG: 11, confidence: 0.74, tip: 'High calorie: great on a hard training day.' },
   { name: 'Greek yoghurt, berries & granola', calories: 320, proteinG: 24, carbsG: 38, fatG: 8, sugarG: 18, confidence: 0.85, tip: 'Strong protein breakfast; granola drives the sugar up.' },
   { name: 'Oats, banana & peanut butter', calories: 430, proteinG: 16, carbsG: 58, fatG: 16, sugarG: 14, confidence: 0.83, tip: 'Great pre-session fuel.' },
 ];

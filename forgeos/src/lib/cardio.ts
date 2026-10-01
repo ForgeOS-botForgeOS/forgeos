@@ -66,7 +66,7 @@ export function speedKmh(distanceKm: number, durationMin: number): number {
 
 // Pace as "m:ss /km" from distance (km) and duration (minutes).
 export function paceLabel(distanceKm: number, durationMin: number): string {
-  if (distanceKm <= 0 || durationMin <= 0) return '—';
+  if (distanceKm <= 0 || durationMin <= 0) return '–';
   const pace = durationMin / distanceKm; // minutes per km
   let m = Math.floor(pace);
   let s = Math.round((pace - m) * 60);

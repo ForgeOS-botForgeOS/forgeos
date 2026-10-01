@@ -30,7 +30,7 @@ export const EXAMPLE_EXPORT = {
 } as const;
 
 /** Plain-English description of every accepted field (also embedded in the prompt). */
-export const SCHEMA_HINT = `Return ONE JSON object. All fields are optional — include only what you can find. Never invent numbers.
+export const SCHEMA_HINT = `Return ONE JSON object. All fields are optional: include only what you can find. Never invent numbers.
 - app: string (the source app's name)
 - memberSince: "YYYY-MM-DD" (when the account was created)
 - currentStreak, longestStreak: whole numbers (days)
@@ -45,7 +45,7 @@ export const SCHEMA_HINT = `Return ONE JSON object. All fields are optional — 
 /** The exact prompt the user copies and hands to any AI assistant. */
 export const AI_CONVERT_PROMPT = `You are converting my fitness/streak progress from another app into a strict JSON format.
 
-I will paste an export, a CSV, or describe a screenshot of my stats. Convert it into ONE JSON object using EXACTLY these keys (omit any you can't find — do NOT make up values):
+I will paste an export, a CSV, or describe a screenshot of my stats. Convert it into ONE JSON object using EXACTLY these keys (omit any you can't find: do NOT make up values):
 
 ${SCHEMA_HINT}
 

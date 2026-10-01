@@ -32,8 +32,8 @@ export default function Shop() {
   function buy(id: string, price: number) {
     if (owned.includes(id)) return;
     const c = ALL_COSMETICS.find((x) => x.id === id);
-    if (c?.exclusive) { haptic('warning'); toast('That one is earned, not bought — check Achievements.', 'error'); return; }
-    if (spend(price)) { own(id); celebrate(); toast(`Unlocked ${c?.name ?? 'item'} 🎉`); } else { haptic('warning'); toast(`Not enough coins — need 🪙${price}.`, 'error'); }
+    if (c?.exclusive) { haptic('warning'); toast('That one is earned, not bought: check Achievements.', 'error'); return; }
+    if (spend(price)) { own(id); celebrate(); toast(`Unlocked ${c?.name ?? 'item'} 🎉`); } else { haptic('warning'); toast(`Not enough coins: need 🪙${price}.`, 'error'); }
   }
   function applyOrEquip(c: Cosmetic) {
     if (c.type === 'theme') { setSetting('theme', c.value as ThemeId); haptic('success'); toast(`Applied ${c.name} 🎨`); return; }

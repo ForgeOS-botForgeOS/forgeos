@@ -216,7 +216,7 @@ export default function Profile() {
           <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center shrink-0"><Download size={18} className="text-accent" /></div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">Core update ready</p>
-            <p className="text-[11px] text-muted">Tap Update — the app fetches it and Android asks to confirm the install. Nothing is lost.</p>
+            <p className="text-[11px] text-muted">Tap Update: the app fetches it and Android asks to confirm the install. Nothing is lost.</p>
           </div>
           <Button disabled={updating} onClick={() => { void handleApkUpdate(); }}>{updating ? 'Getting it…' : 'Update'}</Button>
         </Card>
@@ -271,7 +271,7 @@ export default function Profile() {
             return (
               <button
                 key={g.id}
-                onClick={() => { updateProfile({ goal: g.id }); haptic('success'); toast(`Goal set to ${g.label} — macros recalculated`); }}
+                onClick={() => { updateProfile({ goal: g.id }); haptic('success'); toast(`Goal set to ${g.label}: macros recalculated`); }}
                 className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm text-left transition active:scale-[0.99] ${active ? 'border-accent bg-accent/10' : 'border-line bg-surface'}`}
               >
                 <span>{g.emoji}</span>
@@ -282,7 +282,7 @@ export default function Profile() {
           })}
         </div>
         {profile?.macros && (
-          <p className="text-[11px] text-muted mt-2">Now targeting <span className="font-mono text-text">{profile.macros.calories.toLocaleString()} kcal</span> · {profile.macros.proteinG}g protein — recalculated from your goal.</p>
+          <p className="text-[11px] text-muted mt-2">Now targeting <span className="font-mono text-text">{profile.macros.calories.toLocaleString()} kcal</span> · {profile.macros.proteinG}g protein: recalculated from your goal.</p>
         )}
         <Button
           variant="ghost"
@@ -525,7 +525,7 @@ export default function Profile() {
           : <Badge>{t('common.open')}</Badge>}
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/wrapped')}>
-        <div className="flex items-center gap-2"><Gift size={16} className="text-muted" /><span className="text-sm">Forge Wrapped — last month's recap</span></div>
+        <div className="flex items-center gap-2"><Gift size={16} className="text-muted" /><span className="text-sm">Forge Wrapped: last month's recap</span></div>
         <Badge>{t('common.open')}</Badge>
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/progress')}>
@@ -559,7 +559,7 @@ export default function Profile() {
               <button onClick={() => s.set('weeklyGoal', Math.min(7, s.weeklyGoal + 1))} className="w-8 h-8 rounded-md bg-surface-2">+</button>
             </div>
           </div>
-          <p className="text-[11px] text-muted -mt-1">Your streak counts <b>weeks</b> you hit this many planned sessions — not daily gym days.</p>
+          <p className="text-[11px] text-muted -mt-1">Your streak counts <b>weeks</b> you hit this many planned sessions: not daily gym days.</p>
           <div className="flex items-center justify-between">
             <div><p className="text-sm">Heavy-set quote drops</p><p className="text-[11px] text-muted">Rare/legendary quotes past 100 kg</p></div>
             <Toggle label="Heavy-set quote drops" checked={s.heavyQuotesEnabled} onChange={(v) => s.set('heavyQuotesEnabled', v)} />

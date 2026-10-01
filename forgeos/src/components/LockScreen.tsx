@@ -67,7 +67,7 @@ export function LockScreen({ code, onUnlock }: { code: string; onUnlock: (entere
     <div className="absolute inset-0 z-[95] flex flex-col items-center justify-center bg-bg p-8">
       <Flame className="text-accent mb-2" size={32} />
       <div className="flex items-center gap-2 text-muted mb-6">
-        <Lock size={14} /> <span className="text-sm">{waitMs > 0 ? `Too many tries — wait ${Math.ceil(waitMs / 1000)}s` : 'Enter your passcode'}</span>
+        <Lock size={14} /> <span className="text-sm">{waitMs > 0 ? `Too many tries: wait ${Math.ceil(waitMs / 1000)}s` : 'Enter your passcode'}</span>
       </div>
       <motion.div animate={shake ? { x: [-8, 8, -6, 6, 0] } : {}} transition={{ duration: 0.4 }} className="flex gap-3 mb-8">
         {Array.from({ length: Math.max(PASSCODE_DOTS, entry.length) }).map((_, i) => (

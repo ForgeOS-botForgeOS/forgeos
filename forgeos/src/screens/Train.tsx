@@ -123,7 +123,7 @@ export default function Train() {
                 <p className="text-sm mt-2 font-semibold" style={{ color: readiness.color }}>{guide.headline}</p>
                 <p className="text-[12px] text-muted">{guide.detail}</p>
                 {(readiness.level === 'rundown' || readiness.level === 'rest') && lightDay && todayPlan && !todayPlan.rest && lightDay.label !== todayPlan.label && (
-                  <Button variant="outline" className="w-full justify-center mt-2 py-1.5" onClick={() => { startWorkout(`${lightDay.label} (light)`, lightDay.exerciseIds, { targets: lightDay.targets, maxWeightKg: gymMax }); haptic('success'); toast(`Swapped to ${lightDay.label} — listen to your body 🙏`); }}>
+                  <Button variant="outline" className="w-full justify-center mt-2 py-1.5" onClick={() => { startWorkout(`${lightDay.label} (light)`, lightDay.exerciseIds, { targets: lightDay.targets, maxWeightKg: gymMax }); haptic('success'); toast(`Swapped to ${lightDay.label}: listen to your body 🙏`); }}>
                     Swap today for {lightDay.label} ({lightDay.exerciseIds.length} lifts)
                   </Button>
                 )}
@@ -151,7 +151,7 @@ export default function Train() {
           <Card>
             <p className="text-[10px] uppercase tracking-[0.12em] text-muted mb-1">Coaching</p>
             <LedgerRow k="Next block" v={<span className="capitalize">{rec.nextBlock}</span>} />
-            <LedgerRow k="Avg RPE" v={rec.avgRpe || '—'} />
+            <LedgerRow k="Avg RPE" v={rec.avgRpe || '–'} />
             <LedgerRow k="Volume · wk" v={`${rec.weeklyVolume.toLocaleString()} kg`} />
           </Card>
         </>
@@ -171,7 +171,7 @@ export default function Train() {
           </>
         ) : (
           <>
-            <p className="text-muted text-sm">{todayPlan?.rest ? 'Planned rest day — but you can still train.' : 'No plan for today.'}</p>
+            <p className="text-muted text-sm">{todayPlan?.rest ? 'Planned rest day, but you can still train.' : 'No plan for today.'}</p>
             <Button variant="outline" className="w-full justify-center mt-3" onClick={() => { startWorkout('Freestyle session'); haptic('success'); }}>
               Start an empty workout
             </Button>
@@ -227,7 +227,7 @@ export default function Train() {
               <p className="text-[12px] text-muted">{guide.detail}</p>
               {/* Smart swap: when run down, offer the week's lightest session instead */}
               {(readiness.level === 'rundown' || readiness.level === 'rest') && lightDay && todayPlan && !todayPlan.rest && lightDay.label !== todayPlan.label && (
-                <Button variant="outline" className="w-full justify-center mt-2 py-1.5" onClick={() => { startWorkout(`${lightDay.label} (light)`, lightDay.exerciseIds, { targets: lightDay.targets, maxWeightKg: gymMax }); haptic('success'); toast(`Swapped to ${lightDay.label} — listen to your body 🙏`); }}>
+                <Button variant="outline" className="w-full justify-center mt-2 py-1.5" onClick={() => { startWorkout(`${lightDay.label} (light)`, lightDay.exerciseIds, { targets: lightDay.targets, maxWeightKg: gymMax }); haptic('success'); toast(`Swapped to ${lightDay.label}: listen to your body 🙏`); }}>
                   Swap today for {lightDay.label} ({lightDay.exerciseIds.length} lifts)
                 </Button>
               )}
@@ -243,7 +243,7 @@ export default function Train() {
           <div>
             <p className="text-xs uppercase tracking-wide text-muted">{otRisk.level === 'high' ? 'Take a deload week' : 'Recovery watch'}</p>
             {otRisk.reasons.map((r) => <p key={r} className="text-sm mt-1">{r}</p>)}
-            <p className="text-[11px] text-muted mt-1">{otRisk.level === 'high' ? 'Drop weights ~40% for a few sessions — you’ll come back stronger.' : 'Nothing drastic — just keep an eye on sleep this week.'}</p>
+            <p className="text-[11px] text-muted mt-1">{otRisk.level === 'high' ? 'Drop weights ~40% for a few sessions: you’ll come back stronger.' : 'Nothing drastic: just keep an eye on sleep this week.'}</p>
           </div>
         </Card>
       )}
@@ -267,7 +267,7 @@ export default function Train() {
           <p className="text-xs uppercase tracking-wide text-muted">Periodisation engine</p>
           <p className="text-sm mt-1">Next block: <b className="capitalize">{rec.nextBlock}</b></p>
           <p className="text-xs text-muted mt-1">{rec.reason}</p>
-          <p className="text-[11px] text-muted/70 mt-1">avg RPE {rec.avgRpe || '—'} · ~{rec.weeklyVolume.toLocaleString()} kg/wk</p>
+          <p className="text-[11px] text-muted/70 mt-1">avg RPE {rec.avgRpe || '–'} · ~{rec.weeklyVolume.toLocaleString()} kg/wk</p>
         </div>
       </Card>
       )}
@@ -280,7 +280,7 @@ export default function Train() {
             <Card key={p.exerciseId} className="flex gap-3 items-start border-warn/40">
               <AlertTriangle size={18} className="text-warn mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold text-sm">{p.exerciseName} — stuck {p.weeksStuck} weeks</p>
+                <p className="font-semibold text-sm">{p.exerciseName}: stuck {p.weeksStuck} weeks</p>
                 <p className="text-xs text-muted mt-1">{p.suggestion}</p>
               </div>
             </Card>
@@ -368,7 +368,7 @@ function CardioScanCard() {
       haptic('success');
     } catch {
       setDraft(newCardioData({ machine: source === 'watch' ? 'Run' : 'Cardio', distanceKm: 0, durationMin: 0, calories: 0 }));
-      setScanMeta({ confidence: 0, tip: 'Could not read it — enter the numbers manually.' });
+      setScanMeta({ confidence: 0, tip: 'Could not read it: enter the numbers manually.' });
       haptic('warning');
     } finally {
       setBusy(false);
@@ -397,14 +397,14 @@ function CardioScanCard() {
       <Button variant="ghost" className="w-full justify-center" onClick={() => setManualOpen(true)}>
         <span className="flex items-center gap-2"><Plus size={16} /> Log manually</span>
       </Button>
-      <p className="text-[11px] text-muted/70 text-center">Snap your watch or a machine console — we read distance, time & speed, and you can add your own metrics. Distance + time earn XP; beat your best for a cardio PR 🏃</p>
+      <p className="text-[11px] text-muted/70 text-center">Snap your watch or a machine console: we read distance, time & speed, and you can add your own metrics. Distance + time earn XP; beat your best for a cardio PR 🏃</p>
 
       <ManualCardioSheet open={manualOpen} onClose={() => setManualOpen(false)} onLog={(d) => { reward(d); setManualOpen(false); }} />
 
       <Sheet open={!!draft} onClose={() => { setDraft(null); setScanMeta(null); }} title={source === 'watch' ? 'Review watch session' : 'Review cardio'}>
         {draft && (
           <div className="space-y-3">
-            {scanMeta && <p className="text-[11px] text-muted">Read from your {source === 'watch' ? 'watch' : 'console'} — adjust anything. Confidence {Math.round(scanMeta.confidence * 100)}%.</p>}
+            {scanMeta && <p className="text-[11px] text-muted">Read from your {source === 'watch' ? 'watch' : 'console'}. Adjust anything. Confidence {Math.round(scanMeta.confidence * 100)}%.</p>}
             <CardioFields data={draft} onChange={setDraft} />
             {scanMeta?.tip && <p className="text-xs text-muted">💡 {scanMeta.tip}</p>}
             <Button className="w-full justify-center" onClick={logIt}>Log session</Button>
@@ -439,7 +439,7 @@ function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: 
   return (
     <Sheet open={open} onClose={onClose} title="Custom workout">
       <div className="space-y-3">
-        <p className="text-[11px] text-muted">Name a fresh session — add exercises as you go.</p>
+        <p className="text-[11px] text-muted">Name a fresh session: add exercises as you go.</p>
         <input
           autoFocus value={name} onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && name.trim()) onStart(name.trim()); }}
@@ -453,7 +453,7 @@ function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: 
 
         {pastWorkouts.length > 0 && (
           <div className="pt-3 border-t border-line space-y-2">
-            <p className="text-[11px] uppercase tracking-wide text-muted">Or repeat a past session — weights pre-filled</p>
+            <p className="text-[11px] uppercase tracking-wide text-muted">Or repeat a past session: weights pre-filled</p>
             <div className="space-y-1.5 max-h-56 overflow-y-auto no-scrollbar">
               {pastWorkouts.map((w) => (
                 <div key={w.id} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
@@ -510,7 +510,7 @@ function ManualCardioSheet({ open, onClose, onLog }: { open: boolean; onClose: (
   return (
     <Sheet open={open} onClose={onClose} title="Log cardio">
       <div className="space-y-3">
-        <p className="text-[11px] text-muted">Distance and time both earn XP. Add your own metrics — HR, elevation, splits, whatever you track. Beat your longest distance or time for a cardio PR 🏃</p>
+        <p className="text-[11px] text-muted">Distance and time both earn XP. Add your own metrics: HR, elevation, splits, whatever you track. Beat your longest distance or time for a cardio PR 🏃</p>
         <CardioFields data={data} onChange={setData} />
         <Button className="w-full justify-center" disabled={!valid} onClick={() => onLog(data)}>Log {data.machine || 'cardio'}</Button>
       </div>
@@ -653,7 +653,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       // Share the win with friends (respects the Share-activity preference).
       if (useSettings.getState().shareActivity) {
         const base = newPrs.length === 1
-          ? `🏆 New PR: ${newPrs[0].exerciseName} — ${newPrs[0].weightKg}kg × ${newPrs[0].reps} (e1RM ${Math.round(newPrs[0].e1rm)}kg)`
+          ? `🏆 New PR: ${newPrs[0].exerciseName}: ${newPrs[0].weightKg}kg × ${newPrs[0].reps} (e1RM ${Math.round(newPrs[0].e1rm)}kg)`
           : `🏆 Smashed ${newPrs.length} PRs: ${newPrs.map((p) => p.exerciseName).join(', ')}`;
         const body = nowPlaying ? `${base} 🎧 to ${nowPlaying.title}` : base;
         useSocial.getState().publishPost(body);
@@ -802,7 +802,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       </Sheet>
 
       {/* Substitution */}
-      <Sheet open={!!subFor} onClose={() => setSubFor(null)} title="Substitute — same primary muscle">
+      <Sheet open={!!subFor} onClose={() => setSubFor(null)} title="Substitute: same primary muscle">
         {subFor && (
           <div className="space-y-2">
             {substitutesFor(active.exercises.find((e) => e.id === subFor)?.exerciseId ?? '').map((alt) => (

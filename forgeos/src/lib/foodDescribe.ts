@@ -255,8 +255,8 @@ function describeTip(matched: number, total: number, guessedPortions: number): s
   if (guessedPortions > 0) {
     parts.push(
       guessedPortions === total
-        ? 'No weights given, so portions are assumed — add grams (e.g. "200g rice") for real numbers.'
-        : `${guessedPortions} portion(s) assumed — add grams for those.`,
+        ? 'No weights given, so portions are assumed: add grams (e.g. "200g rice") for real numbers.'
+        : `${guessedPortions} portion(s) assumed: add grams for those.`,
     );
   }
   return parts.join(' ');

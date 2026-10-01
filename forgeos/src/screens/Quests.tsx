@@ -358,7 +358,7 @@ function PrHall() {
       <Card className="text-center space-y-2">
         <Trophy className="mx-auto text-muted" />
         <p className="font-semibold">No PRs yet</p>
-        <p className="text-sm text-muted">Finish a workout — your heaviest sets land here automatically.</p>
+        <p className="text-sm text-muted">Finish a workout: your heaviest sets land here automatically.</p>
         <Button variant="outline" className="w-full justify-center" onClick={() => navigate('/train')}>Go train</Button>
       </Card>
     );
@@ -399,7 +399,7 @@ function PrHall() {
           </div>
           <p className="text-[11px] text-muted">e1RM {pr.e1rm}kg · {new Date(pr.date).toLocaleDateString()}</p>
           {pr.spotifyTrack ? (
-            <p className="text-[11px] text-accent-2 flex items-center gap-1"><Music size={11} /> {pr.spotifyTrack.title} — {pr.spotifyTrack.artist}</p>
+            <p className="text-[11px] text-accent-2 flex items-center gap-1"><Music size={11} /> {pr.spotifyTrack.title} – {pr.spotifyTrack.artist}</p>
           ) : (
             <button className="text-[11px] text-accent-2 flex items-center gap-1" onClick={() => setAttach(pr.id)}><Music size={11} /> Attach the song playing</button>
           )}
@@ -409,7 +409,7 @@ function PrHall() {
         <div className="space-y-1.5">
           {MOCK_TRACKS.map((t) => (
             <button key={t.id} onClick={() => attach && attachTrack(attach, t.id)} className="w-full text-left rounded-xl bg-surface-2 px-4 py-2.5 text-sm flex items-center gap-2">
-              <span>{t.albumArt}</span> {t.title} — <span className="text-muted">{t.artist}</span>
+              <span>{t.albumArt}</span> {t.title} – <span className="text-muted">{t.artist}</span>
             </button>
           ))}
         </div>

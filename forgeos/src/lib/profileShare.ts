@@ -103,7 +103,7 @@ export function generateProfileCard(p: PublicProfile): string {
     ctx.fillStyle = text;
     ctx.font = '600 50px Inter, sans-serif';
     for (const lift of p.bestLifts.slice(0, 3)) {
-      ctx.fillText(`${lift.name} — ${lift.e1rm} kg`, w / 2, y);
+      ctx.fillText(`${lift.name}: ${lift.e1rm} kg`, w / 2, y);
       y += 72;
     }
   }

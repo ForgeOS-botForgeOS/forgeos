@@ -35,7 +35,7 @@ export function HeavyDrop({ drop, onClose }: { drop: Drop | null; onClose: () =>
             </motion.p>
             <p className="text-[11px] text-muted mb-3">{drop.exercise} · {drop.weightKg} kg</p>
             <p className="text-base font-semibold leading-snug">“{drop.quote.text}”</p>
-            <p className="text-xs text-muted mt-3">— {drop.quote.source}</p>
+            <p className="text-xs text-muted mt-3">– {drop.quote.source}</p>
             <button onClick={onClose} className="mt-5 text-sm text-muted">Tap to claim</button>
           </motion.div>
         </div>

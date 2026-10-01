@@ -133,7 +133,7 @@ function Feed({ onRace }: { onRace: () => void }) {
         </button>
       </div>
 
-      {shown.length === 0 && <p className="text-sm text-muted text-center py-6">Nothing here yet — flex something above 💪</p>}
+      {shown.length === 0 && <p className="text-sm text-muted text-center py-6">Nothing here yet: flex something above 💪</p>}
 
       {shown.map((p) => <PostCard key={p.id} post={p} />)}
 
@@ -296,7 +296,7 @@ function Composer({ onShareCard }: { onShareCard: () => void }) {
     <Card className="space-y-2">
       <div className="flex items-center gap-2">
         <Avatar seed={(profile?.name ?? 'You').slice(0, 2).toUpperCase()} />
-        <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Flex something — a PR, a streak, a win…"
+        <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Flex something: a PR, a streak, a win…"
           className="flex-1 resize-none rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm h-12 focus:h-20 transition-all" />
       </div>
       <div className="flex gap-1.5 flex-wrap">
@@ -562,7 +562,7 @@ function Friends() {
     if (nav.share) { try { await nav.share({ title: 'ForgeOS', text, url: inviteLink }); return; } catch { /* cancelled */ } }
     await navigator.clipboard.writeText(inviteLink);
     setCopied(true); setTimeout(() => setCopied(false), 1500);
-    toast('Invite link copied — paste it to a friend');
+    toast('Invite link copied: paste it to a friend');
   }
 
   function regenCode() {
@@ -601,7 +601,7 @@ function Friends() {
             <Button onClick={shareCode}><span className="flex items-center gap-1 text-xs">{copied ? <Check size={14} /> : <Share2 size={14} />} {copied ? 'Copied' : 'Invite link'}</span></Button>
           </div>
         </div>
-        <p className="text-[11px] text-muted">Share your invite link — when a friend taps it, you're added to each other instantly. No code typing needed.</p>
+        <p className="text-[11px] text-muted">Share your invite link: when a friend taps it, you're added to each other instantly. No code typing needed.</p>
       </Card>
 
       {/* Add by name or code */}
@@ -673,7 +673,7 @@ function Friends() {
           <ChevronRight size={16} className="text-muted" onClick={() => setOpenFriend(f)} />
         </Card>
       ))}
-      {friends.length === 0 && <p className="text-sm text-muted">No friends yet — add by code or pick a suggestion below.</p>}
+      {friends.length === 0 && <p className="text-sm text-muted">No friends yet: add by code or pick a suggestion below.</p>}
       {friends.length > 0 && shownFriends.length === 0 && <p className="text-sm text-muted">No friend matches “{query}”.</p>}
 
       {/* Suggested */}
@@ -776,7 +776,7 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
               <MiniStat v={`${act.weeklySessions}`} l="this wk" />
               <MiniStat v={`${Math.round(act.totalVolumeKg / 1000)}t`} l="volume" />
               <MiniStat v={`${act.prs}`} l="PRs" />
-              <MiniStat v={friend.streak ? `${friend.streak}` : '—'} l="streak" />
+              <MiniStat v={friend.streak ? `${friend.streak}` : '–'} l="streak" />
             </div>
             {act.favourite && <p className="text-[11px] text-muted text-center">Top lift: <span className="text-text font-medium">{act.favourite}</span></p>}
 
@@ -907,7 +907,7 @@ function LiveRace() {
         <div className="text-center space-y-1">
           <Swords className="mx-auto text-accent" />
           <p className="font-semibold">Live race</p>
-          <p className="text-sm text-muted">Train side-by-side in real time — first to {TARGET.toLocaleString()} kg wins.</p>
+          <p className="text-sm text-muted">Train side-by-side in real time: first to {TARGET.toLocaleString()} kg wins.</p>
         </div>
         <p className="text-[11px] uppercase tracking-wide text-muted">Challenge a friend</p>
         {online.length === 0 && <p className="text-sm text-muted">Add friends first to race them.</p>}
@@ -1144,7 +1144,7 @@ function Marketplace() {
 
   function purchase(id: string, price: number, title: string) {
     if (owned.includes(id)) return;
-    if (spend(price)) { buy(id); celebrate(); toast(`Unlocked “${title}” 🎉`); } else { haptic('warning'); toast(`Not enough coins — need 🪙${price}.`, 'error'); }
+    if (spend(price)) { buy(id); celebrate(); toast(`Unlocked “${title}” 🎉`); } else { haptic('warning'); toast(`Not enough coins: need 🪙${price}.`, 'error'); }
   }
   function applyPlan(r: typeof all[number]) {
     if (!r.plan) return;

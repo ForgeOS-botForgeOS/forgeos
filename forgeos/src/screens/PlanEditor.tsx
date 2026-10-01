@@ -29,7 +29,7 @@ import { haptic } from '../lib/haptics';
 // exercises adapt to the catalogue (including the user's custom ones).
 const STARTER_SPLITS: { name: string; desc: string; spec: Partial<Record<Weekday, { label: string; focus: PlanFocus }>> }[] = [
   {
-    name: 'Full-body 3×', desc: 'Mon/Wed/Fri — the best all-round start',
+    name: 'Full-body 3×', desc: 'Mon/Wed/Fri: the best all-round start',
     spec: { Mon: { label: 'Full Body A', focus: 'Full Body' }, Wed: { label: 'Full Body B', focus: 'Full Body' }, Fri: { label: 'Full Body C', focus: 'Full Body' } },
   },
   {
@@ -37,7 +37,7 @@ const STARTER_SPLITS: { name: string; desc: string; spec: Partial<Record<Weekday
     spec: { Mon: { label: 'Upper', focus: 'Upper' }, Tue: { label: 'Lower', focus: 'Lower' }, Thu: { label: 'Upper', focus: 'Upper' }, Fri: { label: 'Lower', focus: 'Lower' } },
   },
   {
-    name: 'Push / Pull / Legs 6×', desc: 'High volume — for busy gym rats',
+    name: 'Push / Pull / Legs 6×', desc: 'High volume: for busy gym rats',
     spec: { Mon: { label: 'Push', focus: 'Push' }, Tue: { label: 'Pull', focus: 'Pull' }, Wed: { label: 'Legs', focus: 'Legs' }, Thu: { label: 'Push', focus: 'Push' }, Fri: { label: 'Pull', focus: 'Pull' }, Sat: { label: 'Legs', focus: 'Legs' } },
   },
   {
@@ -110,7 +110,7 @@ export default function PlanEditor() {
         return { ...d, targets };
       }),
     });
-    flash(filled ? `Set ${filled} weights from your history` : 'No history yet — log some sets first');
+    flash(filled ? `Set ${filled} weights from your history` : 'No history yet: log some sets first');
     haptic('success');
   }
 
@@ -127,7 +127,7 @@ export default function PlanEditor() {
         return { ...d, targets };
       }),
     });
-    flash('Deload applied — ~60% load, one fewer set per lift');
+    flash('Deload applied: ~60% load, one fewer set per lift');
     haptic('success');
   }
 
@@ -135,7 +135,7 @@ export default function PlanEditor() {
     return (
       <div className="px-4 pt-12 space-y-3">
         <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
-        <p className="text-muted">No plan yet — finish onboarding to generate one.</p>
+        <p className="text-muted">No plan yet: finish onboarding to generate one.</p>
       </div>
     );
   }
@@ -197,7 +197,7 @@ export default function PlanEditor() {
     if (!note.trim()) return;
     const { plan: tailored, notes } = tailorPlan(plan!, note);
     setWeekPlan(tailored);
-    flash(notes.length ? notes.join(' ') : 'No matching rules — try keywords like knees, shoulder, back, time.');
+    flash(notes.length ? notes.join(' ') : 'No matching rules: try keywords like knees, shoulder, back, time.');
     haptic('success');
   }
   function copyDay(src: string, dst: string) {
@@ -227,7 +227,7 @@ export default function PlanEditor() {
       }),
     });
     setShowSaved(false);
-    flash(`Built “${split.name}” — tweak anything you like`);
+    flash(`Built “${split.name}”: tweak anything you like`);
     haptic('success');
   }
 
@@ -380,7 +380,7 @@ export default function PlanEditor() {
         <Card className="space-y-2">
           <div className="flex items-center justify-between">
             <span className="text-[11px] uppercase tracking-wide text-muted flex items-center gap-1"><LayoutGrid size={12} /> Week balance</span>
-            <span className="text-[11px] text-muted">{analysis.totalSets} sets · push:pull {analysis.pullSets ? `${Math.round((analysis.pushSets / analysis.pullSets) * 10) / 10}:1` : '—'}</span>
+            <span className="text-[11px] text-muted">{analysis.totalSets} sets · push:pull {analysis.pullSets ? `${Math.round((analysis.pushSets / analysis.pullSets) * 10) / 10}:1` : '–'}</span>
           </div>
           <div className="space-y-1">
             {BALANCE_MUSCLES.map((m) => {
@@ -455,7 +455,7 @@ export default function PlanEditor() {
                         </div>
                       </div>
 
-                      {d.exerciseIds.length === 0 && <p className="text-xs text-muted">No exercises — add some or build a full workout above.</p>}
+                      {d.exerciseIds.length === 0 && <p className="text-xs text-muted">No exercises: add some or build a full workout above.</p>}
                       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEnd(d.day, e)}>
                         <SortableContext items={d.exerciseIds} strategy={verticalListSortingStrategy}>
                           {d.exerciseIds.map((id) => {
@@ -578,7 +578,7 @@ function AiBuildSheet({ open, onClose, days, onBuild }: { open: boolean; onClose
   const [skip, setSkip] = useState('');
   const [goal, setGoal] = useState<'hypertrophy' | 'strength'>('hypertrophy');
   return (
-    <Sheet open={open} onClose={onClose} title="AI trainer — build a day">
+    <Sheet open={open} onClose={onClose} title="AI trainer: build a day">
       <div className="space-y-3">
         <p className="text-[11px] text-muted">Name the day (e.g. “Push”, “Leg day”, “Upper body”) and I’ll program a full session like a coach.</p>
         <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Workout name / goal (e.g. Push day)" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
@@ -603,7 +603,7 @@ function PasteSheet({ open, onClose, days, onParse }: { open: boolean; onClose: 
   return (
     <Sheet open={open} onClose={onClose} title="Paste a workout">
       <div className="space-y-3">
-        <p className="text-[11px] text-muted">Paste a workout from anywhere — one exercise per line, e.g. “Bench Press 3x8 80kg”. We’ll match it to the library.</p>
+        <p className="text-[11px] text-muted">Paste a workout from anywhere: one exercise per line, e.g. “Bench Press 3x8 80kg”. We’ll match it to the library.</p>
         <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={'Bench Press 4x8 80kg\nLat Pulldown 3x10 60kg\nSquat 5x5 100kg'} className="w-full rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm h-32 font-mono" />
         {preview && <p className="text-[11px] text-accent-2">Matched {preview.exerciseIds.length} exercise(s).</p>}
         <p className="text-[11px] text-muted">Write into day:</p>

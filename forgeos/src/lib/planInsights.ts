@@ -50,17 +50,17 @@ export function analyseWeek(plan: WeekPlan, lookup: (id: string) => Exercise | u
   const trainingDays = plan.days.filter((d) => !d.rest).length;
 
   if (totalSets > 0) {
-    if (pullSets === 0 && pushSets > 0) warnings.push('No pulling work — add rows or pull-ups to protect your shoulders.');
-    else if (pullSets > 0 && pushSets / pullSets >= 2) warnings.push(`Push:pull is ${Math.round((pushSets / pullSets) * 10) / 10}:1 — shoulders stay healthier near 1:1.`);
+    if (pullSets === 0 && pushSets > 0) warnings.push('No pulling work: add rows or pull-ups to protect your shoulders.');
+    else if (pullSets > 0 && pushSets / pullSets >= 2) warnings.push(`Push:pull is ${Math.round((pushSets / pullSets) * 10) / 10}:1: shoulders stay healthier near 1:1.`);
     if (legSets === 0) warnings.push('Leg day is missing entirely. Your squat (and your physique) will thank you.');
-    else if (legSets < totalSets * 0.2) warnings.push('Legs get under 20% of your sets — consider one more lower-body slot.');
+    else if (legSets < totalSets * 0.2) warnings.push('Legs get under 20% of your sets: consider one more lower-body slot.');
     if ((setsPerMuscle['Core'] ?? 0) === 0) warnings.push('No direct core work this week.');
   }
-  if (trainingDays === 7) warnings.push('No rest day planned — recovery is where the muscle is built.');
+  if (trainingDays === 7) warnings.push('No rest day planned: recovery is where the muscle is built.');
   for (const d of plan.days) {
     if (d.rest) continue;
     const sets = d.exerciseIds.reduce((a, id) => a + (d.targets?.[id]?.sets ?? 3), 0);
-    if (estimateDayMinutes(sets) > 100) warnings.push(`${d.day} is ~${estimateDayMinutes(sets)} min — consider splitting it.`);
+    if (estimateDayMinutes(sets) > 100) warnings.push(`${d.day} is ~${estimateDayMinutes(sets)} min: consider splitting it.`);
   }
 
   return { setsPerMuscle, totalSets, pushSets, pullSets, warnings };

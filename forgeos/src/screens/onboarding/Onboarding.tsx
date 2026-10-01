@@ -302,7 +302,7 @@ export default function Onboarding() {
           <p className="text-[11px] text-muted/70 text-center pt-2">
             {googleIsLive
               ? 'Google sign-in opens the real Google account picker.'
-              : 'Demo mode — add a Google Client ID to enable real Google sign-in.'}
+              : 'Demo mode: add a Google Client ID to enable real Google sign-in.'}
           </p>
         </motion.div>
       )}
@@ -314,7 +314,7 @@ export default function Onboarding() {
       {step === 'metrics' && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
           <h2 className="text-2xl font-bold">Your numbers</h2>
-          <p className="text-sm text-muted">Metric only — kg, cm, kcal.</p>
+          <p className="text-sm text-muted">Metric only: kg, cm, kcal.</p>
 
           <div className="flex gap-2">
             <Pill active={sex === 'male'} onClick={() => setSex('male')}>Male</Pill>
@@ -679,7 +679,7 @@ function ManualIntro({
     <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="space-y-4 mt-6">
       <h2 className="text-2xl font-bold leading-snug">Tell me about yourself</h2>
       <p className="text-sm text-muted">
-        In your own words — your age, height &amp; weight, what you want (lose fat, build muscle, get stronger…),
+        In your own words: your age, height &amp; weight, what you want (lose fat, build muscle, get stronger…),
         how long you’ve trained, how many days a week you can, and anything to work around (bad knees, no time…).
         I’ll fill the form in for you to check.
       </p>
@@ -700,7 +700,7 @@ function ManualIntro({
       {/* If nothing parsed, ask for the specifics we still need. */}
       {text.trim() !== '' && caught === 0 && (
         <p className="text-[12px] text-warn/90 bg-warn/10 rounded-xl px-3 py-2">
-          I couldn’t pick out the details yet — try including your <b>goal</b> (lose fat / build muscle / get stronger), your <b>age, height &amp; weight</b>, and <b>how many days a week</b> you can train.
+          I couldn’t pick out the details yet: try including your <b>goal</b> (lose fat / build muscle / get stronger), your <b>age, height &amp; weight</b>, and <b>how many days a week</b> you can train.
         </p>
       )}
 
@@ -713,7 +713,7 @@ function ManualIntro({
 
       {caught > 0 && (
         <div className="rounded-xl bg-surface-2 border border-line px-4 py-3 text-xs space-y-1">
-          <p className="text-muted">Caught {caught} thing{caught === 1 ? '' : 's'} — you can fix anything on the next screen:</p>
+          <p className="text-muted">Caught {caught} thing{caught === 1 ? '' : 's'}. You can fix anything on the next screen:</p>
           <div className="flex flex-wrap gap-1.5 pt-1">
             {parsed.goal && <Chip>goal: {parsed.goal}</Chip>}
             {parsed.experience && <Chip>{parsed.experience}</Chip>}
@@ -735,7 +735,7 @@ function ManualIntro({
         </Button>
       </div>
       <button onClick={onSkip} className="w-full text-center text-[11px] text-muted/70">
-        Skip — I’ll just use the sliders
+        Skip, I’ll just use the sliders
       </button>
     </motion.div>
   );

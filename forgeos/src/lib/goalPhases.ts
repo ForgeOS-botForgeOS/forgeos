@@ -40,16 +40,16 @@ export function goalNudge(goal: UserProfile['goal'], weighIns: WeighIn[]): strin
   const flat = Math.abs(trend) < 0.4;
   if (goal === 'lose' && trend >= -0.2) {
     return flat
-      ? 'Your weight’s been flat on a cut — a short maintenance break or a slightly bigger deficit can restart the loss.'
-      : 'You’re gaining while cutting — tighten the deficit, or switch to Maintain for a bit.';
+      ? 'Your weight’s been flat on a cut: a short maintenance break or a slightly bigger deficit can restart the loss.'
+      : 'You’re gaining while cutting: tighten the deficit, or switch to Maintain for a bit.';
   }
   if (goal === 'gain' && trend <= 0.2) {
     return flat
-      ? 'Not much scale movement on a bulk — nudge calories up ~10% to keep gaining.'
-      : 'You’re losing weight on a bulk — you likely need to eat more.';
+      ? 'Not much scale movement on a bulk: nudge calories up ~10% to keep gaining.'
+      : 'You’re losing weight on a bulk: you likely need to eat more.';
   }
   if (goal === 'recomp' && Math.abs(trend) > 1) {
-    return 'Your weight’s moving fast for a recomp — ease toward maintenance to keep it a true recomp.';
+    return 'Your weight’s moving fast for a recomp: ease toward maintenance to keep it a true recomp.';
   }
   return null;
 }

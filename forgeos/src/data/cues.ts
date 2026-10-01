@@ -27,12 +27,12 @@ const PATTERNS: PatternDef[] = [
     label: 'Hip hinge / deadlift',
     match: /deadlift|rdl|romanian|good ?morning|hinge|hip thrust|pull-?through|kettlebell swing|swing/,
     steps: [
-      'Brace your core and set a flat back — chest proud, lats tight.',
+      'Brace your core and set a flat back: chest proud, lats tight.',
       'Push your hips back to load the hamstrings, keeping the bar/weight close to your body.',
-      'Drive the floor away and snap your hips through to lockout — squeeze the glutes at the top.',
+      'Drive the floor away and snap your hips through to lockout: squeeze the glutes at the top.',
     ],
     breathing: 'Take a big breath and brace at the top, hold it through the rep, exhale at lockout.',
-    mistake: 'Rounding the lower back or turning it into a squat — keep the shins vertical and hinge from the hips.',
+    mistake: 'Rounding the lower back or turning it into a squat: keep the shins vertical and hinge from the hips.',
   },
   {
     label: 'Squat / knee bend',
@@ -43,7 +43,7 @@ const PATTERNS: PatternDef[] = [
       'Drive up through mid-foot, keeping your chest up the whole way.',
     ],
     breathing: 'Inhale and brace at the top, hold through the bottom, exhale as you stand.',
-    mistake: 'Knees caving in or heels lifting — push the knees out and keep weight mid-foot.',
+    mistake: 'Knees caving in or heels lifting: push the knees out and keep weight mid-foot.',
   },
   {
     label: 'Vertical press',
@@ -54,7 +54,7 @@ const PATTERNS: PatternDef[] = [
       'Finish with biceps by the ears and the weight stacked over mid-foot.',
     ],
     breathing: 'Breathe in and brace before the rep, exhale near the top.',
-    mistake: 'Over-arching the lower back to fake the press — keep ribs down and glutes tight.',
+    mistake: 'Over-arching the lower back to fake the press: keep ribs down and glutes tight.',
   },
   {
     label: 'Horizontal press',
@@ -65,7 +65,7 @@ const PATTERNS: PatternDef[] = [
       'Press up and slightly back, driving through the mid-chest.',
     ],
     breathing: 'Inhale on the way down, exhale as you press.',
-    mistake: 'Flaring the elbows straight out to 90° — tuck them to protect the shoulders.',
+    mistake: 'Flaring the elbows straight out to 90°: tuck them to protect the shoulders.',
   },
   {
     label: 'Vertical pull',
@@ -76,7 +76,7 @@ const PATTERNS: PatternDef[] = [
       'Control the negative all the way back to the stretch.',
     ],
     breathing: 'Exhale as you pull, inhale on the way back up.',
-    mistake: 'Using momentum/kipping or stopping halfway — own the full range with the lats.',
+    mistake: 'Using momentum/kipping or stopping halfway: own the full range with the lats.',
   },
   {
     label: 'Horizontal pull / row',
@@ -87,40 +87,40 @@ const PATTERNS: PatternDef[] = [
       'Lower under control to a full stretch without losing back position.',
     ],
     breathing: 'Exhale as you row, inhale as you lower.',
-    mistake: 'Yanking with the lower back and shrugging — keep the torso still and drive the elbows.',
+    mistake: 'Yanking with the lower back and shrugging: keep the torso still and drive the elbows.',
   },
   {
     label: 'Biceps curl',
     match: /curl/,
     steps: [
       'Pin your elbows by your sides and keep your shoulders back.',
-      'Curl up by contracting the biceps — no swinging at the shoulder.',
+      'Curl up by contracting the biceps: no swinging at the shoulder.',
       'Squeeze at the top, then lower slowly to a full stretch.',
     ],
     breathing: 'Exhale as you curl up, inhale as you lower.',
-    mistake: 'Swinging the weight up with the hips — slow the eccentric and let the biceps do the work.',
+    mistake: 'Swinging the weight up with the hips: slow the eccentric and let the biceps do the work.',
   },
   {
     label: 'Triceps extension',
     match: /tricep|pushdown|push-?down|skull|overhead extension|kickback|french press|extension/,
     steps: [
-      'Keep your upper arm fixed — only the forearm moves.',
+      'Keep your upper arm fixed: only the forearm moves.',
       'Extend fully and squeeze the triceps at lockout.',
       'Control the stretch back without letting the elbow drift.',
     ],
     breathing: 'Exhale as you extend, inhale on the return.',
-    mistake: 'Letting the elbows flare and drift forward — keep them tight and still.',
+    mistake: 'Letting the elbows flare and drift forward: keep them tight and still.',
   },
   {
     label: 'Lateral / front raise',
     match: /lateral raise|side raise|front raise|raise|lateral/,
     steps: [
       'Soft bend in the elbows, lead with the elbows not the hands.',
-      'Raise to about shoulder height — pour-the-jug feel for side raises.',
+      'Raise to about shoulder height: pour-the-jug feel for side raises.',
       'Lower slowly; resist the weight on the way down.',
     ],
     breathing: 'Exhale as you raise, inhale as you lower.',
-    mistake: 'Using momentum and going too heavy — lighter and controlled hits the delts far better.',
+    mistake: 'Using momentum and going too heavy: lighter and controlled hits the delts far better.',
   },
   {
     label: 'Calf raise',
@@ -131,18 +131,18 @@ const PATTERNS: PatternDef[] = [
       'Pause at the top and lower slowly for a deep stretch.',
     ],
     breathing: 'Exhale as you press up, inhale on the stretch.',
-    mistake: 'Bouncing with a short range — pause top and bottom for the full stretch.',
+    mistake: 'Bouncing with a short range: pause top and bottom for the full stretch.',
   },
   {
     label: 'Core / anti-extension',
     match: /plank|crunch|sit-?up|leg raise|hollow|ab |abs|rollout|woodchop|russian twist|dead ?bug|hanging|hyperextension|back extension|superman/,
     steps: [
       'Set a neutral spine and brace your abs before moving.',
-      'Move slowly and deliberately — quality of contraction over reps.',
+      'Move slowly and deliberately: quality of contraction over reps.',
       'Avoid yanking on the neck; keep the movement in the trunk.',
     ],
     breathing: 'Exhale hard as you crunch/brace, breathe shallow to keep tension.',
-    mistake: 'Rushing reps and pulling with the hip flexors or neck — slow down and own the core.',
+    mistake: 'Rushing reps and pulling with the hip flexors or neck: slow down and own the core.',
   },
   {
     label: 'Conditioning / cardio',
@@ -153,7 +153,7 @@ const PATTERNS: PatternDef[] = [
       'Finish strong but don’t blow up in the first minute.',
     ],
     breathing: 'Rhythmic nasal-in, mouth-out breathing keeps you in control.',
-    mistake: 'Going out far too hard and fading — pace the effort.',
+    mistake: 'Going out far too hard and fading: pace the effort.',
   },
 ];
 
@@ -164,7 +164,7 @@ const FALLBACK: Omit<ExerciseCues, 'pattern'> = {
     'Squeeze the target muscle at the peak and resist the lowering phase.',
   ],
   breathing: 'Exhale on the effort (the hard part), inhale on the return.',
-  mistake: 'Using momentum or cutting the range short — slow it down and feel the target muscle.',
+  mistake: 'Using momentum or cutting the range short: slow it down and feel the target muscle.',
 };
 
 export function cuesFor(ex: Exercise): ExerciseCues {

@@ -35,7 +35,7 @@ export function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose:
 
   async function submit() {
     if (!valid || busy) return;
-    if (!isBackendLive || !supabase) { setErr('Password changes need an email account — this build is running in demo mode.'); return; }
+    if (!isBackendLive || !supabase) { setErr('Password changes need an email account: this build is running in demo mode.'); return; }
     setErr(null);
     setBusy(true);
     // No active session = signed in as guest/Google or the session expired.

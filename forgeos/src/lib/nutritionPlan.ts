@@ -69,7 +69,7 @@ const RULES: Record<Goal, GoalRule> = {
     restDelta: 0.08,
     proteinPerKg: 1.9,
     fatPerKg: 0.9,
-    headline: 'A controlled surplus — enough to build, small enough that most of it is muscle.',
+    headline: 'A controlled surplus: enough to build, small enough that most of it is muscle.',
   },
   recomp: {
     trainingDelta: 0.08,
@@ -136,17 +136,17 @@ export function buildNutritionPlan(input: PlanInput): NutritionPlan {
 
 function timingFor(input: PlanInput): string[] {
   const tips: string[] = [
-    `Protein at every meal — roughly ${Math.round((input.weightKg * RULES[input.goal].proteinPerKg) / SPLIT.length)} g a time, four times a day.`,
+    `Protein at every meal: roughly ${Math.round((input.weightKg * RULES[input.goal].proteinPerKg) / SPLIT.length)} g a time, four times a day.`,
   ];
   if (input.trainingDay) {
     tips.push('Carbs 1–2 h before training: something you digest easily, not a fat-heavy meal.');
-    tips.push('Eat within about 2 h of finishing — protein plus carbs. The "30-minute window" is a myth, the same day is not.');
+    tips.push('Eat within about 2 h of finishing: protein plus carbs. The "30-minute window" is a myth, the same day is not.');
   } else {
     tips.push('Rest day: same protein, fewer carbs. Appetite is usually lower anyway.');
   }
   tips.push('Slow protein before bed (quark, casein, cottage cheese) supports overnight recovery.');
   if (input.goal === 'lose') tips.push('Front-load volume: vegetables and lean protein first, so the deficit does not feel like one.');
-  if (input.goal === 'gain') tips.push('If you cannot eat the surplus, drink part of it — a shake is easier than another plate.');
+  if (input.goal === 'gain') tips.push('If you cannot eat the surplus, drink part of it: a shake is easier than another plate.');
   return tips;
 }
 

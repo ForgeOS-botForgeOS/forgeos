@@ -38,7 +38,7 @@ export default function Achievements() {
       own(a.reward.cosmeticId);
       celebrate();
       const c = cosmeticById(a.reward.cosmeticId);
-      toast(`${a.title} claimed — unlocked ${c?.name ?? 'an exclusive reward'} ✨`);
+      toast(`${a.title} claimed: unlocked ${c?.name ?? 'an exclusive reward'} ✨`);
     } else {
       toast(`${a.title} claimed · +${a.reward.xp} XP · 🪙${a.reward.coins}`);
     }

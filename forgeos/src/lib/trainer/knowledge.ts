@@ -28,7 +28,7 @@ export const APP_HELP: HelpEntry[] = [
     title: 'Focus mode during a session',
     keywords: ['focus', 'hud', 'one set at a time', 'full screen', 'crosshair', 'distraction'],
     answer:
-      'In a live session, tap the crosshair icon in the header. Focus mode fills the screen with just the set you are on — big weight × reps, the ghost target, RPE and a giant Done button. The rest timer and the music player float above it. Chips at the bottom let you jump to another exercise (handy for supersets).',
+      'In a live session, tap the crosshair icon in the header. Focus mode fills the screen with just the set you are on: big weight × reps, the ghost target, RPE and a giant Done button. The rest timer and the music player float above it. Chips at the bottom let you jump to another exercise (handy for supersets).',
     route: '/train',
   },
   {
@@ -36,7 +36,7 @@ export const APP_HELP: HelpEntry[] = [
     title: 'Exercise detail pages',
     keywords: ['exercise page', 'form cues', 'how to do', 'technique', 'e1rm', 'progression', 'video', 'library'],
     answer:
-      'Tap any lift\'s name — in a session, the library, history, or the PR Hall — and you get its page: form cues step by step, the common mistake, your session count, best e1RM, your PR, an e1RM progression chart, a warm-up ladder to your working weight, similar movements, and a form video.',
+      'Tap any lift\'s name (in a session, the library, history or the PR Hall) and you get its page: form cues step by step, the common mistake, your session count, best e1RM, your PR, an e1RM progression chart, a warm-up ladder to your working weight, similar movements, and a form video.',
     route: '/library',
   },
   {
@@ -60,7 +60,7 @@ export const APP_HELP: HelpEntry[] = [
     title: 'Recovery and vitamins',
     keywords: ['vitamin', 'supplement', 'creatine', 'magnesium', 'protein powder', 'recovery', 'omega', 'zinc', 'iron'],
     answer:
-      'Food tab → Nutrition plan → "Recovery & vitamins". Each nutrient shows what it does, why it matters for recovery, food sources first, an ordinary amount, timing and a caution. The list reorders itself from your data — short sleep raises magnesium, winter raises vitamin D, four-plus sessions a week raises protein and electrolytes. It is information, not a prescription.',
+      'Food tab → Nutrition plan → "Recovery & vitamins". Each nutrient shows what it does, why it matters for recovery, food sources first, an ordinary amount, timing and a caution. The list reorders itself from your data: short sleep raises magnesium, winter raises vitamin D, four-plus sessions a week raises protein and electrolytes. It is information, not a prescription.',
     route: '/nutrition-plan',
   },
   {
@@ -68,7 +68,7 @@ export const APP_HELP: HelpEntry[] = [
     title: 'Scanning food',
     keywords: ['scan', 'photo', 'camera', 'barcode', 'macro scanner', 'ai food'],
     answer:
-      'Food tab → "Scan a meal" reads a photo and estimates each item, which you can edit before logging; your corrections are remembered for next time. The barcode scanner gives exact macros from Open Food Facts. Both are optional — manual entry works the same.',
+      'Food tab → "Scan a meal" reads a photo and estimates each item, which you can edit before logging; your corrections are remembered for next time. The barcode scanner gives exact macros from Open Food Facts. Both are optional: manual entry works the same.',
     route: '/nutrition',
   },
   {
@@ -76,7 +76,7 @@ export const APP_HELP: HelpEntry[] = [
     title: 'Achievements and rewards',
     keywords: ['achievement', 'reward', 'claim', 'xp', 'coins', 'tier', 'legendary', 'cosmetic', 'title', 'frame'],
     answer:
-      'Profile → Achievements. All 57 have a tier: bronze pays 100 XP + 25 coins, silver 300/75, gold 800/200, legendary 2000/600. You claim them (one at a time or "claim everything"). Seven legendary ones grant cosmetics no amount of coins can buy — titles, frames and the Champion\'s Forge theme.',
+      'Profile → Achievements. All 57 have a tier: bronze pays 100 XP + 25 coins, silver 300/75, gold 800/200, legendary 2000/600. You claim them (one at a time or "claim everything"). Seven legendary ones grant cosmetics no amount of coins can buy: titles, frames and the Champion\'s Forge theme.',
     route: '/achievements',
   },
   {
@@ -92,7 +92,7 @@ export const APP_HELP: HelpEntry[] = [
     title: 'How the streak works',
     keywords: ['streak', 'weekly', 'miss a day', 'freeze', 'consistency'],
     answer:
-      'The main streak is weekly — "weeks you showed up". It advances on your first session of the week and only breaks if you skip a whole week, so a missed Tuesday costs nothing. A daily streak is tracked too, shown secondarily.',
+      'The main streak is weekly: "weeks you showed up". It advances on your first session of the week and only breaks if you skip a whole week, so a missed Tuesday costs nothing. A daily streak is tracked too, shown secondarily.',
     route: '/quests',
   },
   {

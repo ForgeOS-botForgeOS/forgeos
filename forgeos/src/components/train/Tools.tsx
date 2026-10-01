@@ -152,7 +152,7 @@ function OneRmCalc() {
           </div>
         ))}
       </div>
-      <p className="text-[11px] text-muted/70">Standards are relative to your bodyweight ({bodyweight} kg) — set it in your profile.</p>
+      <p className="text-[11px] text-muted/70">Standards are relative to your bodyweight ({bodyweight} kg): set it in your profile.</p>
     </div>
   );
 }

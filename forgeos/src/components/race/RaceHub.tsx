@@ -42,10 +42,10 @@ function RaceCreate() {
     const workout = raceable.find((w) => w.id === workoutId) ?? raceable[0];
     const config = createRace(mode, { targetKg, durationMin, workout: mode === 'workout' ? workout : undefined });
     if (!config) {
-      toast(mode === 'workout' ? t('s.raceNoHistory') : 'Could not create the race — are you online?', 'error');
+      toast(mode === 'workout' ? t('s.raceNoHistory') : 'Could not create the race: are you online?', 'error');
       return;
     }
-    void shareRaceInvite(config).then((how) => toast(how === 'copied' ? 'Invite link copied — send it to a friend 🏁' : 'Invite sent 🏁', 'success'));
+    void shareRaceInvite(config).then((how) => toast(how === 'copied' ? 'Invite link copied: send it to a friend 🏁' : 'Invite sent 🏁', 'success'));
   }
 
   return (

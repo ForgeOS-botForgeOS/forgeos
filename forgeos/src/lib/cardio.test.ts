@@ -16,7 +16,7 @@ describe('cardio conversions', () => {
   it('formats pace as m:ss /km', () => {
     expect(paceLabel(10, 50)).toBe('5:00 /km');
     expect(paceLabel(5, 27.5)).toBe('5:30 /km');
-    expect(paceLabel(0, 30)).toBe('—');
+    expect(paceLabel(0, 30)).toBe('–');
   });
 
   it('carries pace rounding past 60s', () => {

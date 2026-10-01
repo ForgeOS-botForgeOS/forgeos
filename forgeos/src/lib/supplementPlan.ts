@@ -85,6 +85,6 @@ export function supplementPlan(ctx: SupplementContext): RankedSupplement[] {
 /** One-line summary for the section header. */
 export function supplementSummary(list: RankedSupplement[]): string {
   const core = list.filter((s) => s.priority === 'core');
-  if (!core.length) return 'Nothing stands out — your food is doing the work.';
+  if (!core.length) return 'Nothing stands out: your food is doing the work.';
   return `Worth attention right now: ${core.map((s) => s.name.split(' (')[0]).join(', ')}.`;
 }

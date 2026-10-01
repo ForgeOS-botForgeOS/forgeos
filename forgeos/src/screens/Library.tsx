@@ -58,13 +58,13 @@ export default function Library() {
         await reader.scan();
         setNfcMsg('Tap your phone to a ForgeOS-enabled machine tag…');
         reader.onreading = () => {
-          setNfcMsg('Machine paired — opening instructional video.');
+          setNfcMsg('Machine paired: opening instructional video.');
         };
       } catch {
         setNfcMsg('NFC permission denied.');
       }
     } else {
-      setNfcMsg('Web NFC not supported on this device — use the in-app video instead.');
+      setNfcMsg('Web NFC not supported on this device: use the in-app video instead.');
     }
   }
 

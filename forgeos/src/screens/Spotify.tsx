@@ -39,14 +39,14 @@ export default function Spotify() {
 
       {!spotifyIsLive && (
         <Card className="text-sm text-muted space-y-2">
-          <p className="font-semibold text-text">Connect Spotify — 2-minute setup</p>
-          <p>Logging in needs a free Spotify app registered to your account — that’s the piece that was missing, so the login had nothing to connect to.</p>
+          <p className="font-semibold text-text">Connect Spotify: 2-minute setup</p>
+          <p>Logging in needs a free Spotify app registered to your account: that’s the piece that was missing, so the login had nothing to connect to.</p>
           <ol className="list-decimal ml-4 space-y-1">
             <li>Open <span className="text-text">developer.spotify.com/dashboard</span> → <b>Create app</b>.</li>
             <li>Add this <b>Redirect URI</b> exactly: <code className="text-accent break-all">{spotifyRedirectUri}</code></li>
-            <li>Copy the <b>Client ID</b> and add it as a build secret <code className="text-text">VITE_SPOTIFY_CLIENT_ID</code> — or send it to me and I’ll wire it in.</li>
+            <li>Copy the <b>Client ID</b> and add it as a build secret <code className="text-text">VITE_SPOTIFY_CLIENT_ID</code>, or send it to me and I’ll wire it in.</li>
           </ol>
-          <p className="text-[11px] text-muted/70">Until then the player runs in demo mode (the disc spins and tracks advance, but there’s no real audio — real playback also needs Spotify Premium).</p>
+          <p className="text-[11px] text-muted/70">Until then the player runs in demo mode (the disc spins and tracks advance, but there’s no real audio: real playback also needs Spotify Premium).</p>
         </Card>
       )}
 
@@ -90,7 +90,7 @@ export default function Spotify() {
           </button>
           <button onClick={() => { next(); haptic('tap'); }} aria-label="Next"><SkipForward /></button>
         </div>
-        <p className="text-[11px] text-muted/70 mt-4">Plays across all of ForgeOS — control it from the mini player on any screen.</p>
+        <p className="text-[11px] text-muted/70 mt-4">Plays across all of ForgeOS: control it from the mini player on any screen.</p>
       </Card>
 
       <div>

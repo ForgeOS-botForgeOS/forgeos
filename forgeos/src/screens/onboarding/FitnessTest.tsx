@@ -53,7 +53,7 @@ export function FitnessTest({ onComplete }: { onComplete: (score: number, level:
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
       <h2 className="text-2xl font-bold">Quick fitness test</h2>
-      <p className="text-sm text-muted">Four honest answers — we estimate your level and body-fat range. No equipment needed.</p>
+      <p className="text-sm text-muted">Four honest answers: we estimate your level and body-fat range. No equipment needed.</p>
       {ITEMS.map((it) => {
         const Icon = it.icon;
         return (

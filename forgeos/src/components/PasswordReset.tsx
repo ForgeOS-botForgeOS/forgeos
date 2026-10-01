@@ -32,7 +32,7 @@ export function PasswordReset() {
       return;
     }
     haptic('success');
-    toast('Password updated — you’re signed in ✅', 'success');
+    toast('Password updated: you’re signed in ✅', 'success');
     recovery.requested = false;
     setPw('');
     setOpen(false);
@@ -43,7 +43,7 @@ export function PasswordReset() {
       <div className="space-y-3">
         <p className="text-[11px] text-muted flex items-start gap-1.5">
           <KeyRound size={13} className="mt-0.5 shrink-0 text-accent" />
-          You opened a password-reset link. Choose a new password — you’ll be signed in right away.
+          You opened a password-reset link. Choose a new password: you’ll be signed in right away.
         </p>
         <div className="relative">
           <input

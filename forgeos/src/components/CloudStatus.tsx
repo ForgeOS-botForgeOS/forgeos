@@ -43,9 +43,9 @@ export function CloudStatus() {
       await refresh();
       if (!isBackendLive) toast('No cloud backend connected', 'info');
       else if (connected) toast('Connected & synced ✅', 'success');
-      else toast('Backend reachable but no session — enable Anonymous sign-ins in Supabase.', 'error');
+      else toast('Backend reachable but no session: enable Anonymous sign-ins in Supabase.', 'error');
     } catch {
-      toast('Sync failed — check your connection / backend.', 'error');
+      toast('Sync failed: check your connection / backend.', 'error');
     } finally {
       setBusy(false);
     }
@@ -53,13 +53,13 @@ export function CloudStatus() {
 
   const signedIn = auth === 'in';
   const hint = !isBackendLive
-    ? 'No cloud backend connected on this build — social runs locally. Set VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.'
+    ? 'No cloud backend connected on this build: social runs locally. Set VITE_SUPABASE_URL + VITE_SUPABASE_ANON_KEY.'
     : auth === 'checking'
       ? 'Checking your cloud session…'
       : auth === 'error'
-        ? "Couldn't reach your Supabase backend. Free projects pause after inactivity — open your Supabase dashboard and Restore it (or check the URL/anon key). Then tap Sync now."
+        ? "Couldn't reach your Supabase backend. Free projects pause after inactivity: open your Supabase dashboard and Restore it (or check the URL/anon key). Then tap Sync now."
         : !signedIn
-          ? 'No cloud session yet. Tap Sync now — it connects you automatically (no signup). If this stays ✗, enable "Anonymous sign-ins" in your Supabase dashboard (Authentication → Providers).'
+          ? 'No cloud session yet. Tap Sync now: it connects you automatically (no signup). If this stays ✗, enable "Anonymous sign-ins" in your Supabase dashboard (Authentication → Providers).'
           : `Connected as ${email ?? 'your account'}. ${friends.length} friend${friends.length === 1 ? '' : 's'} synced. Add friends by invite link to see real activity.`;
 
   return (

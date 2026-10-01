@@ -25,7 +25,7 @@ import { openTutorial } from '../components/Tutorial';
 import type { HealthDay } from '../types';
 
 function fmtSleep(min?: number): string {
-  if (!min) return '—';
+  if (!min) return '–';
   return `${Math.floor(min / 60)}h ${String(min % 60).padStart(2, '0')}m`;
 }
 function todayKey(): string {
@@ -123,7 +123,7 @@ export default function Health() {
       <div className="text-center space-y-1">
         <div className="mx-auto w-12 h-12 rounded-2xl bg-accent/15 flex items-center justify-center"><Watch className="text-accent" size={24} /></div>
         <h1 className="text-2xl font-extrabold tracking-tight">Health &amp; recovery</h1>
-        <p className="text-sm text-muted">Pull in sleep and daily activity from Garmin — automatically on the app, or by import anywhere.</p>
+        <p className="text-sm text-muted">Pull in sleep and daily activity from Garmin: automatically on the app, or by import anywhere.</p>
       </div>
 
       {/* Recovery readiness hero */}
@@ -132,9 +132,9 @@ export default function Health() {
       {/* Today / last-night summary */}
       <div className="grid grid-cols-2 gap-2">
         <Stat icon={Moon} label="Sleep" value={fmtSleep(latest?.sleepMinutes)} sub={latest?.sleepScore ? `Score ${latest.sleepScore}` : latest?.date} />
-        <Stat icon={Footprints} label="Steps" value={latest?.steps != null ? latest.steps.toLocaleString() : '—'} sub={latest?.date} />
-        <Stat icon={HeartPulse} label="Resting HR" value={latest?.restingHr != null ? `${latest.restingHr} bpm` : '—'} />
-        <Stat icon={Flame} label="Active kcal" value={latest?.activeCalories != null ? latest.activeCalories.toLocaleString() : '—'} sub={latest?.bodyBattery != null ? `Body Battery ${latest.bodyBattery}` : undefined} />
+        <Stat icon={Footprints} label="Steps" value={latest?.steps != null ? latest.steps.toLocaleString() : '–'} sub={latest?.date} />
+        <Stat icon={HeartPulse} label="Resting HR" value={latest?.restingHr != null ? `${latest.restingHr} bpm` : '–'} />
+        <Stat icon={Flame} label="Active kcal" value={latest?.activeCalories != null ? latest.activeCalories.toLocaleString() : '–'} sub={latest?.bodyBattery != null ? `Body Battery ${latest.bodyBattery}` : undefined} />
       </div>
 
       {/* 7-day recovery trends */}
@@ -147,11 +147,11 @@ export default function Health() {
           <div className="flex items-center gap-3">
             <Sparkline values={trend.scores} color={readiness?.color ?? 'rgb(var(--accent))'} />
             <div className="flex-1 grid grid-cols-3 gap-2 text-center">
-              <TrendStat label="Avg sleep" value={trend.avgSleepMin != null ? fmtDur(trend.avgSleepMin) : '—'} />
+              <TrendStat label="Avg sleep" value={trend.avgSleepMin != null ? fmtDur(trend.avgSleepMin) : '–'} />
               <TrendStat label="Sleep debt" value={trend.sleepDebtMin > 0 ? `-${fmtDur(trend.sleepDebtMin)}` : 'none'} warn={trend.sleepDebtMin >= 240} />
               <TrendStat
                 label="Rest HR"
-                value={trend.rhrAvg != null ? `${trend.rhrAvg}` : '—'}
+                value={trend.rhrAvg != null ? `${trend.rhrAvg}` : '–'}
                 sub={trend.rhrDrift != null && trend.rhrDrift !== 0 ? `${trend.rhrDrift > 0 ? '▲' : '▼'}${Math.abs(trend.rhrDrift)}` : undefined}
                 warn={(trend.rhrDrift ?? 0) >= 3}
               />
@@ -173,7 +173,7 @@ export default function Health() {
             ))
           ) : (
             <p className="text-[11px] text-muted">
-              Personal insights unlock after 14 days of data — {daysUntilInsights(list)} to go. Keep syncing 🔄
+              Personal insights unlock after 14 days of data: {daysUntilInsights(list)} to go. Keep syncing 🔄
             </p>
           )}
         </Card>
@@ -185,7 +185,7 @@ export default function Health() {
           <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center shrink-0"><Watch size={18} className="text-accent" /></div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold">Garmin auto-sync</p>
-            <p className="text-[11px] text-muted">Sleep &amp; activity flow in on their own — even with the app closed.</p>
+            <p className="text-[11px] text-muted">Sleep &amp; activity flow in on their own, even with the app closed.</p>
           </div>
           {connected && <Badge color="rgb(var(--success))">Connected</Badge>}
         </div>
@@ -193,7 +193,7 @@ export default function Health() {
         {connected ? (
           <>
             <p className="text-[11px] text-muted flex items-start gap-1.5">
-              <Check size={13} className="mt-0.5 shrink-0 text-success" /> All set — nothing else to do. New data shows up here by itself.
+              <Check size={13} className="mt-0.5 shrink-0 text-success" /> All set: nothing else to do. New data shows up here by itself.
             </p>
             <Button variant="ghost" className="w-full justify-center" disabled={syncing} onClick={autoSync}>
               <span className="flex items-center gap-1.5"><RefreshCw size={15} className={syncing ? 'animate-spin' : ''} />{syncing ? 'Syncing…' : 'Sync now'}</span>
@@ -206,7 +206,7 @@ export default function Health() {
                   APK it's already satisfied, so don't show it at all. */}
               {hcStatus === 'web' && <SetupStep n={1}>Install the <b>ForgeOS Android app</b> (You → Get the app)</SetupStep>}
               <SetupStep n={hcStatus === 'web' ? 2 : 1} done={hcStatus === 'ready'}>In <b>Garmin Connect</b>: profile picture → Settings → <b>Health Connect</b> → allow sleep &amp; activity</SetupStep>
-              <SetupStep n={hcStatus === 'web' ? 3 : 2}>Tap the button — one permission screen, then it’s automatic forever</SetupStep>
+              <SetupStep n={hcStatus === 'web' ? 3 : 2}>Tap the button: one permission screen, then it’s automatic forever</SetupStep>
             </div>
             {hcStatus === 'ready' && (
               <Button className="w-full justify-center" disabled={syncing} onClick={autoSync}>
@@ -218,7 +218,7 @@ export default function Health() {
                 <Button className="w-full justify-center" onClick={() => window.open('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata', '_blank')}>
                   <span className="flex items-center gap-1.5"><BatteryCharging size={15} /> Get Health Connect</span>
                 </Button>
-                <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> Health Connect isn’t ready on this phone yet. It’s built into Android 14+; on older Android install it from Play. Also grab the newest ForgeOS APK from the download page — older ones can’t auto-sync.</p>
+                <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> Health Connect isn’t ready on this phone yet. It’s built into Android 14+; on older Android install it from Play. Also grab the newest ForgeOS APK from the download page: older ones can’t auto-sync.</p>
               </>
             )}
             {hcStatus === 'checking' && (
@@ -317,7 +317,7 @@ function ManualImport({ onImport }: { onImport: (rows: HealthDay[]) => void }) {
         <FileUp size={18} className="text-accent-2 shrink-0" />
         <div className="flex-1">
           <p className="text-sm font-semibold">Import from a file or paste</p>
-          <p className="text-[11px] text-muted">Garmin export, a CSV, or JSON — we match the columns for you.</p>
+          <p className="text-[11px] text-muted">Garmin export, a CSV, or JSON: we match the columns for you.</p>
         </div>
       </div>
       <textarea
@@ -334,7 +334,7 @@ function ManualImport({ onImport }: { onImport: (rows: HealthDay[]) => void }) {
         <Button className="flex-1 justify-center" disabled={!text.trim()} onClick={() => analyze(text)}>Import paste</Button>
       </div>
       <button
-        onClick={async () => { try { await navigator.clipboard.writeText(HEALTH_CSV_TEMPLATE); setCopied(true); toast('Template copied — fill it in a notes/Sheets app.'); setTimeout(() => setCopied(false), 2000); } catch { toast('Could not copy — select the placeholder text.', 'error'); } }}
+        onClick={async () => { try { await navigator.clipboard.writeText(HEALTH_CSV_TEMPLATE); setCopied(true); toast('Template copied: fill it in a notes/Sheets app.'); setTimeout(() => setCopied(false), 2000); } catch { toast('Could not copy: select the placeholder text.', 'error'); } }}
         className="text-[11px] text-accent flex items-center gap-1 mx-auto"
       >
         {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? 'Copied' : 'Copy the CSV template'}

@@ -57,7 +57,7 @@ export function CreateExerciseSheet({ open, onClose }: { open: boolean; onClose:
     });
     addXp(ai.xp);
     if (publish) {
-      publishPost(`🆕 I created a new exercise: “${ex.name}” — ${primary ?? ai.primary}${ai.secondary.length ? ` + ${ai.secondary.join(', ')}` : ''} (${ai.category}). ${desc.trim().slice(0, 140)}`);
+      publishPost(`🆕 I created a new exercise, “${ex.name}”: ${primary ?? ai.primary}${ai.secondary.length ? ` + ${ai.secondary.join(', ')}` : ''} (${ai.category}). ${desc.trim().slice(0, 140)}`);
     }
     celebrate();
     toast(`“${ex.name}” created +${ai.xp} XP${publish ? ' · shared to the feed' : ''} 🔥`, 'success');
@@ -110,7 +110,7 @@ export function CreateExerciseSheet({ open, onClose }: { open: boolean; onClose:
           </div>
         )}
 
-        <p className="text-[11px] text-muted/70">Your exercise appears in every picker — plans, workouts and the library. The better you describe it, the more XP it earns.</p>
+        <p className="text-[11px] text-muted/70">Your exercise appears in every picker: plans, workouts and the library. The better you describe it, the more XP it earns.</p>
       </div>
     </Sheet>
   );

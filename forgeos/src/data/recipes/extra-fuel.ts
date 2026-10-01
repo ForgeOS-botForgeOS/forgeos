@@ -9,7 +9,7 @@ export const EXTRA_FUEL: Recipe[] = [
     kcal: 220, protein: 30, carbs: 14, fat: 4, minutes: 3, servings: 1,
     ingredients: ['250 g quark', '1 tsp cocoa powder', '1 tsp honey or sweetener', 'pinch of salt'],
     steps: [
-      'Sift the cocoa in — dumped straight in it stays as bitter lumps.',
+      'Sift the cocoa in: dumped straight in it stays as bitter lumps.',
       'Beat with the honey and salt until it goes glossy and mousse-like.',
       'Chill 10 minutes if you can wait.',
     ],
@@ -22,7 +22,7 @@ export const EXTRA_FUEL: Recipe[] = [
     ingredients: ['150 g oats', '2 scoops whey', '120 g peanut butter', '80 g honey', '40 g dark chocolate chips', 'splash of milk'],
     steps: [
       'Mix the dry ingredients first, then work in the peanut butter and honey with a spoon.',
-      'Add milk a teaspoon at a time until the mix just holds when squeezed — too wet and they slump.',
+      'Add milk a teaspoon at a time until the mix just holds when squeezed: too wet and they slump.',
       'Roll 10 balls with damp hands.',
       'Fridge 30 minutes to firm up. They keep a week.',
     ],
@@ -47,7 +47,7 @@ export const EXTRA_FUEL: Recipe[] = [
       'Line a tray with baking paper and spread the sweetened yoghurt 1 cm thick.',
       'Press the berries in and grate the chocolate over the top.',
       'Freeze 3 hours, then snap into shards.',
-      'Keep them in the freezer in a bag — they soften fast at room temperature.',
+      'Keep them in the freezer in a bag: they soften fast at room temperature.',
     ],
     tags: ['high-protein', 'meal-prep', 'no-cook', 'vegetarian'],
     tip: 'The ice-cream substitute that does not cost you the day.',
@@ -64,7 +64,7 @@ export const EXTRA_FUEL: Recipe[] = [
     kcal: 250, protein: 8, carbs: 28, fat: 13, minutes: 4, servings: 1,
     ingredients: ['1 apple', '25 g peanut butter', 'cinnamon', '10 g crushed peanuts'],
     steps: [
-      'Core the apple and cut it into thick rings — they hold the topping better than wedges.',
+      'Core the apple and cut it into thick rings: they hold the topping better than wedges.',
       'Spread the peanut butter on each ring, then dust with cinnamon and crushed peanuts.',
     ],
     tags: ['quick', 'no-cook', 'vegetarian', 'budget'],
@@ -74,7 +74,7 @@ export const EXTRA_FUEL: Recipe[] = [
     kcal: 180, protein: 9, carbs: 22, fat: 6, minutes: 35, servings: 3,
     ingredients: ['2 cans chickpeas', '1 tbsp olive oil', '1 tsp paprika', '½ tsp cumin', 'salt'],
     steps: [
-      'Drain, rinse and dry the chickpeas thoroughly on a towel — wet ones never crisp.',
+      'Drain, rinse and dry the chickpeas thoroughly on a towel: wet ones never crisp.',
       'Toss with oil and salt only, and roast at 200 °C for 25–30 minutes, shaking twice.',
       'Add the spices AFTER roasting so they do not scorch.',
       'Cool completely before storing, or they go soft.',
@@ -108,7 +108,7 @@ export const EXTRA_FUEL: Recipe[] = [
     kcal: 200, protein: 14, carbs: 24, fat: 6, minutes: 30, servings: 8,
     ingredients: ['3 ripe bananas', '2 eggs', '100 g oat flour', '2 scoops whey', '1 tsp baking powder', 'cinnamon'],
     steps: [
-      'Mash the bananas properly — lumps become wet patches in the bake.',
+      'Mash the bananas properly: lumps become wet patches in the bake.',
       'Beat in the eggs, then fold in the dry ingredients until just combined (do not over-mix).',
       'Divide between 8 muffin cases and bake at 180 °C for 18–20 minutes.',
       'A skewer should come out clean. Cool on a rack so the bottoms do not sweat.',
@@ -121,8 +121,8 @@ export const EXTRA_FUEL: Recipe[] = [
     ingredients: ['25 g popcorn kernels', '1 scoop whey', '300 ml water', 'salt'],
     steps: [
       'Pop the kernels in a covered pan with a teaspoon of oil, shaking it, until the pops slow to one every few seconds.',
-      'Tip into a bowl and salt straight away while the steam is still rising — salt does not stick to cold popcorn.',
-      'Shake the whey with cold water and have it alongside — volume plus protein for barely any calories.',
+      'Tip into a bowl and salt straight away while the steam is still rising: salt does not stick to cold popcorn.',
+      'Shake the whey with cold water and have it alongside: volume plus protein for barely any calories.',
     ],
     tags: ['high-protein', 'quick', 'budget', 'vegetarian'],
   },
@@ -149,7 +149,7 @@ export const EXTRA_FUEL: Recipe[] = [
     steps: [
       'Soak the pitted dates in hot water 5 minutes so they blend smooth.',
       'Blend the oats to flour, then add everything else.',
-      'Drink 60–90 minutes before training — carbs where you need them, not sitting heavy.',
+      'Drink 60–90 minutes before training: carbs where you need them, not sitting heavy.',
     ],
     tags: ['high-carb', 'quick', 'vegetarian'],
     tip: 'The salt matters: a pinch makes carbs and fluid land better pre-session.',
@@ -171,7 +171,7 @@ export const EXTRA_FUEL: Recipe[] = [
     kcal: 280, protein: 32, carbs: 22, fat: 6, minutes: 5, servings: 1,
     ingredients: ['1 scoop casein', '200 ml milk', '1 tsp cocoa', '1 tsp chia'],
     steps: [
-      'Whisk the casein and cocoa into the milk until smooth — casein clumps if you rush it.',
+      'Whisk the casein and cocoa into the milk until smooth: casein clumps if you rush it.',
       'Stir in the chia and leave 10 minutes; it sets to a thick custard you can spoon.',
       'Eat 30–60 minutes before bed.',
     ],
@@ -186,7 +186,7 @@ export const EXTRA_FUEL: Recipe[] = [
     steps: [
       'Simmer the rice in the milk on LOW for 25 minutes, stirring often so it does not catch.',
       'Take it off the heat and cool for 3 minutes.',
-      'Only then whisk in the whey — protein added to a boiling pan splits and goes grainy.',
+      'Only then whisk in the whey: protein added to a boiling pan splits and goes grainy.',
       'Serve warm with cinnamon and a little honey.',
     ],
     tags: ['high-protein', 'high-carb', 'vegetarian', 'budget'],
@@ -198,7 +198,7 @@ export const EXTRA_FUEL: Recipe[] = [
     steps: [
       'Crush the biscuits and press them into the base of two ramekins.',
       'Beat quark, egg, whey, honey and zest until completely smooth.',
-      'Pour in and bake at 160 °C for 22–25 minutes — low and slow stops it cracking.',
+      'Pour in and bake at 160 °C for 22–25 minutes: low and slow stops it cracking.',
       'Cool, then chill at least 2 hours before eating.',
     ],
     tags: ['high-protein', 'meal-prep', 'vegetarian'],
@@ -209,7 +209,7 @@ export const EXTRA_FUEL: Recipe[] = [
     kcal: 230, protein: 26, carbs: 30, fat: 2, minutes: 5, servings: 1,
     ingredients: ['2 frozen bananas', '1 scoop whey', '50 ml milk', 'cocoa (optional)'],
     steps: [
-      'Slice the bananas before freezing them — a whole frozen banana kills blenders.',
+      'Slice the bananas before freezing them: a whole frozen banana kills blenders.',
       'Blitz the frozen slices with the whey and just enough milk to get it moving.',
       'Stop while it is still thick and scoopable, and eat immediately.',
     ],

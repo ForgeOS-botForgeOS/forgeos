@@ -63,7 +63,7 @@ export function ingestApi(jsonText: string): Ingested {
   const trimmed = jsonText.trim();
   if (!trimmed) throw new Error('Paste the JSON your other app exported.');
   let raw: unknown;
-  try { raw = JSON.parse(trimmed); } catch { throw new Error('That isn’t valid JSON — paste the exact export from the source app.'); }
+  try { raw = JSON.parse(trimmed); } catch { throw new Error('That isn’t valid JSON: paste the exact export from the source app.'); }
   return { raw, lane: 'api', trust: LANE_TRUST.api };
 }
 

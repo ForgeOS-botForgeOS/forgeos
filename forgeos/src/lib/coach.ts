@@ -57,7 +57,7 @@ export function coachInsights(history: Workout[], days: HealthDay[]): CoachInsig
         icon: '😴',
         text:
           diff > 0
-            ? `You sleep ${fmtH(diff)} more before training days — your body preps for work. Keep it up.`
+            ? `You sleep ${fmtH(diff)} more before training days: your body preps for work. Keep it up.`
             : `You sleep ${fmtH(-diff)} less before training days. An earlier night before sessions could unlock more.`,
       });
     }
@@ -87,8 +87,8 @@ export function coachInsights(history: Workout[], days: HealthDay[]): CoachInsig
         icon: '📊',
         text:
           pct > 0
-            ? `You move ${pct}% more volume on days you wake up Ready (70+) — recovery is literally strength.`
-            : `Oddly, you push ${-pct}% harder on tired days — watch that; it's how overtraining sneaks in.`,
+            ? `You move ${pct}% more volume on days you wake up Ready (70+): recovery is literally strength.`
+            : `Oddly, you push ${-pct}% harder on tired days: watch that; it's how overtraining sneaks in.`,
       });
     }
   }
@@ -127,7 +127,7 @@ export function coachInsights(history: Workout[], days: HealthDay[]): CoachInsig
     if (a != null && stepsRest.length >= 3) {
       out.push(
         a >= 7000
-          ? { icon: '🚶', text: `Rest days average ${Math.round(a / 100) * 100} steps — great active recovery.` }
+          ? { icon: '🚶', text: `Rest days average ${Math.round(a / 100) * 100} steps: great active recovery.` }
           : { icon: '🚶', text: `Rest days average only ${Math.round(a / 100) * 100} steps. A short walk speeds up recovery more than the sofa.` },
       );
     }

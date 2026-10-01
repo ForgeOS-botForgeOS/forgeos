@@ -56,7 +56,7 @@ export function WrappedTeaser() {
       </motion.span>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-semibold">{t('wrap.teaserReady', { month: wrapped.monthLabel })}</p>
-        <p className="text-[11px] text-muted">{wrapped.volumeKg.toLocaleString(locale)} kg · {tn('wr.session', wrapped.sessions)} · {tn('wr.pr', wrapped.prCount)} — {t('wrap.tapRelive')}</p>
+        <p className="text-[11px] text-muted">{wrapped.volumeKg.toLocaleString(locale)} kg · {tn('wr.session', wrapped.sessions)} · {tn('wr.pr', wrapped.prCount)} · {t('wrap.tapRelive')}</p>
       </div>
       <button onClick={(e) => { e.stopPropagation(); markSeen(); }} aria-label={t('wrap.dismissTeaser')} className="text-muted"><X size={15} /></button>
     </Card>

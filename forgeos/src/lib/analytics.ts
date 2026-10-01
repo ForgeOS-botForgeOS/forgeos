@@ -104,10 +104,10 @@ export function trainingLoadWarning(history: Workout[]): LoadWarning | null {
   const avgRpe = thisWeek.rpeN ? thisWeek.rpeSum / thisWeek.rpeN : 0;
 
   if (ratio >= 1.5) {
-    return { level: 'spike', ratioPct, message: `Your training volume jumped ${ratioPct - 100}% above your recent average this week. Big spikes are the top driver of overuse injuries — add load more gradually (aim for under +10%/week).` };
+    return { level: 'spike', ratioPct, message: `Your training volume jumped ${ratioPct - 100}% above your recent average this week. Big spikes are the top driver of overuse injuries: add load more gradually (aim for under +10%/week).` };
   }
   if (ratio >= 1.3 && avgRpe >= 8.5) {
-    return { level: 'fatigue', ratioPct, message: `High volume (${ratioPct - 100}% over average) and high effort (RPE ${avgRpe.toFixed(1)}) — consider a lighter day or a deload week so your body can adapt.` };
+    return { level: 'fatigue', ratioPct, message: `High volume (${ratioPct - 100}% over average) and high effort (RPE ${avgRpe.toFixed(1)}): consider a lighter day or a deload week so your body can adapt.` };
   }
   return null;
 }
@@ -142,10 +142,10 @@ export function recommendBlock(history: Workout[]): PeriodisationRec {
   const avgRpe = rpeCount ? Math.round((rpeSum / rpeCount) * 10) / 10 : 0;
 
   if (avgRpe >= 8.7 && rpeCount > 8) {
-    return { nextBlock: 'deload', reason: 'Average RPE is very high — accumulated fatigue suggests a deload week.', avgRpe, weeklyVolume };
+    return { nextBlock: 'deload', reason: 'Average RPE is very high: accumulated fatigue suggests a deload week.', avgRpe, weeklyVolume };
   }
   if (avgRpe >= 7.5) {
-    return { nextBlock: 'strength', reason: 'Intensity has been high — shift to lower reps / heavier loads to convert size into strength.', avgRpe, weeklyVolume };
+    return { nextBlock: 'strength', reason: 'Intensity has been high: shift to lower reps / heavier loads to convert size into strength.', avgRpe, weeklyVolume };
   }
-  return { nextBlock: 'hypertrophy', reason: 'Effort has room to grow — add volume in the 8–12 rep range to drive new muscle.', avgRpe, weeklyVolume };
+  return { nextBlock: 'hypertrophy', reason: 'Effort has room to grow: add volume in the 8–12 rep range to drive new muscle.', avgRpe, weeklyVolume };
 }

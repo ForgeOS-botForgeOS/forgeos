@@ -36,17 +36,17 @@ export const TRAINER_AGREEMENT: AgreementSection[] = [
   {
     heading: 'What leaves your phone',
     body:
-      'When you send a message, that message plus a summary of your ForgeOS data goes to a ForgeOS server (a Cloudflare Worker) and from there to an AI provider to generate the reply. The exact list is shown on this screen before you agree, and it is generated from the same code that builds it — so it cannot quietly drift.',
+      'When you send a message, that message plus a summary of your ForgeOS data goes to a ForgeOS server (a Cloudflare Worker) and from there to an AI provider to generate the reply. The exact list is shown on this screen before you agree, and it is generated from the same code that builds it, so it cannot quietly drift.',
   },
   {
     heading: 'What never leaves your phone',
     body:
-      'Your email address, account id, sign-in provider, friend code, gym location and progress photos are never sent. Only your first name is included, never a full name. Some questions — anything that looks medical, or about disordered eating or banned substances — are answered by the app itself and are never sent anywhere at all.',
+      'Your email address, account id, sign-in provider, friend code, gym location and progress photos are never sent. Only your first name is included, never a full name. Some questions, anything that looks medical, or about disordered eating or banned substances, are answered by the app itself and are never sent anywhere at all.',
   },
   {
     heading: 'Who processes it',
     body:
-      'The reply comes from whichever provider is configured on the ForgeOS Worker: Groq, Google Gemini, or Cloudflare Workers AI. Each is a separate company with its own privacy policy, and each may log requests for a period to run and abuse-protect their service. ForgeOS does not store your conversation on any server — it lives on your device.',
+      'The reply comes from whichever provider is configured on the ForgeOS Worker: Groq, Google Gemini, or Cloudflare Workers AI. Each is a separate company with its own privacy policy, and each may log requests for a period to run and abuse-protect their service. ForgeOS does not store your conversation on any server: it lives on your device.',
   },
   {
     heading: 'Where your chat is stored',
@@ -56,7 +56,7 @@ export const TRAINER_AGREEMENT: AgreementSection[] = [
   {
     heading: 'You are under 18',
     body:
-      'ForgeOS knows you are a minor and the trainer is built accordingly: no aggressive deficits, no fasting protocols, no performance-enhancing drugs, no supplement doses beyond ordinary food-level amounts, and no comments on your body. Show this screen to a parent or guardian before you agree — they should know that an AI service processes your fitness data.',
+      'ForgeOS knows you are a minor and the trainer is built accordingly: no aggressive deficits, no fasting protocols, no performance-enhancing drugs, no supplement doses beyond ordinary food-level amounts, and no comments on your body. Show this screen to a parent or guardian before you agree: they should know that an AI service processes your fitness data.',
   },
   {
     heading: 'Saying no, and changing your mind',

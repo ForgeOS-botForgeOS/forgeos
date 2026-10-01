@@ -51,7 +51,7 @@ function payoutIfJustSettled(previousStatus: Duel['status'], d: Duel): void {
     celebrate();
     toast(`Challenge won vs ${d.opponentName}! +${DUEL_WIN_XP} XP · 🪙${DUEL_WIN_COINS} 🏆`);
   } else {
-    toast(`Challenge vs ${d.opponentName} lost — get them next time.`, 'info');
+    toast(`Challenge vs ${d.opponentName} lost: get them next time.`, 'info');
   }
 }
 
@@ -168,7 +168,7 @@ export async function syncDuels(): Promise<void> {
             toast(
               answered === 'declined'
                 ? `${existing.opponentName} passed on your challenge.`
-                : `⚔️ ${existing.opponentName} accepted — the duel is on!`,
+                : `⚔️ ${existing.opponentName} accepted: the duel is on!`,
               answered === 'declined' ? 'info' : 'success',
             );
             continue;
@@ -180,7 +180,7 @@ export async function syncDuels(): Promise<void> {
             theirTotal > existing.myProgress &&
             theirTotal < existing.target
           ) {
-            toast(`⚔️ ${existing.opponentName} just passed you — ${Math.round(theirTotal).toLocaleString()} vs ${Math.round(existing.myProgress).toLocaleString()}`, 'info');
+            toast(`⚔️ ${existing.opponentName} just passed you: ${Math.round(theirTotal).toLocaleString()} vs ${Math.round(existing.myProgress).toLocaleString()}`, 'info');
           }
           merged = merged.map((d) => (d.id === raw.id ? mergeTheirProgress(d, theirTotal) : d));
         } else {
@@ -208,9 +208,9 @@ export async function syncDuels(): Promise<void> {
             ...merged,
           ];
           if (rowStatus(raw) === 'pending' && side !== 'challenger') {
-            toast(`⚔️ ${opp.name} challenged you — tap Social to answer`, 'info');
+            toast(`⚔️ ${opp.name} challenged you: tap Social to answer`, 'info');
           } else if (rowStatus(raw) === 'active') {
-            toast(`⚔️ ${opp.name} challenged you — first to ${raw.target}!`, 'info');
+            toast(`⚔️ ${opp.name} challenged you: first to ${raw.target}!`, 'info');
           }
         }
       }
@@ -243,7 +243,7 @@ export async function answerDuel(id: string, answer: 'accept' | 'decline'): Prom
   useSocial.getState().upsertDuel(next);
 
   if (answer === 'accept') {
-    toast(`Challenge accepted — first to ${duel.target.toLocaleString()} 🔥`);
+    toast(`Challenge accepted: first to ${duel.target.toLocaleString()} 🔥`);
   } else {
     toast(`Challenge from ${duel.opponentName} declined.`, 'info');
   }

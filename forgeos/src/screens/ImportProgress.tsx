@@ -52,8 +52,8 @@ export default function ImportProgress() {
   async function copyPrompt() {
     const ok = await copyText(AI_CONVERT_PROMPT);
     haptic(ok ? 'tap' : 'warning');
-    if (ok) { setCopied(true); toast('Prompt copied — paste it into any AI with your data', 'success'); setTimeout(() => setCopied(false), 2500); }
-    else toast('Couldn’t copy — select the text and copy it manually', 'error');
+    if (ok) { setCopied(true); toast('Prompt copied: paste it into any AI with your data', 'success'); setTimeout(() => setCopied(false), 2500); }
+    else toast('Couldn’t copy: select the text and copy it manually', 'error');
   }
 
   async function analyze(ing: Ingested) {
@@ -95,7 +95,7 @@ export default function ImportProgress() {
       <div className="text-center space-y-1">
         <div className="mx-auto w-fit"><ForgeLogo size={48} tile /></div>
         <h1 className="text-2xl font-extrabold tracking-tight">Import your progress</h1>
-        <p className="text-sm text-muted">Bring your streak, XP, history and PRs from any app. It only ever <b>adds</b> — you can’t lose anything.</p>
+        <p className="text-sm text-muted">Bring your streak, XP, history and PRs from any app. It only ever <b>adds</b>, so you can’t lose anything.</p>
       </div>
 
       {result && (
@@ -114,7 +114,7 @@ export default function ImportProgress() {
               <Wand2 size={18} className="text-accent shrink-0" />
               <div className="flex-1">
                 <p className="text-sm font-semibold">Easiest: let an AI convert it</p>
-                <p className="text-[11px] text-muted">Works for any app — even from a screenshot. No export needed.</p>
+                <p className="text-[11px] text-muted">Works for any app, even from a screenshot. No export needed.</p>
               </div>
               <Badge color="rgb(var(--accent))">{aiOpen ? 'Hide' : 'How'}</Badge>
             </button>
@@ -128,7 +128,7 @@ export default function ImportProgress() {
                 <Button className="w-full justify-center" onClick={copyPrompt}>
                   <span className="flex items-center gap-1.5">{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? 'Copied!' : 'Copy the AI prompt'}</span>
                 </Button>
-                <p className="text-[11px] text-muted/70">The AI never sees your ForgeOS account — it only reformats the numbers you give it. We still verify everything before importing.</p>
+                <p className="text-[11px] text-muted/70">The AI never sees your ForgeOS account: it only reformats the numbers you give it. We still verify everything before importing.</p>
               </div>
             )}
           </Card>
@@ -162,7 +162,7 @@ export default function ImportProgress() {
           {lane === 'file' && <p className="text-[11px] text-muted">Tap “Analyze” and choose your export file (.json / .csv / .xml).</p>}
           {lane === 'screenshot' && (
             <div className="space-y-2">
-              <p className="text-[11px] text-muted">Tap “Analyze” to pick a screenshot. The image is read, then discarded — never stored. {!screenshotLive && <span className="text-warn">No image reader is configured here — use the AI bridge above or type your stats.</span>}</p>
+              <p className="text-[11px] text-muted">Tap “Analyze” to pick a screenshot. The image is read, then discarded: never stored. {!screenshotLive && <span className="text-warn">No image reader is configured here: use the AI bridge above or type your stats.</span>}</p>
               <button onClick={() => setShowManual((v) => !v)} className="text-xs text-accent underline-offset-2 hover:underline">Can’t auto-read? Type your stats →</button>
               {showManual && (
                 <Card className="grid grid-cols-2 gap-2">
@@ -178,7 +178,7 @@ export default function ImportProgress() {
           )}
 
           <input ref={fileRef} type="file" accept=".json,.csv,.xml,application/json,text/csv,text/xml" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) try { await analyze(await ingestFile(f)); } catch (err) { toast((err as Error).message, 'error'); } }} />
-          <input ref={imgRef} type="file" accept="image/*" multiple className="hidden" onChange={async (e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; if (!fs.length) return; try { await analyze(await ingestScreenshots(fs)); } catch (err) { if ((err as Error).message === 'NO_VISION') { setShowManual(true); toast('No image reader configured — type your stats instead.', 'info'); } else toast((err as Error).message, 'error'); } }} />
+          <input ref={imgRef} type="file" accept="image/*" multiple className="hidden" onChange={async (e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; if (!fs.length) return; try { await analyze(await ingestScreenshots(fs)); } catch (err) { if ((err as Error).message === 'NO_VISION') { setShowManual(true); toast('No image reader configured: type your stats instead.', 'info'); } else toast((err as Error).message, 'error'); } }} />
 
           {!preview && <Button className="w-full justify-center" disabled={busy} onClick={onAnalyzeClick}>{busy ? 'Reading…' : 'Analyze'}</Button>}
 
@@ -231,7 +231,7 @@ function PreviewCard({ preview, onCancel, onConfirm }: { preview: ImportPreview;
       {rejected ? (
         <div className="flex items-start gap-2 text-sm text-warn"><AlertTriangle size={16} className="mt-0.5 shrink-0" />{report.warnings[0] ?? 'Could not read enough to import.'}</div>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-muted">Nothing recognisable found — try another lane or check the format.</p>
+        <p className="text-sm text-muted">Nothing recognisable found: try another lane or check the format.</p>
       ) : (
         <div className="space-y-1">
           {rows.map(([k, v]) => (
@@ -245,9 +245,9 @@ function PreviewCard({ preview, onCancel, onConfirm }: { preview: ImportPreview;
       {/* Honest "is this true?" verdict */}
       {!rejected && rows.length > 0 && (
         report.warnings.length === 0 && report.quarantined.length === 0 ? (
-          <p className="text-[11px] text-success flex items-start gap-1.5"><Check size={13} className="mt-0.5 shrink-0" /> Cross-checked streak against account age and capped values by trust — everything looks consistent.</p>
+          <p className="text-[11px] text-success flex items-start gap-1.5"><Check size={13} className="mt-0.5 shrink-0" /> Cross-checked streak against account age and capped values by trust: everything looks consistent.</p>
         ) : (
-          <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> We adjusted some values that didn’t add up (below) — only the verified amounts are imported.</p>
+          <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> We adjusted some values that didn’t add up (below): only the verified amounts are imported.</p>
         )
       )}
 
@@ -258,15 +258,15 @@ function PreviewCard({ preview, onCancel, onConfirm }: { preview: ImportPreview;
 
       <div className="flex gap-2">
         <Button variant="ghost" className="flex-1 justify-center" onClick={onCancel}>Cancel</Button>
-        <Button className="flex-1 justify-center" disabled={rejected || rows.length === 0} onClick={onConfirm}>Import — keeps the better value</Button>
+        <Button className="flex-1 justify-center" disabled={rejected || rows.length === 0} onClick={onConfirm}>Import: keeps the better value</Button>
       </div>
     </Card>
   );
 }
 
 const TUT_STEPS: { icon: typeof Wand2; title: string; text: string }[] = [
-  { icon: Sparkles, title: 'Bring everything across', text: 'Move your streak, XP, coins, history, PRs and body stats from any other app. Importing only ever ADDS — it keeps the better value and can never lower what you already have.' },
-  { icon: Wand2, title: '1 · Let an AI do the hard part', text: 'Tap “Easiest: let an AI convert it” and copy the prompt. Paste it into ChatGPT or Claude, then add your other app’s export — or just a screenshot of your stats. The AI turns it into clean data for you.' },
+  { icon: Sparkles, title: 'Bring everything across', text: 'Move your streak, XP, coins, history, PRs and body stats from any other app. Importing only ever ADDS: it keeps the better value and can never lower what you already have.' },
+  { icon: Wand2, title: '1 · Let an AI do the hard part', text: 'Tap “Easiest: let an AI convert it” and copy the prompt. Paste it into ChatGPT or Claude, then add your other app’s export, or just a screenshot of your stats. The AI turns it into clean data for you.' },
   { icon: Link2, title: '2 · Paste it back & Analyze', text: 'Copy the JSON the AI replies with into the “Connect / paste export” box and tap Analyze. No export file? You can also upload one, read a screenshot, or just type your numbers by hand.' },
   { icon: ShieldCheck, title: '3 · We check it’s real', text: 'Before anything changes, we cross-check it: a streak can’t be longer than your account has existed, and big XP/coin jumps are capped by how trustworthy the source is. You see exactly what was verified or adjusted.' },
   { icon: Rocket, title: '4 · Review, import, relax', text: 'Confirm the preview and your progress is in. Made a mistake? Every import shows in the history below with a one-tap Undo that restores things exactly. Nothing leaves your device except a screenshot you choose to read.' },

@@ -23,11 +23,11 @@ interface Tier {
 
 // Highest threshold first; first match wins.
 const TIERS: Tier[] = [
-  { level: 'primed', min: 85, label: 'Primed', emoji: '🔥', color: 'rgb(var(--success))', advice: 'Green light — go for a PR or your hardest session.' },
-  { level: 'ready', min: 70, label: 'Ready', emoji: '✅', color: 'rgb(var(--success))', advice: 'Well recovered — train as planned.' },
-  { level: 'maintain', min: 50, label: 'Maintain', emoji: '🟡', color: 'rgb(var(--warn))', advice: 'A bit under — keep volume moderate, nail technique.' },
-  { level: 'rundown', min: 30, label: 'Run-down', emoji: '🟠', color: 'rgb(var(--warn))', advice: 'Fatigued — drop the load or make today a deload.' },
-  { level: 'rest', min: 0, label: 'Rest', emoji: '🔴', color: 'rgb(var(--danger))', advice: 'Run on empty — prioritise sleep and active recovery.' },
+  { level: 'primed', min: 85, label: 'Primed', emoji: '🔥', color: 'rgb(var(--success))', advice: 'Green light: go for a PR or your hardest session.' },
+  { level: 'ready', min: 70, label: 'Ready', emoji: '✅', color: 'rgb(var(--success))', advice: 'Well recovered: train as planned.' },
+  { level: 'maintain', min: 50, label: 'Maintain', emoji: '🟡', color: 'rgb(var(--warn))', advice: 'A bit under: keep volume moderate, nail technique.' },
+  { level: 'rundown', min: 30, label: 'Run-down', emoji: '🟠', color: 'rgb(var(--warn))', advice: 'Fatigued: drop the load or make today a deload.' },
+  { level: 'rest', min: 0, label: 'Rest', emoji: '🔴', color: 'rgb(var(--danger))', advice: 'Run on empty: prioritise sleep and active recovery.' },
 ];
 
 function tierFor(score: number): Tier {
@@ -122,15 +122,15 @@ export interface TrainingGuidance {
 export function trainingGuidance(level: ReadinessLevel): TrainingGuidance {
   switch (level) {
     case 'primed':
-      return { multiplier: 1.05, headline: 'Green light — push it', detail: 'Add ~5% to your top set or chase a PR on the main lift.' };
+      return { multiplier: 1.05, headline: 'Green light: push it', detail: 'Add ~5% to your top set or chase a PR on the main lift.' };
     case 'ready':
       return { multiplier: 1.0, headline: 'Train as planned', detail: 'Hit your normal weights and rep targets.' };
     case 'maintain':
       return { multiplier: 0.95, headline: 'Hold steady', detail: 'Keep ~5% off top sets and prioritise clean technique.' };
     case 'rundown':
-      return { multiplier: 0.85, headline: 'Lighten up', detail: 'Drop ~15% or cut a set — today is about quality, not records.' };
+      return { multiplier: 0.85, headline: 'Lighten up', detail: 'Drop ~15% or cut a set: today is about quality, not records.' };
     case 'rest':
-      return { multiplier: 0, headline: 'Recover today', detail: 'Skip heavy work — a walk, mobility or full rest pays off more.' };
+      return { multiplier: 0, headline: 'Recover today', detail: 'Skip heavy work: a walk, mobility or full rest pays off more.' };
   }
 }
 

@@ -63,12 +63,12 @@ export function InstallButton({ variant = 'big' }: { variant?: 'big' | 'banner' 
               <ol className="space-y-3 text-sm">
                 <li className="flex items-center gap-3"><Share className="text-accent shrink-0" size={20} /> Tap the <b>Share</b> button in Safari’s toolbar.</li>
                 <li className="flex items-center gap-3"><Plus className="text-accent shrink-0" size={20} /> Choose <b>Add to Home Screen</b>.</li>
-                <li className="flex items-center gap-3"><CheckCircle2 className="text-accent shrink-0" size={20} /> Tap <b>Add</b> — ForgeOS lands on your home screen.</li>
+                <li className="flex items-center gap-3"><CheckCircle2 className="text-accent shrink-0" size={20} /> Tap <b>Add</b> and ForgeOS lands on your home screen.</li>
               </ol>
             ) : (
               <p className="text-sm text-muted">
                 In your browser menu (⋮), choose <b>Install app</b> or <b>Add to Home screen</b>. If you don’t see it,
-                your browser may not support installs — try Chrome or Edge.
+                your browser may not support installs: try Chrome or Edge.
               </p>
             )}
           </div>

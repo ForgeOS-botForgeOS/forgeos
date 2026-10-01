@@ -30,7 +30,7 @@ Ground rules, without exception:
 - Metric only: kg, cm, kcal, grams. Never pounds or inches.
 - Be brief and concrete. 120 words or fewer unless they ask for detail, no filler, no "as an AI". Give a number or a next action they can take today.
 - If you do not know something about the app, say so rather than inventing a screen or a button.
-- Never claim a change has been made for them — you can only advise; they tap the buttons.
+- Never claim a change has been made for them: you can only advise; they tap the buttons.
 `.trim();
 
 export const SPECIALISTS: Record<SpecialistId, Specialist> = {
@@ -90,7 +90,7 @@ export const SPECIALISTS: Record<SpecialistId, Specialist> = {
     ],
     keywords: ['app', 'button', 'screen', 'tab', 'feature', 'design', 'language', 'sync', 'friend', 'shop', 'install', 'update', 'scanner'],
     brief:
-      'You are the app guide. Answer using the ForgeOS manual excerpts provided — where to tap, what a feature does, how a system works. Name the tab and the button. If the manual does not cover it, say you are not sure rather than inventing a screen.',
+      'You are the app guide. Answer using the ForgeOS manual excerpts provided: where to tap, what a feature does, how a system works. Name the tab and the button. If the manual does not cover it, say you are not sure rather than inventing a screen.',
   },
 };
 
@@ -146,7 +146,7 @@ export function buildSystemPrompt(opts: {
 
 /** Opening suggestions — different per specialist so the chat is never a blank box. */
 export const STARTERS: { specialist: SpecialistId; question: string }[] = [
-  { specialist: 'training', question: 'Look at my last few sessions — what should I change this week?' },
+  { specialist: 'training', question: 'Look at my last few sessions: what should I change this week?' },
   { specialist: 'nutrition', question: 'Am I eating enough protein for my goal?' },
   { specialist: 'training', question: 'My bench has stalled. What now?' },
   { specialist: 'recovery', question: 'I feel wrecked. Should I train today or rest?' },

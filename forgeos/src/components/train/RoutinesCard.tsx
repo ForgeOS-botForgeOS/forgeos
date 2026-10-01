@@ -34,7 +34,7 @@ export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
     if (!lastStrength) return;
     const name = await askText({
       title: 'Name this routine',
-      body: 'Save the shape of this session — its lifts, sets and weights — to start it again in one tap.',
+      body: 'Save the shape of this session, its lifts, sets and weights, to start it again in one tap.',
       defaultValue: suggestName(lastStrength.id),
       confirmLabel: 'Save',
       required: true,
@@ -120,7 +120,7 @@ export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
         </div>
       ) : (
         <p className="text-[11px] leading-relaxed text-muted">
-          Save a session you liked and it becomes a one-tap routine here — same lifts, same weights, ready to go.
+          Save a session you liked and it becomes a one-tap routine here: same lifts, same weights, ready to go.
         </p>
       )}
 
@@ -132,7 +132,7 @@ export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
           className="flex w-full items-center gap-2 border-t border-line/70 pt-2.5 text-left text-[11px] text-muted active:opacity-70"
         >
           <Repeat size={13} className="shrink-0" aria-hidden="true" />
-          <span className="truncate">Repeat last session — {lastStrength.name}</span>
+          <span className="truncate">Repeat last session: {lastStrength.name}</span>
         </button>
       )}
 

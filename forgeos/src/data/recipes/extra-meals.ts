@@ -11,7 +11,7 @@ export const EXTRA_MEALS: Recipe[] = [
     kcal: 360, protein: 34, carbs: 26, fat: 12, minutes: 4, servings: 1,
     ingredients: ['250 g quark (tvaroh)', '20 g walnuts', '1 tsp honey', '1 pear', 'cinnamon'],
     steps: [
-      'Loosen the quark with 2 tablespoons of milk or water — straight from the tub it is too stiff to eat well.',
+      'Loosen the quark with 2 tablespoons of milk or water: straight from the tub it is too stiff to eat well.',
       'Chop the walnuts roughly and dice the pear.',
       'Fold half the fruit through, top with the rest, the nuts, honey and cinnamon.',
     ],
@@ -26,7 +26,7 @@ export const EXTRA_MEALS: Recipe[] = [
       'Cook the oats in stock instead of milk, stirring 5 minutes until risotto-thick.',
       'Stir the cheese through and season hard with pepper.',
       'Fry or poach the egg and sit it on top.',
-      'Break the yolk and stir it in — that is the sauce.',
+      'Break the yolk and stir it in: that is the sauce.',
     ],
     tags: ['high-protein', 'quick', 'vegetarian', 'budget'],
     tip: 'If sweet breakfasts bore you by week three, this is the fix.',
@@ -39,7 +39,7 @@ export const EXTRA_MEALS: Recipe[] = [
       'Soften the sliced onion and pepper 8 minutes in oil, then add the spices for a minute.',
       'Pour in the tomatoes, season, and simmer 10 minutes until it stops being watery.',
       'Make four wells with a spoon and crack an egg into each.',
-      'Cover and cook 5–7 minutes — whites set, yolks still soft. Crumble feta over the top.',
+      'Cover and cook 5–7 minutes: whites set, yolks still soft. Crumble feta over the top.',
     ],
     tags: ['high-protein', 'low-carb', 'vegetarian', 'one-pan'],
     tip: 'Reduce the sauce properly before the eggs go in, or the eggs poach in water.',
@@ -63,7 +63,7 @@ export const EXTRA_MEALS: Recipe[] = [
     steps: [
       'Toast the split bagel until the cut faces are golden.',
       'Spread the cream cheese right to the edge on both halves.',
-      'Layer the salmon in loose folds — flat slices taste dense.',
+      'Layer the salmon in loose folds: flat slices taste dense.',
       'Add thin onion rings, capers and a squeeze of lemon.',
     ],
     tags: ['high-protein', 'quick', 'no-cook'],
@@ -73,13 +73,13 @@ export const EXTRA_MEALS: Recipe[] = [
     kcal: 520, protein: 36, carbs: 50, fat: 18, minutes: 25, servings: 4,
     ingredients: ['8 eggs', '4 large tortillas', '200 g turkey bacon or ham', '200 g cooked potato', '80 g cheese', 'salsa'],
     steps: [
-      'Scramble the eggs softly and let them cool — hot filling steams the wrap soggy.',
+      'Scramble the eggs softly and let them cool: hot filling steams the wrap soggy.',
       'Crisp the bacon and warm the potato.',
       'Fill each tortilla with a quarter of everything, fold the ends in, and roll tight.',
       'Wrap in foil. Fridge 4 days, or freeze; reheat 90 seconds a side in a dry pan.',
     ],
     tags: ['high-protein', 'meal-prep', 'high-carb'],
-    tip: 'Four breakfasts in 25 minutes — this is the Sunday job that saves the week.',
+    tip: 'Four breakfasts in 25 minutes: this is the Sunday job that saves the week.',
   },
   {
     id: 'rec-59', name: 'Chia Protein Pudding', meal: 'Breakfast', goals: ['lose', 'recomp'],
@@ -98,7 +98,7 @@ export const EXTRA_MEALS: Recipe[] = [
     kcal: 260, protein: 26, carbs: 4, fat: 15, minutes: 30, servings: 3,
     ingredients: ['8 eggs', '120 g lean ham', '60 g cheese', 'spinach', 'salt, pepper'],
     steps: [
-      'Heat the oven to 180 °C and oil a 12-hole muffin tin properly — eggs weld to metal.',
+      'Heat the oven to 180 °C and oil a 12-hole muffin tin properly: eggs weld to metal.',
       'Beat the eggs with salt and pepper; stir in chopped ham, cheese and spinach.',
       'Fill each hole two-thirds full and bake 18–20 minutes until just set and puffed.',
       'Cool 5 minutes before lifting them out. Fridge 4 days.',
@@ -110,7 +110,7 @@ export const EXTRA_MEALS: Recipe[] = [
     kcal: 450, protein: 18, carbs: 55, fat: 18, minutes: 5, servings: 1,
     ingredients: ['2 slices wholemeal bread', '30 g peanut butter', '1 banana', 'cinnamon', 'honey (optional)'],
     steps: [
-      'Toast the bread well — soft bread collapses under peanut butter.',
+      'Toast the bread well: soft bread collapses under peanut butter.',
       'Spread while hot so it melts in slightly.',
       'Layer banana coins, dust with cinnamon, and thread honey over if you want more calories.',
     ],
@@ -137,7 +137,7 @@ export const EXTRA_MEALS: Recipe[] = [
       'Brown the chicken in a heavy pan, then lift it out.',
       'Cook the sliced onions in the same pan 10 minutes until genuinely soft and golden.',
       'Take the pan OFF the heat, stir in the paprika (it burns bitter in seconds), then return the chicken with 300 ml water and the sliced pepper.',
-      'Simmer covered 25 minutes. Off the heat, temper the yoghurt with a ladle of hot sauce, then stir it in — never boil it after. Serve with boiled potatoes.',
+      'Simmer covered 25 minutes. Off the heat, temper the yoghurt with a ladle of hot sauce, then stir it in: never boil it after. Serve with boiled potatoes.',
     ],
     tags: ['high-protein', 'meal-prep', 'budget'],
     tip: 'Yoghurt instead of soured cream keeps the protein up and the fat sane.',
@@ -149,7 +149,7 @@ export const EXTRA_MEALS: Recipe[] = [
     steps: [
       'Rinse the lentils. Simmer with 1.5 l water, bay and the diced carrot and onion for 25 minutes.',
       'Add the smoked meat if using and cook 10 minutes more.',
-      'Season with salt, marjoram and the vinegar — the vinegar at the end is what makes it taste finished.',
+      'Season with salt, marjoram and the vinegar: the vinegar at the end is what makes it taste finished.',
       'Mash a few spoons of lentils against the pan to thicken.',
     ],
     tags: ['high-protein', 'high-carb', 'budget', 'meal-prep', 'one-pan'],
@@ -173,12 +173,12 @@ export const EXTRA_MEALS: Recipe[] = [
     ingredients: ['150 g chicken breast', '60 g halloumi', 'mixed leaves', 'cherry tomatoes', 'olive oil', 'lemon', 'oregano'],
     steps: [
       'Season and grill the chicken 6 minutes a side, then rest.',
-      'Dry-fry the sliced halloumi in a hot pan 1–2 minutes a side until it blisters — no oil needed.',
+      'Dry-fry the sliced halloumi in a hot pan 1–2 minutes a side until it blisters: no oil needed.',
       'Dress the leaves and tomatoes with oil, lemon and oregano.',
       'Slice the chicken over the top and add the halloumi while it is still squeaky.',
     ],
     tags: ['high-protein', 'low-carb', 'quick'],
-    tip: 'Halloumi goes rubbery as it cools — plate it last.',
+    tip: 'Halloumi goes rubbery as it cools: plate it last.',
   },
   {
     id: 'rec-67', name: 'Beef & Bean Burrito Bowl', meal: 'Lunch', goals: ['gain', 'strength'],
@@ -198,7 +198,7 @@ export const EXTRA_MEALS: Recipe[] = [
     ingredients: ['4 eggs', '2 slices rye bread', '2 tbsp Greek yoghurt', '1 tsp mustard', 'chives', 'salt, pepper'],
     steps: [
       'Hard-boil the eggs 9 minutes, then cool them in cold water.',
-      'Chop them roughly — texture beats paste.',
+      'Chop them roughly: texture beats paste.',
       'Mix with yoghurt instead of mayo, plus mustard, chives, salt and pepper.',
       'Pile onto the rye and eat straight away.',
     ],
@@ -223,7 +223,7 @@ export const EXTRA_MEALS: Recipe[] = [
     ingredients: ['1 cauliflower', '1 can chickpeas', '2 tbsp olive oil', '1 tsp cumin', '1 tsp turmeric', '100 g yoghurt', 'lemon'],
     steps: [
       'Heat the oven to 210 °C. Dry the drained chickpeas on a towel so they roast instead of steaming.',
-      'Toss cauliflower florets and chickpeas with oil and spices on a big tray — crowd it and nothing browns.',
+      'Toss cauliflower florets and chickpeas with oil and spices on a big tray: crowd it and nothing browns.',
       'Roast 25–30 minutes, shaking once, until the edges char.',
       'Serve with yoghurt whisked with lemon and salt.',
     ],
@@ -235,7 +235,7 @@ export const EXTRA_MEALS: Recipe[] = [
     ingredients: ['400 g turkey mince', '1 egg', '30 g breadcrumbs', '400 g passata', '2 sub rolls', '40 g mozzarella', 'garlic, oregano'],
     steps: [
       'Mix mince, egg, breadcrumbs, grated garlic, oregano, salt and pepper, then roll 12 balls with wet hands.',
-      'Brown them all over in a pan — 4 minutes, turning; they finish in the sauce.',
+      'Brown them all over in a pan: 4 minutes, turning; they finish in the sauce.',
       'Add the passata and simmer 12 minutes until the meatballs are cooked through.',
       'Load the rolls, add mozzarella, and grill 3 minutes until it melts.',
     ],
@@ -257,13 +257,13 @@ export const EXTRA_MEALS: Recipe[] = [
     kcal: 420, protein: 30, carbs: 58, fat: 6, minutes: 60, servings: 1,
     ingredients: ['1 large baking potato', '250 g cottage cheese', 'chives', 'black pepper', 'salt'],
     steps: [
-      'Prick the potato, rub it with salt, and bake at 200 °C for 50–60 minutes — no foil, or the skin goes soft.',
+      'Prick the potato, rub it with salt, and bake at 200 °C for 50–60 minutes: no foil, or the skin goes soft.',
       'Squeeze it: it is done when it gives completely.',
       'Split it, fluff the inside with a fork, and pile in the seasoned cottage cheese.',
       'Finish with chives and lots of pepper.',
     ],
     tags: ['high-protein', 'high-carb', 'budget', 'vegetarian'],
-    tip: 'Bake two — the second one microwaves fine tomorrow.',
+    tip: 'Bake two: the second one microwaves fine tomorrow.',
   },
   {
     id: 'rec-74', name: 'Buckwheat & Feta Salad', meal: 'Lunch', goals: ['recomp', 'maintain'],
@@ -284,7 +284,7 @@ export const EXTRA_MEALS: Recipe[] = [
     kcal: 560, protein: 48, carbs: 42, fat: 20, minutes: 100, servings: 4,
     ingredients: ['800 g lean beef shin or chuck', '3 onions', '3 tbsp sweet paprika', '2 peppers', '1 tbsp tomato paste', 'caraway', '400 g potatoes'],
     steps: [
-      'Brown the cubed beef in batches and set aside — this is where the flavour comes from, so do not rush it.',
+      'Brown the cubed beef in batches and set aside: this is where the flavour comes from, so do not rush it.',
       'Cook the sliced onions 15 minutes until collapsed and sweet (as much onion as meat, by volume).',
       'Off the heat, stir in the paprika, caraway and tomato paste, then return the beef with water to just cover.',
       'Simmer very gently 75–90 minutes until the beef pulls apart, adding the peppers and potatoes for the last 25.',
@@ -337,7 +337,7 @@ export const EXTRA_MEALS: Recipe[] = [
     steps: [
       'Soften the finely diced onion and carrot 8 minutes, then add garlic and oregano.',
       'Add the rinsed lentils, passata and 400 ml water.',
-      'Simmer 20 minutes, stirring often — red lentils catch on the bottom the moment you stop.',
+      'Simmer 20 minutes, stirring often: red lentils catch on the bottom the moment you stop.',
       'Season well (it needs more salt than you think) and serve over pasta.',
     ],
     tags: ['vegan', 'high-carb', 'budget', 'meal-prep'],
@@ -383,7 +383,7 @@ export const EXTRA_MEALS: Recipe[] = [
     kcal: 620, protein: 44, carbs: 70, fat: 18, minutes: 40, servings: 3,
     ingredients: ['2 cans tuna', '240 g pasta', '400 g chopped tomatoes', '200 g sweetcorn', '80 g cheese', '1 onion'],
     steps: [
-      'Boil the pasta 2 minutes short of the packet time — it finishes in the oven.',
+      'Boil the pasta 2 minutes short of the packet time: it finishes in the oven.',
       'Fry the onion, add the tomatoes and simmer 10 minutes, then fold in the drained tuna and corn.',
       'Mix with the pasta, tip into a dish, and top with the cheese.',
       'Bake at 190 °C for 20 minutes until bubbling at the edges.',
@@ -420,7 +420,7 @@ export const EXTRA_MEALS: Recipe[] = [
     kcal: 640, protein: 46, carbs: 66, fat: 20, minutes: 20, servings: 2,
     ingredients: ['350 g beef strips', '150 g noodles', '300 g mixed veg', '2 tbsp soy sauce', '1 tbsp oyster sauce', 'garlic, ginger'],
     steps: [
-      'Toss the beef with a teaspoon of cornflour — it keeps it tender in high heat.',
+      'Toss the beef with a teaspoon of cornflour: it keeps it tender in high heat.',
       'Sear the beef in a screaming-hot pan for 90 seconds and remove it immediately.',
       'Stir-fry the aromatics and veg 3 minutes, then add the cooked noodles and sauces.',
       'Return the beef for the last 30 seconds only.',

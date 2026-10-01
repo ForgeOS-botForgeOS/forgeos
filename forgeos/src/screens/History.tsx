@@ -118,7 +118,7 @@ function Sessions() {
                   onClick={() => navigate(`/exercise/${e.exerciseId}`)}
                   className="text-[10px] rounded-full bg-surface-2 px-2 py-0.5 text-muted"
                 >
-                  {exerciseById(e.exerciseId)?.name ?? '—'}
+                  {exerciseById(e.exerciseId)?.name ?? '–'}
                 </button>
               ))}
             </div>

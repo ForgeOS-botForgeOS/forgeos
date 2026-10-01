@@ -109,7 +109,7 @@ export default function ExerciseDetail() {
           <p className="text-xs text-muted">e1RM {Math.round(stats.pr.e1rm)} kg</p>
           {stats.pr.spotifyTrack && (
             <p className="flex items-center gap-1.5 pt-1 text-[11px] text-accent">
-              <Music2 size={11} /> {stats.pr.spotifyTrack.title} — {stats.pr.spotifyTrack.artist}
+              <Music2 size={11} /> {stats.pr.spotifyTrack.title} – {stats.pr.spotifyTrack.artist}
             </p>
           )}
         </Card>

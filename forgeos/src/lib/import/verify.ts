@@ -38,7 +38,7 @@ export function verify(c: CanonicalProgress): { canonical: CanonicalProgress; re
       for (const key of ['current', 'longest'] as const) {
         const v = out.streak[key];
         if (typeof v === 'number' && v > ageDays + 1) {
-          report.warnings.push(`${key} streak ${v} exceeds account age ${ageDays}d — clamped to ${ageDays}.`);
+          report.warnings.push(`${key} streak ${v} exceeds account age ${ageDays}d: clamped to ${ageDays}.`);
           out.streak[key] = ageDays;
         }
       }

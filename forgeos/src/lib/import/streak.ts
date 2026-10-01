@@ -31,7 +31,7 @@ export function decideStreak(streak: CanonicalStreak | undefined, tz: string, no
 
   if (!streak.lastActive) {
     // Can't prove it's still alive → preserve as a record only (never inflate live streak on faith).
-    return { keptCurrent: 0, recordLongest: longest, continuity: 'longest-only', graceFreeze: false, reason: 'No last-active date — kept as longest-streak record.' };
+    return { keptCurrent: 0, recordLongest: longest, continuity: 'longest-only', graceFreeze: false, reason: 'No last-active date: kept as longest-streak record.' };
   }
 
   const todayKey = localKey(now.toISOString(), tz);
@@ -39,7 +39,7 @@ export function decideStreak(streak: CanonicalStreak | undefined, tz: string, no
   const gap = dayDiff(lastKey, todayKey);
 
   if (gap <= 1) {
-    return { keptCurrent: current, recordLongest: longest, continuity: 'continue', graceFreeze: true, reason: `Active ${gap === 0 ? 'today' : 'yesterday'} — streak kept alive with a grace day.` };
+    return { keptCurrent: current, recordLongest: longest, continuity: 'continue', graceFreeze: true, reason: `Active ${gap === 0 ? 'today' : 'yesterday'}: streak kept alive with a grace day.` };
   }
-  return { keptCurrent: 0, recordLongest: longest, continuity: 'longest-only', graceFreeze: false, reason: `Last active ${gap} days ago — imported as a longest-streak record (${longest}).` };
+  return { keptCurrent: 0, recordLongest: longest, continuity: 'longest-only', graceFreeze: false, reason: `Last active ${gap} days ago: imported as a longest-streak record (${longest}).` };
 }

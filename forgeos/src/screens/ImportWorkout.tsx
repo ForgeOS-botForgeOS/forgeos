@@ -71,7 +71,7 @@ export default function ImportWorkout() {
         </>
       ) : (
         <>
-          <p className="text-sm text-muted">A friend shared this workout — {shared.exercises.length} exercises · {totalSets} sets. Start it as your session and the weights come pre-filled.</p>
+          <p className="text-sm text-muted">A friend shared this workout: {shared.exercises.length} exercises · {totalSets} sets. Start it as your session and the weights come pre-filled.</p>
           {shared.exercises.map((e, i) => (
             <Card key={i} className="space-y-1">
               <div className="flex items-center justify-between">
@@ -84,7 +84,7 @@ export default function ImportWorkout() {
           <Button className="w-full justify-center" onClick={startIt}>
             <span className="flex items-center gap-2"><Play size={16} /> Start this workout</span>
           </Button>
-          <p className="text-[11px] text-muted/70">It becomes your active session — finish it to log it and earn XP.</p>
+          <p className="text-[11px] text-muted/70">It becomes your active session: finish it to log it and earn XP.</p>
         </>
       )}
     </div>

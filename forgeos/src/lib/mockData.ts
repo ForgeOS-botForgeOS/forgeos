@@ -30,7 +30,7 @@ export const MOCK_FEED: FeedPost[] = [
     authorId: 'f2',
     authorName: 'Marcus',
     avatarSeed: 'MA',
-    body: 'New squat PR — 180 kg x 3. Knees were shaking but it moved 🦵',
+    body: 'New squat PR: 180 kg x 3. Knees were shaking but it moved 🦵',
     flex: { icon: '🏆', label: 'New PR · Squat 180kg' },
     workoutSummary: { volumeKg: 9800, sets: 22, durationMin: 64 },
     createdAt: ago(42),
@@ -77,7 +77,7 @@ export const MOCK_FEED: FeedPost[] = [
 export const MOCK_FEED_DRIP: Omit<FeedPost, 'id' | 'createdAt'>[] = [
   { authorId: 'f3', authorName: 'Sofia', avatarSeed: 'SO', body: 'Hit 100kg deadlift for the first time! 🎉', flex: { icon: '🏆', label: 'New PR · Deadlift 100kg' }, reactions: { '🔥': 3 } },
   { authorId: 'f1', authorName: 'Lena', avatarSeed: 'LN', body: 'Sunrise run done before work. Feeling unstoppable.', workoutSummary: { volumeKg: 0, sets: 0, durationMin: 32 }, reactions: {} },
-  { authorId: 'f2', authorName: 'Marcus', avatarSeed: 'MA', body: 'Deload week — ego left at the door. Recovery is training too.', reactions: { '💪': 5 } },
+  { authorId: 'f2', authorName: 'Marcus', avatarSeed: 'MA', body: 'Deload week: ego left at the door. Recovery is training too.', reactions: { '💪': 5 } },
   { authorId: 'f5', authorName: 'Amir', avatarSeed: 'AM', body: 'Ranked up to Gold I 🥇 Onward.', flex: { icon: '⭐', label: 'Rank up · Gold I' }, reactions: { '🔥': 7 } },
 ];
 
@@ -99,7 +99,7 @@ export interface LeaderboardRow {
 export function buildLeaderboard(youName: string, youXp: number, friends: Friend[] = MOCK_FRIENDS): LeaderboardRow[] {
   const rows = [
     ...friends.map((f) => ({ name: f.name, rankTier: f.rank, xp: f.xp })),
-    { name: youName || 'You', rankTier: '—', xp: youXp, you: true },
+    { name: youName || 'You', rankTier: '–', xp: youXp, you: true },
   ];
   rows.sort((a, b) => b.xp - a.xp);
   return rows.map((r, i) => ({ rank: i + 1, ...r }));

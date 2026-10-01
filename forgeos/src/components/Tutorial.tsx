@@ -16,31 +16,31 @@ export function openTutorial(tour: TourId = 'main') {
 }
 
 const MAIN_SLIDES = [
-  { icon: Flame, title: 'Welcome to ForgeOS', text: 'Your gamified training, nutrition & social app. Here’s the 30-second tour — what each tab does.' },
+  { icon: Flame, title: 'Welcome to ForgeOS', text: 'Your gamified training, nutrition & social app. Here’s the 30-second tour: what each tab does.' },
   { icon: Home, title: 'Home', text: 'Your daily dashboard: calorie ring & macros, weekly volume, weigh-in trend, week-in-review, and a daily quote to collect.' },
   { icon: Dumbbell, title: 'Train', text: 'Start your planned day or a freestyle session. Log sets (swipe → to complete), get e1RM, plate/warm-up tools, and auto progress suggestions. Log cardio from a photo too.' },
   { icon: Apple, title: 'Food', text: 'Scan a meal photo for macros (and edit them), track water, quick-add saved meals, and browse 50+ goal-aligned recipes.' },
   { icon: Users, title: 'Social', text: 'Share progress on the feed, add friends, race live, and publish or adopt training plans in the marketplace.' },
   { icon: Trophy, title: 'Quests', text: 'Earn XP & Forge Coins, rank up Bronze→Strongman, complete daily/weekly quests, and build your PR Hall of Fame.' },
-  { icon: Watch, title: 'Garmin & recovery', text: 'Got a Garmin? Connect it once on the Health screen (You → Health & recovery) and sleep, steps and readiness sync in automatically — even while the app is closed.' },
+  { icon: Watch, title: 'Garmin & recovery', text: 'Got a Garmin? Connect it once on the Health screen (You → Health & recovery) and sleep, steps and readiness sync in automatically, even while the app is closed.' },
   { icon: User, title: 'You', text: '15 themes & languages, edit your week plan, set a gym & reminders, spend coins in the Shop, achievements, calendar and backup.' },
 ];
 
 // The same tour, cut to the app an Apprentice actually has in front of them:
 // four tabs, and the two habits that make the rest findable.
 const APPRENTICE_SLIDES = [
-  { icon: GraduationCap, title: 'Apprentice Mode', text: 'You are in the simple ForgeOS: four tabs, and one thing to do at a time. Nothing is missing — the rest is waiting behind one switch in You.' },
-  { icon: Home, title: 'Home', text: '“Do this next” tells you the single thing worth doing right now. Under it, “Find it fast” says where everything lives — and it is the same place in the full app.' },
+  { icon: GraduationCap, title: 'Apprentice Mode', text: 'You are in the simple ForgeOS: four tabs, and one thing to do at a time. Nothing is missing: the rest is waiting behind one switch in You.' },
+  { icon: Home, title: 'Home', text: '“Do this next” tells you the single thing worth doing right now. Under it, “Find it fast” says where everything lives, and it is the same place in the full app.' },
   { icon: Dumbbell, title: 'Train', text: 'Start today’s session or an empty one. Log a set by tapping ✓ (or swipe the row →). History is at the bottom of this tab.' },
-  { icon: Apple, title: 'Food', text: 'Photograph a meal, scan a barcode, or just type what you ate — then track your water. Recipes live here too, in the Cookbook.' },
-  { icon: User, title: 'You', text: 'Your goal, your name, your theme — and the switch to Full Forge when you want everything. You can come back any time; nothing is ever lost.' },
+  { icon: Apple, title: 'Food', text: 'Photograph a meal, scan a barcode, or just type what you ate, then track your water. Recipes live here too, in the Cookbook.' },
+  { icon: User, title: 'You', text: 'Your goal, your name, your theme, and the switch to Full Forge when you want everything. You can come back any time; nothing is ever lost.' },
 ];
 
 const GARMIN_SLIDES = [
-  { icon: Watch, title: 'Garmin auto-sync', text: 'Wear your watch as normal. ForgeOS pulls in your sleep, steps, resting heart rate and calories — and workouts you record on the watch join your history with XP. Automatically, no typing ever.' },
-  { icon: Link2, title: 'How it works', text: 'Garmin Connect saves your data into Android Health Connect. ForgeOS just reads it from there — everything stays on your phone, nothing is uploaded.' },
+  { icon: Watch, title: 'Garmin auto-sync', text: 'Wear your watch as normal. ForgeOS pulls in your sleep, steps, resting heart rate and calories, and workouts you record on the watch join your history with XP. Automatically, no typing ever.' },
+  { icon: Link2, title: 'How it works', text: 'Garmin Connect saves your data into Android Health Connect. ForgeOS just reads it from there: everything stays on your phone, nothing is uploaded.' },
   { icon: ShieldCheck, title: 'One-time setup', text: '1) Install the ForgeOS Android app. 2) In Garmin Connect: Settings → Health Connect → allow sleep & activity. 3) Tap “Connect Garmin” and approve once.' },
-  { icon: Gauge, title: 'Your readiness score', text: 'Every morning you get a 0–100 readiness score with advice — it even adjusts today’s suggested training load on the Train tab. Turn it all off anytime in You → Preferences.' },
+  { icon: Gauge, title: 'Your readiness score', text: 'Every morning you get a 0–100 readiness score with advice: it even adjusts today’s suggested training load on the Train tab. Turn it all off anytime in You → Preferences.' },
 ];
 
 const TOURS: Record<TourId, { slides: typeof MAIN_SLIDES; done: string }> = {

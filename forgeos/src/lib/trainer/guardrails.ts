@@ -33,37 +33,37 @@ const RULES: Rule[] = [
     category: 'crisis',
     test: /\b(kill myself|suicid|end my life|self.?harm|want to die|hurt myself)\b/i,
     reply:
-      "I'm not the right help for this, and I'm not going to pretend otherwise. Please talk to someone today — a parent, a teacher, or your doctor. In Slovakia you can call the Linka detskej istoty on 116 111, free, any time. If you are in immediate danger, call 112. I'll be here for training whenever you want it.",
+      "I'm not the right help for this, and I'm not going to pretend otherwise. Please talk to someone today: a parent, a teacher, or your doctor. In Slovakia you can call the Linka detskej istoty on 116 111, free, any time. If you are in immediate danger, call 112. I'll be here for training whenever you want it.",
   },
   {
     category: 'disordered-eating',
     test: /\b(purge|purging|vomit after|make myself sick|laxative|starv(e|ing) myself|anorexi|bulimi|not eat(ing)? (for|at all)|skip(ping)? (all )?meals? to lose|thinspo|hate my body)\b/i,
     reply:
-      "I'm not going to help with that, and I'd be a bad trainer if I did. What you're describing is the kind of thing that needs a person, not an app — please talk to a parent or your doctor about it. What I can do is help you eat enough to train well and get stronger, which is a better route to how you want to look than anything restrictive. Want to start there?",
+      "I'm not going to help with that, and I'd be a bad trainer if I did. What you're describing is the kind of thing that needs a person, not an app: please talk to a parent or your doctor about it. What I can do is help you eat enough to train well and get stronger, which is a better route to how you want to look than anything restrictive. Want to start there?",
   },
   {
     category: 'peds',
     test: /\b(steroid|steroids|anabolic|testosterone|test cycle|trt|sarm|sarms|clen(buterol)?|dnp|hgh|growth hormone|peptide|winstrol|dianabol|tren(bolone)?|juice up|gear cycle)\b/i,
     reply:
-      "Not something I'll advise on — and at 15 it isn't a close call: those drugs interfere with growth and development, and most are illegal to buy without a prescription. The honest answer is that you haven't come close to your natural ceiling yet. Ask me about progression, protein or sleep instead — that's where your next 20 kg actually comes from.",
+      "Not something I'll advise on, and at 15 it isn't a close call: those drugs interfere with growth and development, and most are illegal to buy without a prescription. The honest answer is that you haven't come close to your natural ceiling yet. Ask me about progression, protein or sleep instead, that's where your next 20 kg actually comes from.",
   },
   {
     category: 'medical',
     test: /\b(diagnos|my (knee|shoulder|back|elbow|wrist|hip|ankle) (hurts|is injured|clicks|pops)|sharp pain|torn|tear|sprain|strain(ed)? my|fracture|tendonitis|tendinitis|impingement|hernia|concussion|medication|antibiotic|prescri|physio(therapy)? plan|rehab protocol)\b/i,
     reply:
-      "That's past where a trainer should be guessing — pain and injuries need someone who can actually look at you. Please see a doctor or a physiotherapist about it. Two things I can help with in the meantime: keeping your other training going around it, and not losing your streak while you sort it out. Want that?",
+      "That's past where a trainer should be guessing: pain and injuries need someone who can actually look at you. Please see a doctor or a physiotherapist about it. Two things I can help with in the meantime: keeping your other training going around it, and not losing your streak while you sort it out. Want that?",
   },
   {
     category: 'extreme-cut',
     test: /\b(lose \d{2,} ?(kg|kilos) in (a|1|2|3) (week|weeks|month)|(\d{3,}) ?(kcal|calories) a day|800 ?(kcal|calories)|water fast|dry fast|72.hour fast|crash diet|drop \d{2,} ?kg fast)\b/i,
     reply:
-      "I won't build you that. Cuts that fast cost you muscle and, at your age, they can affect growth and recovery — and the weight comes back. What I will do is set a moderate deficit that keeps your lifts going: usually 0.5% of body weight a week, protein high, training unchanged. Say the word and I'll work it out from your numbers.",
+      "I won't build you that. Cuts that fast cost you muscle and, at your age, they can affect growth and recovery, and the weight comes back. What I will do is set a moderate deficit that keeps your lifts going: usually 0.5% of body weight a week, protein high, training unchanged. Say the word and I'll work it out from your numbers.",
   },
   {
     category: 'off-topic',
     test: /\b(write my (essay|homework)|solve this equation|who should i vote|crypto|bitcoin|hack|girlfriend|boyfriend|python code|write code|javascript)\b/i,
     reply:
-      "That's outside what I'm here for — I only cover training, nutrition, recovery and how ForgeOS works. Ask me about any of those and I'm genuinely useful.",
+      "That's outside what I'm here for: I only cover training, nutrition, recovery and how ForgeOS works. Ask me about any of those and I'm genuinely useful.",
   },
 ];
 

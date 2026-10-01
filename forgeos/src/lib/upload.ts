@@ -49,10 +49,10 @@ function typeAllowed(file: File, types: string[], ext: RegExp): boolean {
 export function checkImageFile(file: File): UploadError | null {
   if (!file || file.size === 0) return new UploadError('empty', 'That file is empty.');
   if (!typeAllowed(file, IMAGE_TYPES, IMAGE_EXT)) {
-    return new UploadError('type', 'That is not an image — pick a photo (JPG, PNG, WEBP or HEIC).');
+    return new UploadError('type', 'That is not an image: pick a photo (JPG, PNG, WEBP or HEIC).');
   }
   if (file.size > MAX_IMAGE_BYTES) {
-    return new UploadError('too-large', `That photo is ${Math.round(file.size / 1e6)} MB — the limit is ${MAX_IMAGE_BYTES / 1e6} MB.`);
+    return new UploadError('too-large', `That photo is ${Math.round(file.size / 1e6)} MB: the limit is ${MAX_IMAGE_BYTES / 1e6} MB.`);
   }
   return null;
 }
@@ -60,10 +60,10 @@ export function checkImageFile(file: File): UploadError | null {
 export function checkTextFile(file: File): UploadError | null {
   if (!file || file.size === 0) return new UploadError('empty', 'That file is empty.');
   if (!typeAllowed(file, TEXT_TYPES, TEXT_EXT)) {
-    return new UploadError('type', 'That file type is not supported — use JSON, CSV, XML or TXT.');
+    return new UploadError('type', 'That file type is not supported: use JSON, CSV, XML or TXT.');
   }
   if (file.size > MAX_TEXT_BYTES) {
-    return new UploadError('too-large', `That file is ${Math.round(file.size / 1e6)} MB — the limit is ${MAX_TEXT_BYTES / 1e6} MB.`);
+    return new UploadError('too-large', `That file is ${Math.round(file.size / 1e6)} MB: the limit is ${MAX_TEXT_BYTES / 1e6} MB.`);
   }
   return null;
 }

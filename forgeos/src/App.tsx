@@ -99,7 +99,7 @@ function AppShell() {
       if (useWorkout.getState().active) return; // already training — don't interrupt
       localStorage.setItem('forge-geofence-last', String(Date.now()));
       haptic('success');
-      toast('🔥 Welcome to the Forge — opening today’s workout.', 'info');
+      toast('🔥 Welcome to the Forge: opening today’s workout.', 'info');
       navigate('/train');
     });
   }, [geofenceEnabled, gym, navigate]);
@@ -238,7 +238,7 @@ export default function App() {
     // APK updates: OTA-capable builds pull new web bundles silently
     // (checkForApkUpdate triggers that sync); the nudge only fires when a
     // native change genuinely needs a fresh APK. No-op on the website.
-    void checkForApkUpdate().then((u) => { if (u.available) toast('Core update ready — one tap in You → Update installs it 🚀', 'info'); });
+    void checkForApkUpdate().then((u) => { if (u.available) toast('Core update ready: one tap in You → Update installs it 🚀', 'info'); });
     // Live social: ensure a cloud session (anonymous if needed, no signup),
     // then pull the real friend graph.
     void ensureCloudAccount().then(() => {

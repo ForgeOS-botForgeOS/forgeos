@@ -100,7 +100,7 @@ export function applyImport(patch: ForgePatch, lane: LaneId): ImportSummary {
   if (newXp - snapshot.gami.xp > 0) parts.push(`${(newXp - snapshot.gami.xp).toLocaleString()} XP`);
   if (patch.achievementsImported) parts.push(`${patch.achievementsImported} badges`);
   if (newDays.length) parts.push(tenure);
-  const message = parts.length ? `We brought over ${parts.join(', ').replace(/, ([^,]*)$/, ', and $1')}.` : 'Your account is now linked — nothing new to add.';
+  const message = parts.length ? `We brought over ${parts.join(', ').replace(/, ([^,]*)$/, ', and $1')}.` : 'Your account is now linked: nothing new to add.';
 
   const summary: ImportSummary = {
     source: patch.source,

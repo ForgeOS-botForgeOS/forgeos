@@ -100,7 +100,7 @@ export default function Home() {
         title={`${t('home.hi')}, ${profile?.name ?? 'Athlete'}`}
         subtitle={`${rankLabel(tier)} · ${xp.toLocaleString()} XP`}
         right={
-          <div className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5" title="Week streak — weeks you hit your planned sessions">
+          <div className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5" title="Week streak: weeks you hit your planned sessions">
             <Flame size={16} className="text-accent" />
             <CountUp value={streak} className="font-bold text-sm" /><span className="text-[10px] text-muted">wk</span>
           </div>
@@ -277,7 +277,7 @@ export default function Home() {
           onClick={() => navigate('/quests')}
           className="w-full flex items-center justify-between rounded-2xl bg-surface-2 px-4 py-3 text-sm"
         >
-          <span>Rank progress — {Math.round(progressToNext(xp) * 100)}% to next tier</span>
+          <span>Rank progress: {Math.round(progressToNext(xp) * 100)}% to next tier</span>
           <ChevronRight size={16} />
         </button>
       </Screen>
@@ -432,7 +432,7 @@ function HomeAC({
       >
         <p className="text-[10px] uppercase tracking-[0.14em] text-accent">Today’s focus</p>
         <p className="text-3xl font-bold uppercase italic leading-none mt-2">{trainedToday ? 'Session logged' : 'Ready to train'}</p>
-        <p className="text-[13px] text-muted mt-2">{trainedToday ? 'Great work — review it or add another block.' : 'Your next session is queued. Let’s move.'}</p>
+        <p className="text-[13px] text-muted mt-2">{trainedToday ? 'Great work: review it or add another block.' : 'Your next session is queued. Let’s move.'}</p>
         <div className="mt-4 rounded-md bg-accent text-black text-center font-bold uppercase italic tracking-wide py-3">▸ {trainedToday ? 'Open Train' : 'Start workout'}</div>
       </div>
 
@@ -441,21 +441,21 @@ function HomeAC({
         <div className="grid grid-cols-3 gap-2">
           <Gauge label="Energy" center={`${Math.round(energyPct)}%`} pct={energyPct} color="rgb(var(--accent))" />
           <Gauge label="Protein" center={`${Math.round(proteinValue)}g`} pct={proteinPct} color="rgb(var(--accent-2))" />
-          <Gauge label="Steps" center={steps != null ? fmtK(steps) : '—'} pct={stepsPct} color="rgb(var(--success))" />
+          <Gauge label="Steps" center={steps != null ? fmtK(steps) : '–'} pct={stepsPct} color="rgb(var(--success))" />
         </div>
       </Card>
 
       {/* Recovery rail */}
       <Rail title="Recovery" onSee={() => onNav('/health')}>
-        <Chip t="Readiness" v={readiness ? String(readiness.score) : '—'} s={readiness?.label} />
-        <Chip t="Sleep" v={sleepH != null ? String(sleepH) : '—'} s={sleepH != null ? 'h' : undefined} />
-        <Chip t="Resting HR" v={restingHr != null ? String(restingHr) : '—'} s={restingHr != null ? 'bpm' : undefined} />
+        <Chip t="Readiness" v={readiness ? String(readiness.score) : '–'} s={readiness?.label} />
+        <Chip t="Sleep" v={sleepH != null ? String(sleepH) : '–'} s={sleepH != null ? 'h' : undefined} />
+        <Chip t="Resting HR" v={restingHr != null ? String(restingHr) : '–'} s={restingHr != null ? 'bpm' : undefined} />
       </Rail>
 
       {/* Progress rail */}
       <Rail title="Progress" onSee={() => onNav('/progress')}>
         <Chip t="Volume · wk" v={fmtK(volumeTotal)} s="kg" />
-        <Chip t="Weight" v={weightKg != null ? String(weightKg) : '—'} s={weightKg != null ? 'kg' : undefined} />
+        <Chip t="Weight" v={weightKg != null ? String(weightKg) : '–'} s={weightKg != null ? 'kg' : undefined} />
         <Chip t="PRs" v={String(prs)} s="all-time" />
       </Rail>
     </div>

@@ -74,7 +74,7 @@ export function classifyExerciseLocal(name: string, description: string): Exerci
 
   const feedback =
     hits.length === 0
-      ? `I couldn't recognise the muscles from that description — tell me what it works (e.g. "targets the chest and triceps") and I'll classify it better.`
+      ? `I couldn't recognise the muscles from that description: tell me what it works (e.g. "targets the chest and triceps") and I'll classify it better.`
       : `Sounds like a ${category.toLowerCase()} move mainly working your ${primary}${secondary.length ? `, with help from ${secondary.join(' and ')}` : ''}. Nice addition to the library!`;
 
   return { primary, secondary, category, equipment, confidence, xp, feedback };

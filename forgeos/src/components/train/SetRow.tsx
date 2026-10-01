@@ -181,7 +181,7 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
 
           {ghost && (
             <p className="text-[10px] text-muted/70 mt-1">
-              👻 last week: {ghost.weightKg}kg × {ghost.reps} @ RPE {ghost.rpe ?? '—'}
+              👻 last week: {ghost.weightKg}kg × {ghost.reps} @ RPE {ghost.rpe ?? '–'}
             </p>
           )}
 

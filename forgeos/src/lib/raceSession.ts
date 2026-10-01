@@ -227,7 +227,7 @@ function finalizeOutcome(): void {
   } else {
     const mine = a.racers[me.userId];
     if (mine?.finishedAt != null) gami.addXp(FINISHER_XP);
-    toast(`🏁 ${winner.name} won the race${mine?.finishedAt != null ? ` — you still banked +${FINISHER_XP} XP` : ''}.`, 'info');
+    toast(`🏁 ${winner.name} won the race${mine?.finishedAt != null ? `: you still banked +${FINISHER_XP} XP` : ''}.`, 'info');
   }
 }
 

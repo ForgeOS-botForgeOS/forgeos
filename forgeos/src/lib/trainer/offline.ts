@@ -20,15 +20,15 @@ function proteinAdvice(s: TrainerSnapshot): string {
   const left = Math.max(0, target - logged);
   const perKg = s.weightKg ? Math.round((target / s.weightKg) * 10) / 10 : null;
   return left > 0
-    ? `Your target is ${target} g${perKg ? ` (${perKg} g/kg)` : ''} and you have logged ${logged} g today — ${left} g to go. That is roughly ${Math.ceil(left / 25)} more protein-led servings: quark, chicken, tuna, or a shake.`
-    : `You are at ${logged} g against a ${target} g target — that is done for today. Hold that most days and protein stops being the limiting factor.`;
+    ? `Your target is ${target} g${perKg ? ` (${perKg} g/kg)` : ''} and you have logged ${logged} g today: ${left} g to go. That is roughly ${Math.ceil(left / 25)} more protein-led servings: quark, chicken, tuna, or a shake.`
+    : `You are at ${logged} g against a ${target} g target: that is done for today. Hold that most days and protein stops being the limiting factor.`;
 }
 
 function trainingAdvice(s: TrainerSnapshot): string {
   const bits: string[] = [];
-  if (s.sessionsLast7 === 0) bits.push('You have not logged a session in the last 7 days. The first one back should be deliberately easy — same exercises, about 20% lighter, stop two reps short.');
+  if (s.sessionsLast7 === 0) bits.push('You have not logged a session in the last 7 days. The first one back should be deliberately easy: same exercises, about 20% lighter, stop two reps short.');
   else bits.push(`You have trained ${s.sessionsLast7}× in the last 7 days (${s.sessionsLast28} in 28).`);
-  if (s.plateauLifts?.length) bits.push(`${s.plateauLifts[0]} has stalled — swap in a variation for two weeks or run one lighter week, then re-test.`);
+  if (s.plateauLifts?.length) bits.push(`${s.plateauLifts[0]} has stalled: swap in a variation for two weeks or run one lighter week, then re-test.`);
   else if (s.topPrs.length) bits.push(`Your best lift on record is ${s.topPrs[0].exerciseName} at ${s.topPrs[0].weightKg} kg × ${s.topPrs[0].reps}. If last session felt like an 8 or less, add 2.5 kg; otherwise add a rep first.`);
   if (s.nextPlanned) bits.push(`Next planned: ${s.nextPlanned}.`);
   return bits.join(' ');
@@ -39,7 +39,7 @@ function recoveryAdvice(s: TrainerSnapshot): string {
   if (s.avgSleepH) {
     bits.push(
       s.avgSleepH < 7
-        ? `You are averaging ${Math.round(s.avgSleepH * 10) / 10} h of sleep. That is the single biggest thing holding your recovery back — an extra 45 minutes will do more than any change to your programme.`
+        ? `You are averaging ${Math.round(s.avgSleepH * 10) / 10} h of sleep. That is the single biggest thing holding your recovery back: an extra 45 minutes will do more than any change to your programme.`
         : `Sleep is averaging ${Math.round(s.avgSleepH * 10) / 10} h, which is solid.`,
     );
   }
@@ -55,7 +55,7 @@ function nutritionAdvice(s: TrainerSnapshot): string {
     const left = s.macros.calories - s.todayKcal;
     bits.push(left > 0 ? `Calories: ${s.todayKcal} of ${s.macros.calories} logged, ${left} left.` : `Calories: ${s.todayKcal} logged against a ${s.macros.calories} target.`);
   }
-  if ((s.waterMl ?? 0) < 1500 && s.weightKg) bits.push(`Water is at ${s.waterMl ?? 0} ml — aim for about ${Math.round((s.weightKg * 35) / 100) * 100} ml on a training day.`);
+  if ((s.waterMl ?? 0) < 1500 && s.weightKg) bits.push(`Water is at ${s.waterMl ?? 0} ml: aim for about ${Math.round((s.weightKg * 35) / 100) * 100} ml on a training day.`);
   bits.push('Food tab → Nutrition plan gives you the full split for your goal, and the Cookbook has 107 recipes filtered to it.');
   return bits.join(' ');
 }
@@ -70,7 +70,7 @@ export function offlineAnswer(question: string, s: TrainerSnapshot): OfflineAnsw
   if (specialist === 'app') {
     const hits = searchHelp(question, 2);
     if (hits.length) {
-      return { specialist, text: hits.map((h) => `**${h.title}** — ${h.answer}`).join('\n\n') };
+      return { specialist, text: hits.map((h) => `**${h.title}**: ${h.answer}`).join('\n\n') };
     }
     return {
       specialist,

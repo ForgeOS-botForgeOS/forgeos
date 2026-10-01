@@ -46,7 +46,7 @@ async function handleAuthUrl(url: string): Promise<void> {
   } catch { /* storage blocked — still attempt the exchange */ }
   const { error } = await supabase.auth.exchangeCodeForSession(redirect.code);
   if (error) {
-    toast('Google sign-in failed — please try again.', 'error');
+    toast('Google sign-in failed: please try again.', 'error');
     return;
   }
   // Reload so the normal boot path sees the fresh session and restores the

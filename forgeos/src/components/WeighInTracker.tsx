@@ -78,7 +78,7 @@ export function WeighInTracker() {
         </p>
       )}
       {staleDays !== null && staleDays >= 7 && (
-        <p className="text-[11px] text-muted">Last weigh-in {staleDays} days ago — hop on the scale 📈</p>
+        <p className="text-[11px] text-muted">Last weigh-in {staleDays} days ago: hop on the scale 📈</p>
       )}
 
       {/* Goal weight row */}
@@ -92,7 +92,7 @@ export function WeighInTracker() {
       ) : (
         <button onClick={() => { setGoalDraft(goalKg ?? profile?.weightKg ?? 80); setEditGoal(true); }} className="flex items-center gap-1.5 text-[11px] text-accent-2">
           <Target size={12} />
-          {goalKg !== undefined ? `Goal: ${goalKg} kg — change` : 'Set a goal weight'}
+          {goalKg !== undefined ? `Goal: ${goalKg} kg · change` : 'Set a goal weight'}
         </button>
       )}
 

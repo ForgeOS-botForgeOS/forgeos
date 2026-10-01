@@ -104,7 +104,7 @@ export default function Nutrition() {
         return;
       }
       openItems(estimateMock(file));
-      setScanNote(err instanceof Error ? `${err.message} Showing an estimate instead.` : 'AI unavailable — showing an estimate.');
+      setScanNote(err instanceof Error ? `${err.message} Showing an estimate instead.` : 'AI unavailable: showing an estimate.');
       haptic('warning');
     } finally {
       setScanning(false);
@@ -121,7 +121,7 @@ export default function Nutrition() {
     try {
       const result = await scanDescription(desc);
       if (!result) {
-        setScanNote('No food found in that text — try "200g chicken, 150g rice".');
+        setScanNote('No food found in that text: try "200g chicken, 150g rice".');
         haptic('warning');
         return;
       }
@@ -179,7 +179,7 @@ export default function Nutrition() {
           <Moon size={18} className="text-warn mt-0.5 shrink-0" />
           <div>
             <p className="text-xs uppercase tracking-wide text-muted">Short night ({Math.floor(shortNight / 60)}h {String(shortNight % 60).padStart(2, '0')}m)</p>
-            <p className="text-sm mt-1">Aim for <b>+20 g protein</b> and extra water today — poor sleep raises muscle breakdown and fake hunger.</p>
+            <p className="text-sm mt-1">Aim for <b>+20 g protein</b> and extra water today: poor sleep raises muscle breakdown and fake hunger.</p>
             <p className="text-[11px] text-muted mt-1">Go easy on the sugar; cravings hit harder on low sleep.</p>
           </div>
         </Card>
@@ -326,7 +326,7 @@ export default function Nutrition() {
         {items && (
           <div className="space-y-3">
             {scanNote && <p className="text-xs text-accent-2 bg-accent-2/10 rounded-lg px-3 py-2">{scanNote}</p>}
-            <p className="text-[11px] text-muted">Tick the items to log and tweak anything — your edits are remembered for next time.</p>
+            <p className="text-[11px] text-muted">Tick the items to log and tweak anything: your edits are remembered for next time.</p>
             <div className="space-y-2 max-h-[52vh] overflow-y-auto no-scrollbar">
               {items.map((it, idx) => {
                 const on = selected.has(idx);

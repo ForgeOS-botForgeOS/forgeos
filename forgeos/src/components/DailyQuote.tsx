@@ -50,7 +50,7 @@ export function DailyQuote() {
         <button className="absolute top-3 right-3 text-muted" onClick={() => setOpen(false)}><X size={18} /></button>
         <p className="text-xs uppercase tracking-widest text-accent mb-3">{quote.genre} · today</p>
         <p className="text-lg font-semibold leading-snug">“{quote.text}”</p>
-        <p className="text-sm text-muted mt-3">— {quote.source}</p>
+        <p className="text-sm text-muted mt-3">– {quote.source}</p>
         <Button className="w-full justify-center mt-5" onClick={() => { setOpen(false); navigate(`/quote/${quote.id}`); }}>
           Read the deep dive
         </Button>

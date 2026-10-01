@@ -51,8 +51,8 @@ export function mapToForge(c: CanonicalProgress, streak: StreakDecision): ForgeP
   }));
 
   // Things ForgeOS can't faithfully represent — surfaced to the user.
-  if (c.level?.rank) notes.push(`Source rank "${c.level.rank}" — ForgeOS ranks come from XP, so your imported XP sets your rank instead.`);
-  if (c.currency?.coins && c.trust === 'low') notes.push('Currency from a screenshot is capped — connect via file/API to bring over more.');
+  if (c.level?.rank) notes.push(`Source rank "${c.level.rank}": ForgeOS ranks come from XP, so your imported XP sets your rank instead.`);
+  if (c.currency?.coins && c.trust === 'low') notes.push('Currency from a screenshot is capped: connect via file/API to bring over more.');
   if (c.totals?.timeMinutes) notes.push(`${Math.round(c.totals.timeMinutes / 60)}h of logged time noted, but ForgeOS tracks sessions & volume rather than total minutes.`);
 
   return {

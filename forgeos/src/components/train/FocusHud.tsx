@@ -78,7 +78,7 @@ export function FocusHud({ open, onExit, onComplete, onFinish }: Props) {
       <header className="flex items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">{t('focus.title')}</p>
-          <h1 className="truncate text-xl font-extrabold leading-tight">{ex?.name ?? active?.name ?? '—'}</h1>
+          <h1 className="truncate text-xl font-extrabold leading-tight">{ex?.name ?? active?.name ?? '–'}</h1>
           {target && (
             <p className="mt-0.5 text-xs text-muted">
               {t('focus.exercise')} {target.exerciseIndex + 1}/{exercises.length} · {t('focus.set')} {target.setIndex + 1}/{target.exercise.sets.length}
@@ -156,7 +156,7 @@ export function FocusHud({ open, onExit, onComplete, onFinish }: Props) {
 
           <p className="mt-3 h-4 text-center text-[11px] text-muted">
             {upNext
-              ? `${t('focus.next')}: ${exerciseById(upNext.exercise.exerciseId)?.name ?? '—'} · ${upNext.set.weightKg}kg × ${upNext.set.reps}`
+              ? `${t('focus.next')}: ${exerciseById(upNext.exercise.exerciseId)?.name ?? '–'} · ${upNext.set.weightKg}kg × ${upNext.set.reps}`
               : t('focus.lastSet')}
           </p>
         </>
@@ -209,7 +209,7 @@ export function FocusHud({ open, onExit, onComplete, onFinish }: Props) {
                         : 'border-line bg-surface-2 text-muted'
                   }`}
                 >
-                  {exerciseById(we.exerciseId)?.name ?? '—'}
+                  {exerciseById(we.exerciseId)?.name ?? '–'}
                   {left > 0 && <span className="ml-1 font-mono">{left}</span>}
                 </button>
               );

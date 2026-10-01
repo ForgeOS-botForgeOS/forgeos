@@ -101,7 +101,7 @@ export function buildUserContext(s: TrainerSnapshot): string {
   ];
 
   const quiz = quizLines(s.quizAnswers);
-  if (quiz.length) parts.push('Onboarding quiz answers (use these — they are why the advice must be personal):', ...quiz);
+  if (quiz.length) parts.push('Onboarding quiz answers (use these: they are why the advice must be personal):', ...quiz);
   if (s.about) parts.push(`In their own words: "${s.about.slice(0, 400)}"`);
   if (s.specialRequest) parts.push(`Special request from onboarding: "${s.specialRequest.slice(0, 200)}"`);
 

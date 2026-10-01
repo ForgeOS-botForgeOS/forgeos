@@ -13,7 +13,7 @@ export const CORE_RECIPES: Recipe[] = [
     steps: [
       'Tip the oats, milk and a pinch of salt into a pan over medium heat.',
       'Stir for 4–5 minutes until thick and creamy; the oats should still have a little bite.',
-      'Take the pan OFF the heat and wait a minute before stirring in the whey — boiling protein turns it grainy.',
+      'Take the pan OFF the heat and wait a minute before stirring in the whey: boiling protein turns it grainy.',
       'Top with the berries and eat warm.',
     ],
     tags: ['high-protein', 'high-carb', 'quick', 'budget', 'post-workout'],
@@ -27,7 +27,7 @@ export const CORE_RECIPES: Recipe[] = [
       'Dice the pepper and tomato. Heat a non-stick pan on medium with a little oil.',
       'Cook the pepper 3 minutes, add the tomato and spinach, and cook until the spinach collapses.',
       'Beat the whites and eggs together, season, and pour over the veg.',
-      'Turn the heat to LOW and push the egg gently with a spatula every few seconds until just set — pull it off while it still looks slightly wet.',
+      'Turn the heat to LOW and push the egg gently with a spatula every few seconds until just set: pull it off while it still looks slightly wet.',
     ],
     tags: ['high-protein', 'low-carb', 'quick', 'vegetarian'],
     tip: 'Low and slow is what keeps eggs soft. High heat is why scrambles go rubbery.',
@@ -42,7 +42,7 @@ export const CORE_RECIPES: Recipe[] = [
       'Finish with the remaining berries, the granola on top, and a thin drizzle of honey.',
     ],
     tags: ['high-protein', 'quick', 'no-cook', 'vegetarian'],
-    tip: 'Granola last, eaten soon — layer it early and it goes soggy.',
+    tip: 'Granola last, eaten soon: layer it early and it goes soggy.',
   },
   {
     id: 'rec-4', name: 'Banana Peanut Overnight Oats', meal: 'Breakfast', goals: ['gain', 'strength'],
@@ -55,7 +55,7 @@ export const CORE_RECIPES: Recipe[] = [
       'In the morning stir, loosen with a splash of milk, and top with the rest of the banana, sliced.',
     ],
     tags: ['high-carb', 'meal-prep', 'no-cook', 'vegetarian', 'budget'],
-    tip: 'Make three jars at once on Sunday — breakfast stops being a decision.',
+    tip: 'Make three jars at once on Sunday: breakfast stops being a decision.',
   },
   {
     id: 'rec-5', name: 'Cottage Cheese Toast', meal: 'Breakfast', goals: ['lose', 'recomp'],
@@ -67,7 +67,7 @@ export const CORE_RECIPES: Recipe[] = [
       'Top with sliced tomato, a little salt and the chives.',
     ],
     tags: ['high-protein', 'quick', 'vegetarian', 'budget'],
-    tip: 'Salt the tomato, not the cheese — it draws the flavour out.',
+    tip: 'Salt the tomato, not the cheese: it draws the flavour out.',
   },
   {
     id: 'rec-6', name: 'Spinach Feta Omelette', meal: 'Breakfast', goals: ['recomp', 'maintain'],
@@ -75,7 +75,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['3 eggs', '30 g feta', '2 handfuls spinach', '1 tsp olive oil'],
     steps: [
       'Wilt the spinach in the oiled pan for a minute, then slide it onto a plate.',
-      'Beat the eggs with a fork until uniform — no streaks of white.',
+      'Beat the eggs with a fork until uniform: no streaks of white.',
       'Pour into the pan on medium-low; as it sets, tilt and lift the edges so raw egg runs underneath.',
       'When the top is barely wet, scatter the spinach and crumbled feta over one half and fold it shut.',
     ],
@@ -101,7 +101,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['50 g oats', '1 scoop whey', '2 eggs', '1 banana', '½ tsp baking powder'],
     steps: [
       'Blend everything into a smooth, pourable batter and let it stand 5 minutes to thicken.',
-      'Heat a non-stick pan on medium-LOW — protein batter burns far faster than flour batter.',
+      'Heat a non-stick pan on medium-LOW: protein batter burns far faster than flour batter.',
       'Cook small pancakes, 2 minutes until bubbles appear and the edge sets, then flip for 1 minute.',
       'Stack and serve with berries or a spoon of yoghurt.',
     ],
@@ -117,7 +117,7 @@ export const CORE_RECIPES: Recipe[] = [
     steps: [
       'Butterfly the chicken so it is an even thickness, then season both sides.',
       'Sear 5–6 minutes per side in the oiled pan on medium-high, until the middle reaches 74 °C.',
-      'Steam the broccoli 4 minutes — it should still squeak.',
+      'Steam the broccoli 4 minutes: it should still squeak.',
       'Rest the chicken 3 minutes, slice across the grain, and build the bowl over the rice.',
     ],
     tags: ['high-protein', 'meal-prep', 'post-workout'],
@@ -129,7 +129,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['1 can tuna in water', '80 g pasta', '80 g sweetcorn', '1 tbsp light mayo', 'lemon juice', 'red onion'],
     steps: [
       'Boil the pasta in well-salted water until just tender, then rinse under cold water to stop it cooking.',
-      'Drain the tuna properly — pressing the lid down gets the last of it out.',
+      'Drain the tuna properly: pressing the lid down gets the last of it out.',
       'Fold pasta, tuna, corn and finely diced onion with the mayo and a squeeze of lemon.',
       'Season and chill 10 minutes if you have them.',
     ],
@@ -144,7 +144,7 @@ export const CORE_RECIPES: Recipe[] = [
       'Warm the wrap 20 seconds in a dry pan so it folds without cracking.',
       'Spread the mustard, then layer lettuce, turkey and the sliced veg down the middle third.',
       'Fold the bottom up, both sides in, and roll tight.',
-      'Cut on the diagonal — it holds together better.',
+      'Cut on the diagonal: it holds together better.',
     ],
     tags: ['high-protein', 'quick', 'no-cook', 'budget'],
   },
@@ -159,7 +159,7 @@ export const CORE_RECIPES: Recipe[] = [
       'Toss quinoa, lentils, diced cucumber and chopped parsley in the dressing.',
     ],
     tags: ['vegan', 'high-carb', 'meal-prep', 'budget'],
-    tip: 'Rinsing quinoa washes off the bitter coating — 20 seconds under the tap.',
+    tip: 'Rinsing quinoa washes off the bitter coating: 20 seconds under the tap.',
   },
   {
     id: 'rec-13', name: 'Beef & Sweet Potato', meal: 'Lunch', goals: ['gain', 'strength'],
@@ -167,7 +167,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['180 g lean beef steak', '250 g sweet potato', '150 g green beans', '1 tsp oil', 'salt, pepper'],
     steps: [
       'Cube the sweet potato, toss in oil and salt, roast at 200 °C for 25 minutes, turning once.',
-      'Take the beef out of the fridge while it roasts — cold meat cooks unevenly.',
+      'Take the beef out of the fridge while it roasts: cold meat cooks unevenly.',
       'Sear the steak 3 minutes a side for medium, then rest it 5 minutes under foil.',
       'Boil the beans 4 minutes. Slice the steak across the grain and plate everything.',
     ],
@@ -180,7 +180,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['150 g sushi-grade salmon', '150 g cooked rice', '80 g edamame', '1 tbsp soy sauce', '½ avocado', 'sesame seeds'],
     steps: [
       'Cube the salmon into 2 cm pieces and toss with the soy sauce; leave 10 minutes in the fridge.',
-      'Spread the rice in a bowl — slightly warm rice, cold fish is the classic contrast.',
+      'Spread the rice in a bowl: slightly warm rice, cold fish is the classic contrast.',
       'Arrange salmon, edamame and sliced avocado in sections on top.',
       'Finish with sesame seeds and the marinade from the bowl.',
     ],
@@ -207,7 +207,7 @@ export const CORE_RECIPES: Recipe[] = [
     steps: [
       'Cook the noodles, drain, and toss with a drop of oil so they do not stick.',
       'Get the pan properly hot. Stir-fry the garlic and ginger for 20 seconds.',
-      'Add the veg and keep it moving for 3 minutes — you want colour, not steam.',
+      'Add the veg and keep it moving for 3 minutes: you want colour, not steam.',
       'Add the prawns and cook 2 minutes until they turn pink and curl, then fold in noodles and soy.',
     ],
     tags: ['high-protein', 'quick', 'one-pan'],
@@ -239,7 +239,7 @@ export const CORE_RECIPES: Recipe[] = [
       'It is done the moment the flesh turns opaque and flakes when nudged.',
     ],
     tags: ['high-protein', 'low-carb', 'one-pan'],
-    tip: 'Fish keeps cooking after it leaves the oven — pull it a touch early.',
+    tip: 'Fish keeps cooking after it leaves the oven: pull it a touch early.',
   },
   {
     id: 'rec-19', name: 'Chicken Fajita Bowl', meal: 'Dinner', goals: ['recomp', 'maintain'],
@@ -248,7 +248,7 @@ export const CORE_RECIPES: Recipe[] = [
     steps: [
       'Slice the chicken into strips and toss with the spice and a little oil.',
       'Cook the chicken in a hot pan for 5–6 minutes until browned, then set aside.',
-      'In the same pan, char the sliced peppers and onion 5 minutes — leave them alone between stirs so they colour.',
+      'In the same pan, char the sliced peppers and onion 5 minutes: leave them alone between stirs so they colour.',
       'Warm the beans through, return the chicken, and pile it all over the rice.',
     ],
     tags: ['high-protein', 'meal-prep', 'one-pan'],
@@ -259,7 +259,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['300 g turkey mince', '160 g pasta', '400 g passata', '1 onion', '1 carrot', 'garlic', 'oregano'],
     steps: [
       'Fry the finely diced onion and carrot 6–7 minutes until soft and sweet.',
-      'Add the garlic for 30 seconds, then the mince — break it up and let it brown properly before stirring.',
+      'Add the garlic for 30 seconds, then the mince: break it up and let it brown properly before stirring.',
       'Pour in the passata, season, and simmer at least 15 minutes (longer is better).',
       'Cook the pasta, save a cup of its water, and loosen the sauce with it before combining.',
     ],
@@ -284,7 +284,7 @@ export const CORE_RECIPES: Recipe[] = [
     kcal: 600, protein: 40, carbs: 50, fat: 26, minutes: 25, servings: 1,
     ingredients: ['180 g salmon fillet', '150 g rice', '100 g kale', 'lemon', 'olive oil', 'salt'],
     steps: [
-      'Pat the salmon dry and salt the skin — dry skin is crisp skin.',
+      'Pat the salmon dry and salt the skin: dry skin is crisp skin.',
       'Place it skin-down in a cold oiled pan, then turn the heat to medium and leave it 6 minutes.',
       'Flip for 2 minutes only, then squeeze lemon over it and rest.',
       'Massage the kale with a little oil and salt, then wilt it in the pan for a minute. Serve with the rice.',
@@ -297,13 +297,13 @@ export const CORE_RECIPES: Recipe[] = [
     kcal: 560, protein: 40, carbs: 55, fat: 18, minutes: 40, servings: 3,
     ingredients: ['500 g beef mince', '1 can kidney beans', '400 g chopped tomatoes', '1 onion', '2 tsp cumin', '1 tsp chilli powder', '150 g rice'],
     steps: [
-      'Brown the mince in batches in a hot dry pan — crowding it makes it grey and watery.',
+      'Brown the mince in batches in a hot dry pan: crowding it makes it grey and watery.',
       'Add the onion and cook 5 minutes, then the spices for 1 minute.',
       'Return all the meat, add tomatoes and drained beans, and simmer 25 minutes with the lid off.',
       'Taste and adjust salt and heat at the end, and serve over rice.',
     ],
     tags: ['high-protein', 'meal-prep', 'budget'],
-    tip: 'Better on day two — the batch that reheats best in the whole book.',
+    tip: 'Better on day two: the batch that reheats best in the whole book.',
   },
   {
     id: 'rec-24', name: 'Stuffed Peppers', meal: 'Dinner', goals: ['lose', 'recomp'],
@@ -323,7 +323,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['200 g prawns', '2 courgettes', '2 garlic cloves', '½ chilli', 'olive oil', 'lemon'],
     steps: [
       'Spiralise or julienne the courgettes, salt them lightly, and leave in a colander 10 minutes.',
-      'Squeeze the water out with your hands — this is what stops a watery plate.',
+      'Squeeze the water out with your hands: this is what stops a watery plate.',
       'Fry the garlic and chilli 30 seconds, add the prawns for 2 minutes.',
       'Toss the courgette in for 60 seconds only, then finish with lemon.',
     ],
@@ -341,7 +341,7 @@ export const CORE_RECIPES: Recipe[] = [
       'Dry-fry the cauliflower 4 minutes with salt, and serve with the rest of the yoghurt and coriander.',
     ],
     tags: ['high-protein', 'low-carb'],
-    tip: 'Yoghurt in the marinade tenderises — even 20 minutes helps.',
+    tip: 'Yoghurt in the marinade tenderises: even 20 minutes helps.',
   },
 
   // ---------------- Snacks ----------------
@@ -368,7 +368,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['3 eggs', '1 apple', 'salt'],
     steps: [
       'Lower the eggs into already-boiling water and set a timer for 8 minutes.',
-      'Move them straight into cold water for 2 minutes — that is what makes them peel cleanly.',
+      'Move them straight into cold water for 2 minutes: that is what makes them peel cleanly.',
       'Peel, salt, and eat with the sliced apple.',
     ],
     tags: ['high-protein', 'budget', 'meal-prep', 'vegetarian'],
@@ -378,7 +378,7 @@ export const CORE_RECIPES: Recipe[] = [
     id: 'rec-30', name: 'Beef Jerky & Almonds', meal: 'Snack', goals: ['lose', 'recomp', 'strength'],
     kcal: 280, protein: 26, carbs: 8, fat: 16, minutes: 1, servings: 1,
     ingredients: ['40 g beef jerky', '20 g almonds'],
-    steps: ['Weigh the portions out instead of eating from the bag.', 'Drink water with it — jerky is salty.'],
+    steps: ['Weigh the portions out instead of eating from the bag.', 'Drink water with it: jerky is salty.'],
     tags: ['high-protein', 'low-carb', 'no-cook', 'quick'],
   },
   {
@@ -392,7 +392,7 @@ export const CORE_RECIPES: Recipe[] = [
     id: 'rec-32', name: 'Hummus & Veg Sticks', meal: 'Snack', goals: ['lose', 'maintain'],
     kcal: 200, protein: 8, carbs: 18, fat: 11, minutes: 5, servings: 1,
     ingredients: ['80 g hummus', '1 carrot', '½ cucumber', 'paprika'],
-    steps: ['Cut the veg into finger-length sticks — they scoop better than rounds.', 'Dust the hummus with paprika and a thread of olive oil.'],
+    steps: ['Cut the veg into finger-length sticks: they scoop better than rounds.', 'Dust the hummus with paprika and a thread of olive oil.'],
     tags: ['vegan', 'quick', 'no-cook', 'budget'],
   },
   {
@@ -420,7 +420,7 @@ export const CORE_RECIPES: Recipe[] = [
     id: 'rec-35', name: 'Dark Chocolate & Whey', meal: 'Snack', goals: ['maintain', 'gain'],
     kcal: 230, protein: 26, carbs: 14, fat: 7, minutes: 3, servings: 1,
     ingredients: ['1 scoop whey', '15 g 85% dark chocolate', '250 ml water or milk'],
-    steps: ['Shake the whey with cold liquid until no lumps remain.', 'Eat the chocolate slowly alongside it — this is the sweet-tooth fix that still hits protein.'],
+    steps: ['Shake the whey with cold liquid until no lumps remain.', 'Eat the chocolate slowly alongside it: this is the sweet-tooth fix that still hits protein.'],
     tags: ['high-protein', 'quick', 'no-cook', 'vegetarian'],
   },
 
@@ -459,7 +459,7 @@ export const CORE_RECIPES: Recipe[] = [
     id: 'rec-39', name: 'Cherry Tart Casein Shake', meal: 'Shake', goals: ['maintain', 'recomp'],
     kcal: 220, protein: 28, carbs: 18, fat: 4, minutes: 3, servings: 1,
     ingredients: ['1 scoop casein', '150 ml tart cherry juice', '150 ml water'],
-    steps: ['Shake hard — casein thickens fast and needs it.', 'Drink 30–60 minutes before bed.'],
+    steps: ['Shake hard: casein thickens fast and needs it.', 'Drink 30–60 minutes before bed.'],
     tags: ['high-protein', 'quick', 'no-cook', 'vegetarian'],
     tip: 'Slow protein overnight, and tart cherry has some evidence for sleep and soreness.',
   },
@@ -467,7 +467,7 @@ export const CORE_RECIPES: Recipe[] = [
     id: 'rec-40', name: 'Coffee Protein Frappe', meal: 'Shake', goals: ['lose', 'maintain'],
     kcal: 200, protein: 26, carbs: 12, fat: 4, minutes: 4, servings: 1,
     ingredients: ['1 scoop whey', '200 ml cold brew or cooled coffee', '100 ml milk', 'ice'],
-    steps: ['Blend the ice with the coffee until slushy.', 'Add the whey and milk and pulse briefly — over-blending makes it foam.'],
+    steps: ['Blend the ice with the coffee until slushy.', 'Add the whey and milk and pulse briefly: over-blending makes it foam.'],
     tags: ['high-protein', 'quick', 'no-cook', 'vegetarian'],
   },
   {
@@ -497,7 +497,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['8 baked falafel', '80 g bulgur wheat', 'large bunch parsley', 'lemon', 'tomato', 'olive oil'],
     steps: [
       'Pour boiling water over the bulgur, cover, and leave 15 minutes until it has drunk it all.',
-      'Chop the parsley finely — tabbouleh is a herb salad with grain in it, not the reverse.',
+      'Chop the parsley finely: tabbouleh is a herb salad with grain in it, not the reverse.',
       'Fork the bulgur loose, then mix with parsley, diced tomato, lemon and oil.',
       'Bake the falafel until crisp and serve on top.',
     ],
@@ -508,7 +508,7 @@ export const CORE_RECIPES: Recipe[] = [
     kcal: 560, protein: 42, carbs: 60, fat: 14, minutes: 20, servings: 1,
     ingredients: ['180 g chicken breast', '150 g day-old cooked rice', '2 eggs', '80 g peas', '1 tbsp soy sauce', 'spring onion'],
     steps: [
-      'Use cold, day-old rice — fresh rice steams and clumps.',
+      'Use cold, day-old rice: fresh rice steams and clumps.',
       'Cook the diced chicken in a very hot wok 5 minutes, then push it to one side.',
       'Scramble the eggs in the empty half, then break them up and mix everything.',
       'Add rice, peas and soy, and fry 3 minutes without stirring constantly so some grains toast.',
@@ -522,7 +522,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['150 g smoked mackerel', 'mixed leaves', '100 g cooked beetroot', 'olive oil', 'lemon', 'horseradish (optional)'],
     steps: [
       'Peel the skin off the mackerel and flake it into big pieces, checking for bones.',
-      'Dress the leaves with oil, lemon, salt and pepper — dress first, then plate.',
+      'Dress the leaves with oil, lemon, salt and pepper: dress first, then plate.',
       'Top with the mackerel and diced beetroot, and add a dot of horseradish.',
     ],
     tags: ['high-protein', 'low-carb', 'no-cook', 'quick'],
@@ -545,7 +545,7 @@ export const CORE_RECIPES: Recipe[] = [
     kcal: 460, protein: 44, carbs: 30, fat: 18, minutes: 30, servings: 1,
     ingredients: ['200 g cod', '150 g cooked lentils', '30 g chorizo', '2 handfuls spinach', 'garlic', 'smoked paprika'],
     steps: [
-      'Fry the diced chorizo dry until its red oil runs out — that oil is the sauce.',
+      'Fry the diced chorizo dry until its red oil runs out: that oil is the sauce.',
       'Add garlic and lentils to the oil and warm through with the paprika.',
       'Season the cod and bake at 200 °C for 12 minutes, or pan-fry 4 minutes a side.',
       'Wilt the spinach into the lentils and sit the fish on top.',
@@ -558,7 +558,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['180 g chicken breast', '1 romaine heart', '2 tbsp light Caesar dressing', '15 g parmesan', 'black pepper'],
     steps: [
       'Season and grill the chicken 6 minutes a side, then rest and slice.',
-      'Tear the romaine — cut edges brown, torn ones do not.',
+      'Tear the romaine: cut edges brown, torn ones do not.',
       'Toss the leaves with just enough dressing to coat, then top with chicken and shaved parmesan.',
     ],
     tags: ['high-protein', 'low-carb', 'quick'],
@@ -585,7 +585,7 @@ export const CORE_RECIPES: Recipe[] = [
       'Loosen the tahini with lemon and water until pourable, and build the bowl in sections.',
     ],
     tags: ['high-protein', 'meal-prep'],
-    tip: 'Tahini seizes when you add water — keep whisking, it comes back smooth.',
+    tip: 'Tahini seizes when you add water: keep whisking, it comes back smooth.',
   },
   {
     id: 'rec-51', name: 'Protein French Toast', meal: 'Breakfast', goals: ['gain', 'maintain'],
@@ -593,7 +593,7 @@ export const CORE_RECIPES: Recipe[] = [
     ingredients: ['2 eggs', '1 scoop whey', '2 thick slices bread', 'cinnamon', '50 ml milk'],
     steps: [
       'Whisk eggs, whey, milk and cinnamon in a shallow dish until lump-free.',
-      'Soak each slice 20 seconds a side — long enough to wet, short enough to hold.',
+      'Soak each slice 20 seconds a side: long enough to wet, short enough to hold.',
       'Fry on medium-LOW 3 minutes a side; whey browns fast, so keep the heat down.',
       'Serve with berries or yoghurt.',
     ],
