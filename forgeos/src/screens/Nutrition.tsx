@@ -2,7 +2,8 @@ import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Camera, Trash2, Sparkles, Calculator, ChefHat, ClipboardList, Star, Check, Barcode, Moon, Pencil, Loader2 } from 'lucide-react';
 import { Screen } from '../components/Screen';
-import { Card, Button, Sheet, Badge, SectionTitle } from '../components/ui';
+import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
+import { CalInfo } from '../components/CalInfo';
 import { useNutrition } from '../state/nutritionStore';
 import { useUser } from '../state/userStore';
 import { scanMeal, visionIsLive, estimateMock } from '../lib/vision';
@@ -70,6 +71,8 @@ export default function Nutrition() {
   const [recompOpen, setRecompOpen] = useState(false);
   const [manualOpen, setManualOpen] = useState(false);
   const [barcodeOpen, setBarcodeOpen] = useState(false);
+  // Log = scan and track; Info = what the numbers mean (components/CalInfo).
+  const [tab, setTab] = useState<'log' | 'info'>('log');
 
   const macros = profile?.macros ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 };
 
@@ -172,6 +175,16 @@ export default function Nutrition() {
     <Screen title={t('nut.title')} subtitle={`${profile?.goal ?? 'recomp'} · ${macros.calories} kcal`}>
       {/* No `capture` attribute → the native picker offers Camera *and* Photo Library. */}
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
+
+      <div className="flex gap-2" role="tablist" aria-label="Food">
+        <Pill active={tab === 'log'} onClick={() => setTab('log')}>Log</Pill>
+        <Pill active={tab === 'info'} onClick={() => setTab('info')}>Info</Pill>
+      </div>
+
+      {tab === 'info' && <CalInfo log={rawLog} today={today} macros={macros} profile={profile} />}
+
+      {tab === 'log' && (
+      <>
 
       {/* Sleep-aware fuelling: a rough night changes today's priorities */}
       {shortNight != null && (
@@ -320,6 +333,9 @@ export default function Nutrition() {
           </div>
         )}
       </div>
+
+      </>
+      )}
 
       {/* Scan review — per-item, editable, toggleable, learns your edits */}
       <Sheet open={!!items} onClose={() => setItems(null)} title="Review scan">

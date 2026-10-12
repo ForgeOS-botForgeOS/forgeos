@@ -1,5 +1,6 @@
 import type { Exercise, ExerciseCategory, MuscleGroup } from '../types';
 import { useExercises } from '../state/exerciseStore';
+import { rankSubstitutes, type SubstituteQuery } from '../lib/substitutes';
 
 // Compact helper so the 150+ list stays readable.
 let n = 0;
@@ -1092,9 +1093,10 @@ export const allExercises = (): Exercise[] => [...useExercises.getState().custom
 export const exerciseById = (id: string) =>
   EXERCISES.find((e) => e.id === id) ?? useExercises.getState().custom.find((e) => e.id === id);
 
-// Substitution engine — swap for an exercise sharing the same primary muscle.
-export function substitutesFor(id: string): Exercise[] {
+// Substitution engine: every exercise sharing the primary muscle, best match
+// first (lib/substitutes ranks the whole library, not the first eight).
+export function substitutesFor(id: string, opts?: SubstituteQuery): Exercise[] {
   const base = exerciseById(id);
   if (!base) return [];
-  return allExercises().filter((e) => e.id !== id && e.primary === base.primary).slice(0, 8);
+  return rankSubstitutes(base, allExercises(), opts);
 }

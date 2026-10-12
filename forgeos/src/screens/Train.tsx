@@ -30,7 +30,8 @@ import { useSettings } from '../state/settingsStore';
 import { useGami } from '../state/gamificationStore';
 import { useSocial } from '../state/socialStore';
 import { useExercises } from '../state/exerciseStore';
-import { EXERCISES, exerciseById, substitutesFor, EXERCISE_CATEGORIES } from '../data/exercises';
+import { EXERCISES, exerciseById, EXERCISE_CATEGORIES } from '../data/exercises';
+import { SubstituteList } from '../components/train/SubstituteList';
 import { detectPlateaus, recommendBlock, trainingLoadWarning } from '../lib/analytics';
 import { readinessFromDays, trainingGuidance, recoveryTrend, overtrainingRisk } from '../lib/readiness';
 import { ReadinessChip } from '../components/Readiness';
@@ -802,21 +803,13 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       </Sheet>
 
       {/* Substitution */}
-      <Sheet open={!!subFor} onClose={() => setSubFor(null)} title="Substitute: same primary muscle">
-        {subFor && (
-          <div className="space-y-2">
-            {substitutesFor(active.exercises.find((e) => e.id === subFor)?.exerciseId ?? '').map((alt) => (
-              <button
-                key={alt.id}
-                onClick={() => { swapExercise(subFor, alt.id); setSubFor(null); haptic('tap'); }}
-                className="w-full text-left rounded-xl bg-surface-2 px-4 py-3"
-              >
-                <p className="text-sm font-medium">{alt.name}</p>
-                <p className="text-xs text-muted">{alt.category} · {alt.equipment}</p>
-              </button>
-            ))}
-          </div>
-        )}
+      <Sheet open={!!subFor} onClose={() => setSubFor(null)} title="Substitute exercise">
+        {subFor && (() => {
+          const base = exerciseById(active.exercises.find((e) => e.id === subFor)?.exerciseId ?? '');
+          return base
+            ? <SubstituteList key={subFor} base={base} onPick={(id) => { swapExercise(subFor, id); setSubFor(null); }} />
+            : <p className="text-sm text-muted">This exercise is no longer in the library.</p>;
+        })()}
       </Sheet>
 
       {/* Long-press: note / history / swap */}

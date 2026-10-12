@@ -187,6 +187,7 @@ export const useWorkout = create<WorkoutState>()(
             reps: s.reps,
             rpe: s.rpe ?? 7,
             subKind: s.subKind ?? 'none',
+            grip: s.grip,
             completed: false,
           })),
         }));
@@ -263,6 +264,7 @@ export const useWorkout = create<WorkoutState>()(
                     rpe: seed?.rpe ?? last?.rpe ?? 7,
                     completed: false,
                     subKind: last?.subKind ?? 'none',
+                    grip: last?.grip,
                   },
                 ],
               };

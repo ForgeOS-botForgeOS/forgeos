@@ -1,3 +1,4 @@
+import type { GripPosition } from '../lib/grip';
 // ---- Core domain types for ForgeOS ----
 
 export type Sex = 'male' | 'female';
@@ -38,7 +39,7 @@ export interface Exercise {
   videoUrl?: string;
 }
 
-export type SubTargetKind = 'tut' | 'band' | 'isometric' | 'none';
+export type SubTargetKind = 'tut' | 'band' | 'isometric' | 'grip' | 'none';
 
 export interface SetEntry {
   id: string;
@@ -51,6 +52,7 @@ export interface SetEntry {
   tutSeconds?: number;
   bandColor?: string;
   isoSeconds?: number;
+  grip?: GripPosition; // set when subKind is 'grip'
   note?: string;
 }
 

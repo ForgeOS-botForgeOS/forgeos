@@ -5,6 +5,7 @@ import type { SetEntry } from '../../types';
 import { e1rm } from '../../lib/fitness';
 import { haptic } from '../../lib/haptics';
 import { useSettings } from '../../state/settingsStore';
+import { GRIP_POSITIONS, GRIP_LABEL, GRIP_HINT } from '../../lib/grip';
 
 /** How far a set has to travel before the swipe counts as complete / delete. */
 const SWIPE_PX = 70;
@@ -181,7 +182,7 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
 
           {ghost && (
             <p className="text-[10px] text-muted/70 mt-1">
-              👻 last week: {ghost.weightKg}kg × {ghost.reps} @ RPE {ghost.rpe ?? '–'}
+              👻 last week: {ghost.weightKg}kg × {ghost.reps} @ RPE {ghost.rpe ?? '–'}{ghost.grip ? ` · ${GRIP_LABEL[ghost.grip].toLowerCase()} grip` : ''}
             </p>
           )}
 
@@ -231,11 +232,11 @@ function SubTarget({ set, onChange }: { set: SetEntry; onChange: (patch: Partial
         onClick={() => setOpen((o) => !o)}
         className="inline-flex items-center rounded-full bg-accent-2/12 px-2.5 py-1 text-xs font-medium text-accent-2 active:scale-95 transition"
       >
-        {kind === 'none' ? '+ sub-target' : `sub-target: ${kind}`}
+        {kind === 'none' ? '+ sub-target' : kind === 'grip' && set.grip ? `grip: ${GRIP_LABEL[set.grip].toLowerCase()}` : `sub-target: ${kind}`}
       </button>
       {open && (
         <div className="mt-1 flex flex-wrap gap-1.5 items-center">
-          {(['none', 'tut', 'band', 'isometric'] as const).map((k) => (
+          {(['none', 'tut', 'band', 'isometric', 'grip'] as const).map((k) => (
             <button
               key={k}
               onClick={() => onChange({ subKind: k })}
@@ -249,6 +250,24 @@ function SubTarget({ set, onChange }: { set: SetEntry; onChange: (patch: Partial
           )}
           {kind === 'band' && (
             <input placeholder="band colour" value={set.bandColor ?? ''} onChange={(e) => onChange({ bandColor: e.target.value })} className="w-24 rounded bg-surface-2 px-2 py-0.5 text-[11px]" />
+          )}
+          {kind === 'grip' && (
+            <div className="w-full space-y-1">
+              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Grip position">
+                {GRIP_POSITIONS.map((g) => (
+                  <button
+                    key={g}
+                    role="radio"
+                    aria-checked={set.grip === g}
+                    onClick={() => { onChange({ grip: g }); haptic('tap'); }}
+                    className={`rounded-md px-2 py-0.5 text-[10px] ${set.grip === g ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}
+                  >
+                    {GRIP_LABEL[g]}
+                  </button>
+                ))}
+              </div>
+              {set.grip && <p className="text-[10px] text-muted">{GRIP_HINT[set.grip]}</p>}
+            </div>
           )}
           {kind === 'isometric' && (
             <input type="number" inputMode="numeric" placeholder="hold s" value={set.isoSeconds ?? ''} onChange={(e) => onChange({ isoSeconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} className="w-16 rounded bg-surface-2 px-2 py-0.5 text-[11px]" />

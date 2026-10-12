@@ -14,6 +14,7 @@ import { CardioFields } from '../components/CardioForm';
 import { haptic } from '../lib/haptics';
 import { toast } from '../lib/toast';
 import { shareWorkout } from '../lib/workoutShare';
+import { hasDraft } from '../lib/workoutDraft';
 import type { Workout } from '../types';
 
 export default function History() {
@@ -62,7 +63,7 @@ function Sessions() {
   return (
     <div className="space-y-2">
       <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/workout/new')}>
-        <span className="flex items-center gap-1"><Plus size={15} /> Add a past workout</span>
+        <span className="flex items-center gap-1"><Plus size={15} /> {hasDraft('new') ? 'Continue your unsaved workout' : 'Add a past workout'}</span>
       </Button>
       {history.length > 0 && <p className="text-[11px] text-muted">Tap a session to edit · ⧉ duplicate · ↗ share a link.</p>}
       {history.map((w) => {

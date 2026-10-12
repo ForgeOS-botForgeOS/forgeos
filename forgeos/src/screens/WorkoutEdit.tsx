@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, Trash2, Search, X } from 'lucide-react';
 import { Card, Button, Sheet } from '../components/ui';
@@ -8,6 +8,9 @@ import { EXERCISES, EXERCISE_CATEGORIES, exerciseById } from '../data/exercises'
 import type { Workout, WorkoutExercise, SetEntry } from '../types';
 import { haptic } from '../lib/haptics';
 import { askConfirm } from '../lib/dialog';
+import { toast } from '../lib/toast';
+import { loadDraft, saveDraft, clearDraft, isDirty } from '../lib/workoutDraft';
+import { GRIP_POSITIONS, GRIP_LABEL, coerceGrip } from '../lib/grip';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -20,9 +23,28 @@ export default function WorkoutEdit() {
   const deleteHistoryWorkout = useWorkout((s) => s.deleteHistoryWorkout);
   const addManualWorkout = useWorkout((s) => s.addManualWorkout);
 
-  const blank: Workout = { id: uid(), name: 'New workout', date: new Date().toISOString(), exercises: [], completed: true, totalVolumeKg: 0 };
-  const [draft, setDraft] = useState<Workout | null>(isNew ? blank : original ? structuredClone(original) : null);
+  // What "no changes" looks like, fixed for the life of the screen.
+  const [baseline] = useState<Workout | null>(() =>
+    isNew
+      ? { id: uid(), name: 'New workout', date: new Date().toISOString(), exercises: [], completed: true, totalVolumeKg: 0 }
+      : original ? structuredClone(original) : null);
+  // Unsaved edits from an earlier visit (Back, another tab, the app closed).
+  const draftKey = isNew ? 'new' : (id ?? '');
+  const [restored] = useState<Workout | null>(() => {
+    const d = loadDraft(draftKey);
+    return d && (isNew || d.id === original?.id) ? d : null;
+  });
+  const [draft, setDraft] = useState<Workout | null>(() => restored ?? baseline);
+  const [showRestored, setShowRestored] = useState(!!restored);
   const [pickerOpen, setPickerOpen] = useState(false);
+  const dirty = !!draft && isDirty(draft, baseline);
+
+  // Every edit lands on the device straight away, so leaving the screen keeps it.
+  useEffect(() => {
+    if (!draft) return;
+    if (isDirty(draft, baseline)) saveDraft(draftKey, draft);
+    else clearDraft(draftKey);
+  }, [draft, baseline, draftKey]);
 
   if (!draft) {
     return (
@@ -36,7 +58,7 @@ export default function WorkoutEdit() {
   const patchSet = (weId: string, setId: string, p: Partial<SetEntry>) =>
     setDraft({ ...draft, exercises: draft.exercises.map((we) => (we.id !== weId ? we : { ...we, sets: we.sets.map((s) => (s.id === setId ? { ...s, ...p } : s)) })) });
   const addSet = (weId: string) =>
-    setDraft({ ...draft, exercises: draft.exercises.map((we) => { if (we.id !== weId) return we; const last = we.sets[we.sets.length - 1]; return { ...we, sets: [...we.sets, { id: uid(), weightKg: last?.weightKg ?? 20, reps: last?.reps ?? 8, completed: true, rpe: last?.rpe ?? 7 }] }; }) });
+    setDraft({ ...draft, exercises: draft.exercises.map((we) => { if (we.id !== weId) return we; const last = we.sets[we.sets.length - 1]; return { ...we, sets: [...we.sets, { id: uid(), weightKg: last?.weightKg ?? 20, reps: last?.reps ?? 8, completed: true, rpe: last?.rpe ?? 7, subKind: last?.grip ? 'grip' : undefined, grip: last?.grip }] }; }) });
   const removeSet = (weId: string, setId: string) =>
     setDraft({ ...draft, exercises: draft.exercises.map((we) => (we.id !== weId ? we : { ...we, sets: we.sets.filter((s) => s.id !== setId) })) });
   const removeExercise = (weId: string) => setDraft({ ...draft, exercises: draft.exercises.filter((we) => we.id !== weId) });
@@ -50,7 +72,18 @@ export default function WorkoutEdit() {
     setDraft({ ...draft, exercises: [...draft.exercises, we] });
   };
 
+  function leave() {
+    if (dirty) toast(isNew ? 'Draft kept: finish it any time from History' : 'Unsaved changes kept for next time');
+    navigate(-1);
+  }
+  function startOver() {
+    clearDraft(draftKey);
+    setDraft(baseline);
+    setShowRestored(false);
+    haptic('tap');
+  }
   function save() {
+    clearDraft(draftKey);
     if (isNew) addManualWorkout(draft!);
     else updateHistoryWorkout(draft!.id, draft!);
     haptic('success');
@@ -63,12 +96,19 @@ export default function WorkoutEdit() {
       confirmLabel: 'Delete',
       tone: 'danger',
     });
-    if (ok) { deleteHistoryWorkout(draft!.id); navigate(-1); }
+    if (ok) { clearDraft(draftKey); deleteHistoryWorkout(draft!.id); navigate(-1); }
   }
 
   return (
     <div className="px-4 pt-12 pb-10 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+      <button onClick={leave} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+
+      {showRestored && (
+        <div className="flex items-center gap-2 rounded-xl border border-line bg-surface-2 px-3 py-2 text-xs">
+          <span className="flex-1 text-muted">Picked up where you left off. Nothing is saved to History until you tap Save.</span>
+          <button onClick={startOver} className="shrink-0 rounded-md bg-surface-2 px-2 py-1 text-muted">Start over</button>
+        </div>
+      )}
 
       <input value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} className="w-full bg-transparent text-2xl font-extrabold outline-none" />
       <input type="date" value={draft.date.slice(0, 10)} onChange={(e) => setDraft({ ...draft, date: new Date(e.target.value).toISOString() })} className="rounded-lg bg-surface-2 border border-line px-3 py-1.5 text-sm" />
@@ -80,10 +120,19 @@ export default function WorkoutEdit() {
             <button onClick={() => removeExercise(we.id)} className="text-danger"><Trash2 size={15} /></button>
           </div>
           {we.sets.map((s, i) => (
-            <div key={s.id} className="flex items-center gap-2">
+            <div key={s.id} className="flex items-center gap-2 flex-wrap">
               <span className="w-5 text-xs text-muted">{i + 1}</span>
               <Num value={s.weightKg} step={2.5} unit="kg" onChange={(v) => patchSet(we.id, s.id, { weightKg: Math.max(0, v) })} />
               <Num value={s.reps} step={1} unit="rep" onChange={(v) => patchSet(we.id, s.id, { reps: Math.max(0, v) })} />
+              <select
+                value={s.grip ?? ''}
+                aria-label={`Grip for set ${i + 1}`}
+                onChange={(e) => { const g = coerceGrip(e.target.value); patchSet(we.id, s.id, { grip: g, subKind: g ? 'grip' : 'none' }); }}
+                className="rounded-md bg-surface-2 px-1.5 py-1 text-[11px] text-muted max-w-[6.5rem]"
+              >
+                <option value="">grip</option>
+                {GRIP_POSITIONS.map((g) => <option key={g} value={g}>{GRIP_LABEL[g]}</option>)}
+              </select>
               <button onClick={() => removeSet(we.id, s.id)} className="text-muted ml-auto"><X size={15} /></button>
             </div>
           ))}

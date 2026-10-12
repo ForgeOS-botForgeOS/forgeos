@@ -1,5 +1,6 @@
 import type { CardioLog, SubTargetKind, Workout, WorkoutExercise } from '../types';
 import { displayTitle } from './sanitize';
+import { coerceGrip, type GripPosition } from './grip';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -10,6 +11,7 @@ interface SharedSet {
   reps: number;
   rpe?: number;
   subKind?: SubTargetKind;
+  grip?: GripPosition;
 }
 interface SharedExercise {
   exerciseId: string;
@@ -52,7 +54,7 @@ export function toSharedWorkout(w: Workout): SharedWorkout {
         exerciseId: e.exerciseId,
         supersetGroup: tag,
         restPresetSec: e.restPresetSec,
-        sets: e.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps, rpe: s.rpe, subKind: s.subKind })),
+        sets: e.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps, rpe: s.rpe, subKind: s.subKind, grip: s.grip })),
       };
     }),
     cardio: w.cardio,
@@ -98,6 +100,7 @@ export function sharedToExercises(shared: SharedWorkout): WorkoutExercise[] {
         reps: s.reps,
         rpe: s.rpe ?? 7,
         subKind: s.subKind ?? 'none',
+        grip: coerceGrip(s.grip),
         completed: false,
       })),
     };
