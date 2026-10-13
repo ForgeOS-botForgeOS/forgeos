@@ -10,6 +10,7 @@ import { useGami } from '../state/gamificationStore';
 import { useSettings } from '../state/settingsStore';
 import { useUser } from '../state/userStore';
 import { useWorkout } from '../state/workoutStore';
+import { canReroll } from '../lib/shop';
 import { QUESTS } from '../data/quests';
 import { RANKS, rankForXp, rankLabel, progressToNext } from '../data/ranks';
 import { buildLeaderboard } from '../lib/mockData';
@@ -246,6 +247,8 @@ function QuestBoard() {
   const quests = useGami((s) => s.quests);
   const claim = useGami((s) => s.claimQuest);
   const claimAll = useGami((s) => s.claimAllQuests);
+  const rerolls = useGami((s) => s.rerolls);
+  const reroll = useGami((s) => s.rerollDailyQuest);
   const [scope, setScope] = useState<'daily' | 'weekly' | 'monthly' | 'yearly'>('daily');
 
   const visible = quests
@@ -286,12 +289,17 @@ function QuestBoard() {
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-muted font-mono">{Math.round(uq.progress).toLocaleString()} / {def.target.toLocaleString()}</span>
               {uq.completed && !uq.claimed && <Button className="py-1.5" onClick={() => { claim(def.id); haptic('success'); toast(`+${def.xp} XP · 🪙${def.coins}`); }}>Claim</Button>}
+              {rerolls > 0 && canReroll(uq, def) && (
+                <Button variant="ghost" className="py-1.5" aria-label={`Reroll ${def.title}`} onClick={() => { if (reroll(def.id)) { haptic('success'); toast('New quest dealt 🎲'); } else toast('No other daily quest to swap in right now.', 'error'); }}>
+                  🎲 Reroll
+                </Button>
+              )}
               {uq.claimed && <Badge color="rgb(var(--success))">claimed</Badge>}
             </div>
           </Card>
         );
       })}
-      <p className="text-[11px] text-muted/70">Daily quests auto-assign and reset each day. ~12–15 active across all scopes.</p>
+      <p className="text-[11px] text-muted/70">Daily quests reset each day. Anything you finished but forgot to claim is claimed for you when the day ends.</p>
     </div>
   );
 }

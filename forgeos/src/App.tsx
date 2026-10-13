@@ -212,7 +212,14 @@ export default function App() {
     } else {
       applyTheme(theme);
     }
-    ensureDailyQuests();
+    // New day: yesterday's finished-but-unclaimed quests are claimed for the
+    // player before the board resets. Also checked on every return to the app,
+    // so a phone left open overnight still rolls over.
+    const rollQuestDay = () => {
+      const r = ensureDailyQuests();
+      if (r) setTimeout(() => toast(`🌙 Auto-claimed ${r.count} quests: +${r.xp.toLocaleString()} XP, 🪙${r.coins}`, 'success'), 1500);
+    };
+    rollQuestDay();
     seedFeed();
     // If a silent auto-update just applied, confirm it visibly (see updateNotice).
     announceIfUpdated();
@@ -266,7 +273,7 @@ export default function App() {
     // data stays current without the user ever opening the Health screen.
     const onHide = () => {
       if (document.visibilityState === 'hidden') { void pushCloudBackup(); void pushMyActivity(); }
-      else { syncHealth(20); void syncWebUpdate(); }
+      else { syncHealth(20); void syncWebUpdate(); rollQuestDay(); }
     };
     document.addEventListener('visibilitychange', onHide);
     return () => {

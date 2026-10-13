@@ -125,6 +125,7 @@ export default function Profile() {
   }
   const equippedTitle = useCosmetics((c) => c.equippedTitle);
   const equippedFrame = useCosmetics((c) => c.equippedFrame);
+  const equippedBadge = useCosmetics((c) => c.equippedBadge);
   const ownedCosmetics = useCosmetics((c) => c.owned);
   const pendingAchievements = useAchievements().pending.count;
   const trainerConsent = useTrainer((s) => s.hasConsent)();
@@ -222,6 +223,7 @@ export default function Profile() {
 
   const title = equippedTitle ? cosmeticById(equippedTitle)?.value : null;
   const frame = equippedFrame ? cosmeticById(equippedFrame)?.value : null;
+  const badge = equippedBadge ? cosmeticById(equippedBadge)?.value : null;
 
   return (
     <Screen title={profile?.name ?? 'You'} subtitle={title ?? (profile?.email ?? `${profile?.authProvider ?? 'guest'} account`)}>
@@ -239,10 +241,15 @@ export default function Profile() {
 
       {/* Identity card with equipped cosmetics — V2 adds a rank·XP console line */}
       <Card className="flex items-center gap-3">
-        <div className="w-14 h-14 rounded-full p-[3px]" style={{ background: frame ?? 'rgb(var(--line))' }}>
+        <div className="relative w-14 h-14 shrink-0 rounded-full p-[3px]" style={{ background: frame ?? 'rgb(var(--line))' }}>
           <div className="w-full h-full rounded-full bg-surface-2 flex items-center justify-center text-lg font-extrabold text-accent">
             {(profile?.name ?? 'Y').slice(0, 2).toUpperCase()}
           </div>
+          {badge && (
+            <span aria-label="Badge" className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-line bg-surface text-sm leading-none">
+              {badge}
+            </span>
+          )}
         </div>
         <div className="flex-1 min-w-0">
           {editingName ? (

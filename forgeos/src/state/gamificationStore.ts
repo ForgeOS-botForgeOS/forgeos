@@ -2,12 +2,21 @@ import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { HealthDay, StreakWager, UserQuest } from '../types';
 import { QUESTS } from '../data/quests';
+import { canReroll, claimCompleted, FREEZE_PRICE, rerollCandidates, REROLL_PRICE } from '../lib/shop';
 import { useSettings } from './settingsStore';
 import { useUser } from './userStore';
 
 // Quests whose progress is an absolute value synced from health data,
 // not an increment (see syncHealthQuests).
 const HEALTH_METRICS = new Set(['sleepMin', 'steps', 'weekSteps', 'sleepNights']);
+
+// Daily quests this user can be given (recovery quests need health data).
+function eligibleQuests() {
+  const recovery = useSettings.getState().recoveryEnabled;
+  return QUESTS.filter((q) => recovery || !HEALTH_METRICS.has(q.metric));
+}
+
+export interface ClaimSummary { count: number; xp: number; coins: number }
 
 interface GamiState {
   xp: number;
@@ -23,6 +32,8 @@ interface GamiState {
   wager: StreakWager | null;
   /** Achievement ids whose reward has already been paid out. */
   claimedAchievements: string[];
+  /** Quest rerolls bought in the shop and not used yet. */
+  rerolls: number;
 
   addXp: (amount: number) => void;
   addCoins: (amount: number) => void;
@@ -32,7 +43,11 @@ interface GamiState {
   registerSession: () => void;
   buyStreakFreeze: () => boolean;
   spendCoins: (amount: number) => boolean;
-  ensureDailyQuests: () => void;
+  /** New day: claims yesterday's finished quests (returned) and deals today's board. */
+  ensureDailyQuests: () => ClaimSummary | null;
+  buyReroll: () => boolean;
+  /** Swaps an unfinished daily quest for another one; uses one reroll. */
+  rerollDailyQuest: (questId: string) => boolean;
   bumpMetric: (metric: 'sets' | 'sessions' | 'volume' | 'pr' | 'streak', amount: number) => void;
   // Sync recovery-quest progress to absolute values from health data.
   syncHealthQuests: (days: HealthDay[]) => void;
@@ -41,7 +56,7 @@ interface GamiState {
   // (data/achievements `rewardFor`) so this store stays independent of the
   // achievement catalogue and its stats snapshot.
   claimAchievement: (id: string, xp: number, coins: number) => boolean;
-  claimAllQuests: () => { count: number; xp: number; coins: number };
+  claimAllQuests: () => ClaimSummary;
   // Count a (possibly past-dated) session toward an active bet + this week's streak.
   countSession: (dateISO: string) => void;
   startWager: (targetSessions: number, staked: number, days: number) => boolean;
@@ -75,6 +90,7 @@ export const useGami = create<GamiState>()(
       quests: [],
       wager: null,
       claimedAchievements: [],
+      rerolls: 0,
 
       addXp: (amount) => set({ xp: get().xp + Math.max(0, Math.round(amount)) }),
 
@@ -96,8 +112,8 @@ export const useGami = create<GamiState>()(
       },
 
       buyStreakFreeze: () => {
-        // A streak freeze costs 20 coins and protects one missed day.
-        if (!get().spendCoins(20)) return false;
+        // A streak freeze protects one missed day.
+        if (!get().spendCoins(FREEZE_PRICE)) return false;
         set({ lastSessionDate: todayStr() });
         return true;
       },
@@ -153,10 +169,9 @@ export const useGami = create<GamiState>()(
       },
 
       ensureDailyQuests: () => {
-        const have = get().quests;
         // Recovery quests only make sense with health data flowing in.
         const recovery = useSettings.getState().recoveryEnabled;
-        const eligible = QUESTS.filter((q) => recovery || !HEALTH_METRICS.has(q.metric));
+        const eligible = eligibleQuests();
         const dailyPool = eligible.filter((q) => q.scope === 'daily');
         const today = todayStr();
         // Rotate a fresh subset of the daily pool each day so the board stays
@@ -174,9 +189,17 @@ export const useGami = create<GamiState>()(
           if (restToday && stepQ && !daily.some((q) => q.id === stepQ.id)) daily[0] = stepQ;
         }
         // Reset daily quests if any assigned daily quest is from a previous day.
-        const staleDaily = have.some(
+        const staleDaily = get().quests.some(
           (uq) => dailyPool.find((d) => d.id === uq.questId) && uq.assignedAt.slice(0, 10) !== today,
         );
+        // The day is over: anything finished but not claimed is claimed for
+        // the player before yesterday's board is cleared, so no reward is lost.
+        let autoClaimed: ClaimSummary | null = null;
+        if (staleDaily) {
+          const r = get().claimAllQuests();
+          if (r.count > 0) autoClaimed = r;
+        }
+        const have = get().quests;
         let next = have;
         if (staleDaily || !have.some((uq) => dailyPool.find((d) => d.id === uq.questId))) {
           // Drop any existing daily quests and assign today's rotated subset.
@@ -192,6 +215,29 @@ export const useGami = create<GamiState>()(
           }
         }
         set({ quests: next });
+        return autoClaimed;
+      },
+
+      buyReroll: () => {
+        if (!get().spendCoins(REROLL_PRICE)) return false;
+        set({ rerolls: get().rerolls + 1 });
+        return true;
+      },
+
+      rerollDailyQuest: (questId) => {
+        const board = get().quests;
+        const uq = board.find((q) => q.questId === questId);
+        if (get().rerolls < 1 || !canReroll(uq, QUESTS.find((q) => q.id === questId))) return false;
+        const options = rerollCandidates(board, eligibleQuests().filter((q) => q.scope === 'daily'));
+        if (!options.length) return false;
+        const pick = options[Math.floor(Math.random() * options.length)];
+        set({
+          rerolls: get().rerolls - 1,
+          quests: board.map((q) =>
+            q.questId === questId ? { questId: pick.id, progress: 0, completed: false, claimed: false, assignedAt: new Date().toISOString() } : q,
+          ),
+        });
+        return true;
       },
 
       bumpMetric: (metric, amount) => {
@@ -252,18 +298,7 @@ export const useGami = create<GamiState>()(
 
       // Claim every completed-but-unclaimed quest at once, summing the rewards.
       claimAllQuests: () => {
-        let xp = 0;
-        let coins = 0;
-        let count = 0;
-        const quests = get().quests.map((q) => {
-          if (!q.completed || q.claimed) return q;
-          const def = QUESTS.find((d) => d.id === q.questId);
-          if (!def) return q;
-          xp += def.xp;
-          coins += def.coins;
-          count++;
-          return { ...q, claimed: true };
-        });
+        const { quests, count, xp, coins } = claimCompleted(get().quests, QUESTS);
         if (count > 0) set({ xp: get().xp + xp, coins: get().coins + coins, quests });
         return { count, xp, coins };
       },

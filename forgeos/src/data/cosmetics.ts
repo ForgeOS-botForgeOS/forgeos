@@ -1,9 +1,13 @@
+export type CosmeticType = 'title' | 'frame' | 'badge' | 'confetti' | 'theme';
+
 export interface Cosmetic {
   id: string;
   name: string;
-  type: 'title' | 'frame' | 'theme';
+  type: CosmeticType;
   price: number;
-  value: string; // title text, CSS colour/gradient for frames, or ThemeId for themes
+  /** title text · CSS colour/gradient (frame) · ThemeId (theme) · one emoji
+   *  shown next to your name (badge) · comma-separated emoji (confetti). */
+  value: string;
   /** Achievement-only: never for sale, no matter how many coins you have. */
   exclusive?: true;
   /** What you have to do to earn it (shown in the shop while it's locked). */
@@ -22,6 +26,21 @@ export const COSMETICS: Cosmetic[] = [
   { id: 't-strongman', name: 'The Strongman', type: 'title', price: 300, value: 'The Strongman' },
   { id: 't-apex', name: 'Apex Predator', type: 'title', price: 450, value: 'Apex Predator' },
   { id: 't-immortal', name: 'Immortal', type: 'title', price: 700, value: 'Immortal' },
+  // The fun ones
+  { id: 't-gymrat', name: 'Certified Gym Rat', type: 'title', price: 60, value: 'Certified Gym Rat' },
+  { id: 't-legday', name: 'Leg Day Survivor', type: 'title', price: 90, value: 'Leg Day Survivor' },
+  { id: 't-goblin', name: 'Protein Goblin', type: 'title', price: 90, value: 'Protein Goblin' },
+  { id: 't-chalk', name: 'Chalk Wizard', type: 'title', price: 110, value: 'Chalk Wizard' },
+  { id: 't-whisperer', name: 'Plate Whisperer', type: 'title', price: 110, value: 'Plate Whisperer' },
+  { id: 't-cardio', name: 'Cardio Enjoyer (Allegedly)', type: 'title', price: 120, value: 'Cardio Enjoyer (Allegedly)' },
+  { id: 't-rebel', name: 'Rest Timer Rebel', type: 'title', price: 130, value: 'Rest Timer Rebel' },
+  { id: 't-spotter', name: 'Spotter of the Year', type: 'title', price: 140, value: 'Spotter of the Year' },
+  { id: 't-mirror', name: 'Mirror Flexer', type: 'title', price: 150, value: 'Mirror Flexer' },
+  { id: 't-sleep', name: 'Sleep Champion', type: 'title', price: 160, value: 'Sleep Champion' },
+  { id: 't-bard', name: 'The Barbell Bard', type: 'title', price: 180, value: 'The Barbell Bard' },
+  { id: 't-philosopher', name: 'Iron Philosopher', type: 'title', price: 240, value: 'Iron Philosopher' },
+  { id: 't-dragon', name: 'Deadlift Dragon', type: 'title', price: 260, value: 'Deadlift Dragon' },
+  { id: 't-finalboss', name: 'Final Boss', type: 'title', price: 900, value: 'Final Boss' },
   // Avatar frames (ring colour around your avatar)
   { id: 'f-gold', name: 'Gold Frame', type: 'frame', price: 100, value: '#ffd24a' },
   { id: 'f-crimson', name: 'Crimson Frame', type: 'frame', price: 100, value: '#ef4444' },
@@ -31,6 +50,34 @@ export const COSMETICS: Cosmetic[] = [
   { id: 'f-rosegold', name: 'Rose Gold Frame', type: 'frame', price: 180, value: 'linear-gradient(90deg,#f9a8d4,#fbbf24)' },
   { id: 'f-rainbow', name: 'Prismatic Frame', type: 'frame', price: 400, value: 'linear-gradient(90deg,#ff5c35,#ffd24a,#38bdf8,#a855f7)' },
   { id: 'f-molten', name: 'Molten Frame', type: 'frame', price: 500, value: 'linear-gradient(90deg,#ff5c35,#ff0000,#ffd24a)' },
+  { id: 'f-ice', name: 'Ice Frame', type: 'frame', price: 150, value: 'linear-gradient(90deg,#e0f2fe,#7dd3fc,#e0f2fe)' },
+  { id: 'f-toxic', name: 'Toxic Frame', type: 'frame', price: 200, value: 'linear-gradient(90deg,#365314,#a3e635,#365314)' },
+  { id: 'f-sunset', name: 'Sunset Frame', type: 'frame', price: 220, value: 'linear-gradient(90deg,#f97316,#ec4899,#8b5cf6)' },
+  { id: 'f-ocean', name: 'Deep Ocean Frame', type: 'frame', price: 260, value: 'linear-gradient(90deg,#0c4a6e,#06b6d4,#0c4a6e)' },
+  { id: 'f-galaxy', name: 'Galaxy Frame', type: 'frame', price: 450, value: 'linear-gradient(90deg,#1e1b4b,#7c3aed,#ec4899,#1e1b4b)' },
+  // Badges (one emoji next to your name)
+  { id: 'b-egg', name: 'Egg', type: 'badge', price: 40, value: '🥚' },
+  { id: 'b-drumstick', name: 'Drumstick', type: 'badge', price: 60, value: '🍗' },
+  { id: 'b-turtle', name: 'Slow & Steady', type: 'badge', price: 70, value: '🐢' },
+  { id: 'b-silverback', name: 'Silverback', type: 'badge', price: 80, value: '🦍' },
+  { id: 'b-owl', name: 'Night Owl', type: 'badge', price: 90, value: '🦉' },
+  { id: 'b-fire', name: 'On Fire', type: 'badge', price: 100, value: '🔥' },
+  { id: 'b-ice', name: 'Ice Cold', type: 'badge', price: 100, value: '🧊' },
+  { id: 'b-bolt', name: 'Voltage', type: 'badge', price: 120, value: '⚡' },
+  { id: 'b-arm', name: 'Bionic Arm', type: 'badge', price: 120, value: '🦾' },
+  { id: 'b-shark', name: 'Shark', type: 'badge', price: 150, value: '🦈' },
+  { id: 'b-dragon', name: 'Dragon', type: 'badge', price: 250, value: '🐉' },
+  { id: 'b-goat', name: 'The GOAT', type: 'badge', price: 300, value: '🐐' },
+  { id: 'b-crown', name: 'Crown', type: 'badge', price: 500, value: '👑' },
+  // Confetti (what rains down on every celebration: PRs, rank-ups, claims)
+  { id: 'c-hearts', name: 'Love the Grind', type: 'confetti', price: 120, value: '❤️,💖' },
+  { id: 'c-stars', name: 'Starfall', type: 'confetti', price: 120, value: '⭐,✨' },
+  { id: 'c-flames', name: 'Flames', type: 'confetti', price: 150, value: '🔥,💥' },
+  { id: 'c-flex', name: 'Flex Storm', type: 'confetti', price: 150, value: '💪,🦾' },
+  { id: 'c-cheat', name: 'Cheat Meal', type: 'confetti', price: 180, value: '🍕,🍔,🍩' },
+  { id: 'c-plates', name: 'Plate Rain', type: 'confetti', price: 200, value: '🏋️,⚪,⚫' },
+  { id: 'c-coins', name: 'Coin Shower', type: 'confetti', price: 250, value: '🪙,💰' },
+  { id: 'c-dragon', name: 'Dragon Fire', type: 'confetti', price: 350, value: '🐉,🔥,💥' },
   // Themes (buy with coins instead of grinding rank) — value = ThemeId
   { id: 'theme-emerald-forge', name: 'Emerald Forge', type: 'theme', price: 250, value: 'emerald-forge' },
   { id: 'theme-cyber-lime', name: 'Cyber Lime', type: 'theme', price: 250, value: 'cyber-lime' },

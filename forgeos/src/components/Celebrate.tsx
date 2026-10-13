@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useGami } from '../state/gamificationStore';
 import { rankForXp, rankLabel } from '../data/ranks';
 import { haptic } from '../lib/haptics';
+import { useCosmetics } from '../state/cosmeticsStore';
+import { cosmeticById } from '../data/cosmetics';
 
 const COLORS = ['#ff5c35', '#ffb020', '#34d399', '#7c6df2', '#38bdf8'];
 
@@ -19,17 +21,24 @@ export function Confetti({ count = 80 }: { count?: number }) {
     })),
   ).current;
 
+  // A confetti style bought in the shop swaps the paper strips for emoji.
+  const styleId = useCosmetics((c) => c.equippedConfetti);
+  const emoji = styleId ? cosmeticById(styleId)?.value.split(',') : undefined;
+
   return (
     <div className="pointer-events-none absolute inset-0 z-[80] overflow-hidden">
-      {pieces.map((p) => (
+      {/* Emoji are bigger than paper strips: half as many reads as full. */}
+      {(emoji ? pieces.filter((p) => p.id % 2 === 0) : pieces).map((p) => (
         <motion.span
           key={p.id}
           initial={{ y: -20, x: `${p.x}%`, opacity: 1, rotate: p.rot }}
           animate={{ y: '110%', x: `calc(${p.x}% + ${p.drift}px)`, opacity: [1, 1, 0], rotate: p.rot + 360 }}
           transition={{ duration: 1.8 + (p.id % 5) * 0.2, delay: p.delay, ease: 'easeIn' }}
-          className="absolute top-0 h-2.5 w-1.5 rounded-sm"
-          style={{ backgroundColor: p.color }}
-        />
+          className={emoji ? 'absolute top-0 text-lg leading-none' : 'absolute top-0 h-2.5 w-1.5 rounded-sm'}
+          style={emoji ? undefined : { backgroundColor: p.color }}
+        >
+          {emoji ? emoji[p.id % emoji.length] : null}
+        </motion.span>
       ))}
     </div>
   );
