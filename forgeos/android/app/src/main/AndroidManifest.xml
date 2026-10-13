@@ -84,6 +84,15 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />
 
+    <!-- Gym check-in (Settings, off by default). Capacitor's WebChromeClient
+         asks for these when the page calls navigator.geolocation; undeclared,
+         Android refuses at once and the check-in silently never fires. Coarse
+         alone is enough if the user picks "approximate" (Android 12+). Only
+         used while the app is open; no background location. -->
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-feature android:name="android.hardware.location.gps" android:required="false" />
+
     <!-- Health Connect: read-only access to the data Garmin Connect writes. -->
     <uses-permission android:name="android.permission.health.READ_SLEEP" />
     <uses-permission android:name="android.permission.health.READ_STEPS" />

@@ -52,6 +52,7 @@ sold, never used for ads, and never shared beyond the user's own cloud backup.
 | Permission | Justification for the console |
 |---|---|
 | `CAMERA` | Barcode scanning and meal photos, only while a scanner screen is open |
+| `ACCESS_FINE_LOCATION` / `ACCESS_COARSE_LOCATION` | Optional gym check-in (off by default): while the app is open, compares the phone's position with the gym spot the user saved. Foreground only, coordinates never leave the device |
 | `REQUEST_INSTALL_PACKAGES` | The app updates itself from its own GitHub release; the user confirms every install. (If this is rejected, the alternative is to remove the in-app updater and ship updates through Play only.) |
 | `POST_NOTIFICATIONS` | Morning readiness note and user-set training reminders |
 | `health.READ_*` | Above |

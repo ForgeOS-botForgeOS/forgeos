@@ -27,6 +27,7 @@ import { cosmeticById } from '../data/cosmetics';
 import { openTutorial } from '../components/Tutorial';
 import { ChangePasswordSheet, PasscodeSheet } from '../components/SecuritySheets';
 import { toast } from '../lib/toast';
+import { isPlaceholderGym } from '../lib/geo';
 import { askConfirm } from '../lib/dialog';
 import { pushCloudBackup, pullCloudBackup, cloudSyncAvailable } from '../lib/cloudSync';
 import { signOutEverywhere } from '../lib/supabase';
@@ -138,9 +139,20 @@ export default function Profile() {
     toast('Name updated ✅');
   }
 
-  function setGymToHere() {
+  // `enabling`: called from the check-in toggle while the gym is still the
+  // placeholder. The gym card's message is far down the screen, so answer with
+  // a toast instead, and switch the check-in back off if there is no location.
+  function setGymToHere(enabling = false) {
+    const fail = (msg: string) => {
+      setGymBusy(false);
+      setGymMsg(msg);
+      if (enabling) {
+        s.set('geofenceEnabled', false);
+        toast(`${msg} Set your gym in “Your gym” below.`, 'error');
+      }
+    };
     if (!navigator.geolocation) {
-      setGymMsg('Location not available on this device.');
+      fail('Location not available on this device.');
       return;
     }
     setGymBusy(true);
@@ -150,14 +162,17 @@ export default function Profile() {
         s.set('gym', { ...s.gym, lat: pos.coords.latitude, lng: pos.coords.longitude });
         setGymBusy(false);
         setGymMsg('Saved this spot as your gym ✅');
+        if (enabling) toast('Check-in on: this spot is now your gym ✅');
         haptic('success');
       },
-      () => {
-        setGymBusy(false);
-        setGymMsg('Couldn’t get your location (permission denied?).');
-      },
+      () => fail('Couldn’t get your location (permission denied?).'),
       { enableHighAccuracy: true, timeout: 15000 },
     );
+  }
+
+  function toggleGeofence(on: boolean) {
+    s.set('geofenceEnabled', on);
+    if (on && isPlaceholderGym(s.gym)) setGymToHere(true);
   }
 
   function buildSummary(): PublicProfile {
@@ -457,7 +472,7 @@ export default function Profile() {
             <Toggle label={t('p.bigControls')} checked={s.a11yLargeTargets} onChange={(v) => { s.set('a11yLargeTargets', v); haptic('tap'); }} />
           </Row>
           <Row label={t('p.geofence')} desc="“Welcome to the Forge” check-in">
-            <Toggle label={t('p.geofence')} checked={s.geofenceEnabled} onChange={(v) => s.set('geofenceEnabled', v)} />
+            <Toggle label={t('p.geofence')} checked={s.geofenceEnabled} onChange={toggleGeofence} />
           </Row>
           <Row label="Health & recovery" desc="Sleep, readiness & Garmin sync">
             <Toggle label="Health & recovery" checked={s.recoveryEnabled} onChange={(v) => { s.set('recoveryEnabled', v); void configureBackgroundSync(v, { bedtime: s.bedtimeNudge }); }} />
@@ -688,7 +703,7 @@ export default function Profile() {
             placeholder="Gym name"
             className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm"
           />
-          <Button variant="outline" className="w-full justify-center" onClick={setGymToHere}>
+          <Button variant="outline" className="w-full justify-center" onClick={() => setGymToHere()}>
             <span className="flex items-center gap-2"><MapPin size={15} /> {gymBusy ? t('p.locating') : t('p.useLocation')}</span>
           </Button>
           {gymMsg && <p className="text-[11px] text-accent-2">{gymMsg}</p>}

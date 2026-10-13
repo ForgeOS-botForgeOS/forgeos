@@ -11,6 +11,13 @@ export interface GymGeofence {
 // A sensible default "home gym" fence the user can later relocate.
 export const DEFAULT_GYM: GymGeofence = { name: 'My Forge', lat: 52.52, lng: 13.405, radiusM: 120 };
 
+// True while the gym is still the placeholder spot above. A fence there can
+// never fire for anyone who does not train in central Berlin, so turning the
+// check-in on must first ask where the gym actually is.
+export function isPlaceholderGym(gym: { lat: number; lng: number }): boolean {
+  return gym.lat === DEFAULT_GYM.lat && gym.lng === DEFAULT_GYM.lng;
+}
+
 function distanceM(aLat: number, aLng: number, bLat: number, bLng: number): number {
   const R = 6371000;
   const dLat = ((bLat - aLat) * Math.PI) / 180;

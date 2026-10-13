@@ -47,7 +47,8 @@ class WebUpdatePlugin : Plugin() {
         // the app would blame a setting the user has no way to change.
         // 9 (2026-09-03): allowBackup=false — the manifest changed, so installs
         // still on 8 must not silently take a web bundle built against 9.
-        const val NATIVE_VERSION = 9
+        // 10 (2026-10-13): location permissions for the gym check-in.
+        const val NATIVE_VERSION = 10
 
         const val PREFS = "forgeos-webupdate"
         const val KEY_PATH = "path"
