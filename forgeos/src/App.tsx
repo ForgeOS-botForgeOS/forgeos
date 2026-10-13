@@ -8,6 +8,7 @@ import { RankUpWatcher } from './components/Celebrate';
 import { Tutorial } from './components/Tutorial';
 import { LockScreen } from './components/LockScreen';
 import { UpdatePrompt } from './components/UpdatePrompt';
+import { CoreUpdatePopup } from './components/CoreUpdatePopup';
 import { Toaster } from './components/Toaster';
 import { DialogHost } from './components/DialogHost';
 import { PasswordReset } from './components/PasswordReset';
@@ -139,6 +140,7 @@ function AppShell() {
       </main>
       <RankUpWatcher />
       <Tutorial />
+      <CoreUpdatePopup />
       <NowPlayingCD />
       <TabBar />
     </div>
@@ -238,7 +240,7 @@ export default function App() {
     // APK updates: OTA-capable builds pull new web bundles silently
     // (checkForApkUpdate triggers that sync); the nudge only fires when a
     // native change genuinely needs a fresh APK. No-op on the website.
-    void checkForApkUpdate().then((u) => { if (u.available) toast('Core update ready: one tap in You → Update installs it 🚀', 'info'); });
+    void checkForApkUpdate(); // CoreUpdatePopup shows the result
     // Live social: ensure a cloud session (anonymous if needed, no signup),
     // then pull the real friend graph.
     void ensureCloudAccount().then(() => {

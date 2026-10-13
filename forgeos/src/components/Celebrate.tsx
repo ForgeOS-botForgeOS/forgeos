@@ -63,6 +63,9 @@ export function RankUpWatcher() {
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0 }}
             onClick={() => setShown(null)}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Rank up"
             className="rounded-2xl bg-surface border border-line px-8 py-6 text-center shadow-glow"
           >
             <p className="text-xs uppercase tracking-widest text-muted">Rank up</p>

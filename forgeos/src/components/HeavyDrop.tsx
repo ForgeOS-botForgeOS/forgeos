@@ -17,6 +17,9 @@ export function HeavyDrop({ drop, onClose }: { drop: Drop | null; onClose: () =>
           <div className="absolute inset-0 bg-black/85 backdrop-blur-sm" />
           {drop.rarity === 'mythic' && <Confetti count={100} />}
           <motion.div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Reward"
             initial={{ scale: 0.7, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0 }}

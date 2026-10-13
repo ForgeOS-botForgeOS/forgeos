@@ -166,6 +166,13 @@ const EN: Dict = {
   'p.radius': 'Check-in radius',
   'p.maxWeight': 'Max weight (e.g. dumbbells)',
   'p.gymHint': 'Geofence check-in works while the app is open. Max weight defaults to 20 kg.',
+  // core update popup
+  'upd.title': 'New ForgeOS version',
+  'upd.body': 'This update changes the app itself, so it needs one quick install. Your workouts and settings stay exactly where they are, and new features wait until it is installed.',
+  'upd.now': 'Update now',
+  'upd.later': 'Later',
+  'upd.getting': 'Getting it… Android will ask you to confirm',
+  'upd.where': 'You can also update any time in You → Update.',
   // social
   's.feed': 'Feed',
   's.friends': 'Friends',
@@ -731,6 +738,13 @@ const SK: Dict = {
   'p.radius': 'Polomer pre check-in',
   'p.maxWeight': 'Max váha (napr. činky)',
   'p.gymHint': 'Geo-check-in funguje, kým je appka otvorená. Max váha je predvolene 20 kg.',
+  // core update popup
+  'upd.title': 'Nová verzia ForgeOS',
+  'upd.body': 'Táto aktualizácia mení samotnú appku, takže treba jednu rýchlu inštaláciu. Tréningy aj nastavenia ostanú presne tam, kde sú, a nové funkcie počkajú, kým ju nainštaluješ.',
+  'upd.now': 'Aktualizovať teraz',
+  'upd.later': 'Neskôr',
+  'upd.getting': 'Sťahujem… Android ťa požiada o potvrdenie',
+  'upd.where': 'Aktualizovať môžeš aj kedykoľvek v Ty → Update.',
   // social
   's.feed': 'Feed',
   's.friends': 'Priatelia',
