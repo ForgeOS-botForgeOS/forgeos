@@ -301,7 +301,8 @@ export const useGami = create<GamiState>()(
 
       // Count a session by its date (used for manual / past-dated workouts).
       countSession: (dateISO) => {
-        const date = localDateKey(new Date(dateISO));
+        // A bare yyyy-mm-dd is already a calendar day; parsing it would read it as UTC.
+        const date = /^\d{4}-\d{2}-\d{2}$/.test(dateISO) ? dateISO : localDateKey(new Date(dateISO));
         // Bet: a past workout dated within [startedAt, deadline] counts.
         const w = get().wager;
         if (w?.active) {

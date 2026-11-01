@@ -44,7 +44,7 @@ function typeAllowed(file: File, types: string[], ext: RegExp): boolean {
   // rejecting a legitimate photo, and rather than trusting the name alone.
   if (file.type && types.includes(file.type.toLowerCase())) return true;
   // Windows reports a .csv as application/vnd.ms-excel when Excel is installed.
-  if (file.type.toLowerCase() === 'application/vnd.ms-excel') return /\.csv$/i.test(file.name || '');
+  if (file.type.toLowerCase() === 'application/vnd.ms-excel' && types.includes('text/csv')) return /\.csv$/i.test(file.name || '');
   if (file.type) return false;
   return ext.test(file.name || '');
 }
