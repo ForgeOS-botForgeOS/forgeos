@@ -94,3 +94,13 @@ describe('equipFamily', () => {
     expect(equipFamily('Suspension Trainer')).toBe('Bodyweight');
   });
 });
+
+describe('equipFamily substring traps', () => {
+  it('does not file a sledgehammer under Machine or a stepper under Bodyweight', () => {
+    expect(equipFamily('Sledgehammer')).toBe('Other');
+    expect(equipFamily('Stepper')).toBe('Other');
+    expect(equipFamily('Recumbent Stepper')).toBe('Other');
+    expect(equipFamily('Sled')).toBe('Machine');
+    expect(equipFamily('Step')).toBe('Bodyweight');
+  });
+});
