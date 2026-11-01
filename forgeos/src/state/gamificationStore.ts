@@ -186,7 +186,7 @@ export const useGami = create<GamiState>()(
         }
         // Reset daily quests if any assigned daily quest is from a previous day.
         const staleDaily = get().quests.some(
-          (uq) => dailyPool.find((d) => d.id === uq.questId) && uq.assignedAt.slice(0, 10) !== today,
+          (uq) => dailyPool.find((d) => d.id === uq.questId) && localDateKey(new Date(uq.assignedAt)) !== today,
         );
         // The day is over: anything finished but not claimed is claimed for
         // the player before yesterday's board is cleared, so no reward is lost.

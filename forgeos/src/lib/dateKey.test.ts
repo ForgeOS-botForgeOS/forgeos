@@ -2,6 +2,7 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { localDateKey, localMondayKey, mondayOfKey } from './dateKey';
 import { mondayOf } from './nudges';
 import { useGami } from '../state/gamificationStore';
+import { QUESTS } from '../data/quests';
 
 // Mon 2 Nov 2026, 00:30 LOCAL. In Europe that is still Sunday in UTC.
 const EARLY_MONDAY = new Date(2026, 10, 2, 0, 30);
@@ -31,5 +32,22 @@ describe('weekly streak at the Monday boundary', () => {
     expect(s.weekStart).toBe('2026-11-02');
     expect(s.weekStreak).toBe(4);
     expect(s.lastSessionDate).toBe('2026-11-02');
+  });
+});
+
+describe('daily quests just after local midnight', () => {
+  beforeEach(() => vi.useFakeTimers());
+  afterEach(() => vi.useRealTimers());
+
+  it('keeps a board dealt at 00:30 local instead of treating it as yesterday\'s', () => {
+    useGami.setState({ quests: [], xp: 0, coins: 0 });
+    vi.setSystemTime(EARLY_MONDAY);
+    useGami.getState().ensureDailyQuests();
+    const daily = useGami.getState().quests.filter((u) => QUESTS.find((d) => d.id === u.questId)?.scope === 'daily');
+    expect(daily.length).toBeGreaterThan(0);
+    useGami.setState({ quests: useGami.getState().quests.map((u) => (u.questId === daily[0].questId ? { ...u, progress: 1 } : u)) });
+    vi.setSystemTime(new Date(2026, 10, 2, 0, 45));
+    useGami.getState().ensureDailyQuests();
+    expect(useGami.getState().quests.find((u) => u.questId === daily[0].questId)?.progress).toBe(1);
   });
 });
