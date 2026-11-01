@@ -14,8 +14,8 @@ export type EquipFamily = 'Barbell' | 'Dumbbell' | 'Cable' | 'Machine' | 'Bodywe
 export const EQUIP_FAMILIES: readonly EquipFamily[] = ['Barbell', 'Dumbbell', 'Cable', 'Machine', 'Bodyweight', 'Kettlebell', 'Other'];
 
 const BARBELL = /barbell|bar\b|ssb|safety bar|football bar|cambered|trap bar|ez[ -]?bar|t-bar|landmine|yoke/i;
-const MACHINE = /machine|hammer strength|smith|belt squat|reverse hyper|ghd|sled|prowler/i;
-const BODYWEIGHT = /bodyweight|none|suspension|trx|rings|parallettes|parallel bars|wall|bar$|low bar|step|box|bench|ab wheel|stability ball|hyper bench/i;
+const MACHINE = /machine|hammer strength|smith|belt squat|reverse hyper|ghd|sled|prowler|flywheel|reformer|cadillac|wunda chair|incline trainer|ab coaster/i;
+const BODYWEIGHT = /bodyweight|none|suspension|trx|rings|parallettes|parallel bars|wall|bar$|low bar|step|box|bench|ab wheel|stability ball|hyper bench|power tower/i;
 
 /** Collapses the catalogue's ~80 equipment strings into the handful you choose between at a busy gym. */
 export function equipFamily(equipment: string): EquipFamily {

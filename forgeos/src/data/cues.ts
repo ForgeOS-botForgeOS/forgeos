@@ -1,7 +1,7 @@
 import type { Exercise } from '../types';
 
 // Per-exercise coaching, derived from the movement pattern in the name (plus
-// equipment + primary muscle). With 2000 exercises we can't hand-write each, so
+// equipment + primary muscle). With 2500 exercises we can't hand-write each, so
 // we match the pattern and assemble specific, useful cues: how to set up and
 // execute, a tempo/breathing cue, and the single most common mistake.
 export interface ExerciseCues {
@@ -21,7 +21,9 @@ interface PatternDef {
 }
 
 // Order matters — the first pattern that matches wins, so put more specific
-// movements (deadlift, hip thrust) before broad ones (press, raise).
+// movements (deadlift, hip thrust) before broad ones (press, raise). Calf and
+// core come before curl/extension/raise, or "Calf Raise", "Hanging Leg Raise"
+// and "Back Extension" would be coached as shoulder or triceps work.
 const PATTERNS: PatternDef[] = [
   {
     label: 'Hip hinge / deadlift',
@@ -90,6 +92,28 @@ const PATTERNS: PatternDef[] = [
     mistake: 'Yanking with the lower back and shrugging: keep the torso still and drive the elbows.',
   },
   {
+    label: 'Calf raise',
+    match: /calf|calves|toe press/,
+    steps: [
+      'Get a full stretch at the bottom, heels dropped below the platform.',
+      'Press onto the balls of your feet to the highest point.',
+      'Pause at the top and lower slowly for a deep stretch.',
+    ],
+    breathing: 'Exhale as you press up, inhale on the stretch.',
+    mistake: 'Bouncing with a short range: pause top and bottom for the full stretch.',
+  },
+  {
+    label: 'Core / anti-extension',
+    match: /plank|crunch|sit-?up|leg raise|hollow|ab |abs|rollout|woodchop|russian twist|dead ?bug|hanging|hyperextension|back extension|superman/,
+    steps: [
+      'Set a neutral spine and brace your abs before moving.',
+      'Move slowly and deliberately: quality of contraction over reps.',
+      'Avoid yanking on the neck; keep the movement in the trunk.',
+    ],
+    breathing: 'Exhale hard as you crunch/brace, breathe shallow to keep tension.',
+    mistake: 'Rushing reps and pulling with the hip flexors or neck: slow down and own the core.',
+  },
+  {
     label: 'Biceps curl',
     match: /curl/,
     steps: [
@@ -121,28 +145,6 @@ const PATTERNS: PatternDef[] = [
     ],
     breathing: 'Exhale as you raise, inhale as you lower.',
     mistake: 'Using momentum and going too heavy: lighter and controlled hits the delts far better.',
-  },
-  {
-    label: 'Calf raise',
-    match: /calf|calves|toe press/,
-    steps: [
-      'Get a full stretch at the bottom, heels dropped below the platform.',
-      'Press onto the balls of your feet to the highest point.',
-      'Pause at the top and lower slowly for a deep stretch.',
-    ],
-    breathing: 'Exhale as you press up, inhale on the stretch.',
-    mistake: 'Bouncing with a short range: pause top and bottom for the full stretch.',
-  },
-  {
-    label: 'Core / anti-extension',
-    match: /plank|crunch|sit-?up|leg raise|hollow|ab |abs|rollout|woodchop|russian twist|dead ?bug|hanging|hyperextension|back extension|superman/,
-    steps: [
-      'Set a neutral spine and brace your abs before moving.',
-      'Move slowly and deliberately: quality of contraction over reps.',
-      'Avoid yanking on the neck; keep the movement in the trunk.',
-    ],
-    breathing: 'Exhale hard as you crunch/brace, breathe shallow to keep tension.',
-    mistake: 'Rushing reps and pulling with the hip flexors or neck: slow down and own the core.',
   },
   {
     label: 'Conditioning / cardio',
@@ -219,7 +221,7 @@ const STRETCH_HOLD: Omit<PatternDef, 'match'> = {
 // Footwork and sprint mechanics: quick, light and precise, not grinding reps.
 const AGILITY: PatternDef = {
   label: 'Speed / agility',
-  match: /ladder|shuffle|carioca|backpedal|a-skip|b-skip|march|drill|shuttle|dash|start|line hop|dot drill|mirror|crossover run|drop step|strides/,
+  match: /(?<!jacobs )ladder|shuffle|carioca|backpedal|a-skip|b-skip|march|drill|shuttle|dash|start|line hop|dot drill|mirror|crossover run|drop step|strides/,
   steps: [
     'Stay on the balls of your feet with knees soft and chest slightly forward.',
     'Keep contacts quick and light; arms drive the rhythm.',
@@ -238,9 +240,10 @@ export function cuesFor(ex: Exercise): ExerciseCues {
     return pack(MOBILITY_PATTERNS.find((p) => p.match.test(hay)) ?? STRETCH_HOLD);
   }
   if (AGILITY.match.test(name)) return pack(AGILITY);
+  // Rowing ergs, bikes and treadmills are conditioning even when the name says
+  // "row" or "fly" (Swimming (Butterfly) is not a chest fly).
+  if (ex.category === 'Cardio') return pack(PATTERNS.find((p) => p.label === 'Conditioning / cardio')!);
   const hit = PATTERNS.find((p) => p.match.test(hay));
   if (hit) return pack(hit);
-  // Sports, classes and combat rounds: no weight to control, it is conditioning.
-  if (ex.category === 'Cardio') return pack(PATTERNS.find((p) => p.label === 'Conditioning / cardio')!);
   return { pattern: `${ex.primary} focus`, ...FALLBACK };
 }

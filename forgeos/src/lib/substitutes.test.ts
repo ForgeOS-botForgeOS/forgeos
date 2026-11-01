@@ -82,6 +82,14 @@ describe('equipFamily', () => {
     expect(substitutesFor(bench.id, { query: 'chest stretch' }).some((e) => e.category === 'Mobility')).toBe(true);
   });
 
+  it('files the new machines under machine and the power tower under bodyweight', () => {
+    expect(equipFamily('Hammer Strength')).toBe('Machine');
+    expect(equipFamily('Pneumatic Machine')).toBe('Machine');
+    expect(equipFamily('Flywheel')).toBe('Machine');
+    expect(equipFamily('Reformer')).toBe('Machine');
+    expect(equipFamily('Power Tower')).toBe('Bodyweight');
+  });
+
   it('files the suspension trainer under bodyweight', () => {
     expect(equipFamily('Suspension Trainer')).toBe('Bodyweight');
   });

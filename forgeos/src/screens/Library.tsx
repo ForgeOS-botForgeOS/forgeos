@@ -10,7 +10,7 @@ import { haptic } from '../lib/haptics';
 
 const MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Full Body'];
 
-// Rows rendered at first: 2000 cards at once made the screen slow on phones.
+// Rows rendered at first: thousands of cards at once made the screen slow on phones.
 const PAGE = 60;
 
 const EQUIPMENT = ['Barbell', 'Dumbbell', 'Cable', 'Machine', 'Bodyweight', 'Kettlebell', 'Bands', 'Cardio'];
@@ -23,8 +23,8 @@ function equipGroup(equipment: string): string {
   if (/kettlebell/.test(eq)) return 'Kettlebell';
   if (/cable/.test(eq)) return 'Cable';
   if (/band/.test(eq)) return 'Bands';
-  if (/rower|ski erg|air bike|echo bike|spin|bike|treadmill|jump rope|pool|sled|prowler|battle|heavy bag|speed bag|elliptical|stair|versaclimber|jacobs|poles|inline|skis/.test(eq)) return 'Cardio';
-  if (/machine|smith|pendulum|ghd|hack/.test(eq)) return 'Machine';
+  if (/rower|ski erg|air bike|echo bike|spin|bike|treadmill|jump rope|pool|sled|prowler|battle|heavy bag|speed bag|elliptical|stair|versaclimber|jacobs|poles|inline|skis|erg$|ergometer|arc trainer|stepper|vertical climber|rope trainer|lateral trainer|ski machine/.test(eq)) return 'Cardio';
+  if (/machine|smith|pendulum|ghd|hack|hammer strength|reverse hyper|flywheel|reformer|cadillac|wunda|incline trainer|vibration|ab coaster|inversion|stretch trainer/.test(eq)) return 'Machine';
   return 'Bodyweight';
 }
 

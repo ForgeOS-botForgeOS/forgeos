@@ -2,8 +2,9 @@ import type { Exercise, ExerciseCategory, MuscleGroup } from '../types';
 import { useExercises } from '../state/exerciseStore';
 import { rankSubstitutes, type SubstituteQuery } from '../lib/substitutes';
 import { MORE_EXERCISES } from './exercisesMore';
+import { MACHINE_EXERCISES } from './exercisesMachines';
 
-// Compact helper so the 2000-entry list stays readable.
+// Compact helper so the 2500-entry list stays readable.
 let n = 0;
 function ex(
   name: string,
@@ -1078,7 +1079,7 @@ export const EXERCISES: Exercise[] = [
   // ---------------- The second thousand (data/exercisesMore.ts) ----------------
   // Appended, never interleaved: ids are numbered by position, and saved
   // workouts, plans and routines point at them.
-  ...MORE_EXERCISES.map(([name, category, primary, secondary, equipment]) => ex(name, category, primary, [...secondary], equipment)),
+  ...[...MORE_EXERCISES, ...MACHINE_EXERCISES].map(([name, category, primary, secondary, equipment]) => ex(name, category, primary, [...secondary], equipment)),
 ];
 
 export { isLoadedLift } from '../lib/exerciseKind';
