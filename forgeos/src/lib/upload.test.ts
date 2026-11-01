@@ -61,3 +61,12 @@ describe('checkTextFile', () => {
     expect(checkTextFile(fakeFile('dump.json', 'application/json', MAX_TEXT_BYTES + 1))?.reason).toBe('too-large');
   });
 });
+
+describe('checkTextFile on Windows', () => {
+  it('accepts a .csv that the OS reports as an Excel type', () => {
+    expect(checkTextFile(fakeFile('export.csv', 'application/vnd.ms-excel', 4000))).toBeNull();
+  });
+  it('still refuses an Excel type with a non-text extension', () => {
+    expect(checkTextFile(fakeFile('export.xls', 'application/vnd.ms-excel', 4000))?.reason).toBe('type');
+  });
+});

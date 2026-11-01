@@ -42,7 +42,10 @@ const TEXT_EXT = /\.(json|csv|txt|xml)$/i;
 function typeAllowed(file: File, types: string[], ext: RegExp): boolean {
   // An empty type is common on Android; fall back to the name rather than
   // rejecting a legitimate photo, and rather than trusting the name alone.
-  if (file.type) return types.includes(file.type.toLowerCase());
+  if (file.type && types.includes(file.type.toLowerCase())) return true;
+  // Windows reports a .csv as application/vnd.ms-excel when Excel is installed.
+  if (file.type.toLowerCase() === 'application/vnd.ms-excel') return /\.csv$/i.test(file.name || '');
+  if (file.type) return false;
   return ext.test(file.name || '');
 }
 
