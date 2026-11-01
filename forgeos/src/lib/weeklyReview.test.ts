@@ -60,3 +60,12 @@ describe('buildWeeklyReview', () => {
     expect(review?.focusKey).toMatch(/^wr\.focus\./);
   });
 });
+
+describe('buildWeeklyReview across a DST change', () => {
+  test('a Monday 00:30 session counts in its week when the week spans the autumn clock change', () => {
+    // Mon 2026-10-26 12:00: reviewed week is Mon 10-19 … Sun 10-25 (DST ended Sun 10-25, a 25h day).
+    const now = new Date(2026, 9, 26, 12, 0).getTime();
+    const review = buildWeeklyReview([workout(new Date(2026, 9, 19, 0, 30).toISOString(), 3000)], [], [], now);
+    expect(review?.sessions).toBe(1);
+  });
+});

@@ -17,7 +17,6 @@ export interface WeeklyReview {
   focusKey: string; // i18n key, e.g. 'wr.focus.keepRhythm' — resolved in the UI
 }
 
-const WEEK_MS = 7 * 86_400_000;
 const VOLUME_DROP_PCT = -20;
 const READINESS_TREND_MIN_DELTA = 5;
 
@@ -54,12 +53,23 @@ function pickFocus(r: Omit<WeeklyReview, 'focusKey'>): string {
  */
 export function buildWeeklyReview(history: Workout[], prs: PR[], days: HealthDay[], now: number, locale = 'en-GB'): WeeklyReview | null {
   const thisMonday = weekStart(now).getTime();
-  const from = thisMonday - WEEK_MS;
+  // Calendar arithmetic, not 7 * 24h: a week containing a DST change is 167h or 169h long.
+  const mondayBefore = (monday: number, weeks: number) => {
+    const d = new Date(monday);
+    d.setDate(d.getDate() - 7 * weeks);
+    return d.getTime();
+  };
+  const from = mondayBefore(thisMonday, 1);
+  const sundayOf = (monday: number) => {
+    const d = new Date(monday);
+    d.setDate(d.getDate() + 6);
+    return d.getTime();
+  };
   const week = history.filter((w) => w.completed && within(w.date, from, thisMonday));
   if (week.length === 0) return null;
 
   const volumeKg = week.reduce((sum, w) => sum + (w.totalVolumeKg ?? 0), 0);
-  const prevWeek = history.filter((w) => w.completed && within(w.date, from - WEEK_MS, from));
+  const prevWeek = history.filter((w) => w.completed && within(w.date, mondayBefore(thisMonday, 2), from));
   const prevVolume = prevWeek.reduce((sum, w) => sum + (w.totalVolumeKg ?? 0), 0);
   const volumeDeltaPct = prevVolume > 0 ? Math.round(((volumeKg - prevVolume) / prevVolume) * 100) : null;
 
@@ -86,7 +96,7 @@ export function buildWeeklyReview(history: Workout[], prs: PR[], days: HealthDay
   }
 
   const base = {
-    weekLabel: label(new Date(from), new Date(thisMonday - 86_400_000), locale),
+    weekLabel: label(new Date(from), new Date(sundayOf(from)), locale),
     weekStartISO: new Date(from).toISOString().slice(0, 10),
     sessions: week.length,
     volumeKg: Math.round(volumeKg),
