@@ -103,7 +103,7 @@ export function scoreEntry(entry: SearchEntry, query: string): number {
   const best = Math.max(title, keyword, where);
   if (best === 0) return 0;
 
-  // Destinations first: with 1000 exercises in the index, a beginner searching
+  // Destinations first: with 2000 exercises in the index, a beginner searching
   // "food" must get the Food tab, not a food-shaped lift.
   const kindBonus: Record<SearchKind, number> = {
     place: 12, setting: 8, session: 4, recipe: 2, exercise: 0,

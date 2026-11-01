@@ -1,12 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { EXERCISES, exerciseById, substitutesFor } from '../data/exercises';
 import { equipFamily, rankSubstitutes } from './substitutes';
+import { isLoadedLift } from './exerciseKind';
 
 const bench = EXERCISES.find((e) => e.name === 'Bench Press')!;
 
 describe('substitutes over the full library', () => {
   it('offers every same-muscle exercise, not the first eight', () => {
-    const chest = EXERCISES.filter((e) => e.primary === 'Chest' && e.id !== bench.id).length;
+    const chest = EXERCISES.filter((e) => e.primary === 'Chest' && isLoadedLift(e) && e.id !== bench.id).length;
     expect(chest).toBeGreaterThan(8);
     expect(substitutesFor(bench.id)).toHaveLength(chest);
   });
@@ -70,5 +71,18 @@ describe('equipFamily', () => {
   it('puts every catalogue exercise somewhere', () => {
     expect(EXERCISES.every((e) => !!equipFamily(e.equipment))).toBe(true);
     expect(exerciseById(bench.id)).toBeTruthy();
+  });
+
+  it('swaps a lift for lifts and a stretch for stretches unless you search', () => {
+    expect(substitutesFor(bench.id).every((e) => isLoadedLift(e))).toBe(true);
+    const pigeon = EXERCISES.find((e) => e.name === 'Pigeon Pose')!;
+    const alts = substitutesFor(pigeon.id);
+    expect(alts.length).toBeGreaterThan(0);
+    expect(alts.every((e) => e.category === 'Mobility' || e.category === 'Cardio')).toBe(true);
+    expect(substitutesFor(bench.id, { query: 'chest stretch' }).some((e) => e.category === 'Mobility')).toBe(true);
+  });
+
+  it('files the suspension trainer under bodyweight', () => {
+    expect(equipFamily('Suspension Trainer')).toBe('Bodyweight');
   });
 });

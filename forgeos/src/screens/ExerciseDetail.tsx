@@ -4,7 +4,7 @@ import { ChevronLeft, ChevronRight, Play, TrendingUp, Trophy, Music2 } from 'luc
 import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Area } from 'recharts';
 import { useChartKit } from '../components/chartKit';
 import { Card, Badge, Button, SectionTitle } from '../components/ui';
-import { exerciseById, substitutesFor } from '../data/exercises';
+import { exerciseById, isLoadedLift, substitutesFor } from '../data/exercises';
 import { cuesFor } from '../data/cues';
 import { MUSCLE_CUES } from '../data/tips';
 import { liftBadge } from '../data/ranks';
@@ -46,9 +46,10 @@ export default function ExerciseDetail() {
   const cues = cuesFor(ex);
   const working = stats.bestSet?.weightKg ?? 60;
   const badge = stats.bestE1rm > 0 ? liftBadge(Math.round(stats.bestE1rm), bodyweight) : null;
-  // Cardio logs carry minutes, not load — e1RM, tonnage and warm-up ladders are
-  // meaningless there, so those blocks only exist for loaded movements.
-  const isLoaded = ex.category !== 'Cardio';
+  // Cardio logs minutes and Mobility holds a stretch, not load — e1RM, tonnage
+  // and warm-up ladders are meaningless there, so those blocks only exist for
+  // loaded movements.
+  const isLoaded = isLoadedLift(ex);
 
   return (
     <div className="px-4 pt-12 pb-6 space-y-4">
@@ -154,9 +155,12 @@ export default function ExerciseDetail() {
         </ol>
         <p className="text-xs"><span className="text-accent">🫁 {t('ex.breathing')}.</span> {cues.breathing}</p>
         <p className="text-xs"><span className="text-warn">⚠️ {t('ex.mistake')}.</span> {cues.mistake}</p>
-        <p className="border-t border-line pt-2 text-xs text-muted">
-          <span className="text-accent-2">🎯 {ex.primary}.</span> {MUSCLE_CUES[ex.primary] ?? 'Control the weight through a full range of motion.'}
-        </p>
+        {/* The muscle cues are lifting cues ("squeeze hard at the top"): wrong for a stretch. */}
+        {ex.category !== 'Mobility' && (
+          <p className="border-t border-line pt-2 text-xs text-muted">
+            <span className="text-accent-2">🎯 {ex.primary}.</span> {MUSCLE_CUES[ex.primary] ?? 'Control the weight through a full range of motion.'}
+          </p>
+        )}
       </Card>
 
       {/* ---- warm-up ladder ---- */}

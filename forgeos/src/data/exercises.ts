@@ -1,8 +1,9 @@
 import type { Exercise, ExerciseCategory, MuscleGroup } from '../types';
 import { useExercises } from '../state/exerciseStore';
 import { rankSubstitutes, type SubstituteQuery } from '../lib/substitutes';
+import { MORE_EXERCISES } from './exercisesMore';
 
-// Compact helper so the 150+ list stays readable.
+// Compact helper so the 2000-entry list stays readable.
 let n = 0;
 function ex(
   name: string,
@@ -1074,7 +1075,13 @@ export const EXERCISES: Exercise[] = [
   ex('Bradford Press', 'Bodybuilding', 'Shoulders', ['Triceps'], 'Barbell'),
   ex('Cuban Press', 'Bodybuilding', 'Shoulders', ['Back'], 'Dumbbell'),
   ex('Powell Raise', 'Bodybuilding', 'Shoulders', [], 'Dumbbell'),
+  // ---------------- The second thousand (data/exercisesMore.ts) ----------------
+  // Appended, never interleaved: ids are numbered by position, and saved
+  // workouts, plans and routines point at them.
+  ...MORE_EXERCISES.map(([name, category, primary, secondary, equipment]) => ex(name, category, primary, [...secondary], equipment)),
 ];
+
+export { isLoadedLift } from '../lib/exerciseKind';
 
 export const EXERCISE_CATEGORIES: ExerciseCategory[] = [
   'Powerlifting',
@@ -1084,6 +1091,7 @@ export const EXERCISE_CATEGORIES: ExerciseCategory[] = [
   'Olympic',
   'CrossFit',
   'Cardio',
+  'Mobility',
 ];
 
 // Catalogue + the user's own creations (state/exerciseStore). Custom ids are

@@ -1,4 +1,5 @@
 import type { Exercise } from '../types';
+import { isLoadedLift } from './exerciseKind';
 
 // Exercise substitution over the WHOLE library.
 //
@@ -14,7 +15,7 @@ export const EQUIP_FAMILIES: readonly EquipFamily[] = ['Barbell', 'Dumbbell', 'C
 
 const BARBELL = /barbell|bar\b|ssb|safety bar|football bar|cambered|trap bar|ez[ -]?bar|t-bar|landmine|yoke/i;
 const MACHINE = /machine|hammer strength|smith|belt squat|reverse hyper|ghd|sled|prowler/i;
-const BODYWEIGHT = /bodyweight|none|rings|parallettes|parallel bars|wall|bar$|low bar|step|box|bench|ab wheel|stability ball|hyper bench/i;
+const BODYWEIGHT = /bodyweight|none|suspension|trx|rings|parallettes|parallel bars|wall|bar$|low bar|step|box|bench|ab wheel|stability ball|hyper bench/i;
 
 /** Collapses the catalogue's ~80 equipment strings into the handful you choose between at a busy gym. */
 export function equipFamily(equipment: string): EquipFamily {
@@ -64,7 +65,9 @@ export function rankSubstitutes(base: Exercise, pool: readonly Exercise[], opts:
   const words = norm(opts.query ?? '').split(/\s+/).filter(Boolean);
   const family = opts.family ?? 'Any';
   const matches = (c: Exercise) => {
-    if (words.length === 0) return c.primary === base.primary;
+    // Unprompted, a lift is swapped for lifts and a stretch for stretches; a
+    // search is explicit, so it may cross over.
+    if (words.length === 0) return c.primary === base.primary && isLoadedLift(c) === isLoadedLift(base);
     const hay = norm(`${c.name} ${c.primary} ${c.equipment} ${c.category}`);
     return words.every((w) => hay.includes(w));
   };

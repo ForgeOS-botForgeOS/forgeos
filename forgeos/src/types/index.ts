@@ -13,7 +13,8 @@ export type ExerciseCategory =
   | 'Calisthenics'
   | 'Olympic'
   | 'CrossFit'
-  | 'Cardio';
+  | 'Cardio'
+  | 'Mobility';
 
 export type MuscleGroup =
   | 'Chest'

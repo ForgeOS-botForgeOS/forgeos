@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Search, Nfc, Plus, Trash2 } from 'lucide-react';
 import { Card, Badge, Button } from '../components/ui';
@@ -9,6 +9,9 @@ import type { MuscleGroup } from '../types';
 import { haptic } from '../lib/haptics';
 
 const MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Full Body'];
+
+// Rows rendered at first: 2000 cards at once made the screen slow on phones.
+const PAGE = 60;
 
 const EQUIPMENT = ['Barbell', 'Dumbbell', 'Cable', 'Machine', 'Bodyweight', 'Kettlebell', 'Bands', 'Cardio'];
 
@@ -33,6 +36,7 @@ export default function Library() {
   const [equip, setEquip] = useState<string>('All');
   const [nfcMsg, setNfcMsg] = useState<string | null>(null);
   const [createOpen, setCreateOpen] = useState(false);
+  const [shown, setShown] = useState(PAGE);
   const custom = useExercises((s) => s.custom);
   const removeCustom = useExercises((s) => s.removeCustom);
 
@@ -47,6 +51,8 @@ export default function Library() {
       ),
     [q, cat, muscle, equip, custom],
   );
+  // A new search or filter starts from the top again.
+  useEffect(() => setShown(PAGE), [q, cat, muscle, equip]);
 
   async function pairNfc() {
     haptic('tap');
@@ -124,7 +130,7 @@ export default function Library() {
         )}
       </div>
       <div className="space-y-2">
-        {list.map((e) => (
+        {list.slice(0, shown).map((e) => (
           <Card key={e.id} onClick={() => navigate(`/exercise/${e.id}`)} className="flex items-center justify-between">
             <div>
               <p className="font-medium text-sm">{e.name}</p>
@@ -140,6 +146,11 @@ export default function Library() {
             </div>
           </Card>
         ))}
+        {list.length > shown && (
+          <button onClick={() => setShown((n) => n + PAGE)} className="w-full rounded-xl border border-line py-2.5 text-xs text-muted">
+            Show more ({list.length - shown} left)
+          </button>
+        )}
       </div>
 
       <CreateExerciseSheet open={createOpen} onClose={() => setCreateOpen(false)} />

@@ -10,7 +10,7 @@ const PAGE = 30;
 
 /**
  * The swap sheet's body: every same-muscle alternative from the full library,
- * narrowed by whichever equipment is free, or a search across all 1000.
+ * narrowed by whichever equipment is free, or a search across the whole library.
  */
 export function SubstituteList({ base, onPick }: { base: Exercise; onPick: (id: string) => void }) {
   const [q, setQ] = useState('');

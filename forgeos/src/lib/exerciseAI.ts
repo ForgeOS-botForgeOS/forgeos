@@ -37,6 +37,7 @@ const MUSCLE_HINTS: [MuscleGroup, RegExp][] = [
 ];
 
 const CATEGORY_HINTS: [ExerciseCategory, RegExp][] = [
+  ['Mobility', /\b(stretch(es|ing)?|mobility|yoga|pose|foam roll(ing)?|warm[- ]?up drill)\b/i],
   ['Cardio', /\b(run|sprint|bike|row(ing)? machine|jump rope|cardio|treadmill|conditioning)\b/i],
   ['Plyometrics', /\b(jump|hop|bound|explosive|plyo)\b/i],
   ['Olympic', /\b(clean|snatch|jerk)\b/i],

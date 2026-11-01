@@ -1,5 +1,5 @@
 import type { Goal, PlannedDay, WeekPlan, Weekday, MuscleGroup } from '../../types';
-import { EXERCISES } from '../../data/exercises';
+import { EXERCISES, isLoadedLift } from '../../data/exercises';
 
 const WEEKDAYS: Weekday[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -12,7 +12,7 @@ export interface PlanOptions {
 }
 
 function pick(primaries: MuscleGroup[], count: number, offset: number): string[] {
-  const pool = EXERCISES.filter((e) => primaries.includes(e.primary) && e.category !== 'Cardio');
+  const pool = EXERCISES.filter((e) => primaries.includes(e.primary) && isLoadedLift(e));
   const out: string[] = [];
   for (let i = 0; i < count && pool.length; i++) {
     out.push(pool[(offset * count + i) % pool.length].id);
@@ -106,7 +106,7 @@ export function exercisesForFocus(focus: PlanFocus, count = 5): string[] {
     return EXERCISES.filter((e) => e.category === 'Cardio').slice(0, count).map((e) => e.id);
   }
   const muscles = FOCUS_MUSCLES[focus];
-  const pool = EXERCISES.filter((e) => muscles.includes(e.primary) && e.category !== 'Cardio');
+  const pool = EXERCISES.filter((e) => muscles.includes(e.primary) && isLoadedLift(e));
   // de-dupe and take a spread across the targeted muscles
   const out: string[] = [];
   for (const m of muscles) {

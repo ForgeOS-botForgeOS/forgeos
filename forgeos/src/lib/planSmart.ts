@@ -1,4 +1,4 @@
-import { EXERCISES, exerciseById } from '../data/exercises';
+import { EXERCISES, exerciseById, isLoadedLift } from '../data/exercises';
 import type { ExerciseTarget, MuscleGroup, PlannedDay, Weekday } from '../types';
 import { exercisesForFocus, inferFocus } from '../screens/onboarding/planGenerator';
 
@@ -22,7 +22,7 @@ export function buildSmartDay(name: string, focusText: string, skipText: string,
   const focusLower = focusText.toLowerCase();
   for (const [word, muscle] of Object.entries(MUSCLE_WORDS)) {
     if (focusLower.includes(word)) {
-      const extra = EXERCISES.filter((e) => e.primary === muscle && e.category !== 'Cardio' && !ids.includes(e.id)).slice(0, 2).map((e) => e.id);
+      const extra = EXERCISES.filter((e) => e.primary === muscle && isLoadedLift(e) && !ids.includes(e.id)).slice(0, 2).map((e) => e.id);
       ids = [...extra, ...ids];
     }
   }

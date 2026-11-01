@@ -1,7 +1,7 @@
 import type { Exercise } from '../types';
 
 // Per-exercise coaching, derived from the movement pattern in the name (plus
-// equipment + primary muscle). With 1000 exercises we can't hand-write each, so
+// equipment + primary muscle). With 2000 exercises we can't hand-write each, so
 // we match the pattern and assemble specific, useful cues: how to set up and
 // execute, a tempo/breathing cue, and the single most common mistake.
 export interface ExerciseCues {
@@ -167,12 +167,80 @@ const FALLBACK: Omit<ExerciseCues, 'pattern'> = {
   mistake: 'Using momentum or cutting the range short: slow it down and feel the target muscle.',
 };
 
+// Mobility work is matched on its own list first: "Squat to Stand" or "Bridge
+// Pose" are stretches, and the lifting cues ("control the weight") would be wrong.
+const MOBILITY_PATTERNS: PatternDef[] = [
+  {
+    label: 'Soft-tissue release',
+    match: /foam roll|lacrosse ball|massage ball/,
+    steps: [
+      'Roll slowly, about an inch a second, along the length of the muscle.',
+      'When you find a tender spot, pause on it for 20 to 30 seconds and let it ease.',
+      'Stay off joints and bone; keep the pressure on muscle.',
+    ],
+    breathing: 'Breathe slowly through the tender spots; holding your breath keeps the muscle tight.',
+    mistake: 'Grinding fast and hard over a sore spot: slow, moderate pressure works better.',
+  },
+  {
+    label: 'Breathing drill',
+    match: /breathing|corpse pose/,
+    steps: [
+      'Lie or sit comfortably with one hand on your chest and one on your belly.',
+      'Breathe in through the nose so the belly and lower ribs widen, not the shoulders.',
+      'Breathe out slowly and fully, letting the ribs drop.',
+    ],
+    breathing: 'Slow and even: around 4 seconds in, 6 seconds out.',
+    mistake: 'Breathing up into the chest and shoulders instead of the belly and ribs.',
+  },
+  {
+    label: 'Dynamic mobility',
+    match: /circles|cars\b|swings|walk|hug|pull\b|inchworm|rock|switch|get-up|opener|closer|airplane|slide|dislocate|rotation|thread|flow|salutation|squat to stand|reach/,
+    steps: [
+      'Move slowly through the biggest range you can control.',
+      'Keep the rest of the body still so the target joint does the work.',
+      'Do 5 to 10 smooth reps each side, a little bigger each time.',
+    ],
+    breathing: 'Keep breathing steadily; exhale as you move into the end range.',
+    mistake: 'Swinging or bouncing to get further: control beats range.',
+  },
+];
+
+const STRETCH_HOLD: Omit<PatternDef, 'match'> = {
+  label: 'Stretch hold',
+  steps: [
+    'Ease into the position until you feel a gentle stretch, not pain.',
+    'Hold still for 20 to 45 seconds; go slightly deeper as the muscle relaxes.',
+    'Come out slowly and repeat on the other side.',
+  ],
+  breathing: 'Long, slow breaths out help the muscle let go.',
+  mistake: 'Bouncing or forcing it into pain: a stretch should feel strong but tolerable.',
+};
+
+// Footwork and sprint mechanics: quick, light and precise, not grinding reps.
+const AGILITY: PatternDef = {
+  label: 'Speed / agility',
+  match: /ladder|shuffle|carioca|backpedal|a-skip|b-skip|march|drill|shuttle|dash|start|line hop|dot drill|mirror|crossover run|drop step|strides/,
+  steps: [
+    'Stay on the balls of your feet with knees soft and chest slightly forward.',
+    'Keep contacts quick and light; arms drive the rhythm.',
+    'Go for clean, precise steps first, then add speed.',
+  ],
+  breathing: 'Short work, full rest: breathe deeply between reps.',
+  mistake: 'Getting sloppy when tired: stop the set once the footwork breaks down.',
+};
+
+const pack = (p: Omit<PatternDef, 'match'>): ExerciseCues => ({ pattern: p.label, steps: p.steps, breathing: p.breathing, mistake: p.mistake });
+
 export function cuesFor(ex: Exercise): ExerciseCues {
   const name = ex.name.toLowerCase();
   const hay = `${name} ${ex.equipment.toLowerCase()}`;
-  const hit = PATTERNS.find((p) => p.match.test(hay));
-  if (hit) {
-    return { pattern: hit.label, steps: hit.steps, breathing: hit.breathing, mistake: hit.mistake };
+  if (ex.category === 'Mobility') {
+    return pack(MOBILITY_PATTERNS.find((p) => p.match.test(hay)) ?? STRETCH_HOLD);
   }
+  if (AGILITY.match.test(name)) return pack(AGILITY);
+  const hit = PATTERNS.find((p) => p.match.test(hay));
+  if (hit) return pack(hit);
+  // Sports, classes and combat rounds: no weight to control, it is conditioning.
+  if (ex.category === 'Cardio') return pack(PATTERNS.find((p) => p.label === 'Conditioning / cardio')!);
   return { pattern: `${ex.primary} focus`, ...FALLBACK };
 }
