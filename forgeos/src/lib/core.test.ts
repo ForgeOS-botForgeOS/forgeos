@@ -4,6 +4,13 @@ import { rankForXp } from '../data/ranks';
 import { parsePastedWorkout, parsePastedWeek } from './planSmart';
 
 describe('fitness math', () => {
+  it('e1RM stays finite and monotonic for high-rep sets (Brzycki divides by 37 - reps)', () => {
+    for (const reps of [30, 36, 37, 40, 60]) {
+      expect(Number.isFinite(e1rm(20, reps))).toBe(true);
+      expect(e1rm(20, reps)).toBeGreaterThanOrEqual(20);
+    }
+  });
+
   it('e1RM grows with reps and equals the weight at 1 rep', () => {
     expect(Math.round(e1rm(100, 1))).toBe(100);
     expect(e1rm(100, 5)).toBeGreaterThan(100);

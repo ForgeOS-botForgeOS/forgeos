@@ -8,6 +8,8 @@ export function epley(weightKg: number, reps: number): number {
 
 export function brzycki(weightKg: number, reps: number): number {
   if (reps <= 1) return weightKg;
+  // The formula diverges at 37 reps and goes negative past it: fall back to Epley.
+  if (reps >= 36) return epley(weightKg, reps);
   return weightKg * (36 / (37 - reps));
 }
 
