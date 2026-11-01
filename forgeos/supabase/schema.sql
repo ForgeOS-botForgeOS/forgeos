@@ -206,8 +206,15 @@ create policy "purchases owner" on purchases for all using (auth.uid() = user_id
 -- Friendships: either side may read; only owner writes their own row.
 drop policy if exists "friendships read" on friendships;
 create policy "friendships read" on friendships for select using (auth.uid() = user_id or auth.uid() = friend_id);
+-- Clients NEVER insert or update friendships: a self-made (me, victim, 'accepted')
+-- row opened every "friends read" policy below onto the victim. The only creator
+-- is add_friend_by_code (SECURITY DEFINER, writes both directions); either side
+-- may delete, so unfriending revokes access in both directions.
+-- (migrations/2026-11-01-security-hardening-2.sql)
 drop policy if exists "friendships write" on friendships;
-create policy "friendships write" on friendships for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+drop policy if exists "friendships delete" on friendships;
+create policy "friendships delete" on friendships for delete using (auth.uid() = user_id or auth.uid() = friend_id);
+revoke insert, update on friendships from anon, authenticated;
 
 -- Feed: anyone authenticated reads; author writes.
 drop policy if exists "feed read" on feed_posts;
@@ -219,7 +226,8 @@ create policy "feed author" on feed_posts for all using (auth.uid() = author_id)
 drop policy if exists "reactions read" on reactions;
 create policy "reactions read" on reactions for select using (auth.role() = 'authenticated');
 drop policy if exists "reactions self" on reactions;
-create policy "reactions self" on reactions for all using (auth.uid() = user_id) with check (auth.uid() = user_id);
+create policy "reactions self" on reactions for all using (auth.uid() = user_id)
+  with check (auth.uid() = user_id and exists (select 1 from feed_posts p where p.id = post_id));
 
 -- Leaderboard: public rows readable by all; owner writes own.
 drop policy if exists "leaderboard read" on leaderboard_entries;
@@ -437,6 +445,11 @@ drop policy if exists "challenger starts duel" on duels;
 create policy "duel insert" on duels for insert with check (
   auth.uid() = challenger
   and opponent <> challenger
+  and state = 'pending'
+  and challenger_progress = 0
+  and opponent_progress = 0
+  and ends_at > now()
+  and ends_at <= now() + interval '400 days'
   and exists (
     select 1 from friendships f
     where f.user_id = auth.uid() and f.friend_id = opponent and f.status = 'accepted'
