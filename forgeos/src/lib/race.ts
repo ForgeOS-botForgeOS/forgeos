@@ -1,6 +1,7 @@
 import type { Workout } from '../types';
 import { toSharedWorkout, decodeWorkout, type SharedWorkout } from './workoutShare';
 import { randomId } from './rand';
+import { displayName } from './sanitize';
 
 // Three ways to win a live race — the host picks one when creating it:
 //  - workout: everyone does the identical shared workout; first to complete
@@ -114,7 +115,11 @@ export function decodeRaceInvite(code: string): RaceConfig | null {
   try {
     const wire = JSON.parse(atobUrl(code)) as InviteWire;
     if (!wire || wire.v !== 1 || typeof wire.raceId !== 'string' || typeof wire.hostId !== 'string' || typeof wire.hostName !== 'string') return null;
-    const base = { raceId: wire.raceId, hostId: wire.hostId, hostName: wire.hostName };
+    // Ids go into a realtime channel name and presence key; the name is shown to
+    // the joiner. All three come from a link a stranger can write by hand.
+    const ID = /^[A-Za-z0-9_-]{1,64}$/;
+    if (!ID.test(wire.raceId) || !ID.test(wire.hostId)) return null;
+    const base = { raceId: wire.raceId, hostId: wire.hostId, hostName: displayName(wire.hostName, 'Host') };
     if (wire.mode === 'volume') {
       if (!isSaneNumber(wire.targetKg, MAX_TARGET_KG)) return null;
       return { ...base, mode: 'volume', targetKg: wire.targetKg };

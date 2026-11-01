@@ -115,3 +115,27 @@ export function safeUrl(input: unknown): string | undefined {
     return undefined;
   }
 }
+
+/** A finite number clamped into [min, max]; anything else becomes `fallback`. */
+export function cleanNumber(input: unknown, min: number, max: number, fallback = 0): number {
+  const n = typeof input === 'number' ? input : typeof input === 'string' && input.trim() ? Number(input) : NaN;
+  if (!Number.isFinite(n)) return fallback;
+  return Math.min(max, Math.max(min, n));
+}
+
+/**
+ * The "5400 kg, 18 sets, 52 min" strip on a feed post, from a jsonb column the
+ * author controls. It is rendered as React children, and React throws on a
+ * plain-object child: a friend could store {"durationMin":{}} and the Social
+ * screen would crash for as long as that post stayed in the feed. Returns
+ * undefined for anything that is not a plain object, and numbers otherwise.
+ */
+export function cleanWorkoutSummary(input: unknown): { volumeKg: number; sets: number; durationMin: number } | undefined {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) return undefined;
+  const r = input as Record<string, unknown>;
+  return {
+    volumeKg: cleanNumber(r.volumeKg, 0, 1_000_000),
+    sets: cleanNumber(r.sets, 0, 1000),
+    durationMin: cleanNumber(r.durationMin, 0, 1440),
+  };
+}

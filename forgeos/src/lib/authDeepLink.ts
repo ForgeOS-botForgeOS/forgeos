@@ -1,6 +1,7 @@
 import { Capacitor } from '@capacitor/core';
 import { supabase } from './supabase';
 import { toast } from './toast';
+import { cleanText } from './sanitize';
 
 // Google refuses to run its sign-in page inside a WebView, so in the installed
 // app the OAuth round-trip goes: system browser → Google → Supabase →
@@ -23,7 +24,10 @@ export function parseAuthRedirect(url: string): AuthRedirect | null {
   }
   if (parsed.protocol !== 'forgeos:' || parsed.hostname !== 'auth') return null;
   const message = parsed.searchParams.get('error_description') ?? parsed.searchParams.get('error');
-  if (message) return { kind: 'error', message };
+  // Any app or web page can fire forgeos://auth?error_description=..., and the
+  // text goes straight into a toast: without a cap and cleaning it is a free
+  // phishing message ("sign-in failed, call +421...") shown inside our UI.
+  if (message) return { kind: 'error', message: cleanText(message, { max: 120 }) || 'unknown error' };
   const code = parsed.searchParams.get('code');
   if (code) return { kind: 'code', code };
   return null;

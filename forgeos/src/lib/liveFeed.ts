@@ -1,6 +1,7 @@
 import type { FeedPost } from '../types';
 import { isBackendLive, supabase, subscribeToFeed } from './supabase';
 import { useSocial } from '../state/socialStore';
+import { cleanWorkoutSummary, displayBody, displayName, LIMITS } from './sanitize';
 
 // Live feed: friends' posts stream in over Supabase Realtime (postgres_changes
 // on feed_posts — RLS still applies, so only posts you're allowed to read
@@ -19,15 +20,17 @@ export function feedRowToPost(row: unknown): FeedPost | null {
     created_at?: unknown;
   };
   if (typeof r.id !== 'string' || typeof r.author_id !== 'string' || typeof r.created_at !== 'string') return null;
-  const name = typeof r.author_name === 'string' && r.author_name ? r.author_name : 'Athlete';
-  const summary = r.workout_summary as FeedPost['workoutSummary'] | null | undefined;
+  // Same boundary cleaning as fetchFeed (repositories.ts): this realtime path
+  // used to skip it, so the live feed accepted bidi-override names, unbounded
+  // bodies and a workout_summary of any shape.
+  const name = displayName(r.author_name);
   return {
     id: r.id,
     authorId: r.author_id,
     authorName: name,
     avatarSeed: name.slice(0, 2).toUpperCase(),
-    body: typeof r.body === 'string' ? r.body : '',
-    workoutSummary: summary ?? undefined,
+    body: displayBody(r.body, LIMITS.post),
+    workoutSummary: cleanWorkoutSummary(r.workout_summary),
     createdAt: r.created_at,
     reactions: {},
   };

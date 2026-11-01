@@ -1,5 +1,7 @@
 // Shareable public profile: encode a read-only snapshot into a link, and render
 // a profile card to canvas. Toggleable on/off in settings.
+import { cleanNumber, displayName, displayTitle } from './sanitize';
+
 export interface PublicProfile {
   name: string;
   rank: string;
@@ -15,11 +17,39 @@ export function encodeProfile(p: PublicProfile): string {
   return btoa(unescape(encodeURIComponent(JSON.stringify(p)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
+/**
+ * A profile link is written by its owner (or by anyone pretending to be them).
+ * Rebuild it from known keys: the page calls `p.xp.toLocaleString()` and
+ * `p.bestLifts.length`, so a link missing or mistyping those used to blank the
+ * page, and names went to the screen and the share-card canvas uncleaned.
+ */
+export function sanitizeProfile(raw: unknown): PublicProfile | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const r = raw as Record<string, unknown>;
+  const name = displayName(r.name, '');
+  if (!name) return null;
+  const lifts = (Array.isArray(r.bestLifts) ? r.bestLifts : [])
+    .slice(0, 5)
+    .filter((l): l is Record<string, unknown> => typeof l === 'object' && l !== null)
+    .map((l) => ({ name: displayTitle(l.name, 'Lift'), e1rm: cleanNumber(l.e1rm, 0, 2000) }));
+  const title = displayTitle(r.title);
+  return {
+    name,
+    rank: displayTitle(r.rank, 'Bronze I'),
+    xp: cleanNumber(r.xp, 0, 1e12),
+    streak: cleanNumber(r.streak, 0, 100_000),
+    sessions: cleanNumber(r.sessions, 0, 1e7),
+    achievements: cleanNumber(r.achievements, 0, 10_000),
+    ...(title ? { title } : {}),
+    bestLifts: lifts,
+  };
+}
+
 export function decodeProfile(code: string): PublicProfile | null {
   try {
+    if (code.length > 8000) return null;
     const json = decodeURIComponent(escape(atob(code.replace(/-/g, '+').replace(/_/g, '/'))));
-    const p = JSON.parse(json) as PublicProfile;
-    return p && p.name ? p : null;
+    return sanitizeProfile(JSON.parse(json));
   } catch {
     return null;
   }

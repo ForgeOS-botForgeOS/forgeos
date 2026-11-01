@@ -1,5 +1,5 @@
 import type { Friend } from '../types';
-import { displayName, displayTitle } from './sanitize';
+import { cleanNumber, displayName, displayTitle } from './sanitize';
 import { randomId } from './rand';
 
 // Friend invites without a backend: the inviter's real profile snapshot is
@@ -42,9 +42,33 @@ export function buildInviteLink(p: InvitePayload): string {
 }
 
 export function parseInvitePayload(raw: string): InvitePayload | null {
-  const p = decode<InvitePayload>(raw);
-  if (!p || p.v !== 1 || !p.code || !p.name) return null;
-  return p;
+  if (raw.length > 4000) return null;
+  return sanitizeInvite(decode<unknown>(raw));
+}
+
+/**
+ * Every field of an invite is written by whoever made the link. Rebuild it from
+ * known keys with the right types: a numeric-looking `xp` that is really an
+ * object used to be stored on the friend and crash the Social screen whenever
+ * it was rendered, and a code of any shape went on to the add-by-code RPC.
+ */
+export function sanitizeInvite(raw: unknown): InvitePayload | null {
+  if (typeof raw !== 'object' || raw === null) return null;
+  const p = raw as Record<string, unknown>;
+  if (p.v !== 1 || typeof p.code !== 'string' || typeof p.name !== 'string') return null;
+  const code = p.code.trim();
+  if (!/^[A-Za-z0-9-]{4,24}$/.test(code)) return null;
+  const name = displayName(p.name, '');
+  if (!name) return null;
+  return {
+    v: 1,
+    code,
+    name,
+    rank: displayTitle(p.rank, 'Bronze I'),
+    xp: cleanNumber(p.xp, 0, 1e12),
+    seed: displayTitle(p.seed).slice(0, 2),
+    ...(p.streak == null ? {} : { streak: cleanNumber(p.streak, 0, 100_000) }),
+  };
 }
 
 // Pull an invite payload out of whatever the user pasted: a full link, a bare
@@ -89,8 +113,7 @@ export function takePendingInvite(): InvitePayload | null {
     const raw = localStorage.getItem(PENDING_KEY);
     if (!raw) return null;
     localStorage.removeItem(PENDING_KEY);
-    const p = JSON.parse(raw) as InvitePayload;
-    return p && p.v === 1 && p.code ? p : null;
+    return sanitizeInvite(JSON.parse(raw));
   } catch {
     return null;
   }

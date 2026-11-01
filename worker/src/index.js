@@ -420,7 +420,10 @@ export default {
         tip: `${matchedCount}/${items.length} items matched a nutrition database (built-in + Open Food Facts). Edit anything if needed.`,
       }, 200, cors);
     } catch (e) {
-      return json({ error: String(e && e.message ? e.message : e) }, 500, cors);
+      // The reason stays in the Worker log; an anonymous caller does not need
+      // model-binding or parser internals.
+      console.log(`vision failed: ${e && e.message ? e.message : e}`);
+      return json({ error: 'could not read that image' }, 500, cors);
     }
   },
 };

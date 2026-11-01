@@ -1,5 +1,5 @@
 import { supabase, isBackendLive } from './supabase';
-import { displayBody, displayName, LIMITS } from './sanitize';
+import { cleanNumber, cleanWorkoutSummary, displayBody, displayName, LIMITS } from './sanitize';
 import type { FeedPost, Friend, PR, UserProfile, Workout } from '../types';
 import type { FriendActivity, FriendSession } from './friendActivity';
 import { rankForXp, rankLabel } from '../data/ranks';
@@ -80,7 +80,7 @@ export async function fetchFeed(): Promise<FeedPost[] | null> {
       authorName: name,
       avatarSeed: name.slice(0, 2).toUpperCase(),
       body: displayBody(r.body, LIMITS.post),
-      workoutSummary: r.workout_summary ?? undefined,
+      workoutSummary: cleanWorkoutSummary(r.workout_summary),
       createdAt: r.created_at,
       reactions: {},
     };
@@ -209,8 +209,9 @@ export async function pushPRsRemote(prs: PR[]): Promise<void> {
 }
 
 function rowToFriend(p: Row): Friend {
-  const name = (p.name as string) ?? 'Athlete';
-  const xp = Number(p.xp) || 0;
+  // A friend's name is written by that friend: clean it where it arrives.
+  const name = displayName(p.name);
+  const xp = cleanNumber(p.xp, 0, 1e12);
   const lastIso = (p.last_active as string) || undefined;
   const online = lastIso ? Date.now() - new Date(lastIso).getTime() < 5 * 60000 : false;
   return {
