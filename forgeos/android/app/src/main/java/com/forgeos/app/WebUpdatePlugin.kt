@@ -2,6 +2,7 @@ package com.forgeos.app
 
 import android.content.Context
 import android.content.Intent
+import android.util.Base64
 import androidx.core.content.FileProvider
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -18,7 +19,10 @@ import java.io.File
 import java.io.FileOutputStream
 import java.net.HttpURLConnection
 import java.net.URL
+import java.security.KeyFactory
 import java.security.MessageDigest
+import java.security.Signature
+import java.security.spec.X509EncodedKeySpec
 import java.util.zip.ZipInputStream
 
 /**
@@ -48,7 +52,29 @@ class WebUpdatePlugin : Plugin() {
         // 9 (2026-09-03): allowBackup=false — the manifest changed, so installs
         // still on 8 must not silently take a web bundle built against 9.
         // 10 (2026-10-13): location permissions for the gym check-in.
-        const val NATIVE_VERSION = 10
+        // 11 (2026-11-01): the OTA bundle can now be signature-checked (see
+        // OTA_PUBKEY_B64) and unzip refuses oversized archives.
+        const val NATIVE_VERSION = 11
+
+        /**
+         * Base64 X.509 (SubjectPublicKeyInfo) ECDSA P-256 public key that the
+         * web bundle must be signed with. EMPTY = signature not required (the
+         * old behaviour: only the SHA-256 from version.json, which lives in the
+         * same release as the zip, so it proves integrity but not origin).
+         *
+         * Why it matters: the APK self-update is protected by Android's
+         * signing-key check, but this OTA path swaps in *code that runs inside
+         * the app* and was protected only by whoever can write to the GitHub
+         * release. A stolen GitHub token, or a compromised release, could ship
+         * script to every phone without the APK keystore. Setup: see
+         * docs/ota-signing.md. Fill this in the SAME commit that adds the
+         * OTA_SIGNING_KEY_PEM_B64 secret, and ship the APK before the first
+         * signed release (an unsigned bundle is refused once this is set).
+         */
+        const val OTA_PUBKEY_B64 = ""
+
+        /** Largest total size a web bundle may expand to. The real one is a few MB. */
+        const val MAX_UNZIPPED_BYTES = 150L * 1024 * 1024
 
         const val PREFS = "forgeos-webupdate"
         const val KEY_PATH = "path"
@@ -121,6 +147,10 @@ class WebUpdatePlugin : Plugin() {
                 }
                 val bytes = fetchBytes(ZIP_URL)
                 if (!sha256Hex(bytes).equals(wantSha256, ignoreCase = true)) {
+                    call.resolve(result)
+                    return@launch
+                }
+                if (!signatureOk(bytes, manifest.optString("zipSig"))) {
                     call.resolve(result)
                     return@launch
                 }
@@ -204,6 +234,22 @@ class WebUpdatePlugin : Plugin() {
         }
     }
 
+    /** ECDSA P-256 / SHA-256 over the raw zip bytes. Always true while no key is pinned. */
+    private fun signatureOk(bytes: ByteArray, sigB64: String): Boolean {
+        if (OTA_PUBKEY_B64.isEmpty()) return true
+        if (sigB64.isEmpty()) return false
+        return try {
+            val key = KeyFactory.getInstance("EC")
+                .generatePublic(X509EncodedKeySpec(Base64.decode(OTA_PUBKEY_B64, Base64.DEFAULT)))
+            val verifier = Signature.getInstance("SHA256withECDSA")
+            verifier.initVerify(key)
+            verifier.update(bytes)
+            verifier.verify(Base64.decode(sigB64, Base64.DEFAULT))
+        } catch (e: Exception) {
+            false
+        }
+    }
+
     private fun sha256Hex(bytes: ByteArray): String =
         MessageDigest.getInstance("SHA-256").digest(bytes).joinToString("") { "%02x".format(it) }
 
@@ -211,6 +257,7 @@ class WebUpdatePlugin : Plugin() {
         if (dir.exists()) dir.deleteRecursively()
         dir.mkdirs()
         val root = dir.canonicalPath + File.separator
+        var written = 0L
         ZipInputStream(ByteArrayInputStream(bytes)).use { zip ->
             var entry = zip.nextEntry
             while (entry != null) {
@@ -221,7 +268,17 @@ class WebUpdatePlugin : Plugin() {
                     out.mkdirs()
                 } else {
                     out.parentFile?.mkdirs()
-                    FileOutputStream(out).use { zip.copyTo(it) }
+                    // Zip-bomb guard: count what actually comes out, not what the header claims.
+                    FileOutputStream(out).use { sink ->
+                        val buf = ByteArray(16 * 1024)
+                        while (true) {
+                            val n = zip.read(buf)
+                            if (n < 0) break
+                            written += n
+                            if (written > MAX_UNZIPPED_BYTES) throw SecurityException("bundle too large")
+                            sink.write(buf, 0, n)
+                        }
+                    }
                 }
                 entry = zip.nextEntry
             }

@@ -94,12 +94,24 @@ jobs:
       - name: Stage web bundle for in-app OTA updates
         # The installed app checks version.json on launch and swaps in web.zip
         # by itself (WebUpdatePlugin) — no APK re-download for web-only changes.
+        env:
+          OTA_KEY_B64: ${{ secrets.OTA_SIGNING_KEY_PEM_B64 }}
         run: |
           (cd dist && zip -qr ../web.zip .)
           NATIVE_VERSION=$(grep -oP 'NATIVE_VERSION = \K\d+' android/app/src/main/java/com/forgeos/app/WebUpdatePlugin.kt)
           ZIP_SHA256=$(sha256sum web.zip | cut -d' ' -f1)
-          printf '{"version":"1.0.%s","sha":"%s","zipSha256":"%s","nativeVersion":%s,"builtAt":"%s"}\n' \
-            "$GITHUB_RUN_NUMBER" "$GITHUB_SHA" "$ZIP_SHA256" "$NATIVE_VERSION" "$(date -u +%FT%TZ)" > version.json
+          # Detached ECDSA P-256 signature over the zip, checked by the app against
+          # the public key pinned in WebUpdatePlugin.kt (OTA_PUBKEY_B64). Skipped
+          # until the OTA_SIGNING_KEY_PEM_B64 secret exists, so nothing breaks
+          # before the one-time setup in docs/ota-signing.md is done.
+          ZIP_SIG=""
+          if [ -n "$OTA_KEY_B64" ]; then
+            printf '%s' "$OTA_KEY_B64" | tr -d ' \n\r\t' | base64 -d > "$RUNNER_TEMP/ota.pem"
+            ZIP_SIG=$(openssl dgst -sha256 -sign "$RUNNER_TEMP/ota.pem" web.zip | base64 -w0)
+            rm -f "$RUNNER_TEMP/ota.pem"
+          fi
+          printf '{"version":"1.0.%s","sha":"%s","zipSha256":"%s","zipSig":"%s","nativeVersion":%s,"builtAt":"%s"}\n' \
+            "$GITHUB_RUN_NUMBER" "$GITHUB_SHA" "$ZIP_SHA256" "$ZIP_SIG" "$NATIVE_VERSION" "$(date -u +%FT%TZ)" > version.json
           cat version.json
 
       - name: Upload APK artifact
