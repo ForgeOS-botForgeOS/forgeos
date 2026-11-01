@@ -1,3 +1,5 @@
+import { localMondayKey } from './dateKey';
+
 // Home-screen nudges derived from the weekly streak model (weeks you showed
 // up; see gamificationStore). Pure date maths so the messages are testable.
 
@@ -9,10 +11,7 @@ export interface Nudge {
 /** Monday of the week containing `d`, as yyyy-mm-dd. Mirrors the exact
  *  algorithm in gamificationStore so weekStart comparisons never drift. */
 export function mondayOf(d: Date): string {
-  const x = new Date(d.toISOString().slice(0, 10));
-  const dow = (x.getDay() + 6) % 7; // 0 = Monday
-  x.setDate(x.getDate() - dow);
-  return x.toISOString().slice(0, 10);
+  return localMondayKey(d);
 }
 
 /**
@@ -29,7 +28,7 @@ export function weekendNudge(opts: {
   now?: Date;
 }): Nudge | null {
   const now = opts.now ?? new Date();
-  const dow = (new Date(now.toISOString().slice(0, 10)).getDay() + 6) % 7; // Mon=0 … Sun=6
+  const dow = (now.getDay() + 6) % 7; // Mon=0 … Sun=6
   if (dow < 4) return null; // only Fri (4), Sat (5), Sun (6)
   const daysLeft = 7 - dow; // incl. today
 

@@ -1,3 +1,4 @@
+import { localDateKey, mondayOfKey } from '../lib/dateKey';
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { HealthDay, StreakWager, UserQuest } from '../types';
@@ -63,17 +64,12 @@ interface GamiState {
   resolveWagerProgress: () => void;
 }
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => localDateKey();
 function daysBetween(a: string, b: string) {
   return Math.round((new Date(b).getTime() - new Date(a).getTime()) / 86400000);
 }
-// Monday (yyyy-mm-dd) of the week containing dateStr.
-function mondayOf(dateStr: string) {
-  const d = new Date(dateStr);
-  const dow = (d.getDay() + 6) % 7; // 0 = Monday
-  d.setDate(d.getDate() - dow);
-  return d.toISOString().slice(0, 10);
-}
+// Monday (yyyy-mm-dd) of the week containing dateStr (local calendar days).
+const mondayOf = mondayOfKey;
 
 export const useGami = create<GamiState>()(
   persist(

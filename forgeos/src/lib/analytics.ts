@@ -1,3 +1,4 @@
+import { localMondayKey } from './dateKey';
 import type { Workout } from '../types';
 import { e1rm, volumeOf } from './fitness';
 import { exerciseById } from '../data/exercises';
@@ -72,11 +73,8 @@ export interface LoadWarning {
 }
 
 function weekKey(d: Date): string {
-  // ISO-ish year-week bucket (Monday start) for grouping sessions by week.
-  const t = new Date(d);
-  const day = (t.getDay() + 6) % 7;
-  t.setDate(t.getDate() - day);
-  return t.toISOString().slice(0, 10);
+  // Monday-start week bucket, in local time.
+  return localMondayKey(d);
 }
 
 export function trainingLoadWarning(history: Workout[]): LoadWarning | null {
