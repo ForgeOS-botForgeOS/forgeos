@@ -51,3 +51,23 @@ describe('daily quests just after local midnight', () => {
     expect(useGami.getState().quests.find((u) => u.questId === daily[0].questId)?.progress).toBe(1);
   });
 });
+
+describe('wagers', () => {
+  const base = { active: true, targetSessions: 3, staked: 10, progress: 2, startedAt: '2026-10-01T00:00:00.000Z' };
+  it('a session after the deadline does not win the bet or pay out', () => {
+    useGami.setState({ coins: 0, wager: { ...base, deadline: '2026-10-08T00:00:00.000Z' } });
+    useGami.getState().resolveWagerProgress();
+    expect(useGami.getState().coins).toBe(0);
+    expect(useGami.getState().wager?.active).toBe(false);
+  });
+  it('an expired bet does not block placing a new one', () => {
+    useGami.setState({ coins: 50, wager: { ...base, deadline: '2026-10-08T00:00:00.000Z' } });
+    expect(useGami.getState().startWager(2, 10, 7)).toBe(true);
+    expect(useGami.getState().wager?.targetSessions).toBe(2);
+  });
+  it('a session inside the window still wins', () => {
+    useGami.setState({ coins: 0, wager: { ...base, deadline: new Date(Date.now() + 86400000).toISOString() } });
+    useGami.getState().resolveWagerProgress();
+    expect(useGami.getState().coins).toBe(20);
+  });
+});

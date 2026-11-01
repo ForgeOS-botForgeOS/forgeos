@@ -1,3 +1,4 @@
+import { localDateKey } from '../dateKey';
 import type { BodyStat, WeighIn, Workout } from '../../types';
 import { useGami } from '../../state/gamificationStore';
 import { useWorkout } from '../../state/workoutStore';
@@ -8,7 +9,7 @@ import type { LaneId } from './canonical';
 import type { ForgePatch } from './mapToForge';
 import { mergePrs, unionByDate } from './mergeRules';
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
+const todayStr = () => localDateKey();
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 function captureSnapshot(): ForgeSnapshot {

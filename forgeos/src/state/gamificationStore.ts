@@ -301,7 +301,7 @@ export const useGami = create<GamiState>()(
 
       // Count a session by its date (used for manual / past-dated workouts).
       countSession: (dateISO) => {
-        const date = dateISO.slice(0, 10);
+        const date = localDateKey(new Date(dateISO));
         // Bet: a past workout dated within [startedAt, deadline] counts.
         const w = get().wager;
         if (w?.active) {
@@ -324,7 +324,8 @@ export const useGami = create<GamiState>()(
       },
 
       startWager: (targetSessions, staked, days) => {
-        if (get().wager?.active) return false;
+        const open = get().wager;
+        if (open?.active && new Date() <= new Date(open.deadline)) return false; // an expired bet no longer blocks a new one
         if (!get().spendCoins(staked)) return false;
         const deadline = new Date(Date.now() + days * 86400000).toISOString();
         set({ wager: { active: true, targetSessions, staked, deadline, startedAt: new Date().toISOString(), progress: 0 } });
@@ -334,13 +335,16 @@ export const useGami = create<GamiState>()(
       resolveWagerProgress: () => {
         const w = get().wager;
         if (!w?.active) return;
+        if (new Date() > new Date(w.deadline)) {
+          // Missed deadline — stake already spent, just close it. A late session
+          // must never win the bet, so this is checked before the win.
+          set({ wager: { ...w, active: false } });
+          return;
+        }
         const progress = w.progress + 1;
         if (progress >= w.targetSessions) {
           // Won — double the stake back.
           set({ coins: get().coins + w.staked * 2, wager: { ...w, active: false, progress } });
-        } else if (new Date() > new Date(w.deadline)) {
-          // Missed deadline — stake already spent, just close it.
-          set({ wager: { ...w, active: false, progress } });
         } else {
           set({ wager: { ...w, progress } });
         }
