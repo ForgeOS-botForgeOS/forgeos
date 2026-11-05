@@ -4,6 +4,7 @@ import { Activity, Cloud, History, Sparkles, Zap, Palette, MapPin, RefreshCw, Bo
 import { Screen } from '../components/Screen';
 import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
 import { ModeSwitch } from '../components/ModeSwitch';
+import { AppIconPicker } from '../components/AppIconPicker';
 import { FeedbackLink } from '../components/Feedback';
 import { hashPasscode } from '../lib/appLock';
 import { pushMyActivity } from '../lib/activitySync';
@@ -332,7 +333,8 @@ export default function Profile() {
         {/* Phase history — your bulk / cut / maintain timeline */}
         {(goalHistory.length > 0 || profile) && (() => {
           const hist = goalHistory.length ? goalHistory : profile ? [{ goal: profile.goal, startISO: new Date().toISOString() }] : [];
-          const spans = phaseSpans(hist);
+          // A profile restored from an old backup can lack a goal: skip it instead of crashing the tab.
+          const spans = phaseSpans(hist.filter((h) => h.goal in GOAL_LABEL));
           if (spans.length === 0) return null;
           return (
             <div className="mt-3">
@@ -385,6 +387,7 @@ export default function Profile() {
           </div>
           <Toggle label="Auto day / night" checked={s.autoTheme} onChange={(v) => s.set('autoTheme', v)} />
         </div>
+        <AppIconPicker />
         <div className={s.apprentice ? 'hidden' : 'mt-3'}>
           <p className="text-sm font-medium mb-2 flex items-center gap-1.5">App design</p>
           <div className="space-y-2" data-noswipe>

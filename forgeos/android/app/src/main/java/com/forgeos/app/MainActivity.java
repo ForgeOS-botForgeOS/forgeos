@@ -15,6 +15,7 @@ public class MainActivity extends BridgeActivity {
         // load() also swaps in any previously downloaded web bundle (OTA update).
         registerPlugin(HealthConnectPlugin.class);
         registerPlugin(WebUpdatePlugin.class);
+        registerPlugin(AppIconPlugin.class);
         super.onCreate(savedInstanceState);
         // The stock Capacitor theme leaves the navigation/status bars at their
         // light defaults, which shows as a white strip under the dark app.

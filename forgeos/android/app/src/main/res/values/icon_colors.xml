@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- App icon colours (Profile > Theme > App icon colour). Orange is
+     ic_launcher_background. Each has a launcher alias in AndroidManifest.xml
+     and an adaptive icon in mipmap-anydpi-v26; keep src/lib/appIcon.ts in step. -->
+<resources>
+    <color name="icon_red">#E11D48</color>
+    <color name="icon_pink">#DB2777</color>
+    <color name="icon_violet">#7C3AED</color>
+    <color name="icon_blue">#2563EB</color>
+    <color name="icon_cyan">#0891B2</color>
+    <color name="icon_green">#16A34A</color>
+    <color name="icon_gold">#CA8A04</color>
+    <color name="icon_graphite">#374151</color>
+    <color name="icon_midnight">#0B0E14</color>
+</resources>
