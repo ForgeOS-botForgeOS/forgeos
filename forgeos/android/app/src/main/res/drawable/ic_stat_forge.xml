@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Notification small icon: the ForgeOS anvil and sparkles from the launcher
+     logo, traced to a white silhouette. Android draws small icons from the
+     alpha channel only, so the full-colour launcher icon showed up as an empty
+     rounded square. Regenerate with the same transform if the logo changes. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M3.96,9.34H21.74V9.76H3.96ZM1.85,9.76H21.31V10.18H1.85ZM1,10.18H23.01V11.03H1ZM3.96,11.03H23.01V11.88H3.96ZM8.62,11.88H19.2V13.57H8.62ZM10.73,13.57H14.97V16.53H10.73ZM6.92,16.53H18.77V18.23H6.92ZM5.66,18.23H20.04V19.07H5.66ZM6.59,4.83H7.79V7.93H6.59ZM5.64,5.78H8.74V6.98H5.64ZM10.24,6.22H11.08V8.12H10.24ZM9.71,6.75H11.61V7.59H9.71ZM3.62,7.57H4.72V8.67H3.62Z" />
+</vector>

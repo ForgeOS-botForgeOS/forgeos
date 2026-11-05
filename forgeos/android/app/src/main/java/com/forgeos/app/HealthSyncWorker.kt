@@ -90,8 +90,9 @@ class HealthSyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val notification = NotificationCompat.Builder(ctx, CHANNEL_ID)
-            .setSmallIcon(ctx.applicationInfo.icon)
-            .setContentTitle("Readiness $score — $label")
+            .setSmallIcon(R.drawable.ic_stat_forge)
+            .setColor(ContextCompat.getColor(ctx, R.color.ic_launcher_background))
+            .setContentTitle("Readiness $score · $label")
             .setContentText(advice)
             .setStyle(NotificationCompat.BigTextStyle().bigText(advice))
             .setContentIntent(open)
@@ -131,7 +132,7 @@ class HealthSyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
             if (date >= today) lastNight = m
         }
         val text = when {
-            debtMin >= 120 -> "You're carrying ${debtMin / 60}h of sleep debt this week. Tonight is the comeback — aim for 8h+ 😴"
+            debtMin >= 120 -> "You're carrying ${debtMin / 60}h of sleep debt this week. Tonight is the comeback, aim for 8h+ 😴"
             lastNight in 1 until 420 -> "Last night was short (${lastNight / 60}h ${lastNight % 60}m). An early night = a better readiness score tomorrow 🔥"
             else -> return // sleeping fine — don't nag
         }
@@ -147,7 +148,8 @@ class HealthSyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         val notification = NotificationCompat.Builder(ctx, CHANNEL_ID)
-            .setSmallIcon(ctx.applicationInfo.icon)
+            .setSmallIcon(R.drawable.ic_stat_forge)
+            .setColor(ContextCompat.getColor(ctx, R.color.ic_launcher_background))
             .setContentTitle("Bedtime check-in")
             .setContentText(text)
             .setStyle(NotificationCompat.BigTextStyle().bigText(text))
@@ -181,11 +183,11 @@ class HealthSyncWorker(ctx: Context, params: WorkerParameters) : CoroutineWorker
     }
 
     private fun tierText(score: Int): Pair<String, String> = when {
-        score >= 85 -> "Primed 🔥" to "Green light — go for a PR or your hardest session."
-        score >= 70 -> "Ready ✅" to "Well recovered — train as planned."
-        score >= 50 -> "Maintain 🟡" to "A bit under — keep volume moderate, nail technique."
-        score >= 30 -> "Run-down 🟠" to "Fatigued — drop the load or make today a deload."
-        else -> "Rest 🔴" to "Running on empty — prioritise sleep and active recovery."
+        score >= 85 -> "Primed 🔥" to "Green light: go for a PR or your hardest session."
+        score >= 70 -> "Ready ✅" to "Well recovered. Train as planned."
+        score >= 50 -> "Maintain 🟡" to "A bit under: keep volume moderate, nail technique."
+        score >= 30 -> "Run-down 🟠" to "Fatigued: drop the load or make today a deload."
+        else -> "Rest 🔴" to "Running on empty: prioritise sleep and active recovery."
     }
 
     private fun median(xs: List<Long>): Double {

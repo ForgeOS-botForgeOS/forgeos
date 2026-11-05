@@ -54,6 +54,7 @@ class WebUpdatePlugin : Plugin() {
         // 10 (2026-10-13): location permissions for the gym check-in.
         // 11 (2026-11-01): the OTA bundle can now be signature-checked (see
         // OTA_PUBKEY_B64) and unzip refuses oversized archives.
+        // Same release: a real notification icon (the anvil, not a blank square).
         const val NATIVE_VERSION = 11
 
         /**
