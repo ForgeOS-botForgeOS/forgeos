@@ -1,11 +1,13 @@
 import { useSettings } from '../state/settingsStore';
 import type { Language } from '../types';
+import { WRAP_EN, WRAP_SK } from './wrapCopy';
 
 // Key-based translations. English is the source; Slovak is the full localisation.
 // t('key') returns the string for the active language, falling back to the key.
 type Dict = Record<string, string>;
 
 const EN: Dict = {
+  ...WRAP_EN,
   // nav
   'nav.home': 'Home',
   'nav.train': 'Train',
@@ -578,6 +580,7 @@ const EN: Dict = {
 };
 
 const SK: Dict = {
+  ...WRAP_SK,
   // nav
   'nav.home': 'Domov',
   'nav.train': 'Tréning',

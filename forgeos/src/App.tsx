@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { HashRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { stashPendingLink, takePendingLink } from './lib/publicUrl';
 import { PhoneFrame } from './components/PhoneFrame';
 import { NowPlayingCD } from './components/NowPlayingCD';
 import { handleSpotifyCallback } from './lib/spotify';
@@ -76,6 +77,7 @@ const ImportProgress = lazy(() => import('./screens/ImportProgress'));
 const AddFriend = lazy(() => import('./screens/AddFriend'));
 const RaceJoin = lazy(() => import('./screens/RaceJoin'));
 const Wrapped = lazy(() => import('./screens/Wrapped'));
+const WorkoutWrap = lazy(() => import('./screens/WorkoutWrap'));
 
 // Left→right order of the bottom tabs comes from lib/apprentice, so the swipe
 // gesture can never carry someone to a tab their bottom bar does not show.
@@ -173,7 +175,18 @@ function HomeRoute() {
 
 function RequireOnboarding({ children }: { children: React.ReactNode }) {
   const onboarded = useUser((s) => s.profile?.onboarded);
-  if (!onboarded) return <Navigate to="/onboarding" replace />;
+  const location = useLocation();
+  const navigate = useNavigate();
+  // A share link opened before onboarding is kept and reopened once it is done.
+  useEffect(() => {
+    if (!onboarded) return;
+    const pending = takePendingLink();
+    if (pending) navigate(pending, { replace: true });
+  }, [onboarded, navigate]);
+  if (!onboarded) {
+    stashPendingLink(location.pathname + location.search);
+    return <Navigate to="/onboarding" replace />;
+  }
   return <>{children}</>;
 }
 
@@ -353,6 +366,7 @@ export default function App() {
             <Route path="/u" element={<PublicProfile />} />
             <Route path="/quote/:id" element={<QuoteDeepDive />} />
             <Route path="/wrapped" element={<Wrapped />} />
+            <Route path="/wrap/:id" element={<WorkoutWrap />} />
           </Route>
           <Route path="*" element={<Navigate to="/home" replace />} />
         </Routes>

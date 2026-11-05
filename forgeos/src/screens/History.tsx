@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, ChevronRight, Dumbbell, TrendingUp, Plus, Copy, Activity, Trash2, Share2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Dumbbell, TrendingUp, Plus, Copy, Activity, Trash2, Share2, Sparkles } from 'lucide-react';
 import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, Area } from 'recharts';
 import { useChartKit } from '../components/chartKit';
 import { Card, Badge, Pill, Button, Sheet } from '../components/ui';
@@ -13,9 +13,10 @@ import { speedKmh, paceLabel, newCardioData, type CardioData } from '../lib/card
 import { CardioFields } from '../components/CardioForm';
 import { haptic } from '../lib/haptics';
 import { toast } from '../lib/toast';
-import { shareWorkout } from '../lib/workoutShare';
+import { shareWorkout, workoutShareUrl } from '../lib/workoutShare';
 import { hasDraft } from '../lib/workoutDraft';
 import type { Workout } from '../types';
+import { useT } from '../lib/i18n';
 
 export default function History() {
   const navigate = useNavigate();
@@ -37,16 +38,19 @@ export default function History() {
 }
 
 function Sessions() {
+  const t = useT();
   const history = useWorkout((s) => s.history);
   const addManualWorkout = useWorkout((s) => s.addManualWorkout);
   const navigate = useNavigate();
   const [editCardio, setEditCardio] = useState<Workout | null>(null);
   const uid = () => Math.random().toString(36).slice(2, 10);
 
+  const [manualLink, setManualLink] = useState<string | null>(null);
   async function share(w: typeof history[number]) {
     const r = await shareWorkout(w);
     haptic('tap');
-    toast(r === 'shared' ? 'Shared!' : 'Share link copied to clipboard');
+    if (r === 'failed') { setManualLink(workoutShareUrl(w)); return; }
+    toast(r === 'shared' ? 'Shared!' : 'Link copied: paste it to a friend. It opens this workout for them.', 'success');
   }
 
   function duplicate(w: typeof history[number]) {
@@ -65,7 +69,7 @@ function Sessions() {
       <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/workout/new')}>
         <span className="flex items-center gap-1"><Plus size={15} /> {hasDraft('new') ? 'Continue your unsaved workout' : 'Add a past workout'}</span>
       </Button>
-      {history.length > 0 && <p className="text-[11px] text-muted">Tap a session to edit · ⧉ duplicate · ↗ share a link.</p>}
+      {history.length > 0 && <p className="text-[11px] text-muted">Tap a session to edit · ✨ relive it as a wrap · ⧉ duplicate · ↗ share a link.</p>}
       {history.map((w) => {
         if (w.cardio) {
           const c = w.cardio;
@@ -92,6 +96,12 @@ function Sessions() {
                   ))}
                 </div>
               )}
+              <button
+                onClick={() => navigate(`/wrap/${w.id}`)}
+                className="mt-1 w-full rounded-xl py-2 text-xs font-bold flex items-center justify-center gap-1.5 text-white bg-gradient-to-r from-accent to-accent-2 active:scale-[0.98] transition"
+              >
+                <Sparkles size={13} aria-hidden="true" /> {t('ww.open')}
+              </button>
             </Card>
           );
         }
@@ -123,10 +133,20 @@ function Sessions() {
                 </button>
               ))}
             </div>
+              <button
+                onClick={() => navigate(`/wrap/${w.id}`)}
+                className="mt-1 w-full rounded-xl py-2 text-xs font-bold flex items-center justify-center gap-1.5 text-white bg-gradient-to-r from-accent to-accent-2 active:scale-[0.98] transition"
+              >
+                <Sparkles size={13} aria-hidden="true" /> {t('ww.open')}
+              </button>
           </Card>
         );
       })}
       <CardioEditSheet workout={editCardio} onClose={() => setEditCardio(null)} />
+      <Sheet open={!!manualLink} onClose={() => setManualLink(null)} title="Share this workout">
+        <p className="text-sm text-muted mb-2">This phone would not copy automatically. Press and hold the link to copy it, then send it to a friend.</p>
+        <textarea readOnly value={manualLink ?? ''} onFocus={(e) => e.currentTarget.select()} aria-label="Workout link" className="w-full h-28 rounded-xl bg-surface-2 p-2 text-[11px] font-mono break-all" />
+      </Sheet>
     </div>
   );
 }
