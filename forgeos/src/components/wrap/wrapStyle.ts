@@ -37,8 +37,5 @@ export const PATTERN_SIZE: Partial<Record<WrapArchetype, string>> = {
   balanced: '44px 44px',
 };
 
-export function formatPace(sec?: number): string {
-  if (!sec) return '–';
-  return `${Math.floor(sec / 60)}:${String(sec % 60).padStart(2, '0')}`;
-}
+export { formatPace } from '../../lib/wrapRecap';
 

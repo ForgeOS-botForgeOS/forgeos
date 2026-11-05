@@ -5,11 +5,14 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X, Share2, Download, RotateCcw } from 'lucide-react';
 import { useWorkout } from '../state/workoutStore';
 import { buildWorkoutWrap, type WorkoutWrap as Wrap } from '../lib/workoutWrap';
+import { buildRecap, type Recap } from '../lib/wrapRecap';
+import { shareImage } from '../lib/shareImage';
 import { generateWrapCard } from '../lib/wrapCard';
 import { downloadDataUrl } from '../lib/shareCard';
 import { shareWorkout, workoutShareUrl } from '../lib/workoutShare';
 import { Slide } from '../components/wrap/WrapSlides';
-import { ARCH_EMOJI, ARCH_PATTERN, PATTERN_SIZE, formatPace } from '../components/wrap/wrapStyle';
+import { WrapRecap } from '../components/wrap/WrapRecap';
+import { ARCH_EMOJI, ARCH_PATTERN, PATTERN_SIZE } from '../components/wrap/wrapStyle';
 import { haptic } from '../lib/haptics';
 import { celebrate, toast } from '../lib/toast';
 import { useLocale, useT } from '../lib/i18n';
@@ -89,29 +92,32 @@ function Story({ wrap, onClose }: { wrap: Wrap; onClose: () => void }) {
     return () => window.removeEventListener('keydown', onKey);
   }, [go, onClose]);
 
+  const recap = useMemo(
+    () => buildRecap(wrap, t, locale, dateLabel, ARCH_EMOJI[wrap.archetype]),
+    [wrap, t, locale, dateLabel],
+  );
+  const cardName = `forge-wrap-${wrap.workoutId}.png`;
+
+  // The recap card is what gets shared: as a picture with the link in the text
+  // where the phone can share files, otherwise the link on its own.
   async function share() {
     if (!workout) return;
+    const url = workoutShareUrl(workout);
+    const card = generateWrapCard(wrap, recap);
+    if (card) {
+      const r = await shareImage(card, cardName, recap.title, `${recap.name}: ${recap.line}\n${url}`);
+      if (r === 'cancelled') return;
+      if (r === 'shared') { haptic('success'); toast(t('ww.recap.shared'), 'success'); return; }
+    }
     const r = await shareWorkout(workout);
-    if (r === 'failed') { setManualLink(workoutShareUrl(workout)); return; }
-    toast(r === 'shared' ? 'Shared!' : 'Link copied: paste it to a friend. It opens this workout for them.', 'success');
+    if (r === 'failed') { setManualLink(url); return; }
+    toast(r === 'shared' ? t('ww.recap.shared') : t('ww.recap.copied'), 'success');
   }
 
   function saveCard() {
-    const big = wrap.kind === 'cardio'
-      ? (wrap.cardio!.distanceKm > 0 ? [`${wrap.cardio!.distanceKm}`, t('ww.cardio.km')] : [`${Math.round(wrap.cardio!.durationMin)}`, t('ww.cardio.min')])
-      : wrap.kind === 'watch' ? [`${wrap.durationMin}`, t('ww.cardio.min')] : [wrap.volumeKg.toLocaleString(locale), `kg · ${t('ww.lbl.volume')}`];
-    const url = generateWrapCard(wrap, ARCH_EMOJI[wrap.archetype], {
-      title: t(`ww.arch.${wrap.archetype}.title`),
-      line: t(`ww.arch.${wrap.archetype}.l${wrap.variant}`),
-      workoutName: wrap.name,
-      dateLabel: `${dateLabel} · ${t(`ww.tod.${wrap.timeOfDay}`)}`,
-      bigValue: big[0],
-      bigLabel: big[1],
-      stats: summaryStats(wrap, t),
-      footer: 'forged with ForgeOS',
-    });
+    const url = generateWrapCard(wrap, recap);
     if (!url) { toast(t('ww.cardError'), 'error'); return; }
-    downloadDataUrl(url, `forge-wrap-${wrap.workoutId}.png`);
+    downloadDataUrl(url, cardName);
     haptic('success');
     toast(t('ww.cardSaved'), 'success');
   }
@@ -159,7 +165,7 @@ function Story({ wrap, onClose }: { wrap: Wrap; onClose: () => void }) {
         </div>
       )}
 
-      <div className="relative z-0 h-full flex flex-col justify-center px-7 pb-10 pt-16">
+      <div className={`relative z-0 h-full flex flex-col px-7 ${isLast ? 'overflow-y-auto overscroll-contain pt-20 pb-8 px-5 [mask-image:linear-gradient(to_bottom,transparent_40px,black_80px)]' : 'justify-center pb-10 pt-16'}`}>
         <AnimatePresence mode="wait">
           <motion.div
             key={slide}
@@ -170,7 +176,7 @@ function Story({ wrap, onClose }: { wrap: Wrap; onClose: () => void }) {
             className={isLast ? 'relative z-20' : ''}
           >
             {slide === 'outro'
-              ? <Outro wrap={wrap} dateLabel={dateLabel} onShare={share} onCard={saveCard} onReplay={() => { setIndex(0); setProgress(0); }} manualLink={manualLink} canShare={!!workout && (workout.exercises.length > 0 || !!workout.cardio)} />
+              ? <Outro recap={recap} onShare={share} onCard={saveCard} onReplay={() => { setIndex(0); setProgress(0); }} manualLink={manualLink} canShare={!!workout && (workout.exercises.length > 0 || !!workout.cardio)} />
               : <Slide slide={slide} wrap={wrap} dateLabel={dateLabel} />}
           </motion.div>
         </AnimatePresence>
@@ -180,64 +186,27 @@ function Story({ wrap, onClose }: { wrap: Wrap; onClose: () => void }) {
   );
 }
 
-function summaryStats(wrap: Wrap, t: (k: string, p?: Record<string, string | number>) => string): [string, string][] {
-  if (wrap.kind === 'cardio') {
-    const c = wrap.cardio!;
-    return [
-      [String(Math.round(c.durationMin)), t('ww.lbl.time')],
-      ...(c.paceSecPerKm ? [[formatPace(c.paceSecPerKm), t('ww.cardio.pace')] as [string, string]] : []),
-      ...(c.calories ? [[String(c.calories), t('ww.cardio.kcal')] as [string, string]] : []),
-    ];
-  }
-  if (wrap.kind === 'watch') return [[String(wrap.durationMin), t('ww.lbl.time')]];
-  return [
-    [String(wrap.sets), t('ww.lbl.sets')],
-    [String(wrap.exerciseCount), t('ww.lbl.exercises')],
-    ...(wrap.durationMin ? [[String(wrap.durationMin), t('ww.lbl.time')] as [string, string]] : []),
-    ...(wrap.prs.length ? [[String(wrap.prs.length), t('ww.lbl.prs')] as [string, string]] : []),
-  ];
-}
-
-function Outro({ wrap, dateLabel, onShare, onCard, onReplay, manualLink, canShare }: {
-  wrap: Wrap; dateLabel: string; onShare: () => void; onCard: () => void; onReplay: () => void; manualLink: string | null; canShare: boolean;
+function Outro({ recap, onShare, onCard, onReplay, manualLink, canShare }: {
+  recap: Recap; onShare: () => void; onCard: () => void; onReplay: () => void; manualLink: string | null; canShare: boolean;
 }) {
   const t = useT();
-  const stats = summaryStats(wrap, t);
   return (
-    <div className="space-y-5">
-      <div className="text-center space-y-1">
-        <p className="text-5xl" aria-hidden="true">{ARCH_EMOJI[wrap.archetype]}</p>
-        <h2 className="text-3xl font-black">{t('ww.outro.title', { name: wrap.name })}</h2>
-        <p className="text-sm text-white/75">{dateLabel} · {t(`ww.arch.${wrap.archetype}.title`)}</p>
-      </div>
-      {wrap.kind === 'strength' && (
-        <div className="rounded-3xl bg-white/15 backdrop-blur p-5 text-center">
-          <p className="text-5xl font-black font-mono">{wrap.volumeKg.toLocaleString()}<span className="text-xl"> kg</span></p>
-          <p className="text-[11px] uppercase tracking-[0.25em] text-white/70">{t('ww.lbl.volume')}</p>
-        </div>
-      )}
-      <div className={`grid gap-2 ${stats.length >= 3 ? 'grid-cols-3' : 'grid-cols-2'}`}>
-        {stats.slice(0, 3).map(([v, l]) => (
-          <div key={l} className="rounded-2xl bg-white/10 py-3 text-center">
-            <p className="text-xl font-black font-mono">{v}</p>
-            <p className="text-[10px] uppercase tracking-widest text-white/70">{l}</p>
-          </div>
-        ))}
-      </div>
-      <div className="space-y-2">
+    <div className="space-y-3">
+      <WrapRecap recap={recap} />
+      <div className="space-y-2 pt-1">
         {canShare && (
           <button onClick={onShare} className="w-full rounded-2xl bg-white text-black font-bold py-3.5 flex items-center justify-center gap-2 active:scale-[0.98] transition">
-            <Share2 size={18} aria-hidden="true" /> {t('ww.outro.share')}
+            <Share2 size={18} aria-hidden="true" /> {t('ww.recap.share')}
           </button>
         )}
         {manualLink && (
           <textarea readOnly value={manualLink} onFocus={(e) => e.currentTarget.select()} aria-label="Workout link" className="w-full h-20 rounded-xl bg-black/30 p-2 text-[10px] font-mono break-all text-white" />
         )}
         <div className="grid grid-cols-2 gap-2">
-          <button onClick={onCard} className="rounded-2xl bg-white/15 font-semibold py-3 flex items-center justify-center gap-2 backdrop-blur">
+          <button onClick={onCard} className="rounded-2xl bg-white/15 font-semibold py-3 flex items-center justify-center gap-2 backdrop-blur active:scale-[0.98] transition">
             <Download size={16} aria-hidden="true" /> {t('ww.outro.card')}
           </button>
-          <button onClick={onReplay} className="rounded-2xl bg-white/15 font-semibold py-3 flex items-center justify-center gap-2 backdrop-blur">
+          <button onClick={onReplay} className="rounded-2xl bg-white/15 font-semibold py-3 flex items-center justify-center gap-2 backdrop-blur active:scale-[0.98] transition">
             <RotateCcw size={16} aria-hidden="true" /> {t('ww.outro.replay')}
           </button>
         </div>
