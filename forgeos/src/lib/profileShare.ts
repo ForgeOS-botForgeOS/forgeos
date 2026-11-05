@@ -1,3 +1,4 @@
+import { shareBase } from './publicUrl';
 // Shareable public profile: encode a read-only snapshot into a link, and render
 // a profile card to canvas. Toggleable on/off in settings.
 import { cleanNumber, displayName, displayTitle } from './sanitize';
@@ -56,7 +57,7 @@ export function decodeProfile(code: string): PublicProfile | null {
 }
 
 export function profileUrl(p: PublicProfile): string {
-  return `${window.location.href.split('#')[0]}#/u?d=${encodeProfile(p)}`;
+  return `${shareBase()}#/u?d=${encodeProfile(p)}`;
 }
 
 export async function shareProfile(p: PublicProfile): Promise<'shared' | 'copied'> {

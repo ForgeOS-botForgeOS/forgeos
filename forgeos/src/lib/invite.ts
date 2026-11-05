@@ -1,3 +1,4 @@
+import { PUBLIC_APP_URL } from './publicUrl';
 import type { Friend } from '../types';
 import { cleanNumber, displayName, displayTitle } from './sanitize';
 import { randomId } from './rand';
@@ -18,10 +19,6 @@ export interface InvitePayload {
   streak?: number;
 }
 
-// Canonical public site — share links must be clickable from any chat app on
-// any device, so they always point at the hosted web app (not the local/APK
-// origin). This is the share target, unrelated to the Vite build base.
-const PUBLIC_APP_URL = 'https://forgeos-botforgeos.github.io/forgeos/';
 
 // URL-safe base64 (base64url) so payloads survive being pasted into links.
 function encode(obj: unknown): string {

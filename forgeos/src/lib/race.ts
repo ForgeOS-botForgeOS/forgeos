@@ -1,3 +1,4 @@
+import { shareBase } from './publicUrl';
 import type { Workout } from '../types';
 import { toSharedWorkout, decodeWorkout, type SharedWorkout } from './workoutShare';
 import { randomId } from './rand';
@@ -138,7 +139,7 @@ export function decodeRaceInvite(code: string): RaceConfig | null {
 }
 
 export function raceInviteUrl(config: RaceConfig): string {
-  const base = window.location.href.split('#')[0];
+  const base = shareBase();
   return `${base}#/race-join?d=${encodeRaceInvite(config)}`;
 }
 

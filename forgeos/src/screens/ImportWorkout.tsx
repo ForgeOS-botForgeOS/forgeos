@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, Dumbbell, Activity, CheckCircle2, Play } from 'lucide-react';
 import { Card, Button, Badge } from '../components/ui';
-import { decodeWorkout, sharedToExercises } from '../lib/workoutShare';
+import { decodeWorkout, sharedExerciseName, sharedToExercises } from '../lib/workoutShare';
 import { useWorkout } from '../state/workoutStore';
 import { exerciseById } from '../data/exercises';
 import { haptic } from '../lib/haptics';
@@ -75,7 +75,7 @@ export default function ImportWorkout() {
           {shared.exercises.map((e, i) => (
             <Card key={i} className="space-y-1">
               <div className="flex items-center justify-between">
-                <p className="font-semibold text-sm flex items-center gap-2"><Dumbbell size={14} className="text-accent" /> {exerciseById(e.exerciseId)?.name ?? 'Exercise'}</p>
+                <p className="font-semibold text-sm flex items-center gap-2"><Dumbbell size={14} className="text-accent" /> {sharedExerciseName(e, exerciseById)}</p>
                 <Badge>{e.sets.length} sets</Badge>
               </div>
               <p className="text-xs text-muted">{e.sets.map((s) => `${s.weightKg}kg×${s.reps}`).join(' · ')}</p>

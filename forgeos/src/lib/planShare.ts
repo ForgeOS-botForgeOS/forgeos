@@ -1,3 +1,4 @@
+import { shareBase } from './publicUrl';
 import type { ExerciseTarget, PlannedDay, Weekday, WeekPlan } from '../types';
 import { cleanNumber, displayTitle } from './sanitize';
 
@@ -78,7 +79,7 @@ export function decodePlan(code: string): WeekPlan | null {
 
 // Full shareable link that opens the in-app import screen.
 export function planShareUrl(plan: WeekPlan): string {
-  const base = window.location.href.split('#')[0];
+  const base = shareBase();
   return `${base}#/import?p=${encodePlan(plan)}`;
 }
 

@@ -1,8 +1,27 @@
-import type { CardioLog, SubTargetKind, Workout, WorkoutExercise } from '../types';
+import { shareBase, shareOrCopy, type ShareResult } from './publicUrl';
+import type { CardioLog, ExerciseCategory, MuscleGroup, SubTargetKind, Workout, WorkoutExercise } from '../types';
+import { useExercises } from '../state/exerciseStore';
 import { cleanNumber, displayTitle } from './sanitize';
 import { coerceGrip, type GripPosition } from './grip';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
+
+// The same bounds the decoder enforces: a link the app writes must always open.
+export const SHARE_MAX_EXERCISES = 40;
+export const SHARE_MAX_SETS = 30;
+const CATEGORIES: readonly ExerciseCategory[] = ['Powerlifting', 'Bodybuilding', 'Plyometrics', 'Calisthenics', 'Olympic', 'CrossFit', 'Cardio', 'Mobility'];
+const MUSCLES: readonly MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Calves', 'Core', 'Full Body'];
+
+function sanitizeCustom(raw: unknown): SharedCustom | undefined {
+  if (typeof raw !== 'object' || raw === null) return undefined;
+  const c = raw as Record<string, unknown>;
+  return {
+    name: displayTitle(c.name, 'Custom exercise').slice(0, 60),
+    category: CATEGORIES.includes(c.category as ExerciseCategory) ? (c.category as ExerciseCategory) : 'Bodybuilding',
+    primary: MUSCLES.includes(c.primary as MuscleGroup) ? (c.primary as MuscleGroup) : 'Full Body',
+    equipment: displayTitle(c.equipment, 'Other').slice(0, 40),
+  };
+}
 
 // A trimmed, id-free view of a single workout that's safe (and small enough) to
 // carry in a share link — no local ids, dates, sync flags or personal totals.
@@ -13,9 +32,18 @@ interface SharedSet {
   subKind?: SubTargetKind;
   grip?: GripPosition;
 }
+// A custom exercise only exists on the sender's phone, so its name and kind
+// travel with the link and are recreated on the friend's phone.
+export interface SharedCustom {
+  name: string;
+  category: ExerciseCategory;
+  primary: MuscleGroup;
+  equipment: string;
+}
 interface SharedExercise {
   exerciseId: string;
   sets: SharedSet[];
+  custom?: SharedCustom;
   supersetGroup?: number; // index-based group tag, re-linked on import
   restPresetSec?: number;
 }
@@ -37,6 +65,12 @@ function fromBase64Url(code: string): string {
   return decodeURIComponent(escape(atob(b64)));
 }
 
+function customFor(exerciseId: string): { custom?: SharedCustom } {
+  if (!exerciseId.startsWith('cus-')) return {};
+  const ex = useExercises.getState().custom.find((c) => c.id === exerciseId);
+  return ex ? { custom: { name: ex.name, category: ex.category, primary: ex.primary, equipment: ex.equipment } } : {};
+}
+
 // Trim a full Workout down to the shareable view. Maps real superset group
 // ids to small integer tags so linkage survives the trip without leaking
 // local ids. Also used by live races to carry the workout in the invite.
@@ -44,7 +78,7 @@ export function toSharedWorkout(w: Workout): SharedWorkout {
   const groupTag = new Map<string, number>();
   return {
     name: displayTitle(w.name, 'Shared workout'),
-    exercises: w.exercises.map((e) => {
+    exercises: w.exercises.slice(0, SHARE_MAX_EXERCISES).map((e) => {
       let tag: number | undefined;
       if (e.supersetGroup) {
         if (!groupTag.has(e.supersetGroup)) groupTag.set(e.supersetGroup, groupTag.size + 1);
@@ -54,7 +88,8 @@ export function toSharedWorkout(w: Workout): SharedWorkout {
         exerciseId: e.exerciseId,
         supersetGroup: tag,
         restPresetSec: e.restPresetSec,
-        sets: e.sets.map((s) => ({ weightKg: s.weightKg, reps: s.reps, rpe: s.rpe, subKind: s.subKind, grip: s.grip })),
+        sets: e.sets.slice(0, SHARE_MAX_SETS).map((s) => ({ weightKg: s.weightKg, reps: s.reps, rpe: s.rpe, subKind: s.subKind, grip: s.grip })),
+        ...customFor(e.exerciseId),
       };
     }),
     cardio: w.cardio,
@@ -100,6 +135,7 @@ export function sanitizeSharedWorkout(raw: unknown): SharedWorkout | null {
       sets,
       supersetGroup: x.supersetGroup == null ? undefined : Math.round(cleanNumber(x.supersetGroup, 0, 100)),
       restPresetSec: x.restPresetSec == null ? undefined : Math.round(cleanNumber(x.restPresetSec, 0, 1800, 90)),
+      ...(x.custom == null ? {} : { custom: sanitizeCustom(x.custom) }),
     });
   }
   let cardio: CardioLog | undefined;
@@ -124,11 +160,27 @@ export function decodeWorkout(code: string): SharedWorkout | null {
   }
 }
 
+// The friend's own copy of a sender's custom exercise: reuse one with the same
+// name, otherwise create it, so the session never shows a nameless row.
+function resolveExerciseId(e: SharedExercise): string {
+  if (!e.custom) return e.exerciseId;
+  const store = useExercises.getState();
+  const same = store.custom.find((c) => c.name.toLowerCase() === e.custom!.name.toLowerCase());
+  if (same) return same.id;
+  return store.addCustom({ ...e.custom, secondary: [], isCore: false }).id;
+}
+
+/** Display name of a shared exercise, built-in or carried custom. */
+export function sharedExerciseName(e: SharedExercise, lookup: (id: string) => { name: string } | undefined): string {
+  return lookup(e.exerciseId)?.name ?? e.custom?.name ?? 'Exercise';
+}
+
 // Rebuild proper WorkoutExercise[] (fresh ids, superset groups re-linked, sets
 // reset to uncompleted) so a shared workout can be started as a live session.
 export function sharedToExercises(shared: SharedWorkout): WorkoutExercise[] {
   const groupId = new Map<number, string>();
   return shared.exercises.map((e) => {
+    const exerciseId = resolveExerciseId(e);
     let supersetGroup: string | undefined;
     if (e.supersetGroup != null) {
       if (!groupId.has(e.supersetGroup)) groupId.set(e.supersetGroup, uid());
@@ -136,7 +188,7 @@ export function sharedToExercises(shared: SharedWorkout): WorkoutExercise[] {
     }
     return {
       id: uid(),
-      exerciseId: e.exerciseId,
+      exerciseId,
       supersetGroup,
       restPresetSec: e.restPresetSec ?? 90,
       sets: e.sets.map((s) => ({
@@ -154,21 +206,10 @@ export function sharedToExercises(shared: SharedWorkout): WorkoutExercise[] {
 
 // Full shareable link that opens the in-app import screen.
 export function workoutShareUrl(w: Workout): string {
-  const base = window.location.href.split('#')[0];
-  return `${base}#/import-workout?w=${encodeWorkout(w)}`;
+  return `${shareBase()}#/import-workout?w=${encodeWorkout(w)}`;
 }
 
-export async function shareWorkout(w: Workout): Promise<'shared' | 'copied'> {
-  const url = workoutShareUrl(w);
-  const nav = navigator as Navigator & { share?: (d: { title?: string; text?: string; url?: string }) => Promise<void> };
-  if (nav.share) {
-    try {
-      await nav.share({ title: 'ForgeOS workout', text: `Try my "${w.name}" workout on ForgeOS 💪`, url });
-      return 'shared';
-    } catch {
-      /* user cancelled — fall through to copy */
-    }
-  }
-  await navigator.clipboard.writeText(url);
-  return 'copied';
+export async function shareWorkout(w: Workout): Promise<ShareResult> {
+  const what = w.cardio ? `${w.cardio.machine} session` : `"${w.name}" workout`;
+  return shareOrCopy({ title: 'ForgeOS workout', text: `Try my ${what} on ForgeOS 💪`, url: workoutShareUrl(w) });
 }
