@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Coins, Check, Lock } from 'lucide-react';
@@ -32,15 +33,16 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export default function Shop() {
+  const tr = useT();
   const navigate = useNavigate();
   const coins = useGami((s) => s.coins);
   const [tab, setTab] = useState<Tab>('power');
 
   return (
     <div className="px-4 pt-12 pb-8 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {tr('Back')}</button>
       <div className="flex items-end justify-between">
-        <h1 className="text-2xl font-extrabold">Forge Shop</h1>
+        <h1 className="text-2xl font-extrabold">{tr('Forge Shop')}</h1>
         <Badge color="rgb(var(--accent-2))"><span className="flex items-center gap-1"><Coins size={12} /> <CountUp value={coins} /></span></Badge>
       </div>
 
@@ -51,7 +53,7 @@ export default function Shop() {
       </div>
 
       {tab === 'power' ? <PowerUps /> : <CosmeticGrid type={tab} />}
-      <p className="text-[11px] text-muted/70">Earn Forge Coins from quests, milestones and XP conversion. Everything here is for fun: coins never buy XP or rank.</p>
+      <p className="text-[11px] text-muted/70">{tr('Earn Forge Coins from quests, milestones and XP conversion. Everything here is for fun: coins never buy XP or rank.')}</p>
     </div>
   );
 }
@@ -91,6 +93,7 @@ function Preview({ c }: { c: Cosmetic }) {
 }
 
 function CosmeticGrid({ type }: { type: CosmeticType }) {
+  const t = useT();
   const coins = useGami((s) => s.coins);
   const spend = useGami((s) => s.spendCoins);
   const equippedConfetti = useCosmetics((s) => s.equippedConfetti);
@@ -104,7 +107,7 @@ function CosmeticGrid({ type }: { type: CosmeticType }) {
 
   function buy(c: Cosmetic) {
     if (owned.includes(c.id)) return;
-    if (c.exclusive) { haptic('warning'); toast('That one is earned, not bought: check Achievements.', 'error'); return; }
+    if (c.exclusive) { haptic('warning'); toast(t('That one is earned, not bought: check Achievements.'), 'error'); return; }
     if (spend(c.price)) { own(c.id); celebrate(); toast(`Unlocked ${c.name} 🎉`); } else { haptic('warning'); toast(`Not enough coins: need 🪙${c.price}.`, 'error'); }
   }
 
@@ -113,9 +116,9 @@ function CosmeticGrid({ type }: { type: CosmeticType }) {
       {type === 'confetti' && (
         <Card className="space-y-2 text-center">
           <p className="text-2xl leading-[3rem]">🎊</p>
-          <p className="text-sm font-semibold">Classic</p>
+          <p className="text-sm font-semibold">{t('Classic')}</p>
           <Button variant={equippedConfetti ? 'ghost' : 'primary'} className="w-full justify-center py-1.5" onClick={() => { equipConfetti(null); haptic('tap'); }}>
-            {equippedConfetti ? 'Equip' : <span className="flex items-center gap-1"><Check size={14} /> Equipped</span>}
+            {equippedConfetti ? t('Equip') : <span className="flex items-center gap-1"><Check size={14} /> {t('Equipped')}</span>}
           </Button>
         </Card>
       )}
@@ -130,11 +133,11 @@ function CosmeticGrid({ type }: { type: CosmeticType }) {
             {!c.exclusive && <p className="text-[10px] font-semibold uppercase tracking-wide" style={{ color: RARITY_COLOR[rarity] }}>{rarity}</p>}
             {have ? (
               <Button variant={equipped ? 'primary' : 'ghost'} className="w-full justify-center py-1.5" onClick={() => equip(c)}>
-                {equipped ? <span className="flex items-center gap-1"><Check size={14} /> {c.type === 'theme' ? 'Active' : 'Equipped'}</span> : (c.type === 'theme' ? 'Apply' : 'Equip')}
+                {equipped ? <span className="flex items-center gap-1"><Check size={14} /> {c.type === 'theme' ? t('Active') : t('Equipped')}</span> : (c.type === 'theme' ? t('Apply') : t('Equip'))}
               </Button>
             ) : c.exclusive ? (
               <div className="rounded-xl border border-dashed border-accent-2/60 px-2 py-1.5">
-                <p className="flex items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-accent-2"><Lock size={10} /> achievement</p>
+                <p className="flex items-center justify-center gap-1 text-[10px] font-semibold uppercase tracking-wide text-accent-2"><Lock size={10} /> {t('achievement')}</p>
                 <p className="text-[10px] leading-tight text-muted">{c.earnedBy}</p>
               </div>
             ) : (
@@ -148,6 +151,7 @@ function CosmeticGrid({ type }: { type: CosmeticType }) {
 }
 
 function PowerUps() {
+  const t = useT();
   const coins = useGami((s) => s.coins);
   const spend = useGami((s) => s.spendCoins);
   const rerolls = useGami((s) => s.rerolls);
@@ -173,46 +177,46 @@ function PowerUps() {
       <Card className="space-y-3 text-center border-accent-2/50">
         <p className="text-5xl">🎁</p>
         <div>
-          <p className="text-lg font-extrabold">Mystery Chest</p>
-          <p className="text-xs text-muted">One random title, badge, frame, confetti or theme you don't own yet. Never a duplicate. Legendary pulls are rare, and some are worth far more than 🪙{CHEST_PRICE}.</p>
+          <p className="text-lg font-extrabold">{t('Mystery Chest')}</p>
+          <p className="text-xs text-muted">{t('One random title, badge, frame, confetti or theme you don\'t own yet. Never a duplicate. Legendary pulls are rare, and some are worth far more than 🪙')}{CHEST_PRICE}.</p>
         </div>
         {pool.length ? (
-          <Button className="w-full justify-center py-3 text-base" disabled={coins < CHEST_PRICE} onClick={openChest}>Open for 🪙{CHEST_PRICE}</Button>
+          <Button className="w-full justify-center py-3 text-base" disabled={coins < CHEST_PRICE} onClick={openChest}>{t('Open for 🪙')}{CHEST_PRICE}</Button>
         ) : (
-          <p className="text-sm font-semibold text-accent-2">You own everything the chest can give. Legend.</p>
+          <p className="text-sm font-semibold text-accent-2">{t('You own everything the chest can give. Legend.')}</p>
         )}
       </Card>
 
       <Card className="flex items-center gap-3">
         <p className="text-3xl">🎲</p>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold">Quest Reroll {rerolls > 0 && <span className="text-accent">· {rerolls} ready</span>}</p>
-          <p className="text-[11px] text-muted">Don't like a daily quest? Swap it for a different one on the Quests tab.</p>
+          <p className="text-sm font-semibold">{t('Quest Reroll')} {rerolls > 0 && <span className="text-accent">· {rerolls} {t('ready')}</span>}</p>
+          <p className="text-[11px] text-muted">{t('Don\'t like a daily quest? Swap it for a different one on the Quests tab.')}</p>
         </div>
-        <Button variant="outline" className="py-1.5 shrink-0" disabled={coins < REROLL_PRICE} onClick={() => { if (buyReroll()) { haptic('success'); toast('Reroll ready: tap 🎲 on a daily quest'); } }}>🪙 {REROLL_PRICE}</Button>
+        <Button variant="outline" className="py-1.5 shrink-0" disabled={coins < REROLL_PRICE} onClick={() => { if (buyReroll()) { haptic('success'); toast(t('Reroll ready: tap 🎲 on a daily quest')); } }}>🪙 {REROLL_PRICE}</Button>
       </Card>
 
       <Card className="flex items-center gap-3">
         <p className="text-3xl">🧊</p>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-semibold">Streak Freeze</p>
-          <p className="text-[11px] text-muted">Protects your day streak for one missed day.</p>
+          <p className="text-sm font-semibold">{t('Streak Freeze')}</p>
+          <p className="text-[11px] text-muted">{t('Protects your day streak for one missed day.')}</p>
         </div>
-        <Button variant="outline" className="py-1.5 shrink-0" disabled={coins < FREEZE_PRICE} onClick={() => { if (buyFreeze()) { haptic('success'); toast('Streak freeze bought 🧊'); } }}>🪙 {FREEZE_PRICE}</Button>
+        <Button variant="outline" className="py-1.5 shrink-0" disabled={coins < FREEZE_PRICE} onClick={() => { if (buyFreeze()) { haptic('success'); toast(t('Streak freeze bought 🧊')); } }}>🪙 {FREEZE_PRICE}</Button>
       </Card>
 
-      <Sheet open={won !== null} onClose={() => setWon(null)} title="You got…">
+      <Sheet open={won !== null} onClose={() => setWon(null)} title={t('You got…')}>
         {won && (
           <div className="space-y-3 pt-1 text-center">
             <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: RARITY_COLOR[rarityOf(won.price)] }}>{rarityOf(won.price)} {won.type}</p>
             <Preview c={won} />
             <p className="text-xl font-extrabold">{won.name}</p>
-            <p className="text-xs text-muted">Worth 🪙{won.price} in the shop.</p>
+            <p className="text-xs text-muted">{t('Worth 🪙')}{won.price} {t('in the shop.')}</p>
             {!isEquipped(won) && (
-              <Button className="w-full justify-center py-3" onClick={() => { equip(won); setWon(null); }}>{won.type === 'theme' ? 'Apply now' : 'Equip now'}</Button>
+              <Button className="w-full justify-center py-3" onClick={() => { equip(won); setWon(null); }}>{won.type === 'theme' ? t('Apply now') : t('Equip now')}</Button>
             )}
             <Button variant="ghost" className="w-full justify-center" onClick={() => { setWon(null); if (won.type === 'title' || won.type === 'badge' || won.type === 'frame') navigate('/profile'); }}>
-              {won.type === 'title' || won.type === 'badge' || won.type === 'frame' ? 'See it on your profile' : 'Nice'}
+              {won.type === 'title' || won.type === 'badge' || won.type === 'frame' ? t('See it on your profile') : t('Nice')}
             </Button>
           </div>
         )}

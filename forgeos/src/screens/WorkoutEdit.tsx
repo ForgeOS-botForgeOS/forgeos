@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, Trash2, Search, X } from 'lucide-react';
@@ -15,6 +16,7 @@ import { GRIP_POSITIONS, GRIP_LABEL, coerceGrip } from '../lib/grip';
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 export default function WorkoutEdit() {
+  const t = useT();
   const { id } = useParams();
   const navigate = useNavigate();
   const isNew = id === 'new';
@@ -49,8 +51,8 @@ export default function WorkoutEdit() {
   if (!draft) {
     return (
       <div className="px-4 pt-12 space-y-3">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
-        <p className="text-muted">Workout not found.</p>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Back')}</button>
+        <p className="text-muted">{t('Workout not found.')}</p>
       </div>
     );
   }
@@ -101,12 +103,12 @@ export default function WorkoutEdit() {
 
   return (
     <div className="px-4 pt-12 pb-10 space-y-4">
-      <button onClick={leave} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
+      <button onClick={leave} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Back')}</button>
 
       {showRestored && (
         <div className="flex items-center gap-2 rounded-xl border border-line bg-surface-2 px-3 py-2 text-xs">
-          <span className="flex-1 text-muted">Picked up where you left off. Nothing is saved to History until you tap Save.</span>
-          <button onClick={startOver} className="shrink-0 rounded-md bg-surface-2 px-2 py-1 text-muted">Start over</button>
+          <span className="flex-1 text-muted">{t('Picked up where you left off. Nothing is saved to History until you tap Save.')}</span>
+          <button onClick={startOver} className="shrink-0 rounded-md bg-surface-2 px-2 py-1 text-muted">{t('Start over')}</button>
         </div>
       )}
 
@@ -116,7 +118,7 @@ export default function WorkoutEdit() {
       {draft.exercises.map((we) => (
         <Card key={we.id} className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="font-semibold text-sm">{exerciseById(we.exerciseId)?.name ?? 'Exercise'}</p>
+            <p className="font-semibold text-sm">{exerciseById(we.exerciseId)?.name ?? t('Exercise')}</p>
             <button onClick={() => removeExercise(we.id)} className="text-danger"><Trash2 size={15} /></button>
           </div>
           {we.sets.map((s, i) => (
@@ -130,24 +132,24 @@ export default function WorkoutEdit() {
                 onChange={(e) => { const g = coerceGrip(e.target.value); patchSet(we.id, s.id, { grip: g, subKind: g ? 'grip' : 'none' }); }}
                 className="rounded-md bg-surface-2 px-1.5 py-1 text-[11px] text-muted max-w-[6.5rem]"
               >
-                <option value="">grip</option>
+                <option value="">{t('grip')}</option>
                 {GRIP_POSITIONS.map((g) => <option key={g} value={g}>{GRIP_LABEL[g]}</option>)}
               </select>
               <button onClick={() => removeSet(we.id, s.id)} className="text-muted ml-auto"><X size={15} /></button>
             </div>
           ))}
-          <Button variant="ghost" className="w-full justify-center py-1.5" onClick={() => addSet(we.id)}><span className="flex items-center gap-1 text-xs"><Plus size={13} /> Set</span></Button>
+          <Button variant="ghost" className="w-full justify-center py-1.5" onClick={() => addSet(we.id)}><span className="flex items-center gap-1 text-xs"><Plus size={13} /> {t('Set')}</span></Button>
         </Card>
       ))}
 
-      <Button variant="ghost" className="w-full justify-center" onClick={() => setPickerOpen(true)}><span className="flex items-center gap-1"><Plus size={16} /> Add exercise</span></Button>
+      <Button variant="ghost" className="w-full justify-center" onClick={() => setPickerOpen(true)}><span className="flex items-center gap-1"><Plus size={16} /> {t('Add exercise')}</span></Button>
 
       <div className="flex gap-2">
-        {!isNew && <Button variant="outline" className="flex-1 justify-center text-danger" onClick={del}>Delete</Button>}
-        <Button className="flex-1 justify-center" onClick={save}>{isNew ? 'Save workout' : 'Save changes'}</Button>
+        {!isNew && <Button variant="outline" className="flex-1 justify-center text-danger" onClick={del}>{t('Delete')}</Button>}
+        <Button className="flex-1 justify-center" onClick={save}>{isNew ? t('Save workout') : t('Save changes')}</Button>
       </div>
 
-      <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="Add exercise">
+      <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title={t('Add exercise')}>
         <ExercisePicker onPick={(id2) => { addExercise(id2); setPickerOpen(false); }} />
       </Sheet>
     </div>
@@ -165,12 +167,13 @@ function Num({ value, step, unit, onChange }: { value: number; step: number; uni
 }
 
 function ExercisePicker({ onPick }: { onPick: (id: string) => void }) {
+  const t = useT();
   const [q, setQ] = useState('');
   const [cat, setCat] = useState('All');
   const list = EXERCISES.filter((e) => (cat === 'All' || e.category === cat) && e.name.toLowerCase().includes(q.toLowerCase())).slice(0, 50);
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5"><Search size={16} className="text-muted" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search…" className="bg-transparent text-sm flex-1 outline-none" /></div>
+      <div className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5"><Search size={16} className="text-muted" /><input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Search…')} className="bg-transparent text-sm flex-1 outline-none" /></div>
       <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1" data-noswipe>
         {['All', ...EXERCISE_CATEGORIES].map((c) => <button key={c} onClick={() => setCat(c)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${cat === c ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>{c}</button>)}
       </div>

@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, Download, CheckCircle2 } from 'lucide-react';
@@ -8,6 +9,7 @@ import { exerciseById } from '../data/exercises';
 import { haptic } from '../lib/haptics';
 
 export default function ImportPlan() {
+  const t = useT();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const setWeekPlan = useUser((s) => s.setWeekPlan);
@@ -28,21 +30,21 @@ export default function ImportPlan() {
 
   return (
     <div className="px-4 pt-12 pb-8 space-y-4">
-      <button onClick={() => navigate('/home')} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Home</button>
-      <h1 className="text-2xl font-extrabold">Shared plan</h1>
+      <button onClick={() => navigate('/home')} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Home')}</button>
+      <h1 className="text-2xl font-extrabold">{t('Shared plan')}</h1>
 
       {!plan ? (
-        <Card><p className="text-sm text-muted">This share link is invalid or empty.</p></Card>
+        <Card><p className="text-sm text-muted">{t('This share link is invalid or empty.')}</p></Card>
       ) : done ? (
-        <Card className="flex items-center gap-3"><CheckCircle2 className="text-success" /><p className="text-sm">Plan imported! Opening the editor…</p></Card>
+        <Card className="flex items-center gap-3"><CheckCircle2 className="text-success" /><p className="text-sm">{t('Plan imported! Opening the editor…')}</p></Card>
       ) : (
         <>
-          <p className="text-sm text-muted">A friend shared this training week. Preview it, then make it yours.</p>
+          <p className="text-sm text-muted">{t('A friend shared this training week. Preview it, then make it yours.')}</p>
           <div className="grid grid-cols-7 gap-1">
             {plan.days.map((d) => (
               <div key={d.day} className={`rounded-lg p-2 text-center ${d.rest ? 'bg-surface' : 'bg-accent/15'}`}>
                 <p className="text-[10px] text-muted">{d.day}</p>
-                <p className="text-[10px] font-semibold mt-1 leading-tight">{d.rest ? 'Rest' : d.label}</p>
+                <p className="text-[10px] font-semibold mt-1 leading-tight">{d.rest ? t('Rest') : d.label}</p>
               </div>
             ))}
           </div>
@@ -56,9 +58,9 @@ export default function ImportPlan() {
             </Card>
           ))}
           <Button className="w-full justify-center" onClick={useThisPlan}>
-            <span className="flex items-center gap-2"><Download size={16} /> Use this plan</span>
+            <span className="flex items-center gap-2"><Download size={16} /> {t('Use this plan')}</span>
           </Button>
-          <p className="text-[11px] text-muted/70">It’s also saved to your templates so your current plan isn’t lost.</p>
+          <p className="text-[11px] text-muted/70">{t('It’s also saved to your templates so your current plan isn’t lost.')}</p>
         </>
       )}
     </div>

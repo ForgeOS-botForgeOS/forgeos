@@ -1,5 +1,5 @@
 import { shortDate } from '../lib/shortDate';
-import { useLocale } from '../lib/i18n';
+import { useLocale, useT } from '../lib/i18n';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, TrendingDown, TrendingUp, Camera, Trophy, Footprints, Dumbbell, Target, Flame } from 'lucide-react';
@@ -33,6 +33,7 @@ const MEASURES: { key: keyof BodyStat; label: string; unit: string; step: number
 type Tab = 'body' | 'cardio' | 'strength';
 
 export default function Progress() {
+  const t = useT();
   const navigate = useNavigate();
   const [tab, setTab] = useState<Tab>('body');
   const weekStreak = useGami((s) => s.weekStreak);
@@ -44,16 +45,16 @@ export default function Progress() {
 
   return (
     <div className="px-4 pt-12 pb-8 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Back')}</button>
       <div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Progress</h1>
-        <p className="text-sm text-muted">Your body, your numbers, over time.</p>
+        <h1 className="text-2xl font-extrabold tracking-tight">{t('Progress')}</h1>
+        <p className="text-sm text-muted">{t('Your body, your numbers, over time.')}</p>
       </div>
 
       {/* Weekly adherence — ties to the new week-based streak */}
       <Card className="space-y-2">
         <div className="flex items-center justify-between">
-          <SectionTitle action={<span className="flex items-center gap-1 text-accent text-xs font-bold"><Flame size={13} /> <CountUp value={weekStreak} /> wk</span>}>This week</SectionTitle>
+          <SectionTitle action={<span className="flex items-center gap-1 text-accent text-xs font-bold"><Flame size={13} /> <CountUp value={weekStreak} /> wk</span>}>{t('This week')}</SectionTitle>
         </div>
         <div className="flex items-center gap-3">
           <div className="flex-1">
@@ -61,19 +62,19 @@ export default function Progress() {
           </div>
           <span className="font-mono text-sm">{Math.min(weekSessions, goal)}/{goal}</span>
         </div>
-        <p className="text-[11px] text-muted">{weekSessions >= 1 ? 'You showed up this week: streak secured 🔥' : 'Train once this week to keep your streak going.'}</p>
+        <p className="text-[11px] text-muted">{weekSessions >= 1 ? t('You showed up this week: streak secured 🔥') : t('Train once this week to keep your streak going.')}</p>
         <div className="flex gap-2 pt-1">
-          <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium flex items-center gap-1"><Flame size={12} className="text-accent" /> {weekStreak}-week streak</span>
-          <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium flex items-center gap-1"><Flame size={12} className="text-accent-2" /> {dayStreak}-day streak</span>
+          <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium flex items-center gap-1"><Flame size={12} className="text-accent" /> {weekStreak}{t('-week streak')}</span>
+          <span className="rounded-full bg-surface-2 px-2.5 py-1 text-[11px] font-medium flex items-center gap-1"><Flame size={12} className="text-accent-2" /> {dayStreak}{t('-day streak')}</span>
         </div>
       </Card>
 
       <ConsistencyHeatmap />
 
       <div className="flex gap-2">
-        <Pill active={tab === 'body'} onClick={() => setTab('body')}>Body</Pill>
-        <Pill active={tab === 'cardio'} onClick={() => setTab('cardio')}>Cardio</Pill>
-        <Pill active={tab === 'strength'} onClick={() => setTab('strength')}>Strength</Pill>
+        <Pill active={tab === 'body'} onClick={() => setTab('body')}>{t('Body')}</Pill>
+        <Pill active={tab === 'cardio'} onClick={() => setTab('cardio')}>{t('Cardio')}</Pill>
+        <Pill active={tab === 'strength'} onClick={() => setTab('strength')}>{t('Strength')}</Pill>
       </div>
 
       {tab === 'body' && <BodyPanel />}
@@ -92,6 +93,7 @@ const AXIS_TICK = { fontSize: 10, fill: 'rgb(var(--muted))' };
 const TIP_STYLE = { background: 'rgb(var(--surface))', border: '1px solid rgb(var(--line))', borderRadius: 12, fontSize: 12 };
 
 function RecoveryGrowth() {
+  const t = useT();
   const locale = useLocale();
   const ck = useChartKit();
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
@@ -129,9 +131,9 @@ function RecoveryGrowth() {
       <Card>
         <SectionTitle action={delta != null && delta !== 0 ? (
           <span className={`flex items-center gap-1 text-xs font-bold ${delta > 0 ? 'text-success' : 'text-warn'}`}>
-            {delta > 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}{delta > 0 ? '+' : ''}{delta} vs last week
+            {delta > 0 ? <TrendingUp size={13} /> : <TrendingDown size={13} />}{delta > 0 ? '+' : ''}{delta} {t('vs last week')}
           </span>
-        ) : undefined}>Readiness (30d)</SectionTitle>
+        ) : undefined}>{t('Readiness (30d)')}</SectionTitle>
         <div className="h-36">
           <ResponsiveContainer width="100%" height="100%">
             <ComposedChart data={series} margin={{ left: -24, right: 6, top: 6 }}>
@@ -148,7 +150,7 @@ function RecoveryGrowth() {
       </Card>
 
       <Card>
-        <SectionTitle>Sleep vs the 8h target (14d)</SectionTitle>
+        <SectionTitle>{t('Sleep vs the 8h target (14d)')}</SectionTitle>
         <div className="h-36">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={last14} margin={{ left: -24, right: 6, top: 6 }}>
@@ -165,7 +167,7 @@ function RecoveryGrowth() {
       </Card>
 
       <Card>
-        <SectionTitle>Daily steps (14d)</SectionTitle>
+        <SectionTitle>{t('Daily steps (14d)')}</SectionTitle>
         <div className="h-36">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={last14} margin={{ left: -14, right: 6, top: 6 }}>
@@ -186,6 +188,7 @@ function RecoveryGrowth() {
 /* ------------------------------- BODY ------------------------------- */
 
 function BodyPanel() {
+  const t = useT();
   const locale = useLocale();
   const ck = useChartKit();
   const bodyStats = useUser((s) => s.bodyStats);
@@ -214,7 +217,7 @@ function BodyPanel() {
       const { dataUrl } = await prepareImage(file, 480, 0.7);
       addBodyStat({ photo: dataUrl });
       haptic('success');
-      toast('Progress photo saved 📸');
+      toast(t('Progress photo saved 📸'));
     } catch (err) {
       haptic('warning');
       toast(uploadErrorMessage(err), 'error');
@@ -224,7 +227,7 @@ function BodyPanel() {
   return (
     <div className="space-y-3">
       <div className="flex gap-2">
-        <Button className="flex-1 justify-center" onClick={() => setLogOpen(true)}><span className="flex items-center gap-1"><Plus size={15} /> Log measurements</span></Button>
+        <Button className="flex-1 justify-center" onClick={() => setLogOpen(true)}><span className="flex items-center gap-1"><Plus size={15} /> {t('Log measurements')}</span></Button>
         <Button variant="ghost" className="justify-center px-3" onClick={() => photoRef.current?.click()}><Camera size={16} /></Button>
         <input ref={photoRef} type="file" accept="image/*" className="hidden" onChange={onPhoto} />
       </div>
@@ -254,7 +257,7 @@ function BodyPanel() {
       {/* weight trend */}
       {weightSeries.length > 1 && (
         <Card>
-          <SectionTitle>Weight trend</SectionTitle>
+          <SectionTitle>{t('Weight trend')}</SectionTitle>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={weightSeries} margin={{ left: -20, right: 6, top: 6 }}>
@@ -276,7 +279,7 @@ function BodyPanel() {
       {/* progress photos */}
       {photos.length > 0 && (
         <Card>
-          <SectionTitle>Progress photos</SectionTitle>
+          <SectionTitle>{t('Progress photos')}</SectionTitle>
           <div className="flex gap-2 overflow-x-auto no-scrollbar" data-noswipe>
             {photos.map((b) => (
               <div key={b.date} className="shrink-0 text-center">
@@ -288,14 +291,15 @@ function BodyPanel() {
         </Card>
       )}
 
-      {bodyStats.length === 0 && <p className="text-sm text-muted text-center py-4">Log your first measurements to start tracking 📈</p>}
+      {bodyStats.length === 0 && <p className="text-sm text-muted text-center py-4">{t('Log your first measurements to start tracking 📈')}</p>}
 
-      <MeasureSheet open={logOpen} onClose={() => setLogOpen(false)} latest={latest} onSave={(patch) => { addBodyStat(patch); setLogOpen(false); haptic('success'); toast('Measurements logged 📏'); }} />
+      <MeasureSheet open={logOpen} onClose={() => setLogOpen(false)} latest={latest} onSave={(patch) => { addBodyStat(patch); setLogOpen(false); haptic('success'); toast(t('Measurements logged 📏')); }} />
     </div>
   );
 }
 
 function MeasureSheet({ open, onClose, latest, onSave }: { open: boolean; onClose: () => void; latest?: BodyStat; onSave: (patch: Partial<BodyStat>) => void }) {
+  const t = useT();
   // Raw text per touched field, so an emptied box stays empty instead of
   // snapping to 0. Untouched fields fall back to your last value / a seed.
   const [vals, setVals] = useState<Record<string, string>>({});
@@ -323,9 +327,9 @@ function MeasureSheet({ open, onClose, latest, onSave }: { open: boolean; onClos
   }, [vals]);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Log measurements">
+    <Sheet open={open} onClose={onClose} title={t('Log measurements')}>
       <div className="space-y-2.5">
-        <p className="text-[11px] text-muted">Only the ones you fill in are saved. Track what matters to you.</p>
+        <p className="text-[11px] text-muted">{t('Only the ones you fill in are saved. Track what matters to you.')}</p>
         {MEASURES.map((m) => (
           <div key={m.key} className="flex items-center justify-between gap-2">
             <span className="text-sm text-muted">{m.label} <span className="text-[10px]">({m.unit})</span></span>
@@ -336,7 +340,7 @@ function MeasureSheet({ open, onClose, latest, onSave }: { open: boolean; onClos
             </div>
           </div>
         ))}
-        <Button className="w-full justify-center" disabled={Object.keys(patch).length === 0} onClick={() => onSave(patch as Partial<BodyStat>)}>Save today’s snapshot</Button>
+        <Button className="w-full justify-center" disabled={Object.keys(patch).length === 0} onClick={() => onSave(patch as Partial<BodyStat>)}>{t('Save today’s snapshot')}</Button>
       </div>
     </Sheet>
   );
@@ -356,6 +360,7 @@ function defaultFor(k: keyof BodyStat): number {
 /* ------------------------------ CARDIO ------------------------------ */
 
 function CardioPanel() {
+  const t = useT();
   const ck = useChartKit();
   const history = useWorkout((s) => s.history);
   const cardio = useMemo(() => history.filter((w) => w.cardio).map((w) => w.cardio!), [history]);
@@ -375,8 +380,8 @@ function CardioPanel() {
     return (
       <Card className="text-center space-y-2">
         <Footprints className="mx-auto text-muted" />
-        <p className="font-semibold">No cardio logged yet</p>
-        <p className="text-sm text-muted">Log a run/row/ride in the Train tab: distance &amp; time earn XP and set PRs.</p>
+        <p className="font-semibold">{t('No cardio logged yet')}</p>
+        <p className="text-sm text-muted">{t('Log a run/row/ride in the Train tab: distance & time earn XP and set PRs.')}</p>
       </Card>
     );
   }
@@ -384,21 +389,21 @@ function CardioPanel() {
   return (
     <div className="space-y-3">
       <div className="grid grid-cols-3 gap-2">
-        <Card className="py-3 text-center"><CountUp value={Math.round(totalDist * 10) / 10} className="font-mono font-bold text-lg" format={(n) => `${n}`} /><p className="text-[10px] text-muted">km total</p></Card>
-        <Card className="py-3 text-center"><CountUp value={Math.round(totalMin)} className="font-mono font-bold text-lg" /><p className="text-[10px] text-muted">min total</p></Card>
-        <Card className="py-3 text-center"><CountUp value={cardio.length} className="font-mono font-bold text-lg" /><p className="text-[10px] text-muted">sessions</p></Card>
+        <Card className="py-3 text-center"><CountUp value={Math.round(totalDist * 10) / 10} className="font-mono font-bold text-lg" format={(n) => `${n}`} /><p className="text-[10px] text-muted">{t('km total')}</p></Card>
+        <Card className="py-3 text-center"><CountUp value={Math.round(totalMin)} className="font-mono font-bold text-lg" /><p className="text-[10px] text-muted">{t('min total')}</p></Card>
+        <Card className="py-3 text-center"><CountUp value={cardio.length} className="font-mono font-bold text-lg" /><p className="text-[10px] text-muted">{t('sessions')}</p></Card>
       </div>
 
       <Card className="space-y-2">
-        <SectionTitle action={<Trophy size={14} className="text-accent-2" />}>Personal bests</SectionTitle>
-        <BestRow label="Longest distance" value={`${Math.round(bestDist * 10) / 10} km`} />
-        <BestRow label="Longest time" value={`${Math.round(bestDur)} min`} />
-        {bestPace !== Infinity && <BestRow label="Best pace" value={`${Math.floor(bestPace)}:${String(Math.round((bestPace % 1) * 60)).padStart(2, '0')} /km`} />}
+        <SectionTitle action={<Trophy size={14} className="text-accent-2" />}>{t('Personal bests')}</SectionTitle>
+        <BestRow label={t('Longest distance')} value={`${Math.round(bestDist * 10) / 10} km`} />
+        <BestRow label={t('Longest time')} value={`${Math.round(bestDur)} min`} />
+        {bestPace !== Infinity && <BestRow label={t('Best pace')} value={`${Math.floor(bestPace)}:${String(Math.round((bestPace % 1) * 60)).padStart(2, '0')} /km`} />}
       </Card>
 
       {series.length > 1 && (
         <Card>
-          <SectionTitle>Distance per session</SectionTitle>
+          <SectionTitle>{t('Distance per session')}</SectionTitle>
           <div className="h-36">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={series} margin={{ left: -22, right: 6, top: 6 }}>
@@ -424,6 +429,7 @@ function BestRow({ label, value }: { label: string; value: string }) {
 /* ----------------------------- STRENGTH ----------------------------- */
 
 function StrengthPanel() {
+  const t = useT();
   const ck = useChartKit();
   const history = useWorkout((s) => s.history);
   const prs = useWorkout((s) => s.prs);
@@ -457,7 +463,7 @@ function StrengthPanel() {
       {/* Strength progression — estimated 1RM over time, per lift */}
       {trained.length > 0 && (
         <Card>
-          <SectionTitle action={<TrendingUp size={14} className="text-accent-2" />}>Strength progression</SectionTitle>
+          <SectionTitle action={<TrendingUp size={14} className="text-accent-2" />}>{t('Strength progression')}</SectionTitle>
           <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1 mb-1" data-noswipe>
             {trained.slice(0, 12).map((e) => (
               <button key={e.id} onClick={() => setSelEx(e.id)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs font-medium ${activeEx === e.id ? 'bg-accent-2 text-black' : 'bg-surface-2 text-muted'}`}>{e.name}</button>
@@ -478,14 +484,14 @@ function StrengthPanel() {
               </ResponsiveContainer>
             </div>
           ) : (
-            <p className="text-sm text-muted text-center py-6">Log this lift a couple more times to see the trend.</p>
+            <p className="text-sm text-muted text-center py-6">{t('Log this lift a couple more times to see the trend.')}</p>
           )}
         </Card>
       )}
 
       {volSeries.length > 1 ? (
         <Card>
-          <SectionTitle action={<Dumbbell size={14} className="text-accent" />}>Volume per session</SectionTitle>
+          <SectionTitle action={<Dumbbell size={14} className="text-accent" />}>{t('Volume per session')}</SectionTitle>
           <div className="h-40">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={volSeries} margin={{ left: -12, right: 6, top: 6 }}>
@@ -500,12 +506,12 @@ function StrengthPanel() {
           </div>
         </Card>
       ) : (
-        <Card className="text-center space-y-2"><Target className="mx-auto text-muted" /><p className="text-sm text-muted">Finish a couple of workouts to see your volume trend.</p></Card>
+        <Card className="text-center space-y-2"><Target className="mx-auto text-muted" /><p className="text-sm text-muted">{t('Finish a couple of workouts to see your volume trend.')}</p></Card>
       )}
 
       <Card className="space-y-2">
-        <SectionTitle action={<Trophy size={14} className="text-accent-2" />}>PR hall</SectionTitle>
-        {topPrs.length === 0 && <p className="text-sm text-muted">No PRs yet: your heaviest sets land here.</p>}
+        <SectionTitle action={<Trophy size={14} className="text-accent-2" />}>{t('PR hall')}</SectionTitle>
+        {topPrs.length === 0 && <p className="text-sm text-muted">{t('No PRs yet: your heaviest sets land here.')}</p>}
         {topPrs.map((pr) => (
           <div key={pr.id} className="flex items-center justify-between">
             <span className="text-sm">{pr.exerciseName}</span>
@@ -522,6 +528,7 @@ function StrengthPanel() {
 // A GitHub-style 16-week grid: one cell per day, brighter the more you trained.
 // The single most motivating view in a fitness app — "don't break the chain".
 function ConsistencyHeatmap() {
+  const t = useT();
   const history = useWorkout((s) => s.history);
   const WEEKS = 16;
 
@@ -565,8 +572,8 @@ function ConsistencyHeatmap() {
   return (
     <Card className="space-y-2">
       <div className="flex items-center justify-between">
-        <SectionTitle>Consistency</SectionTitle>
-        <span className="text-[11px] text-muted">{activeDays} active days · {total} sessions · {WEEKS} wks</span>
+        <SectionTitle>{t('Consistency')}</SectionTitle>
+        <span className="text-[11px] text-muted">{activeDays} {t('active days ·')} {total} {t('sessions ·')} {WEEKS} {t('wks')}</span>
       </div>
       <div className="flex gap-[3px] overflow-x-auto no-scrollbar" data-noswipe>
         {columns.map((col, i) => (
@@ -583,12 +590,12 @@ function ConsistencyHeatmap() {
         ))}
       </div>
       <div className="flex items-center gap-1.5 justify-end text-[10px] text-muted">
-        <span>less</span>
+        <span>{t('less')}</span>
         <span className="w-2.5 h-2.5 rounded-[2px]" style={{ background: 'rgb(var(--surface-2))' }} />
         <span className="w-2.5 h-2.5 rounded-[2px]" style={{ background: 'rgb(var(--accent) / 0.45)' }} />
         <span className="w-2.5 h-2.5 rounded-[2px]" style={{ background: 'rgb(var(--accent) / 0.7)' }} />
         <span className="w-2.5 h-2.5 rounded-[2px]" style={{ background: 'rgb(var(--accent))' }} />
-        <span>more</span>
+        <span>{t('more')}</span>
       </div>
     </Card>
   );

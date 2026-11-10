@@ -64,7 +64,7 @@ export default function ExerciseDetail() {
           <Badge color="rgb(var(--accent-2))">{ex.category}</Badge>
           <Badge>{ex.primary}</Badge>
           {ex.secondary.map((m) => <Badge key={m} color="rgb(var(--muted))">{m}</Badge>)}
-          {ex.isCore && <Badge color="rgb(var(--success))">core</Badge>}
+          {ex.isCore && <Badge color="rgb(var(--success))">{t('core')}</Badge>}
         </div>
         <p className="text-sm text-muted">{t('ex.equipment')}: {ex.equipment}</p>
       </header>
@@ -158,7 +158,7 @@ export default function ExerciseDetail() {
         {/* The muscle cues are lifting cues ("squeeze hard at the top"): wrong for a stretch. */}
         {ex.category !== 'Mobility' && (
           <p className="border-t border-line pt-2 text-xs text-muted">
-            <span className="text-accent-2">🎯 {ex.primary}.</span> {MUSCLE_CUES[ex.primary] ?? 'Control the weight through a full range of motion.'}
+            <span className="text-accent-2">🎯 {ex.primary}.</span> {MUSCLE_CUES[ex.primary] ?? t('Control the weight through a full range of motion.')}
           </p>
         )}
       </Card>

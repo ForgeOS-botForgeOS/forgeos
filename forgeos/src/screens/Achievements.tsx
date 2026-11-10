@@ -122,8 +122,8 @@ export default function Achievements() {
                 {a.claimed && <span className="text-[9px] text-muted">✓</span>}
               </div>
               <div className="text-3xl">{a.unlocked ? a.icon : <Lock size={24} className="mx-auto text-muted" />}</div>
-              <p className="text-sm font-semibold leading-tight">{a.title}</p>
-              <p className="text-[11px] leading-tight text-muted">{a.desc}</p>
+              <p className="text-sm font-semibold leading-tight">{t(a.title)}</p>
+              <p className="text-[11px] leading-tight text-muted">{t(a.desc)}</p>
 
               {!a.unlocked && (
                 <>

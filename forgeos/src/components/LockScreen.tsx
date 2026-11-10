@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Flame, Delete, Check } from 'lucide-react';
@@ -19,6 +20,7 @@ import { PASSCODE_DOTS, PASSCODE_MAX, verifyPasscode } from '../lib/appLock';
 // mistyped digit would sit in the entry until you happened to reach 8 — and the
 // next, correct code would fail through no fault of the person typing it.
 export function LockScreen({ code, onUnlock }: { code: string; onUnlock: (entered: string) => void }) {
+  const t = useT();
   const [entry, setEntry] = useState('');
   const [shake, setShake] = useState(false);
   const [waitMs, setWaitMs] = useState(0);
@@ -67,7 +69,7 @@ export function LockScreen({ code, onUnlock }: { code: string; onUnlock: (entere
     <div className="absolute inset-0 z-[95] flex flex-col items-center justify-center bg-bg p-8">
       <Flame className="text-accent mb-2" size={32} />
       <div className="flex items-center gap-2 text-muted mb-6">
-        <Lock size={14} /> <span className="text-sm">{waitMs > 0 ? `Too many tries: wait ${Math.ceil(waitMs / 1000)}s` : 'Enter your passcode'}</span>
+        <Lock size={14} /> <span className="text-sm">{waitMs > 0 ? `Too many tries: wait ${Math.ceil(waitMs / 1000)}s` : t('Enter your passcode')}</span>
       </div>
       <motion.div animate={shake ? { x: [-8, 8, -6, 6, 0] } : {}} transition={{ duration: 0.4 }} className="flex gap-3 mb-8">
         {Array.from({ length: Math.max(PASSCODE_DOTS, entry.length) }).map((_, i) => (
@@ -80,7 +82,7 @@ export function LockScreen({ code, onUnlock }: { code: string; onUnlock: (entere
         ))}
         <span />
         <button onClick={() => void press('0')} className="w-16 h-16 rounded-full bg-surface-2 text-2xl font-mono active:scale-90 transition">0</button>
-        <button onClick={() => setEntry(entry.slice(0, -1))} aria-label="Delete a digit" className="w-16 h-16 rounded-full flex items-center justify-center text-muted active:scale-90 transition"><Delete size={22} /></button>
+        <button onClick={() => setEntry(entry.slice(0, -1))} aria-label={t('Delete a digit')} className="w-16 h-16 rounded-full flex items-center justify-center text-muted active:scale-90 transition"><Delete size={22} /></button>
       </div>
       <div className="h-16 mt-4 flex items-center">
         {entry.length >= PASSCODE_DOTS && waitMs === 0 && (
@@ -88,7 +90,7 @@ export function LockScreen({ code, onUnlock }: { code: string; onUnlock: (entere
             onClick={() => void attempt(entry, true)}
             className="flex items-center gap-2 rounded-full bg-accent px-6 py-3 font-semibold text-black active:scale-95 transition"
           >
-            <Check size={18} /> Unlock
+            <Check size={18} /> {t('Unlock')}
           </button>
         )}
       </div>

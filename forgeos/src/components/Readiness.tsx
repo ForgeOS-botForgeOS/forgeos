@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { Card, Ring, Badge } from './ui';
 import type { Readiness } from '../lib/readiness';
 
@@ -25,6 +26,7 @@ export function ReadinessHero({ r }: { r: Readiness }) {
 
 /** Dashboard card (Home) — tappable, opens the Health screen. */
 export function ReadinessCard({ r, onClick }: { r: Readiness; onClick?: () => void }) {
+  const t = useT();
   return (
     <Card onClick={onClick} className="flex items-center gap-3" style={{ borderColor: r.color }}>
       <Ring value={r.score} max={100} size={56} stroke={7} color={r.color}>
@@ -33,11 +35,11 @@ export function ReadinessCard({ r, onClick }: { r: Readiness; onClick?: () => vo
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="text-sm font-bold" style={{ color: r.color }}>{r.emoji} {r.label}</span>
-          <span className="text-[11px] text-muted">recovery</span>
+          <span className="text-[11px] text-muted">{t('recovery')}</span>
         </div>
         <p className="text-[12px] text-muted truncate">{r.advice}</p>
       </div>
-      <Badge color={r.color}>Open</Badge>
+      <Badge color={r.color}>{t('Open')}</Badge>
     </Card>
   );
 }

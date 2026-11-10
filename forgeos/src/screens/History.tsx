@@ -19,19 +19,20 @@ import type { Workout } from '../types';
 import { useT } from '../lib/i18n';
 
 export default function History() {
+  const t = useT();
   const navigate = useNavigate();
   const history = useWorkout((s) => s.history);
   const [tab, setTab] = useState<'sessions' | 'lifts'>('sessions');
 
   return (
     <div className="px-4 pt-12 pb-6 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
-      <h1 className="text-2xl font-extrabold">History</h1>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Back')}</button>
+      <h1 className="text-2xl font-extrabold">{t('History')}</h1>
       <div className="flex gap-2">
-        <Pill active={tab === 'sessions'} onClick={() => setTab('sessions')}>Sessions</Pill>
-        <Pill active={tab === 'lifts'} onClick={() => setTab('lifts')}>Lifts</Pill>
+        <Pill active={tab === 'sessions'} onClick={() => setTab('sessions')}>{t('Sessions')}</Pill>
+        <Pill active={tab === 'lifts'} onClick={() => setTab('lifts')}>{t('Lifts')}</Pill>
       </div>
-      {history.length === 0 && <p className="text-sm text-muted">No sessions logged yet.</p>}
+      {history.length === 0 && <p className="text-sm text-muted">{t('No sessions logged yet.')}</p>}
       {tab === 'sessions' ? <Sessions /> : <Lifts />}
     </div>
   );
@@ -67,9 +68,9 @@ function Sessions() {
   return (
     <div className="space-y-2">
       <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/workout/new')}>
-        <span className="flex items-center gap-1"><Plus size={15} /> {hasDraft('new') ? 'Continue your unsaved workout' : 'Add a past workout'}</span>
+        <span className="flex items-center gap-1"><Plus size={15} /> {hasDraft('new') ? t('Continue your unsaved workout') : t('Add a past workout')}</span>
       </Button>
-      {history.length > 0 && <p className="text-[11px] text-muted">Tap a session to edit · ✨ relive it as a wrap · ⧉ duplicate · ↗ share a link.</p>}
+      {history.length > 0 && <p className="text-[11px] text-muted">{t('Tap a session to edit · ✨ relive it as a wrap · ⧉ duplicate · ↗ share a link.')}</p>}
       {history.map((w) => {
         if (w.cardio) {
           const c = w.cardio;
@@ -79,8 +80,8 @@ function Sessions() {
               <div className="flex items-center justify-between">
                 <button onClick={() => setEditCardio(w)} className="font-semibold text-sm flex items-center gap-2 text-left flex-1"><Activity size={14} className="text-accent-2" /> {c.machine}</button>
                 <div className="flex items-center gap-2">
-                  <button onClick={() => share(w)} title="Share" className="text-muted"><Share2 size={14} /></button>
-                  <button onClick={() => duplicate(w)} title="Duplicate" className="text-muted"><Copy size={14} /></button>
+                  <button onClick={() => share(w)} title={t('Share')} className="text-muted"><Share2 size={14} /></button>
+                  <button onClick={() => duplicate(w)} title={t('Duplicate')} className="text-muted"><Copy size={14} /></button>
                   <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString()}</span>
                 </div>
               </div>
@@ -111,8 +112,8 @@ function Sessions() {
             <div className="flex items-center justify-between">
               <button onClick={() => navigate(`/workout/${w.id}`)} className="font-semibold text-sm flex items-center gap-2 text-left flex-1"><Dumbbell size={14} className="text-accent" /> {w.name}</button>
               <div className="flex items-center gap-2">
-                {w.exercises.length > 0 && <button onClick={() => share(w)} title="Share" className="text-muted"><Share2 size={14} /></button>}
-                <button onClick={() => duplicate(w)} title="Duplicate" className="text-muted"><Copy size={14} /></button>
+                {w.exercises.length > 0 && <button onClick={() => share(w)} title={t('Share')} className="text-muted"><Share2 size={14} /></button>}
+                <button onClick={() => duplicate(w)} title={t('Duplicate')} className="text-muted"><Copy size={14} /></button>
                 <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString()}</span>
               </div>
             </div>
@@ -120,7 +121,7 @@ function Sessions() {
               {w.exercises.length === 0 && w.durationSec
                 ? `${Math.round(w.durationSec / 60)} min · recorded on your watch`
                 : `${Math.round(w.totalVolumeKg ?? 0).toLocaleString()} kg · ${sets} sets · ${w.exercises.length} exercises`}
-              {w.synced === false && ' · ⏳ queued'}
+              {w.synced === false && t(' · ⏳ queued')}
             </p>
             <div className="flex flex-wrap gap-1 pt-1">
               {w.exercises.slice(0, 6).map((e) => (
@@ -143,15 +144,16 @@ function Sessions() {
         );
       })}
       <CardioEditSheet workout={editCardio} onClose={() => setEditCardio(null)} />
-      <Sheet open={!!manualLink} onClose={() => setManualLink(null)} title="Share this workout">
-        <p className="text-sm text-muted mb-2">This phone would not copy automatically. Press and hold the link to copy it, then send it to a friend.</p>
-        <textarea readOnly value={manualLink ?? ''} onFocus={(e) => e.currentTarget.select()} aria-label="Workout link" className="w-full h-28 rounded-xl bg-surface-2 p-2 text-[11px] font-mono break-all" />
+      <Sheet open={!!manualLink} onClose={() => setManualLink(null)} title={t('Share this workout')}>
+        <p className="text-sm text-muted mb-2">{t('This phone would not copy automatically. Press and hold the link to copy it, then send it to a friend.')}</p>
+        <textarea readOnly value={manualLink ?? ''} onFocus={(e) => e.currentTarget.select()} aria-label={t('Workout link')} className="w-full h-28 rounded-xl bg-surface-2 p-2 text-[11px] font-mono break-all" />
       </Sheet>
     </div>
   );
 }
 
 function CardioEditSheet({ workout, onClose }: { workout: Workout | null; onClose: () => void }) {
+  const t = useT();
   const updateCardio = useWorkout((s) => s.updateCardio);
   const deleteHistoryWorkout = useWorkout((s) => s.deleteHistoryWorkout);
   const [data, setData] = useState<CardioData>(newCardioData());
@@ -173,7 +175,7 @@ function CardioEditSheet({ workout, onClose }: { workout: Workout | null; onClos
     const iso = date ? new Date(`${date}T12:00:00`).toISOString() : workout.date;
     updateCardio(workout.id, { ...data, date: iso });
     haptic('success');
-    toast('Cardio updated');
+    toast(t('Cardio updated'));
     onClose();
   }
   function del() {
@@ -181,22 +183,22 @@ function CardioEditSheet({ workout, onClose }: { workout: Workout | null; onClos
     if (!confirmDel) { setConfirmDel(true); haptic('warning'); return; }
     deleteHistoryWorkout(workout.id);
     haptic('tap');
-    toast('Cardio deleted');
+    toast(t('Cardio deleted'));
     onClose();
   }
 
   return (
-    <Sheet open={!!workout} onClose={onClose} title="Edit cardio">
+    <Sheet open={!!workout} onClose={onClose} title={t('Edit cardio')}>
       <div className="space-y-3">
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-muted">Date</span>
+          <span className="text-sm text-muted">{t('Date')}</span>
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="rounded-lg bg-surface-2 border border-line px-3 py-1.5 text-sm text-text" />
         </div>
         <CardioFields data={data} onChange={setData} />
         <div className="flex gap-2">
-          <Button className="flex-1 justify-center" onClick={save}>Save changes</Button>
+          <Button className="flex-1 justify-center" onClick={save}>{t('Save changes')}</Button>
           <Button variant="ghost" className="justify-center" onClick={del}>
-            <span className="flex items-center gap-1 text-danger"><Trash2 size={15} /> {confirmDel ? 'Confirm?' : 'Delete'}</span>
+            <span className="flex items-center gap-1 text-danger"><Trash2 size={15} /> {confirmDel ? t('Confirm?') : t('Delete')}</span>
           </Button>
         </div>
       </div>
@@ -205,6 +207,7 @@ function CardioEditSheet({ workout, onClose }: { workout: Workout | null; onClos
 }
 
 function Lifts() {
+  const t = useT();
   const ck = useChartKit();
   const history = useWorkout((s) => s.history);
   const bodyweight = useUser((s) => s.profile?.weightKg ?? 80);
@@ -217,7 +220,7 @@ function Lifts() {
     return [...counts.entries()].sort((a, b) => b[1] - a[1]).map(([id]) => id);
   }, [history]);
 
-  if (lifts.length === 0) return <p className="text-sm text-muted">Log some lifts to see per-exercise progression.</p>;
+  if (lifts.length === 0) return <p className="text-sm text-muted">{t('Log some lifts to see per-exercise progression.')}</p>;
 
   return (
     <div className="space-y-3">
@@ -237,7 +240,7 @@ function Lifts() {
             </div>
             <div className="flex items-center gap-3">
               <div>
-                <p className="text-[11px] text-muted">best e1RM</p>
+                <p className="text-[11px] text-muted">{t('best e1RM')}</p>
                 <p className="font-mono font-bold">{best} kg</p>
               </div>
               {series.length > 1 && (
@@ -259,13 +262,13 @@ function Lifts() {
             {series.length > 1 && (
               <p className="text-[11px] text-muted flex items-center gap-1">
                 <TrendingUp size={11} className="text-success" />
-                {series[0].e1rm} → {series[series.length - 1].e1rm} kg over {series.length} sessions
+                {series[0].e1rm} → {series[series.length - 1].e1rm} {t('kg over')} {series.length} {t('sessions')}
               </p>
             )}
           </Card>
         );
       })}
-      <p className="text-[11px] text-muted/70">Badges are body-weight-adjusted (e1RM scaled around 80 kg) · current weight {bodyweight} kg</p>
+      <p className="text-[11px] text-muted/70">{t('Badges are body-weight-adjusted (e1RM scaled around 80 kg) · current weight')} {bodyweight} kg</p>
     </div>
   );
 }

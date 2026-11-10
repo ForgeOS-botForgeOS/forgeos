@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Play, Pause, SkipBack, SkipForward, Music } from 'lucide-react';
 import { Card, Button, Badge } from '../components/ui';
@@ -6,6 +7,7 @@ import { usePlayer } from '../state/playerStore';
 import { haptic } from '../lib/haptics';
 
 export default function Spotify() {
+  const t = useT();
   const navigate = useNavigate();
   const active = usePlayer((s) => s.active);
   const playing = usePlayer((s) => s.playing);
@@ -21,38 +23,38 @@ export default function Spotify() {
   return (
     <div className="px-4 pt-12 pb-6 space-y-4">
       <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3">
-        <ChevronLeft size={16} /> Back
+        <ChevronLeft size={16} /> {t('Back')}
       </button>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-extrabold">Spotify</h1>
-        {connected ? <Badge color="rgb(var(--success))">Connected</Badge> : spotifyIsLive ? <Badge color="rgb(var(--warn))">Not logged in</Badge> : <Badge color="rgb(var(--warn))">Setup needed</Badge>}
+        {connected ? <Badge color="rgb(var(--success))">{t('Connected')}</Badge> : spotifyIsLive ? <Badge color="rgb(var(--warn))">{t('Not logged in')}</Badge> : <Badge color="rgb(var(--warn))">{t('Setup needed')}</Badge>}
       </div>
 
       {!connected && spotifyIsLive && (
         <Card className="text-sm text-muted">
-          Log in to link your real Spotify account.
+          {t('Log in to link your real Spotify account.')}
           <Button className="w-full justify-center mt-3" onClick={() => void beginSpotifyAuth()}>
-            Log in with Spotify
+            {t('Log in with Spotify')}
           </Button>
         </Card>
       )}
 
       {!spotifyIsLive && (
         <Card className="text-sm text-muted space-y-2">
-          <p className="font-semibold text-text">Connect Spotify: 2-minute setup</p>
-          <p>Logging in needs a free Spotify app registered to your account: that’s the piece that was missing, so the login had nothing to connect to.</p>
+          <p className="font-semibold text-text">{t('Connect Spotify: 2-minute setup')}</p>
+          <p>{t('Logging in needs a free Spotify app registered to your account: that’s the piece that was missing, so the login had nothing to connect to.')}</p>
           <ol className="list-decimal ml-4 space-y-1">
-            <li>Open <span className="text-text">developer.spotify.com/dashboard</span> → <b>Create app</b>.</li>
-            <li>Add this <b>Redirect URI</b> exactly: <code className="text-accent break-all">{spotifyRedirectUri}</code></li>
-            <li>Copy the <b>Client ID</b> and add it as a build secret <code className="text-text">VITE_SPOTIFY_CLIENT_ID</code>, or send it to me and I’ll wire it in.</li>
+            <li>{t('Open')} <span className="text-text">{t('developer.spotify.com/dashboard')}</span> → <b>{t('Create app')}</b>.</li>
+            <li>{t('Add this')} <b>{t('Redirect URI')}</b> {t('exactly:')} <code className="text-accent break-all">{spotifyRedirectUri}</code></li>
+            <li>{t('Copy the')} <b>{t('Client ID')}</b> {t('and add it as a build secret')} <code className="text-text">{t('VITE_SPOTIFY_CLIENT_ID')}</code>{t(', or send it to me and I’ll wire it in.')}</li>
           </ol>
-          <p className="text-[11px] text-muted/70">Until then the player runs in demo mode (the disc spins and tracks advance, but there’s no real audio: real playback also needs Spotify Premium).</p>
+          <p className="text-[11px] text-muted/70">{t('Until then the player runs in demo mode (the disc spins and tracks advance, but there’s no real audio: real playback also needs Spotify Premium).')}</p>
         </Card>
       )}
 
       {connected && (
         <Button variant="ghost" className="w-full justify-center" onClick={() => { spotifyLogout(); window.location.reload(); }}>
-          Log out of Spotify
+          {t('Log out of Spotify')}
         </Button>
       )}
 
@@ -80,35 +82,35 @@ export default function Spotify() {
         <p className="font-bold text-lg">{track.title}</p>
         <p className="text-sm text-muted">{track.artist}</p>
         <div className="flex items-center justify-center gap-6 mt-5">
-          <button onClick={() => { prev(); haptic('tap'); }} aria-label="Previous"><SkipBack /></button>
+          <button onClick={() => { prev(); haptic('tap'); }} aria-label={t('Previous')}><SkipBack /></button>
           <button
             onClick={() => { if (!active) start(index); else toggle(); haptic('tap'); }}
-            aria-label={isPlaying ? 'Pause' : 'Play'}
+            aria-label={isPlaying ? t('Pause') : t('Play')}
             className="w-14 h-14 rounded-full bg-accent text-black flex items-center justify-center"
           >
             {isPlaying ? <Pause /> : <Play className="translate-x-[1px]" />}
           </button>
-          <button onClick={() => { next(); haptic('tap'); }} aria-label="Next"><SkipForward /></button>
+          <button onClick={() => { next(); haptic('tap'); }} aria-label={t('Next')}><SkipForward /></button>
         </div>
-        <p className="text-[11px] text-muted/70 mt-4">Plays across all of ForgeOS: control it from the mini player on any screen.</p>
+        <p className="text-[11px] text-muted/70 mt-4">{t('Plays across all of ForgeOS: control it from the mini player on any screen.')}</p>
       </Card>
 
       <div>
-        <h2 className="text-sm font-semibold text-muted uppercase mb-2">Playlists</h2>
+        <h2 className="text-sm font-semibold text-muted uppercase mb-2">{t('Playlists')}</h2>
         <div className="space-y-2">
           {MOCK_PLAYLISTS.map((p) => (
             <Card key={p.id} className="flex items-center gap-3 cursor-pointer" onClick={() => { start(0); haptic('tap'); }}>
               <div className="w-10 h-10 rounded-lg bg-surface-2 flex items-center justify-center"><Music size={18} className="text-accent" /></div>
               <div className="flex-1">
                 <p className="font-semibold text-sm">{p.name}</p>
-                <p className="text-xs text-muted">{p.count} tracks · {p.vibe}</p>
+                <p className="text-xs text-muted">{p.count} {t('tracks ·')} {p.vibe}</p>
               </div>
               <Play size={18} className="text-muted" />
             </Card>
           ))}
         </div>
       </div>
-      <p className="text-[11px] text-muted/70">Attach the now-playing track to a PR from the Quests → PR Hall of Fame screen.</p>
+      <p className="text-[11px] text-muted/70">{t('Attach the now-playing track to a PR from the Quests → PR Hall of Fame screen.')}</p>
     </div>
   );
 }

@@ -4,6 +4,7 @@ import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
 import { useSettings } from '../state/settingsStore';
+import { useT } from '../lib/i18n';
 
 export function Card({
   children,
@@ -55,7 +56,8 @@ export const Button = forwardRef<HTMLButtonElement, BtnProps>(function Button(
   );
 });
 
-export function Pill({ children, active = false, onClick }: { children: ReactNode; active?: boolean; onClick?: () => void }) {
+export function Pill({ children: raw, active = false, onClick }: { children: ReactNode; active?: boolean; onClick?: () => void }) {
+  const children = useLabel(raw);
   return (
     <motion.button
       onClick={onClick}
@@ -70,7 +72,19 @@ export function Pill({ children, active = false, onClick }: { children: ReactNod
   );
 }
 
-export function SectionTitle({ children, action }: { children: ReactNode; action?: ReactNode }) {
+/**
+ * Pills, badges and section titles are usually handed a value straight from
+ * data ("friends", "Chest", "daily"). A plain string is run through the
+ * translator here, so those labels follow the language without every call
+ * site having to remember; anything not in the dictionary is shown as is.
+ */
+function useLabel(children: ReactNode): ReactNode {
+  const t = useT();
+  return typeof children === 'string' ? t(children) : children;
+}
+
+export function SectionTitle({ children: raw, action }: { children: ReactNode; action?: ReactNode }) {
+  const children = useLabel(raw);
   return (
     <div className="flex items-center justify-between mb-2 mt-1">
       <h2 className="text-sm font-semibold tracking-wide text-muted uppercase">{children}</h2>
@@ -260,7 +274,8 @@ export function Toggle({ checked, onChange, label }: { checked: boolean; onChang
   );
 }
 
-export function Badge({ children, color = 'rgb(var(--accent))' }: { children: ReactNode; color?: string }) {
+export function Badge({ children: raw, color = 'rgb(var(--accent))' }: { children: ReactNode; color?: string }) {
+  const children = useLabel(raw);
   return (
     <span
       className="fx-badge inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-bold"

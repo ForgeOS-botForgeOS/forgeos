@@ -186,7 +186,7 @@ function RaceStatus({ active }: { active: ActiveRace }) {
           <Button className="flex-1 justify-center" onClick={() => {
             const next = rematchRace();
             if (next) void shareRaceInvite(next).then((how) => toast(how === 'copied' ? 'Rematch invite copied 🏁' : 'Rematch invite sent 🏁', 'success'));
-          }}>Rematch 🏁</Button>
+          }}>{t('Rematch 🏁')}</Button>
           <Button variant="ghost" className="flex-1 justify-center" onClick={() => leaveRace()}>{t('common.finish')}</Button>
         </div>
       )}

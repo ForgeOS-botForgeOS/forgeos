@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Dumbbell } from 'lucide-react';
@@ -8,6 +9,7 @@ import { exerciseById } from '../data/exercises';
 const DOW = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
 export default function Calendar() {
+  const t = useT();
   const navigate = useNavigate();
   const history = useWorkout((s) => s.history);
   const [cursor, setCursor] = useState(() => { const d = new Date(); return { y: d.getFullYear(), m: d.getMonth() }; });
@@ -49,12 +51,12 @@ export default function Calendar() {
 
   return (
     <div className="px-4 pt-12 pb-8 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Back')}</button>
 
       <div className="flex items-center justify-between">
-        <button onClick={() => shift(-1)} aria-label="Previous month" className="w-11 h-11 rounded-lg bg-surface-2 flex items-center justify-center"><ChevronLeft size={18} /></button>
+        <button onClick={() => shift(-1)} aria-label={t('Previous month')} className="w-11 h-11 rounded-lg bg-surface-2 flex items-center justify-center"><ChevronLeft size={18} /></button>
         <h1 className="text-lg font-extrabold">{monthName}</h1>
-        <button onClick={() => shift(1)} aria-label="Next month" className="w-11 h-11 rounded-lg bg-surface-2 flex items-center justify-center"><ChevronRight size={18} /></button>
+        <button onClick={() => shift(1)} aria-label={t('Next month')} className="w-11 h-11 rounded-lg bg-surface-2 flex items-center justify-center"><ChevronRight size={18} /></button>
       </div>
 
       <div className="grid grid-cols-7 gap-1 text-center">
@@ -79,7 +81,7 @@ export default function Calendar() {
         })}
       </div>
 
-      <p className="text-[11px] text-muted text-center">Shaded by training volume · tap a day for details</p>
+      <p className="text-[11px] text-muted text-center">{t('Shaded by training volume · tap a day for details')}</p>
 
       {selected && (
         <div className="space-y-2">
@@ -95,7 +97,7 @@ export default function Calendar() {
         </div>
       )}
 
-      {history.length === 0 && <p className="text-sm text-muted text-center">No workouts logged yet.</p>}
+      {history.length === 0 && <p className="text-sm text-muted text-center">{t('No workouts logged yet.')}</p>}
     </div>
   );
 }

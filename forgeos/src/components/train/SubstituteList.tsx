@@ -1,3 +1,4 @@
+import { useT } from '../../lib/i18n';
 import { useMemo, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import type { Exercise } from '../../types';
@@ -13,6 +14,7 @@ const PAGE = 30;
  * narrowed by whichever equipment is free, or a search across the whole library.
  */
 export function SubstituteList({ base, onPick }: { base: Exercise; onPick: (id: string) => void }) {
+  const t = useT();
   const [q, setQ] = useState('');
   const [family, setFamily] = useState<EquipFamily | 'Any'>('Any');
   const [shown, setShown] = useState(PAGE);
@@ -28,11 +30,11 @@ export function SubstituteList({ base, onPick }: { base: Exercise; onPick: (id: 
         <input
           value={q}
           onChange={(e) => reset(() => setQ(e.target.value))}
-          placeholder="Search all exercises…"
-          aria-label="Search all exercises"
+          placeholder={t('Search all exercises…')}
+          aria-label={t('Search all exercises')}
           className="bg-transparent text-sm flex-1 outline-none min-w-0"
         />
-        {q && <button onClick={() => reset(() => setQ(''))} aria-label="Clear search" className="text-muted"><X size={15} /></button>}
+        {q && <button onClick={() => reset(() => setQ(''))} aria-label={t('Clear search')} className="text-muted"><X size={15} /></button>}
       </div>
       <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1" data-noswipe>
         {(['Any', ...EQUIP_FAMILIES] as const).map((f) => (
@@ -47,8 +49,8 @@ export function SubstituteList({ base, onPick }: { base: Exercise; onPick: (id: 
         ))}
       </div>
       <p className="text-[11px] text-muted">
-        {list.length} {searching ? 'matches in the full library' : `${base.primary.toLowerCase()} alternatives`}
-        {family !== 'Any' && ` · ${family.toLowerCase()} only`} · best match first
+        {list.length} {searching ? t('matches in the full library') : `${base.primary.toLowerCase()} alternatives`}
+        {family !== 'Any' && ` · ${family.toLowerCase()} only`} {t('· best match first')}
       </p>
       <div className="space-y-1.5 max-h-[50vh] overflow-y-auto no-scrollbar">
         {list.slice(0, shown).map((alt) => (
@@ -64,11 +66,11 @@ export function SubstituteList({ base, onPick }: { base: Exercise; onPick: (id: 
           </button>
         ))}
         {list.length === 0 && (
-          <p className="text-sm text-muted py-2">Nothing matches. Try another word or set equipment back to Any.</p>
+          <p className="text-sm text-muted py-2">{t('Nothing matches. Try another word or set equipment back to Any.')}</p>
         )}
         {list.length > shown && (
           <button onClick={() => setShown((n) => n + PAGE)} className="w-full rounded-xl border border-line py-2 text-xs text-muted">
-            Show more ({list.length - shown} left)
+            {t('Show more (')}{list.length - shown} {t('left)')}
           </button>
         )}
       </div>

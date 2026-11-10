@@ -27,12 +27,13 @@ const TIP = { background: 'rgb(var(--surface-2))', border: 'none', borderRadius:
 const PALETTE = ['rgb(var(--accent))', 'rgb(var(--accent-2))', 'rgb(var(--success))', 'rgb(var(--warn))', '#a78bfa', '#f472b6', '#38bdf8', '#fb923c'];
 
 function PrTooltip({ active, payload }: { active?: boolean; payload?: { payload: PrPoint }[] }) {
+  const t = useT();
   if (!active || !payload || !payload.length) return null;
   const p = payload[0].payload;
   return (
     <div className="rounded-lg bg-surface-2 border border-line px-2.5 py-1.5 text-[11px]">
       <p className="font-semibold">{p.exercise}</p>
-      <p className="text-muted">{p.e1rm}kg e1RM · {p.label}</p>
+      <p className="text-muted">{p.e1rm}{t('kg e1RM ·')} {p.label}</p>
       <p className="text-muted/70">{new Date(p.t).toLocaleDateString()}</p>
     </div>
   );
@@ -58,17 +59,17 @@ export default function Quests() {
               onClick={() => setTab(d.id)}
               className={`relative shrink-0 pt-1 pb-2 text-sm uppercase tracking-wide ${tab === d.id ? 'text-text font-semibold' : 'text-muted'}`}
             >
-              {d.label}
+              {t(d.label)}
               {tab === d.id && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-accent" />}
             </button>
           ))}
         </div>
       ) : (
         <div data-noswipe className="flex gap-2 overflow-x-auto no-scrollbar">
-          <Pill active={tab === 'rank'} onClick={() => setTab('rank')}>Rank</Pill>
-          <Pill active={tab === 'quests'} onClick={() => setTab('quests')}>Quests</Pill>
-          <Pill active={tab === 'board'} onClick={() => setTab('board')}>Leaderboard</Pill>
-          <Pill active={tab === 'prs'} onClick={() => setTab('prs')}>PR Hall</Pill>
+          <Pill active={tab === 'rank'} onClick={() => setTab('rank')}>{t('Rank')}</Pill>
+          <Pill active={tab === 'quests'} onClick={() => setTab('quests')}>{t('Quests')}</Pill>
+          <Pill active={tab === 'board'} onClick={() => setTab('board')}>{t('Leaderboard')}</Pill>
+          <Pill active={tab === 'prs'} onClick={() => setTab('prs')}>{t('PR Hall')}</Pill>
         </div>
       )}
       {tab === 'rank' && <RankPanel />}
@@ -80,6 +81,7 @@ export default function Quests() {
 }
 
 function RankPanel() {
+  const tr = useT();
   const ck = useChartKit();
   const xp = useGami((s) => s.xp);
   const coins = useGami((s) => s.coins);
@@ -105,7 +107,7 @@ function RankPanel() {
         <Card>
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-[10px] uppercase tracking-[0.12em] text-muted">Rank</p>
+              <p className="text-[10px] uppercase tracking-[0.12em] text-muted">{tr('Rank')}</p>
               <p className="text-3xl font-bold uppercase italic leading-none mt-1" style={{ color: tier.color }}>{rankLabel(tier)}</p>
               <CountUp value={xp} className="text-sm text-muted block mt-1" format={(n) => `${n.toLocaleString()} XP`} />
             </div>
@@ -117,7 +119,7 @@ function RankPanel() {
                 <div className="v2-meter-fill" style={{ width: `${Math.round(progressToNext(xp) * 100)}%`, background: tier.color }} />
                 <div className="v2-meter-seg" />
               </div>
-              <p className="text-[11px] text-muted mt-2">{(next.minXp - xp).toLocaleString()} XP to {rankLabel(next)}</p>
+              <p className="text-[11px] text-muted mt-2">{(next.minXp - xp).toLocaleString()} {tr('XP to')} {rankLabel(next)}</p>
             </>
           )}
         </Card>
@@ -125,19 +127,19 @@ function RankPanel() {
         <Card className="flex items-center gap-4">
           <Ring value={progressToNext(xp)} max={1} color={tier.color}>
             <span className="text-lg font-bold">{tier.sub}</span>
-            <span className="text-[9px] text-muted">tier</span>
+            <span className="text-[9px] text-muted">{tr('tier')}</span>
           </Ring>
           <div className="flex-1">
             <p className="text-xl font-extrabold" style={{ color: tier.color }}>{rankLabel(tier)}</p>
             <CountUp value={xp} className="text-sm text-muted block" format={(n) => `${n.toLocaleString()} XP`} />
-            {next && <p className="text-[11px] text-muted/70">{(next.minXp - xp).toLocaleString()} XP to {rankLabel(next)}</p>}
+            {next && <p className="text-[11px] text-muted/70">{(next.minXp - xp).toLocaleString()} {tr('XP to')} {rankLabel(next)}</p>}
           </div>
         </Card>
       )}
 
       {showCharts && xpCurve.length > 1 && (
         <div>
-          <SectionTitle>XP progression</SectionTitle>
+          <SectionTitle>{tr('XP progression')}</SectionTitle>
           <Card>
             <div className="h-40">
               <ResponsiveContainer width="100%" height="100%">
@@ -155,7 +157,7 @@ function RankPanel() {
                 </ComposedChart>
               </ResponsiveContainer>
             </div>
-            <p className="text-[10px] text-muted/70 mt-1">Estimated from your training history · ends at your real {xp.toLocaleString()} XP{next ? ` · next: ${rankLabel(next)} at ${next.minXp.toLocaleString()}` : ''}</p>
+            <p className="text-[10px] text-muted/70 mt-1">{tr('Estimated from your training history · ends at your real')} {xp.toLocaleString()} XP{next ? ` · next: ${rankLabel(next)} at ${next.minXp.toLocaleString()}` : ''}</p>
           </Card>
         </div>
       )}
@@ -163,28 +165,28 @@ function RankPanel() {
       <div className="grid grid-cols-2 gap-3">
         <Card className="flex items-center gap-3">
           <Flame className="text-accent" />
-          <div><CountUp value={streak} className="font-mono font-bold text-lg block" /><p className="text-[11px] text-muted">week streak · 🔥{dayStreak}d</p></div>
+          <div><CountUp value={streak} className="font-mono font-bold text-lg block" /><p className="text-[11px] text-muted">{tr('week streak · 🔥')}{dayStreak}d</p></div>
         </Card>
         <Card className="flex items-center gap-3">
           <Coins className="text-accent-2" />
-          <div><CountUp value={coins} className="font-mono font-bold text-lg block" /><p className="text-[11px] text-muted">Forge Coins</p></div>
+          <div><CountUp value={coins} className="font-mono font-bold text-lg block" /><p className="text-[11px] text-muted">{tr('Forge Coins')}</p></div>
         </Card>
       </div>
 
       <div className="flex gap-2">
-        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setConvertOpen(true)}>Convert XP → 🪙</Button>
-        <Button variant="ghost" className="flex-1 justify-center" onClick={() => { if (buyFreeze()) { haptic('success'); toast('Streak freeze bought 🧊'); } else { haptic('warning'); toast('Not enough coins for a freeze.', 'error'); } }}>Streak freeze · 🪙20</Button>
+        <Button variant="ghost" className="flex-1 justify-center" onClick={() => setConvertOpen(true)}>{tr('Convert XP → 🪙')}</Button>
+        <Button variant="ghost" className="flex-1 justify-center" onClick={() => { if (buyFreeze()) { haptic('success'); toast(tr('Streak freeze bought 🧊')); } else { haptic('warning'); toast(tr('Not enough coins for a freeze.'), 'error'); } }}>{tr('Streak freeze · 🪙20')}</Button>
       </div>
 
       {gambling && (
         <Card className="space-y-2 border-warn/40">
-          <p className="font-semibold flex items-center gap-2"><Dice5 size={16} className="text-warn" /> Streak gambling</p>
+          <p className="font-semibold flex items-center gap-2"><Dice5 size={16} className="text-warn" /> {tr('Streak gambling')}</p>
           {wager?.active ? (
-            <p className="text-sm text-muted">Active wager: hit {wager.targetSessions} sessions · staked 🪙{wager.staked} · {wager.progress}/{wager.targetSessions} done.</p>
+            <p className="text-sm text-muted">{tr('Active wager: hit')} {wager.targetSessions} {tr('sessions · staked 🪙')}{wager.staked} · {wager.progress}/{wager.targetSessions} {tr('done.')}</p>
           ) : (
             <>
-              <p className="text-sm text-muted">Wager coins you’ll hit a session target. Win doubles your stake; miss and it’s gone.</p>
-              <Button variant="outline" className="w-full justify-center" onClick={() => setWagerOpen(true)}>Place a wager</Button>
+              <p className="text-sm text-muted">{tr('Wager coins you’ll hit a session target. Win doubles your stake; miss and it’s gone.')}</p>
+              <Button variant="outline" className="w-full justify-center" onClick={() => setWagerOpen(true)}>{tr('Place a wager')}</Button>
             </>
           )}
         </Card>
@@ -192,7 +194,7 @@ function RankPanel() {
 
       {/* Rank ladder */}
       <div>
-        <SectionTitle>Rank ladder</SectionTitle>
+        <SectionTitle>{tr('Rank ladder')}</SectionTitle>
         <Card className="space-y-1.5 max-h-60 overflow-y-auto no-scrollbar">
           {RANKS.map((r, i) => {
             const reached = xp >= r.minXp;
@@ -214,36 +216,39 @@ function RankPanel() {
 }
 
 function ConvertSheet({ open, onClose, xp, rate, convert }: { open: boolean; onClose: () => void; xp: number; rate: number; convert: (c: number, r: number) => boolean }) {
+  const t = useT();
   const [coins, setCoins] = useState(1);
   const cost = coins * rate;
   return (
-    <Sheet open={open} onClose={onClose} title="Convert XP to Forge Coins">
+    <Sheet open={open} onClose={onClose} title={t('Convert XP to Forge Coins')}>
       <div className="space-y-3">
-        <p className="text-sm text-muted">Rate: {rate} XP per coin. You have {xp.toLocaleString()} XP.</p>
+        <p className="text-sm text-muted">{t('Rate:')} {rate} {t('XP per coin. You have')} {xp.toLocaleString()} XP.</p>
         <input type="range" min={1} max={Math.max(1, Math.floor(xp / rate))} value={coins} onChange={(e) => setCoins(Number(e.target.value))} className="w-full accent-[rgb(var(--accent))]" />
         <p className="text-center font-mono">{coins} 🪙 = {cost.toLocaleString()} XP</p>
-        <Button className="w-full justify-center" disabled={cost > xp} onClick={() => { if (convert(coins, rate)) { celebrate(); toast(`Converted to 🪙${coins}`); onClose(); } }}>Convert</Button>
+        <Button className="w-full justify-center" disabled={cost > xp} onClick={() => { if (convert(coins, rate)) { celebrate(); toast(`Converted to 🪙${coins}`); onClose(); } }}>{t('Convert')}</Button>
       </div>
     </Sheet>
   );
 }
 
 function WagerSheet({ open, onClose, coins, start }: { open: boolean; onClose: () => void; coins: number; start: (t: number, s: number, d: number) => boolean }) {
+  const tr = useT();
   const [target, setTarget] = useState(3);
   const [stake, setStake] = useState(10);
   return (
-    <Sheet open={open} onClose={onClose} title="Place a streak wager">
+    <Sheet open={open} onClose={onClose} title={tr('Place a streak wager')}>
       <div className="space-y-3">
-        <p className="text-sm">Hit <b>{target}</b> sessions in <b>7 days</b>, staking <b>🪙{stake}</b>. Win → 🪙{stake * 2}.</p>
-        <label className="text-xs text-muted">Target sessions: {target}<input type="range" min={2} max={6} value={target} onChange={(e) => setTarget(Number(e.target.value))} className="w-full accent-[rgb(var(--accent))]" /></label>
-        <label className="text-xs text-muted">Stake: 🪙{stake}<input type="range" min={5} max={Math.max(5, coins)} value={stake} onChange={(e) => setStake(Number(e.target.value))} className="w-full accent-[rgb(var(--accent))]" /></label>
-        <Button className="w-full justify-center" disabled={stake > coins} onClick={() => { if (start(target, stake, 7)) { haptic('success'); onClose(); } }}>Lock in wager</Button>
+        <p className="text-sm">{tr('Hit')} <b>{target}</b> {tr('sessions in')} <b>{tr('7 days')}</b>{tr(', staking')} <b>🪙{stake}</b>{tr('. Win → 🪙')}{stake * 2}.</p>
+        <label className="text-xs text-muted">{tr('Target sessions:')} {target}<input type="range" min={2} max={6} value={target} onChange={(e) => setTarget(Number(e.target.value))} className="w-full accent-[rgb(var(--accent))]" /></label>
+        <label className="text-xs text-muted">{tr('Stake: 🪙')}{stake}<input type="range" min={5} max={Math.max(5, coins)} value={stake} onChange={(e) => setStake(Number(e.target.value))} className="w-full accent-[rgb(var(--accent))]" /></label>
+        <Button className="w-full justify-center" disabled={stake > coins} onClick={() => { if (start(target, stake, 7)) { haptic('success'); onClose(); } }}>{tr('Lock in wager')}</Button>
       </div>
     </Sheet>
   );
 }
 
 function QuestBoard() {
+  const t = useT();
   const quests = useGami((s) => s.quests);
   const claim = useGami((s) => s.claimQuest);
   const claimAll = useGami((s) => s.claimAllQuests);
@@ -272,10 +277,10 @@ function QuestBoard() {
 
       {claimable.length > 0 && (
         <Button className="w-full justify-center" onClick={() => { const r = claimAll(); if (r.count) { celebrate(); toast(`Claimed ${r.count} · +${r.xp.toLocaleString()} XP · 🪙${r.coins}`); } }}>
-          <span className="flex items-center justify-center gap-2"><Trophy size={16} className="shrink-0" /> Claim all {claimable.length} · +{totalXp.toLocaleString()} XP · 🪙{totalCoins}</span>
+          <span className="flex items-center justify-center gap-2"><Trophy size={16} className="shrink-0" /> {t('Claim all')} {claimable.length} · +{totalXp.toLocaleString()} XP · 🪙{totalCoins}</span>
         </Button>
       )}
-      {visible.length === 0 && <p className="text-sm text-muted">No {scope} quests assigned.</p>}
+      {visible.length === 0 && <p className="text-sm text-muted">No {scope} {t('quests assigned.')}</p>}
       {visible.map(({ uq, def }) => {
         const pct = Math.min(100, (uq.progress / def.target) * 100);
         return (
@@ -288,23 +293,24 @@ function QuestBoard() {
             <div className="h-2 rounded-full bg-surface-2 overflow-hidden"><div className="h-full bg-accent rounded-full" style={{ width: `${pct}%` }} /></div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-muted font-mono">{Math.round(uq.progress).toLocaleString()} / {def.target.toLocaleString()}</span>
-              {uq.completed && !uq.claimed && <Button className="py-1.5" onClick={() => { claim(def.id); haptic('success'); toast(`+${def.xp} XP · 🪙${def.coins}`); }}>Claim</Button>}
+              {uq.completed && !uq.claimed && <Button className="py-1.5" onClick={() => { claim(def.id); haptic('success'); toast(`+${def.xp} XP · 🪙${def.coins}`); }}>{t('Claim')}</Button>}
               {rerolls > 0 && canReroll(uq, def) && (
-                <Button variant="ghost" className="py-1.5" aria-label={`Reroll ${def.title}`} onClick={() => { if (reroll(def.id)) { haptic('success'); toast('New quest dealt 🎲'); } else toast('No other daily quest to swap in right now.', 'error'); }}>
-                  🎲 Reroll
+                <Button variant="ghost" className="py-1.5" aria-label={`Reroll ${def.title}`} onClick={() => { if (reroll(def.id)) { haptic('success'); toast(t('New quest dealt 🎲')); } else toast(t('No other daily quest to swap in right now.'), 'error'); }}>
+                  {t('🎲 Reroll')}
                 </Button>
               )}
-              {uq.claimed && <Badge color="rgb(var(--success))">claimed</Badge>}
+              {uq.claimed && <Badge color="rgb(var(--success))">{t('claimed')}</Badge>}
             </div>
           </Card>
         );
       })}
-      <p className="text-[11px] text-muted/70">Daily quests reset each day. Anything you finished but forgot to claim is claimed for you when the day ends.</p>
+      <p className="text-[11px] text-muted/70">{t('Daily quests reset each day. Anything you finished but forgot to claim is claimed for you when the day ends.')}</p>
     </div>
   );
 }
 
 function Leaderboard() {
+  const t = useT();
   const isPublic = useSettings((s) => s.leaderboardPublic);
   const setSetting = useSettings((s) => s.set);
   const xp = useGami((s) => s.xp);
@@ -315,9 +321,9 @@ function Leaderboard() {
     return (
       <Card className="text-center space-y-3">
         <Crown className="mx-auto text-muted" />
-        <p className="font-semibold">Leaderboard is private</p>
-        <p className="text-sm text-muted">Your rank is hidden from others. Flip it on to compete.</p>
-        <Button className="w-full justify-center" onClick={() => setSetting('leaderboardPublic', true)}>Join the leaderboard</Button>
+        <p className="font-semibold">{t('Leaderboard is private')}</p>
+        <p className="text-sm text-muted">{t('Your rank is hidden from others. Flip it on to compete.')}</p>
+        <Button className="w-full justify-center" onClick={() => setSetting('leaderboardPublic', true)}>{t('Join the leaderboard')}</Button>
       </Card>
     );
   }
@@ -326,7 +332,7 @@ function Leaderboard() {
   return (
     <div className="space-y-2">
       <div className="flex justify-end">
-        <button className="text-xs text-muted underline" onClick={() => setSetting('leaderboardPublic', false)}>Make private</button>
+        <button className="text-xs text-muted underline" onClick={() => setSetting('leaderboardPublic', false)}>{t('Make private')}</button>
       </div>
       {rows.map((r) => (
         <Card key={r.rank} className={`flex items-center gap-3 ${r.you ? 'border-accent' : ''}`}>
@@ -343,6 +349,7 @@ function Leaderboard() {
 }
 
 function PrHall() {
+  const tr = useT();
   const ck = useChartKit();
   const prs = useWorkout((s) => s.prs);
   const navigate = useNavigate();
@@ -365,9 +372,9 @@ function PrHall() {
     return (
       <Card className="text-center space-y-2">
         <Trophy className="mx-auto text-muted" />
-        <p className="font-semibold">No PRs yet</p>
-        <p className="text-sm text-muted">Finish a workout: your heaviest sets land here automatically.</p>
-        <Button variant="outline" className="w-full justify-center" onClick={() => navigate('/train')}>Go train</Button>
+        <p className="font-semibold">{tr('No PRs yet')}</p>
+        <p className="text-sm text-muted">{tr('Finish a workout: your heaviest sets land here automatically.')}</p>
+        <Button variant="outline" className="w-full justify-center" onClick={() => navigate('/train')}>{tr('Go train')}</Button>
       </Card>
     );
   }
@@ -376,7 +383,7 @@ function PrHall() {
     <div className="space-y-2">
       {showCharts && points.length > 1 && (
         <Card>
-          <p className="text-[10px] uppercase tracking-wide text-muted mb-1">PR timeline · e1RM over time</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted mb-1">{tr('PR timeline · e1RM over time')}</p>
           <div className="h-44">
             <ResponsiveContainer width="100%" height="100%">
               <ScatterChart margin={{ left: -8, right: 10, top: 8, bottom: 0 }}>
@@ -409,11 +416,11 @@ function PrHall() {
           {pr.spotifyTrack ? (
             <p className="text-[11px] text-accent-2 flex items-center gap-1"><Music size={11} /> {pr.spotifyTrack.title} – {pr.spotifyTrack.artist}</p>
           ) : (
-            <button className="text-[11px] text-accent-2 flex items-center gap-1" onClick={() => setAttach(pr.id)}><Music size={11} /> Attach the song playing</button>
+            <button className="text-[11px] text-accent-2 flex items-center gap-1" onClick={() => setAttach(pr.id)}><Music size={11} /> {tr('Attach the song playing')}</button>
           )}
         </Card>
       ))}
-      <Sheet open={!!attach} onClose={() => setAttach(null)} title="Attach a song to this PR">
+      <Sheet open={!!attach} onClose={() => setAttach(null)} title={tr('Attach a song to this PR')}>
         <div className="space-y-1.5">
           {MOCK_TRACKS.map((t) => (
             <button key={t.id} onClick={() => attach && attachTrack(attach, t.id)} className="w-full text-left rounded-xl bg-surface-2 px-4 py-2.5 text-sm flex items-center gap-2">

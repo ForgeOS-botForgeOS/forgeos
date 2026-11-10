@@ -1,3 +1,4 @@
+import { useT } from '../../lib/i18n';
 import { motion, useReducedMotion } from 'framer-motion';
 import type { Recap, RecapSection } from '../../lib/wrapRecap';
 
@@ -18,6 +19,7 @@ function Label({ children }: { children: React.ReactNode }) {
 }
 
 export function WrapRecap({ recap }: { recap: Recap }) {
+  const t = useT();
   const reduce = useReducedMotion();
   const half = recap.sections.filter(isHalf);
   const full = recap.sections.filter((s) => !isHalf(s));
@@ -25,7 +27,7 @@ export function WrapRecap({ recap }: { recap: Recap }) {
   return (
     <div className="space-y-2.5">
       <motion.header {...pop(reduce, n++)} className="text-center space-y-0.5">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-white/70">ForgeOS · {recap.kicker}</p>
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.3em] text-white/70">{t('ForgeOS ·')} {recap.kicker}</p>
         <p className="text-4xl pt-1" aria-hidden="true">{recap.emoji}</p>
         <h2 className="text-3xl font-black uppercase leading-none tracking-tight">{recap.title}</h2>
         <p className="text-lg font-extrabold leading-tight">{recap.name}</p>

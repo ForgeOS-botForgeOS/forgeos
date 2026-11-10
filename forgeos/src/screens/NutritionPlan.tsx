@@ -144,7 +144,7 @@ export default function NutritionPlan() {
             {plan.meals.map((m) => (
               <div key={m.slot} className="flex items-center justify-between border-b border-line/60 py-1.5 last:border-0">
                 <span className="text-sm">{m.slot}</span>
-                <span className="font-mono text-xs text-muted">{m.kcal} kcal · P{m.proteinG} · {Math.round(m.share * 100)}%</span>
+                <span className="font-mono text-xs text-muted">{m.kcal} {t('kcal · P')}{m.proteinG} · {Math.round(m.share * 100)}%</span>
               </div>
             ))}
           </Card>
@@ -174,7 +174,7 @@ export default function NutritionPlan() {
                         <ChevronRight size={14} className="shrink-0 text-muted" />
                       </button>
                       <p className="font-mono text-xs text-muted">
-                        {m.portions}× {t('cook.serv')} · {m.macros.kcal} kcal · P{m.macros.protein} C{m.macros.carbs} F{m.macros.fat}
+                        {m.portions}× {t('cook.serv')} · {m.macros.kcal} {t('kcal · P')}{m.macros.protein} C{m.macros.carbs} F{m.macros.fat}
                       </p>
                       <Button variant="ghost" className="w-full justify-center py-1.5 text-xs" onClick={() => logMeal(r.name, m.macros)}>{t('plan.logMeal')}</Button>
                     </>
@@ -188,7 +188,7 @@ export default function NutritionPlan() {
             <Card className="flex items-center justify-between">
               <span className="text-xs text-muted">{t('plan.dayTotal')}</span>
               <span className="font-mono text-xs">
-                {day.totals.kcal} kcal · P{day.totals.protein}
+                {day.totals.kcal} {t('kcal · P')}{day.totals.protein}
                 <span className={Math.abs(day.kcalOffPct) <= 10 ? ' text-success' : ' text-warn'}> ({day.kcalOffPct > 0 ? '+' : ''}{day.kcalOffPct}%)</span>
               </span>
             </Card>

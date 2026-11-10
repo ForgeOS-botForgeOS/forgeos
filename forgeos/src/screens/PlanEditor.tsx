@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, Wand2, Trash2, Search, X, Share2, Save, Play, GripVertical, FolderOpen, Sparkles, Store, ClipboardPaste, History, TrendingDown, AlertTriangle, LayoutGrid, SlidersHorizontal, Download } from 'lucide-react';
@@ -49,6 +50,7 @@ const STARTER_SPLITS: { name: string; desc: string; spec: Partial<Record<Weekday
 const BALANCE_MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Quads', 'Hamstrings', 'Glutes', 'Core'];
 
 export default function PlanEditor() {
+  const tr = useT();
   const navigate = useNavigate();
   const plan = useUser((s) => s.weekPlan);
   const setWeekPlan = useUser((s) => s.setWeekPlan);
@@ -134,8 +136,8 @@ export default function PlanEditor() {
   if (!plan) {
     return (
       <div className="px-4 pt-12 space-y-3">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
-        <p className="text-muted">No plan yet: finish onboarding to generate one.</p>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {tr('Back')}</button>
+        <p className="text-muted">{tr('No plan yet: finish onboarding to generate one.')}</p>
       </div>
     );
   }
@@ -272,11 +274,11 @@ export default function PlanEditor() {
 
   return (
     <div className="px-4 pt-12 pb-10 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {tr('Back')}</button>
       <div className="flex items-start justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold">Week plan</h1>
-          <p className="text-sm text-muted">{trainingDays} training days · tap a day to edit</p>
+          <h1 className="text-2xl font-extrabold">{tr('Week plan')}</h1>
+          <p className="text-sm text-muted">{trainingDays} {tr('training days · tap a day to edit')}</p>
         </div>
       </div>
 
@@ -288,40 +290,40 @@ export default function PlanEditor() {
           described in a sheet where each one has room for a sentence. */}
       <div className="flex gap-2">
         <Button className="flex-[2] justify-center py-2.5" onClick={() => setAiOpen(true)}>
-          <span className="flex items-center gap-1.5 text-sm"><Sparkles size={15} /> AI build a day</span>
+          <span className="flex items-center gap-1.5 text-sm"><Sparkles size={15} /> {tr('AI build a day')}</span>
         </Button>
         <Button variant="outline" className="flex-1 justify-center py-2.5" onClick={() => setToolsOpen(true)}>
-          <span className="flex items-center gap-1.5 text-sm"><SlidersHorizontal size={15} /> Tools</span>
+          <span className="flex items-center gap-1.5 text-sm"><SlidersHorizontal size={15} /> {tr('Tools')}</span>
         </Button>
       </div>
 
-      <Sheet open={toolsOpen} onClose={() => setToolsOpen(false)} title="Plan tools">
-        <ActionGroup title="Build the week">
+      <Sheet open={toolsOpen} onClose={() => setToolsOpen(false)} title={tr('Plan tools')}>
+        <ActionGroup title={tr('Build the week')}>
           <ActionRow
-            icon={<ClipboardPaste size={15} />} title="Paste a workout"
+            icon={<ClipboardPaste size={15} />} title={tr('Paste a workout')}
             detail="Turn a session written anywhere into one day"
             onClick={() => { setToolsOpen(false); setPasteOpen(true); }}
           />
           <ActionRow
-            icon={<ClipboardPaste size={15} />} title="Paste a whole week"
+            icon={<ClipboardPaste size={15} />} title={tr('Paste a whole week')}
             detail="Seven days at once, from text"
             onClick={() => { setToolsOpen(false); setPasteWeekOpen(true); }}
           />
           <ActionRow
-            icon={<Download size={15} />} title="Import a plan code"
+            icon={<Download size={15} />} title={tr('Import a plan code')}
             detail="From a link somebody shared with you"
             onClick={() => { setToolsOpen(false); setImportOpen(true); }}
           />
           <ActionRow
-            icon={<Sparkles size={15} />} title="Tailor to a limitation"
+            icon={<Sparkles size={15} />} title={tr('Tailor to a limitation')}
             detail="Bad knees, no overhead, short on time"
             onClick={() => { setToolsOpen(false); void tailor(); }}
           />
         </ActionGroup>
 
-        <ActionGroup title="Keep &amp; reuse">
+        <ActionGroup title={tr('Keep & reuse')}>
           <ActionRow
-            icon={<Save size={15} />} title="Save as a template"
+            icon={<Save size={15} />} title={tr('Save as a template')}
             detail="Come back to this exact week whenever"
             onClick={async () => {
               setToolsOpen(false);
@@ -330,16 +332,16 @@ export default function PlanEditor() {
             }}
           />
           <ActionRow
-            icon={<FolderOpen size={15} />} title="My templates"
+            icon={<FolderOpen size={15} />} title={tr('My templates')}
             detail={savedPlans.length ? 'Load a week you saved earlier' : 'Nothing saved yet'}
             trailing={<span className="font-mono text-xs text-muted">{savedPlans.length}</span>}
             onClick={() => { setToolsOpen(false); setShowSaved(true); }}
           />
         </ActionGroup>
 
-        <ActionGroup title="Send it out">
+        <ActionGroup title={tr('Send it out')}>
           <ActionRow
-            icon={<Share2 size={15} />} title="Share this week"
+            icon={<Share2 size={15} />} title={tr('Share this week')}
             detail="A link anyone can open"
             onClick={async () => {
               setToolsOpen(false);
@@ -348,7 +350,7 @@ export default function PlanEditor() {
             }}
           />
           <ActionRow
-            icon={<Store size={15} />} title="Publish to the marketplace"
+            icon={<Store size={15} />} title={tr('Publish to the marketplace')}
             detail="Other lifters can run your plan · +🪙25"
             onClick={() => { setToolsOpen(false); void publish(); }}
           />
@@ -358,7 +360,7 @@ export default function PlanEditor() {
       {/* Weights: increment + history fill + deload */}
       <Card className="space-y-2">
         <div className="flex items-center justify-between">
-          <span className="text-[11px] uppercase tracking-wide text-muted">Weight step</span>
+          <span className="text-[11px] uppercase tracking-wide text-muted">{tr('Weight step')}</span>
           <div className="flex gap-1" data-noswipe>
             {[2.5, 5, 10, 20].map((st) => (
               <button key={st} onClick={() => setWeightStep(st)} className={`rounded-full px-2.5 py-1 text-xs font-medium ${weightStep === st ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>+{st}</button>
@@ -367,10 +369,10 @@ export default function PlanEditor() {
         </div>
         <div className="flex gap-2">
           <Button variant="ghost" className="flex-1 justify-center" onClick={fillFromHistory}>
-            <span className="flex items-center gap-1 text-xs"><History size={14} /> Fill from history</span>
+            <span className="flex items-center gap-1 text-xs"><History size={14} /> {tr('Fill from history')}</span>
           </Button>
           <Button variant="ghost" className="flex-1 justify-center" onClick={deload}>
-            <span className="flex items-center gap-1 text-xs"><TrendingDown size={14} /> Deload</span>
+            <span className="flex items-center gap-1 text-xs"><TrendingDown size={14} /> {tr('Deload')}</span>
           </Button>
         </div>
       </Card>
@@ -379,8 +381,8 @@ export default function PlanEditor() {
       {analysis && analysis.totalSets > 0 && (
         <Card className="space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] uppercase tracking-wide text-muted flex items-center gap-1"><LayoutGrid size={12} /> Week balance</span>
-            <span className="text-[11px] text-muted">{analysis.totalSets} sets · push:pull {analysis.pullSets ? `${Math.round((analysis.pushSets / analysis.pullSets) * 10) / 10}:1` : '–'}</span>
+            <span className="text-[11px] uppercase tracking-wide text-muted flex items-center gap-1"><LayoutGrid size={12} /> {tr('Week balance')}</span>
+            <span className="text-[11px] text-muted">{analysis.totalSets} {tr('sets · push:pull')} {analysis.pullSets ? `${Math.round((analysis.pushSets / analysis.pullSets) * 10) / 10}:1` : '–'}</span>
           </div>
           <div className="space-y-1">
             {BALANCE_MUSCLES.map((m) => {
@@ -404,7 +406,7 @@ export default function PlanEditor() {
       )}
 
       {specialRequest && (
-        <Card className="bg-surface-2 text-xs text-muted">📝 Your note: <span className="text-text">{specialRequest}</span></Card>
+        <Card className="bg-surface-2 text-xs text-muted">{tr('📝 Your note:')} <span className="text-text">{specialRequest}</span></Card>
       )}
 
       <div className="space-y-2">
@@ -418,14 +420,14 @@ export default function PlanEditor() {
                   value={d.label}
                   onChange={(e) => patch(d.day, { label: e.target.value })}
                   disabled={d.rest}
-                  placeholder="Name this day"
+                  placeholder={tr('Name this day')}
                   aria-label={`Name for ${d.day}`}
                   className="min-w-0 flex-1 bg-transparent text-sm font-semibold outline-none disabled:text-muted"
                 />
                 {/* nowrap: this used to wrap "2 ex · ~23 min" onto three lines
                     and stretch the row to triple height. */}
                 <span className="shrink-0 whitespace-nowrap text-[11px] text-muted">
-                  {d.rest ? 'Rest' : `${d.exerciseIds.length} ex · ~${estimateDayMinutes(daySets(d))} min`}
+                  {d.rest ? tr('Rest') : `${d.exerciseIds.length} ex · ~${estimateDayMinutes(daySets(d))} min`}
                 </span>
                 <Toggle label={`${d.day}: training day`} checked={!d.rest} onChange={() => toggleRest(d)} />
               </div>
@@ -434,10 +436,10 @@ export default function PlanEditor() {
                 <>
                   <div className="flex items-center justify-between">
                     <button onClick={() => setOpenDay(expanded ? null : d.day)} className="text-[11px] text-accent-2">
-                      {expanded ? 'Hide exercises' : 'Edit exercises'}
+                      {expanded ? tr('Hide exercises') : tr('Edit exercises')}
                     </button>
                     {d.exerciseIds.length > 0 && (
-                      <button onClick={() => startDay(d)} className="text-[11px] text-accent flex items-center gap-1"><Play size={11} /> Start this day</button>
+                      <button onClick={() => startDay(d)} className="text-[11px] text-accent flex items-center gap-1"><Play size={11} /> {tr('Start this day')}</button>
                     )}
                   </div>
 
@@ -445,8 +447,8 @@ export default function PlanEditor() {
                     <div className="space-y-2 pt-1">
                       <div className="rounded-xl bg-surface-2 p-2 space-y-2">
                         <div className="flex items-center justify-between">
-                          <span className="text-[11px] text-muted flex items-center gap-1"><Wand2 size={12} /> Build a full workout</span>
-                          <button onClick={() => autoFill(d.day, inferFocus(d.label))} className="text-[11px] text-accent">from name → {inferFocus(d.label)}</button>
+                          <span className="text-[11px] text-muted flex items-center gap-1"><Wand2 size={12} /> {tr('Build a full workout')}</span>
+                          <button onClick={() => autoFill(d.day, inferFocus(d.label))} className="text-[11px] text-accent">{tr('from name →')} {inferFocus(d.label)}</button>
                         </div>
                         <div className="flex gap-1.5 flex-wrap">
                           {PLAN_FOCI.map((f) => (
@@ -455,7 +457,7 @@ export default function PlanEditor() {
                         </div>
                       </div>
 
-                      {d.exerciseIds.length === 0 && <p className="text-xs text-muted">No exercises: add some or build a full workout above.</p>}
+                      {d.exerciseIds.length === 0 && <p className="text-xs text-muted">{tr('No exercises: add some or build a full workout above.')}</p>}
                       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={(e) => onDragEnd(d.day, e)}>
                         <SortableContext items={d.exerciseIds} strategy={verticalListSortingStrategy}>
                           {d.exerciseIds.map((id) => {
@@ -471,8 +473,8 @@ export default function PlanEditor() {
                                       <button onClick={() => removeExercise(d.day, id)} aria-label={`Remove ${ex?.name ?? id} from ${d.day}`} className="text-danger"><Trash2 size={14} /></button>
                                     </div>
                                     <div className="flex items-center gap-2 pl-6 flex-wrap">
-                                      <Stepper label="sets" value={tgt.sets} min={1} max={10} onChange={(v) => setTarget(d.day, id, { ...tgt, sets: v })} />
-                                      <Stepper label="reps" value={tgt.reps} min={1} max={30} onChange={(v) => setTarget(d.day, id, { ...tgt, reps: v })} />
+                                      <Stepper label={tr('sets')} value={tgt.sets} min={1} max={10} onChange={(v) => setTarget(d.day, id, { ...tgt, sets: v })} />
+                                      <Stepper label={tr('reps')} value={tgt.reps} min={1} max={30} onChange={(v) => setTarget(d.day, id, { ...tgt, reps: v })} />
                                       <Stepper label={tgt.weightKg ? 'kg' : 'auto'} value={tgt.weightKg ?? 0} min={0} max={500} step={weightStep} onChange={(v) => setTarget(d.day, id, { ...tgt, weightKg: v })} />
                                     </div>
                                   </div>
@@ -484,17 +486,17 @@ export default function PlanEditor() {
                       </DndContext>
 
                       <Button variant="ghost" className="w-full justify-center py-2" onClick={() => setPickerDay(d.day)}>
-                        <span className="flex items-center gap-1 text-xs"><Plus size={14} /> Add exercise</span>
+                        <span className="flex items-center gap-1 text-xs"><Plus size={14} /> {tr('Add exercise')}</span>
                       </Button>
 
                       <div className="flex items-center gap-1.5 flex-wrap" data-noswipe>
-                        <span className="text-[10px] text-muted">Copy to</span>
+                        <span className="text-[10px] text-muted">{tr('Copy to')}</span>
                         {plan.days.filter((x) => x.day !== d.day).map((x) => (
                           <button key={x.day} onClick={() => copyDay(d.day, x.day)} className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-muted">{x.day}</button>
                         ))}
                       </div>
                       <div className="flex items-center gap-1.5 flex-wrap" data-noswipe>
-                        <span className="text-[10px] text-muted">Swap with</span>
+                        <span className="text-[10px] text-muted">{tr('Swap with')}</span>
                         {plan.days.filter((x) => x.day !== d.day).map((x) => (
                           <button key={x.day} onClick={() => swapDays(d.day, x.day)} className="rounded-full bg-surface-2 px-2 py-0.5 text-[10px] text-muted">{x.day}</button>
                         ))}
@@ -508,7 +510,7 @@ export default function PlanEditor() {
         })}
       </div>
 
-      <p className="text-[11px] text-muted/70">Changes save automatically. Seeded weights respect your gym max ({gym.maxWeightKg} kg).</p>
+      <p className="text-[11px] text-muted/70">{tr('Changes save automatically. Seeded weights respect your gym max (')}{gym.maxWeightKg} kg).</p>
 
       {toast && (
         <div className="fixed left-1/2 -translate-x-1/2 bottom-24 z-[80] rounded-full bg-surface-2 border border-line px-4 py-2 text-sm shadow-glow">{toast}</div>
@@ -522,36 +524,36 @@ export default function PlanEditor() {
       <PasteWeekSheet open={pasteWeekOpen} onClose={() => setPasteWeekOpen(false)} onApply={(days, matchedDays, matchedExercises) => { setWeekPlan({ id: plan.id, blockType: plan.blockType, days }); setPasteWeekOpen(false); flash(`Built ${matchedDays} day(s) · ${matchedExercises} exercises`); haptic('success'); }} />
 
       {/* Import by code/link */}
-      <Sheet open={importOpen} onClose={() => setImportOpen(false)} title="Import a shared plan">
+      <Sheet open={importOpen} onClose={() => setImportOpen(false)} title={tr('Import a shared plan')}>
         <div className="space-y-3">
-          <p className="text-sm text-muted">Paste a friend’s share link or code.</p>
+          <p className="text-sm text-muted">{tr('Paste a friend’s share link or code.')}</p>
           <textarea value={importCode} onChange={(e) => setImportCode(e.target.value)} placeholder="https://…#/import?p=… or the raw code" className="w-full rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm h-24" />
-          <Button className="w-full justify-center" disabled={!importCode.trim()} onClick={importFromCode}>Import plan</Button>
+          <Button className="w-full justify-center" disabled={!importCode.trim()} onClick={importFromCode}>{tr('Import plan')}</Button>
         </div>
       </Sheet>
 
       {/* Saved templates */}
-      <Sheet open={showSaved} onClose={() => setShowSaved(false)} title="Templates">
+      <Sheet open={showSaved} onClose={() => setShowSaved(false)} title={tr('Templates')}>
         <div className="space-y-2">
-          <p className="text-[11px] uppercase tracking-wide text-muted">Starter splits</p>
+          <p className="text-[11px] uppercase tracking-wide text-muted">{tr('Starter splits')}</p>
           {STARTER_SPLITS.map((t) => (
             <Card key={t.name} className="flex items-center gap-3">
               <div className="flex-1">
                 <p className="text-sm font-semibold">{t.name}</p>
                 <p className="text-[11px] text-muted">{t.desc}</p>
               </div>
-              <Button className="py-1.5" onClick={() => applySplit(t)}>Build</Button>
+              <Button className="py-1.5" onClick={() => applySplit(t)}>{tr('Build')}</Button>
             </Card>
           ))}
-          <p className="text-[11px] uppercase tracking-wide text-muted pt-2">Your saved plans</p>
-          {savedPlans.length === 0 && <p className="text-sm text-muted">No saved plans yet. Tap “Save” to store the current one.</p>}
+          <p className="text-[11px] uppercase tracking-wide text-muted pt-2">{tr('Your saved plans')}</p>
+          {savedPlans.length === 0 && <p className="text-sm text-muted">{tr('No saved plans yet. Tap “Save” to store the current one.')}</p>}
           {savedPlans.map((sp) => (
             <Card key={sp.id} className="flex items-center gap-3">
               <div className="flex-1">
                 <p className="text-sm font-semibold">{sp.name}</p>
-                <p className="text-[11px] text-muted">{sp.plan.days.filter((d) => !d.rest).length} days · {new Date(sp.savedAt).toLocaleDateString()}</p>
+                <p className="text-[11px] text-muted">{sp.plan.days.filter((d) => !d.rest).length} {tr('days ·')} {new Date(sp.savedAt).toLocaleDateString()}</p>
               </div>
-              <Button className="py-1.5" onClick={() => { loadPlan(sp.id); setShowSaved(false); flash(`Loaded “${sp.name}”`); }}>Load</Button>
+              <Button className="py-1.5" onClick={() => { loadPlan(sp.id); setShowSaved(false); flash(`Loaded “${sp.name}”`); }}>{tr('Load')}</Button>
               <button onClick={() => deletePlan(sp.id)} className="text-danger"><Trash2 size={15} /></button>
             </Card>
           ))}
@@ -572,72 +574,75 @@ function DayPicker({ days, value, onChange }: { days: PlannedDay[]; value: strin
 }
 
 function AiBuildSheet({ open, onClose, days, onBuild }: { open: boolean; onClose: () => void; days: PlannedDay[]; onBuild: (day: string, built: ReturnType<typeof buildSmartDay>) => void }) {
+  const t = useT();
   const [day, setDay] = useState<string>(days.find((d) => !d.rest)?.day ?? days[0]?.day ?? 'Mon');
   const [name, setName] = useState('');
   const [focus, setFocus] = useState('');
   const [skip, setSkip] = useState('');
   const [goal, setGoal] = useState<'hypertrophy' | 'strength'>('hypertrophy');
   return (
-    <Sheet open={open} onClose={onClose} title="AI trainer: build a day">
+    <Sheet open={open} onClose={onClose} title={t('AI trainer: build a day')}>
       <div className="space-y-3">
-        <p className="text-[11px] text-muted">Name the day (e.g. “Push”, “Leg day”, “Upper body”) and I’ll program a full session like a coach.</p>
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Workout name / goal (e.g. Push day)" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
-        <input value={focus} onChange={(e) => setFocus(e.target.value)} placeholder="Focus on… (e.g. chest, arms)" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
-        <input value={skip} onChange={(e) => setSkip(e.target.value)} placeholder="Skip / avoid… (e.g. no deadlift, bad knees)" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+        <p className="text-[11px] text-muted">{t('Name the day (e.g. “Push”, “Leg day”, “Upper body”) and I’ll program a full session like a coach.')}</p>
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('Workout name / goal (e.g. Push day)')} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+        <input value={focus} onChange={(e) => setFocus(e.target.value)} placeholder={t('Focus on… (e.g. chest, arms)')} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+        <input value={skip} onChange={(e) => setSkip(e.target.value)} placeholder={t('Skip / avoid… (e.g. no deadlift, bad knees)')} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
         <div className="flex gap-2">
-          <Button variant={goal === 'hypertrophy' ? 'primary' : 'ghost'} className="flex-1 justify-center py-1.5" onClick={() => setGoal('hypertrophy')}>Hypertrophy</Button>
-          <Button variant={goal === 'strength' ? 'primary' : 'ghost'} className="flex-1 justify-center py-1.5" onClick={() => setGoal('strength')}>Strength</Button>
+          <Button variant={goal === 'hypertrophy' ? 'primary' : 'ghost'} className="flex-1 justify-center py-1.5" onClick={() => setGoal('hypertrophy')}>{t('Hypertrophy')}</Button>
+          <Button variant={goal === 'strength' ? 'primary' : 'ghost'} className="flex-1 justify-center py-1.5" onClick={() => setGoal('strength')}>{t('Strength')}</Button>
         </div>
-        <p className="text-[11px] text-muted">Write into day:</p>
+        <p className="text-[11px] text-muted">{t('Write into day:')}</p>
         <DayPicker days={days} value={day} onChange={setDay} />
-        <Button className="w-full justify-center" onClick={() => onBuild(day, buildSmartDay(name, focus, skip, goal))}>Create workout</Button>
+        <Button className="w-full justify-center" onClick={() => onBuild(day, buildSmartDay(name, focus, skip, goal))}>{t('Create workout')}</Button>
       </div>
     </Sheet>
   );
 }
 
 function PasteSheet({ open, onClose, days, onParse }: { open: boolean; onClose: () => void; days: PlannedDay[]; onParse: (day: string, built: ReturnType<typeof parsePastedWorkout>) => void }) {
+  const t = useT();
   const [day, setDay] = useState<string>(days.find((d) => !d.rest)?.day ?? days[0]?.day ?? 'Mon');
   const [text, setText] = useState('');
   const preview = text.trim() ? parsePastedWorkout(text) : null;
   return (
-    <Sheet open={open} onClose={onClose} title="Paste a workout">
+    <Sheet open={open} onClose={onClose} title={t('Paste a workout')}>
       <div className="space-y-3">
-        <p className="text-[11px] text-muted">Paste a workout from anywhere: one exercise per line, e.g. “Bench Press 3x8 80kg”. We’ll match it to the library.</p>
+        <p className="text-[11px] text-muted">{t('Paste a workout from anywhere: one exercise per line, e.g. “Bench Press 3x8 80kg”. We’ll match it to the library.')}</p>
         <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={'Bench Press 4x8 80kg\nLat Pulldown 3x10 60kg\nSquat 5x5 100kg'} className="w-full rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm h-32 font-mono" />
-        {preview && <p className="text-[11px] text-accent-2">Matched {preview.exerciseIds.length} exercise(s).</p>}
-        <p className="text-[11px] text-muted">Write into day:</p>
+        {preview && <p className="text-[11px] text-accent-2">{t('Matched')} {preview.exerciseIds.length} {t('exercise(s).')}</p>}
+        <p className="text-[11px] text-muted">{t('Write into day:')}</p>
         <DayPicker days={days} value={day} onChange={setDay} />
-        <Button className="w-full justify-center" disabled={!preview || preview.exerciseIds.length === 0} onClick={() => preview && onParse(day, preview)}>Fill day from text</Button>
+        <Button className="w-full justify-center" disabled={!preview || preview.exerciseIds.length === 0} onClick={() => preview && onParse(day, preview)}>{t('Fill day from text')}</Button>
       </div>
     </Sheet>
   );
 }
 
 function PasteWeekSheet({ open, onClose, onApply }: { open: boolean; onClose: () => void; onApply: (days: PlannedDay[], matchedDays: number, matchedExercises: number) => void }) {
+  const t = useT();
   const [text, setText] = useState('');
   const preview = text.trim() ? parsePastedWeek(text) : null;
   const example = 'Monday - Push\nBench Press 4x8 80kg\nOverhead Press 3x10\nTuesday - Pull\nDeadlift 5x5 120kg\nLat Pulldown 3x12\nWednesday - Rest\nThursday: Legs\nSquat 5x5 100kg\nLeg Press 3x12';
   return (
-    <Sheet open={open} onClose={onClose} title="Paste a whole week">
+    <Sheet open={open} onClose={onClose} title={t('Paste a whole week')}>
       <div className="space-y-3">
         <p className="text-[11px] text-muted">
-          Paste a full week from anywhere. Start each day with its name (<b>Monday</b>, <b>Mon - Push</b>, or <b>Day 1: Legs</b>), then one exercise per line (<b>Bench Press 4x8 80kg</b>). Write <b>Rest</b> for off days. Unlisted days become rest.
+          {t('Paste a full week from anywhere. Start each day with its name (')}<b>{t('Monday')}</b>, <b>{t('Mon - Push')}</b>, or <b>{t('Day 1: Legs')}</b>{t('), then one exercise per line (')}<b>{t('Bench Press 4x8 80kg')}</b>{t('). Write')} <b>{t('Rest')}</b> {t('for off days. Unlisted days become rest.')}
         </p>
         <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder={example} className="w-full rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm h-48 font-mono" />
         {preview && (
           <Card className="bg-surface-2 space-y-1">
-            <p className="text-[11px] text-accent-2">{preview.matchedDays} training day(s) · {preview.matchedExercises} exercise(s) matched.</p>
+            <p className="text-[11px] text-accent-2">{preview.matchedDays} {t('training day(s) ·')} {preview.matchedExercises} {t('exercise(s) matched.')}</p>
             {preview.days.map((d) => (
               <div key={d.day} className="flex items-center justify-between text-[11px]">
                 <span className="font-medium">{d.day}</span>
-                <span className="text-muted truncate ml-2">{d.rest ? 'Rest' : `${d.label} · ${d.exerciseIds.length} ex`}</span>
+                <span className="text-muted truncate ml-2">{d.rest ? t('Rest') : `${d.label} · ${d.exerciseIds.length} ex`}</span>
               </div>
             ))}
           </Card>
         )}
-        <p className="text-[11px] text-muted">This replaces your current week plan.</p>
-        <Button className="w-full justify-center" disabled={!preview || preview.matchedDays === 0} onClick={() => preview && onApply(preview.days, preview.matchedDays, preview.matchedExercises)}>Replace week from text</Button>
+        <p className="text-[11px] text-muted">{t('This replaces your current week plan.')}</p>
+        <Button className="w-full justify-center" disabled={!preview || preview.matchedDays === 0} onClick={() => preview && onApply(preview.days, preview.matchedDays, preview.matchedExercises)}>{t('Replace week from text')}</Button>
       </div>
     </Sheet>
   );
@@ -664,6 +669,7 @@ function Stepper({ label, value, min, max, step = 1, onChange }: { label: string
 }
 
 function ExercisePickerSheet({ open, onClose, onPick, onCreate }: { open: boolean; onClose: () => void; onPick: (id: string) => void; onCreate: () => void }) {
+  const t = useT();
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<string>('All');
   const list = allExercises().filter(
@@ -673,11 +679,11 @@ function ExercisePickerSheet({ open, onClose, onPick, onCreate }: { open: boolea
   ).slice(0, 60);
 
   return (
-    <Sheet open={open} onClose={onClose} title="Add exercise">
+    <Sheet open={open} onClose={onClose} title={t('Add exercise')}>
       <div className="space-y-3">
         <div className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
           <Search size={16} className="text-muted" />
-          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search exercises…" className="bg-transparent text-sm flex-1 outline-none" />
+          <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Search exercises…')} className="bg-transparent text-sm flex-1 outline-none" />
           {q && <button onClick={() => setQ('')}><X size={14} className="text-muted" /></button>}
         </div>
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1" data-noswipe>
@@ -688,13 +694,13 @@ function ExercisePickerSheet({ open, onClose, onPick, onCreate }: { open: boolea
         <div className="space-y-1.5 max-h-72 overflow-y-auto no-scrollbar">
           {list.map((e) => (
             <button key={e.id} onClick={() => { onPick(e.id); haptic('tap'); }} className="w-full text-left rounded-xl bg-surface-2 px-4 py-2.5">
-              <p className="text-sm font-medium">{e.name}{e.id.startsWith('cus-') && <span className="text-[10px] text-success ml-1.5">yours</span>}</p>
+              <p className="text-sm font-medium">{e.name}{e.id.startsWith('cus-') && <span className="text-[10px] text-success ml-1.5">{t('yours')}</span>}</p>
               <p className="text-xs text-muted">{e.primary} · {e.category}</p>
             </button>
           ))}
         </div>
         <Button variant="ghost" className="w-full justify-center py-2" onClick={onCreate}>
-          <span className="flex items-center gap-1 text-xs"><Plus size={14} /> Not in the list? Create your own</span>
+          <span className="flex items-center gap-1 text-xs"><Plus size={14} /> {t('Not in the list? Create your own')}</span>
         </Button>
       </div>
     </Sheet>

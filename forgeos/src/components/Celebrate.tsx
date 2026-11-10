@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGami } from '../state/gamificationStore';
@@ -46,6 +47,7 @@ export function Confetti({ count = 80 }: { count?: number }) {
 
 // Watches XP and fires a rank-up celebration when the tier index increases.
 export function RankUpWatcher() {
+  const tr = useT();
   const xp = useGami((s) => s.xp);
   const prevIndex = useRef<number | null>(null);
   const [shown, setShown] = useState<{ label: string; color: string } | null>(null);
@@ -74,12 +76,12 @@ export function RankUpWatcher() {
             onClick={() => setShown(null)}
             role="dialog"
             aria-modal="true"
-            aria-label="Rank up"
+            aria-label={tr('Rank up')}
             className="rounded-2xl bg-surface border border-line px-8 py-6 text-center shadow-glow"
           >
-            <p className="text-xs uppercase tracking-widest text-muted">Rank up</p>
+            <p className="text-xs uppercase tracking-widest text-muted">{tr('Rank up')}</p>
             <p className="text-3xl font-extrabold mt-1" style={{ color: shown.color }}>{shown.label}</p>
-            <p className="text-sm text-muted mt-2">New tier unlocked 🔥</p>
+            <p className="text-sm text-muted mt-2">{tr('New tier unlocked 🔥')}</p>
           </motion.div>
         </div>
       )}

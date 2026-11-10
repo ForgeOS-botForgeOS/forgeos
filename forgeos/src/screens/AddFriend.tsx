@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { UserPlus, Check, ArrowRight, Frown } from 'lucide-react';
@@ -13,6 +14,7 @@ import { toast, celebrate } from '../lib/toast';
 // brand-new visitor can open it; if they aren't set up yet we stash the invite
 // and apply it the moment onboarding finishes (see App.tsx).
 export default function AddFriend() {
+  const t = useT();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const onboarded = useUser((s) => s.profile?.onboarded);
@@ -34,10 +36,10 @@ export default function AddFriend() {
     return (
       <Frame>
         <Frown className="mx-auto text-muted" size={36} />
-        <h1 className="text-xl font-extrabold">Invite link broken</h1>
-        <p className="text-sm text-muted">This invite link is invalid or out of date. Ask your friend to share a fresh one from their Friends tab.</p>
+        <h1 className="text-xl font-extrabold">{t('Invite link broken')}</h1>
+        <p className="text-sm text-muted">{t('This invite link is invalid or out of date. Ask your friend to share a fresh one from their Friends tab.')}</p>
         <Button className="w-full justify-center" onClick={() => navigate(onboarded ? '/social' : '/onboarding')}>
-          {onboarded ? 'Go to ForgeOS' : 'Set up ForgeOS'}
+          {onboarded ? t('Go to ForgeOS') : t('Set up ForgeOS')}
         </Button>
       </Frame>
     );
@@ -47,7 +49,7 @@ export default function AddFriend() {
     if (!payload) return;
     const res = addFriendByInvite(payload);
     if (res === 'self') {
-      toast("That's your own invite link 🙂", 'info');
+      toast(t('That\'s your own invite link 🙂'), 'info');
       navigate('/social');
       return;
     }
@@ -80,22 +82,22 @@ export default function AddFriend() {
             <p className="text-lg font-extrabold">{payload.name}</p>
             <p className="text-sm text-accent">{payload.rank} · {payload.xp.toLocaleString()} XP{payload.streak ? ` · 🔥 ${payload.streak}` : ''}</p>
           </div>
-          <p className="text-sm text-muted">wants to train with you on ForgeOS.</p>
+          <p className="text-sm text-muted">{t('wants to train with you on ForgeOS.')}</p>
         </div>
 
         {onboarded ? (
           <div className="space-y-2">
             <Button className="w-full justify-center" onClick={accept}>
-              <span className="flex items-center gap-1.5"><UserPlus size={16} /> Add {payload.name}</span>
+              <span className="flex items-center gap-1.5"><UserPlus size={16} /> {t('Add')} {payload.name}</span>
             </Button>
-            <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/social')}>Not now</Button>
+            <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/social')}>{t('Not now')}</Button>
           </div>
         ) : (
           <div className="space-y-2">
             <Button className="w-full justify-center" onClick={setupFirst}>
-              <span className="flex items-center gap-1.5">Set up ForgeOS to add them <ArrowRight size={16} /></span>
+              <span className="flex items-center gap-1.5">{t('Set up ForgeOS to add them')} <ArrowRight size={16} /></span>
             </Button>
-            <p className="text-[11px] text-muted flex items-center justify-center gap-1"><Check size={12} /> We'll add {payload.name} automatically once you're in.</p>
+            <p className="text-[11px] text-muted flex items-center justify-center gap-1"><Check size={12} /> {t('We\'ll add')} {payload.name} {t('automatically once you\'re in.')}</p>
           </div>
         )}
       </Card>

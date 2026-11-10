@@ -111,13 +111,13 @@ export default function Train() {
               <Card>
                 <div className="flex items-start justify-between">
                   <div>
-                    <p className="text-[10px] uppercase tracking-[0.12em] text-muted">Readiness</p>
+                    <p className="text-[10px] uppercase tracking-[0.12em] text-muted">{t('Readiness')}</p>
                     <div className="flex items-baseline gap-2 mt-1">
                       <span className="font-mono font-bold text-3xl leading-none">{readiness.score}</span>
                       <span className="uppercase tracking-wide text-sm" style={{ color: readiness.color }}>{readiness.label}</span>
                     </div>
                   </div>
-                  <Badge color={readiness.color}>load: {loadLabel}</Badge>
+                  <Badge color={readiness.color}>{t('load:')} {loadLabel}</Badge>
                 </div>
                 <div className="v2-meter mt-3" style={{ height: 12 }}>
                   <div className="v2-meter-fill" style={{ width: `${readiness.score}%`, background: readiness.color }} />
@@ -127,7 +127,7 @@ export default function Train() {
                 <p className="text-[12px] text-muted">{guide.detail}</p>
                 {(readiness.level === 'rundown' || readiness.level === 'rest') && lightDay && todayPlan && !todayPlan.rest && lightDay.label !== todayPlan.label && (
                   <Button variant="outline" className="w-full justify-center mt-2 py-1.5" onClick={() => { startWorkout(`${lightDay.label} (light)`, lightDay.exerciseIds, { targets: lightDay.targets, maxWeightKg: gymMax }); haptic('success'); toast(`Swapped to ${lightDay.label}: listen to your body 🙏`); }}>
-                    Swap today for {lightDay.label} ({lightDay.exerciseIds.length} lifts)
+                    {t('Swap today for')} {lightDay.label} ({lightDay.exerciseIds.length} {t('lifts)')}
                   </Button>
                 )}
               </Card>
@@ -136,26 +136,26 @@ export default function Train() {
 
           <Card className="flex items-center justify-between">
             <div className="min-w-0">
-              <p className="text-[10px] uppercase tracking-[0.12em] text-muted">Today</p>
-              <p className="font-bold uppercase italic text-xl leading-tight truncate">{todayPlan && !todayPlan.rest ? todayPlan.label : todayPlan?.rest ? 'Rest day' : 'No plan'}</p>
+              <p className="text-[10px] uppercase tracking-[0.12em] text-muted">{t('Today')}</p>
+              <p className="font-bold uppercase italic text-xl leading-tight truncate">{todayPlan && !todayPlan.rest ? todayPlan.label : todayPlan?.rest ? t('Rest day') : t('No plan')}</p>
             </div>
             {todayPlan && !todayPlan.rest ? (
               <Button className="shrink-0" onClick={() => { startWorkout(todayPlan.label, todayPlan.exerciseIds, { targets: todayPlan.targets, maxWeightKg: gymMax }); haptic('success'); }}>
-                <span className="flex items-center gap-1.5"><Dumbbell size={15} /> Start</span>
+                <span className="flex items-center gap-1.5"><Dumbbell size={15} /> {t('Start')}</span>
               </Button>
             ) : (
-              <Button variant="outline" className="shrink-0" onClick={() => { startWorkout('Freestyle session'); haptic('success'); }}>Start</Button>
+              <Button variant="outline" className="shrink-0" onClick={() => { startWorkout('Freestyle session'); haptic('success'); }}>{t('Start')}</Button>
             )}
           </Card>
           <Button variant="ghost" className="w-full justify-center" onClick={() => setCustomOpen(true)}>
-            <span className="flex items-center gap-2"><Plus size={16} /> Start a custom workout</span>
+            <span className="flex items-center gap-2"><Plus size={16} /> {t('Start a custom workout')}</span>
           </Button>
 
           <Card>
-            <p className="text-[10px] uppercase tracking-[0.12em] text-muted mb-1">Coaching</p>
-            <LedgerRow k="Next block" v={<span className="capitalize">{rec.nextBlock}</span>} />
-            <LedgerRow k="Avg RPE" v={rec.avgRpe || '–'} />
-            <LedgerRow k="Avg volume / wk" v={`${rec.weeklyVolume.toLocaleString()} kg`} />
+            <p className="text-[10px] uppercase tracking-[0.12em] text-muted mb-1">{t('Coaching')}</p>
+            <LedgerRow k={t('Next block')} v={<span className="capitalize">{rec.nextBlock}</span>} />
+            <LedgerRow k={t('Avg RPE')} v={rec.avgRpe || '–'} />
+            <LedgerRow k={t('Avg volume / wk')} v={`${rec.weeklyVolume.toLocaleString()} kg`} />
           </Card>
         </>
       )}
@@ -169,19 +169,19 @@ export default function Train() {
             <p className="font-semibold text-lg">{todayPlan.label}</p>
             <p className="text-sm text-muted mt-1">{todayPlan.exerciseIds.map((id) => exerciseById(id)?.name).filter(Boolean).slice(0, 4).join(' · ')}…</p>
             <Button className="w-full justify-center mt-3" onClick={() => { startWorkout(todayPlan.label, todayPlan.exerciseIds, { targets: todayPlan.targets, maxWeightKg: gymMax }); haptic('success'); }}>
-              <span className="flex items-center gap-2"><Dumbbell size={16} /> Start {todayPlan.label}</span>
+              <span className="flex items-center gap-2"><Dumbbell size={16} /> {t('Start')} {todayPlan.label}</span>
             </Button>
           </>
         ) : (
           <>
-            <p className="text-muted text-sm">{todayPlan?.rest ? 'Planned rest day, but you can still train.' : 'No plan for today.'}</p>
+            <p className="text-muted text-sm">{todayPlan?.rest ? t('Planned rest day, but you can still train.') : t('No plan for today.')}</p>
             <Button variant="outline" className="w-full justify-center mt-3" onClick={() => { startWorkout('Freestyle session'); haptic('success'); }}>
-              Start an empty workout
+              {t('Start an empty workout')}
             </Button>
           </>
         )}
         <Button variant="ghost" className="w-full justify-center mt-2" onClick={() => setCustomOpen(true)}>
-          <span className="flex items-center gap-2"><Plus size={16} /> Start a custom workout</span>
+          <span className="flex items-center gap-2"><Plus size={16} /> {t('Start a custom workout')}</span>
         </Button>
       </Card>
       )}
@@ -191,13 +191,13 @@ export default function Train() {
         onClose={() => setCustomOpen(false)}
         onStart={(name) => { startWorkout(name); setCustomOpen(false); haptic('success'); toast(`“${name}” started 💪`); }}
         pastWorkouts={history.filter((w) => !w.cardio && w.exercises.length > 0).slice(0, 8)}
-        onRepeat={(id) => { if (repeatWorkout(id)) { setCustomOpen(false); haptic('success'); toast('Loaded a past session 💪'); } }}
+        onRepeat={(id) => { if (repeatWorkout(id)) { setCustomOpen(false); haptic('success'); toast(t('Loaded a past session 💪')); } }}
       />
 
       {/* Your coach — tailored to what you told us at sign-up (goal, experience, the words you typed) */}
       {!simple && tips.length > 0 && (
         <Card className="space-y-2 border-accent-2/30 bg-accent-2/5">
-          <p className="text-xs uppercase tracking-wide text-muted">Your coach</p>
+          <p className="text-xs uppercase tracking-wide text-muted">{t('Your coach')}</p>
           {tips.map((tip) => (
             <p key={tip.text} className="text-sm flex items-start gap-2">
               <span className="shrink-0">{tip.icon}</span>
@@ -222,7 +222,7 @@ export default function Train() {
             <Moon size={18} className="mt-0.5 shrink-0" style={{ color: readiness.color }} />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="text-xs uppercase tracking-wide text-muted">Today’s readiness</span>
+                <span className="text-xs uppercase tracking-wide text-muted">{t('Today’s readiness')}</span>
                 <ReadinessChip r={readiness} />
                 <Badge color={readiness.color}>{loadLabel}</Badge>
               </div>
@@ -231,7 +231,7 @@ export default function Train() {
               {/* Smart swap: when run down, offer the week's lightest session instead */}
               {(readiness.level === 'rundown' || readiness.level === 'rest') && lightDay && todayPlan && !todayPlan.rest && lightDay.label !== todayPlan.label && (
                 <Button variant="outline" className="w-full justify-center mt-2 py-1.5" onClick={() => { startWorkout(`${lightDay.label} (light)`, lightDay.exerciseIds, { targets: lightDay.targets, maxWeightKg: gymMax }); haptic('success'); toast(`Swapped to ${lightDay.label}: listen to your body 🙏`); }}>
-                  Swap today for {lightDay.label} ({lightDay.exerciseIds.length} lifts)
+                  {t('Swap today for')} {lightDay.label} ({lightDay.exerciseIds.length} {t('lifts)')}
                 </Button>
               )}
             </div>
@@ -244,9 +244,9 @@ export default function Train() {
         <Card className={`flex gap-3 items-start ${otRisk.level === 'high' ? 'border-danger/60' : 'border-warn/50'}`}>
           <HeartPulse size={18} className={`mt-0.5 shrink-0 ${otRisk.level === 'high' ? 'text-danger' : 'text-warn'}`} />
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted">{otRisk.level === 'high' ? 'Take a deload week' : 'Recovery watch'}</p>
+            <p className="text-xs uppercase tracking-wide text-muted">{otRisk.level === 'high' ? t('Take a deload week') : t('Recovery watch')}</p>
             {otRisk.reasons.map((r) => <p key={r} className="text-sm mt-1">{r}</p>)}
-            <p className="text-[11px] text-muted mt-1">{otRisk.level === 'high' ? 'Drop weights ~40% for a few sessions: you’ll come back stronger.' : 'Nothing drastic: just keep an eye on sleep this week.'}</p>
+            <p className="text-[11px] text-muted mt-1">{otRisk.level === 'high' ? t('Drop weights ~40% for a few sessions: you’ll come back stronger.') : t('Nothing drastic: just keep an eye on sleep this week.')}</p>
           </div>
         </Card>
       )}
@@ -256,7 +256,7 @@ export default function Train() {
         <Card className={`flex gap-3 items-start ${loadWarning.level === 'spike' ? 'border-danger/50' : 'border-warn/50'}`}>
           <AlertTriangle size={18} className={`mt-0.5 shrink-0 ${loadWarning.level === 'spike' ? 'text-danger' : 'text-warn'}`} />
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted">{loadWarning.level === 'spike' ? 'Load spike' : 'Fatigue building'}</p>
+            <p className="text-xs uppercase tracking-wide text-muted">{loadWarning.level === 'spike' ? t('Load spike') : t('Fatigue building')}</p>
             <p className="text-sm mt-1">{loadWarning.message}</p>
           </div>
         </Card>
@@ -267,10 +267,10 @@ export default function Train() {
       <Card className="flex gap-3 items-start">
         <Brain size={18} className="text-accent-2 mt-0.5 shrink-0" />
         <div>
-          <p className="text-xs uppercase tracking-wide text-muted">Periodisation engine</p>
-          <p className="text-sm mt-1">Next block: <b className="capitalize">{rec.nextBlock}</b></p>
+          <p className="text-xs uppercase tracking-wide text-muted">{t('Periodisation engine')}</p>
+          <p className="text-sm mt-1">{t('Next block:')} <b className="capitalize">{rec.nextBlock}</b></p>
           <p className="text-xs text-muted mt-1">{rec.reason}</p>
-          <p className="text-[11px] text-muted/70 mt-1">avg RPE {rec.avgRpe || '–'} · about {rec.weeklyVolume.toLocaleString()} kg a week on average</p>
+          <p className="text-[11px] text-muted/70 mt-1">{t('avg RPE')} {rec.avgRpe || '–'} {t('· about')} {rec.weeklyVolume.toLocaleString()} {t('kg a week on average')}</p>
         </div>
       </Card>
       )}
@@ -278,12 +278,12 @@ export default function Train() {
       {/* Plateau breaker */}
       {!simple && plateaus.length > 0 && (
         <div>
-          <SectionTitle>Plateau breaker</SectionTitle>
+          <SectionTitle>{t('Plateau breaker')}</SectionTitle>
           {plateaus.map((p) => (
             <Card key={p.exerciseId} className="flex gap-3 items-start border-warn/40">
               <AlertTriangle size={18} className="text-warn mt-0.5 shrink-0" />
               <div>
-                <p className="font-semibold text-sm">{p.exerciseName}: stuck {p.weeksStuck} weeks</p>
+                <p className="font-semibold text-sm">{p.exerciseName}{t(': stuck')} {p.weeksStuck} {t('weeks')}</p>
                 <p className="text-xs text-muted mt-1">{p.suggestion}</p>
               </div>
             </Card>
@@ -294,17 +294,17 @@ export default function Train() {
       <div className="flex gap-2">
         {!simple && (
           <Button variant="ghost" className="flex-1 justify-center" onClick={() => setToolsOpen(true)}>
-            <span className="flex items-center gap-2"><Wrench size={16} /> Tools</span>
+            <span className="flex items-center gap-2"><Wrench size={16} /> {t('Tools')}</span>
           </Button>
         )}
         <Button variant="ghost" className="flex-1 justify-center" onClick={() => navigate('/history')}>
-          <span className="flex items-center gap-2"><History size={16} /> History</span>
+          <span className="flex items-center gap-2"><History size={16} /> {t('History')}</span>
         </Button>
       </div>
 
       {!simple && <CardioScanCard />}
 
-      <Sheet open={toolsOpen} onClose={() => setToolsOpen(false)} title="Lifting tools">
+      <Sheet open={toolsOpen} onClose={() => setToolsOpen(false)} title={t('Lifting tools')}>
         <Tools />
       </Sheet>
     </Screen>
@@ -393,26 +393,26 @@ function CardioScanCard() {
       <p className="text-xs uppercase tracking-[0.12em] text-muted">{t('Log cardio')}</p>
       <div className="flex gap-2">
         <Button variant="ghost" className="flex-1 justify-center" disabled={busy} onClick={() => pick('watch')}>
-          <span className="flex items-center gap-2"><Watch size={16} /> {busy && source === 'watch' ? 'Reading…' : 'From watch'}</span>
+          <span className="flex items-center gap-2"><Watch size={16} /> {busy && source === 'watch' ? t('Reading…') : t('From watch')}</span>
         </Button>
         <Button variant="ghost" className="flex-1 justify-center" disabled={busy} onClick={() => pick('machine')}>
-          <span className="flex items-center gap-2"><Camera size={16} /> {busy && source === 'machine' ? 'Reading…' : 'Machine'}</span>
+          <span className="flex items-center gap-2"><Camera size={16} /> {busy && source === 'machine' ? t('Reading…') : t('Machine')}</span>
         </Button>
       </div>
       <Button variant="ghost" className="w-full justify-center" onClick={() => setManualOpen(true)}>
-        <span className="flex items-center gap-2"><Plus size={16} /> Log manually</span>
+        <span className="flex items-center gap-2"><Plus size={16} /> {t('Log manually')}</span>
       </Button>
-      <p className="text-[11px] text-muted/70 text-center">Snap your watch or a machine console: we read distance, time & speed, and you can add your own metrics. Distance + time earn XP; beat your best for a cardio PR 🏃</p>
+      <p className="text-[11px] text-muted/70 text-center">{t('Snap your watch or a machine console: we read distance, time & speed, and you can add your own metrics. Distance + time earn XP; beat your best for a cardio PR 🏃')}</p>
 
       <ManualCardioSheet open={manualOpen} onClose={() => setManualOpen(false)} onLog={(d) => { reward(d); setManualOpen(false); }} />
 
-      <Sheet open={!!draft} onClose={() => { setDraft(null); setScanMeta(null); }} title={source === 'watch' ? 'Review watch session' : 'Review cardio'}>
+      <Sheet open={!!draft} onClose={() => { setDraft(null); setScanMeta(null); }} title={source === 'watch' ? t('Review watch session') : t('Review cardio')}>
         {draft && (
           <div className="space-y-3">
-            {scanMeta && <p className="text-[11px] text-muted">Read from your {source === 'watch' ? 'watch' : 'console'}. Adjust anything. Confidence {Math.round(scanMeta.confidence * 100)}%.</p>}
+            {scanMeta && <p className="text-[11px] text-muted">{t('Read from your')} {source === 'watch' ? 'watch' : 'console'}{t('. Adjust anything. Confidence')} {Math.round(scanMeta.confidence * 100)}%.</p>}
             <CardioFields data={draft} onChange={setDraft} />
             {scanMeta?.tip && <p className="text-xs text-muted">💡 {scanMeta.tip}</p>}
-            <Button className="w-full justify-center" onClick={logIt}>Log session</Button>
+            <Button className="w-full justify-center" onClick={logIt}>{t('Log session')}</Button>
           </div>
         )}
       </Sheet>
@@ -421,6 +421,7 @@ function CardioScanCard() {
 }
 
 function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: { open: boolean; onClose: () => void; onStart: (name: string) => void; pastWorkouts: Workout[]; onRepeat: (id: string) => void }) {
+  const t = useT();
   const [name, setName] = useState('');
   const saveRoutine = useWorkout((s) => s.saveRoutine);
   const suggestName = useWorkout((s) => s.suggestName);
@@ -442,23 +443,23 @@ function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: 
     if (saved) { haptic('success'); toast(`“${saved.name}” saved as a routine 📌`); }
   }
   return (
-    <Sheet open={open} onClose={onClose} title="Custom workout">
+    <Sheet open={open} onClose={onClose} title={t('Custom workout')}>
       <div className="space-y-3">
-        <p className="text-[11px] text-muted">Name a fresh session: add exercises as you go.</p>
+        <p className="text-[11px] text-muted">{t('Name a fresh session: add exercises as you go.')}</p>
         <input
           autoFocus value={name} onChange={(e) => setName(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter' && name.trim()) onStart(name.trim()); }}
-          placeholder="e.g. Peter’s Power Hour"
+          placeholder={t('e.g. Peter’s Power Hour')}
           className="w-full rounded-xl bg-surface-2 border border-line px-4 py-3 text-sm"
         />
         <div className="flex gap-2 flex-wrap">
           {suggestions.map((s) => <Pill key={s} active={name === s} onClick={() => setName(s)}>{s}</Pill>)}
         </div>
-        <Button className="w-full justify-center" disabled={!name.trim()} onClick={() => onStart(name.trim())}>Start workout</Button>
+        <Button className="w-full justify-center" disabled={!name.trim()} onClick={() => onStart(name.trim())}>{t('Start workout')}</Button>
 
         {pastWorkouts.length > 0 && (
           <div className="pt-3 border-t border-line space-y-2">
-            <p className="text-[11px] uppercase tracking-wide text-muted">Or repeat a past session: weights pre-filled</p>
+            <p className="text-[11px] uppercase tracking-wide text-muted">{t('Or repeat a past session: weights pre-filled')}</p>
             <div className="space-y-1.5 max-h-56 overflow-y-auto no-scrollbar">
               {pastWorkouts.map((w) => (
                 <div key={w.id} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2.5">
@@ -466,7 +467,7 @@ function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: 
                     <p className="text-sm font-medium truncate">{w.name}</p>
                     <p className="text-[11px] text-muted">{w.exercises.length} {w.exercises.length === 1 ? 'exercise' : 'exercises'} · {new Date(w.date).toLocaleDateString()}</p>
                   </button>
-                  <span className="flex items-center gap-1 text-xs text-accent shrink-0"><Repeat size={13} /> Load</span>
+                  <span className="flex items-center gap-1 text-xs text-accent shrink-0"><Repeat size={13} /> {t('Load')}</span>
                   <button
                     onClick={() => void keep(w)}
                     aria-label={`Save ${w.name} as a routine`}
@@ -486,6 +487,7 @@ function CustomWorkoutSheet({ open, onClose, onStart, pastWorkouts, onRepeat }: 
 
 // A big celebratory PR moment when a session sets new records.
 function PrBurstOverlay({ data }: { data: { label: string; count: number } }) {
+  const t = useT();
   return (
     <motion.div
       className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center"
@@ -500,24 +502,25 @@ function PrBurstOverlay({ data }: { data: { label: string; count: number } }) {
         transition={{ type: 'spring', stiffness: 260, damping: 15 }}
       >
         <motion.div className="text-6xl mb-3" animate={{ rotate: [0, -14, 12, -6, 0], scale: [1, 1.25, 1] }} transition={{ duration: 0.9, ease: 'easeOut' }}>🏆</motion.div>
-        <p className="text-4xl font-extrabold italic uppercase tracking-tight text-accent-2 drop-shadow">New PR!</p>
+        <p className="text-4xl font-extrabold italic uppercase tracking-tight text-accent-2 drop-shadow">{t('New PR!')}</p>
         <p className="text-lg font-semibold mt-1">{data.label}</p>
-        {data.count > 1 && <p className="text-sm text-muted mt-1">{data.count} records this session</p>}
+        {data.count > 1 && <p className="text-sm text-muted mt-1">{data.count} {t('records this session')}</p>}
       </motion.div>
     </motion.div>
   );
 }
 
 function ManualCardioSheet({ open, onClose, onLog }: { open: boolean; onClose: () => void; onLog: (d: CardioData) => void }) {
+  const t = useT();
   const [data, setData] = useState<CardioData>(newCardioData());
   useEffect(() => { if (open) setData(newCardioData()); }, [open]); // fresh defaults each open
   const valid = data.distanceKm > 0 || data.durationMin > 0;
   return (
-    <Sheet open={open} onClose={onClose} title="Log cardio">
+    <Sheet open={open} onClose={onClose} title={t('Log cardio')}>
       <div className="space-y-3">
-        <p className="text-[11px] text-muted">Distance and time both earn XP. Add your own metrics: HR, elevation, splits, whatever you track. Beat your longest distance or time for a cardio PR 🏃</p>
+        <p className="text-[11px] text-muted">{t('Distance and time both earn XP. Add your own metrics: HR, elevation, splits, whatever you track. Beat your longest distance or time for a cardio PR 🏃')}</p>
         <CardioFields data={data} onChange={setData} />
-        <Button className="w-full justify-center" disabled={!valid} onClick={() => onLog(data)}>Log {data.machine || 'cardio'}</Button>
+        <Button className="w-full justify-center" disabled={!valid} onClick={() => onLog(data)}>{t('Log')} {data.machine || 'cardio'}</Button>
       </div>
     </Sheet>
   );
@@ -525,12 +528,13 @@ function ManualCardioSheet({ open, onClose, onLog }: { open: boolean; onClose: (
 
 /** How long the session has been running, ticking once a second. */
 function SessionClock({ startedAt }: { startedAt: string }) {
+  const t = useT();
   const [now, setNow] = useState(() => Date.now());
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 1000);
     return () => window.clearInterval(id);
   }, []);
-  return <span className="font-mono tabular-nums" aria-label="Time elapsed">{formatElapsed(now - new Date(startedAt).getTime())}</span>;
+  return <span className="font-mono tabular-nums" aria-label={t('Time elapsed')}>{formatElapsed(now - new Date(startedAt).getTime())}</span>;
 }
 
 /** Icon-only buttons in the session header: the glyph is small, the target is not. */
@@ -705,7 +709,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold">{active.name}</h1>
-          <p className="text-sm text-muted"><SessionClock startedAt={active.date} /> · {completedSets} sets · {Math.round(totalVolume).toLocaleString()} kg</p>
+          <p className="text-sm text-muted"><SessionClock startedAt={active.date} /> · {completedSets} {t('sets ·')} {Math.round(totalVolume).toLocaleString()} kg</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -718,12 +722,12 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
           </button>
           <button
             onClick={() => { const v = !voiceCoach; setSetting('voiceCoach', v); haptic('tap'); if (v) speak('Voice cues on'); }}
-            aria-label={voiceCoach ? 'Turn off voice cues' : 'Turn on voice cues'}
+            aria-label={voiceCoach ? t('Turn off voice cues') : t('Turn on voice cues')}
             className="grid place-items-center w-10 h-10"
           >
             {voiceCoach ? <Volume2 size={18} className="text-accent" /> : <VolumeX size={18} className="text-muted" />}
           </button>
-          <Badge color="rgb(var(--success))">LIVE</Badge>
+          <Badge color="rgb(var(--success))">{t('LIVE')}</Badge>
         </div>
       </header>
 
@@ -748,27 +752,27 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
             <Card className="space-y-2">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <button {...handle} aria-label="Drag to reorder this exercise" className="text-muted cursor-grab active:cursor-grabbing touch-none" title="Drag to reorder"><GripVertical size={16} /></button>
+                <button {...handle} aria-label={t('Drag to reorder this exercise')} className="text-muted cursor-grab active:cursor-grabbing touch-none" title={t('Drag to reorder')}><GripVertical size={16} /></button>
                 {/* The lift's name is the way into its detail page — cues, your
                     history, PR and progression for exactly this movement. */}
                 <button onClick={() => navigate(`/exercise/${we.exerciseId}`)} className="flex items-center gap-0.5 text-left">
-                  <span className="font-semibold">{ex?.name ?? 'Exercise'}</span>
+                  <span className="font-semibold">{ex?.name ?? t('Exercise')}</span>
                   <ChevronRight size={14} className="text-muted" />
                 </button>
-                {we.supersetGroup && <Badge color="rgb(var(--accent-2))">superset</Badge>}
+                {we.supersetGroup && <Badge color="rgb(var(--accent-2))">{t('superset')}</Badge>}
               </div>
               <div className="flex items-center text-muted">
-                <button onClick={() => setSubFor(we.id)} title="Substitute" aria-label={`Swap ${ex?.name ?? 'exercise'} for another`} className={ICON_BTN}><Repeat size={16} /></button>
+                <button onClick={() => setSubFor(we.id)} title={t('Substitute')} aria-label={`Swap ${ex?.name ?? 'exercise'} for another`} className={ICON_BTN}><Repeat size={16} /></button>
                 <button
                   onClick={() => setLinkMode((m) => (m.includes(we.id) ? m.filter((x) => x !== we.id) : [...m, we.id]))}
-                  title="Link superset"
-                  aria-label="Link as a superset"
+                  title={t('Link superset')}
+                  aria-label={t('Link as a superset')}
                   aria-pressed={linkMode.includes(we.id)}
                   className={`${ICON_BTN} ${linkMode.includes(we.id) ? 'text-accent-2' : ''}`}
                 >
                   <Link2 size={16} />
                 </button>
-                <button onClick={() => removeExercise(we.id)} title="Remove" aria-label={`Remove ${ex?.name ?? 'exercise'}`} className={ICON_BTN}>✕</button>
+                <button onClick={() => removeExercise(we.id)} title={t('Remove')} aria-label={`Remove ${ex?.name ?? 'exercise'}`} className={ICON_BTN}>✕</button>
               </div>
             </div>
 
@@ -796,7 +800,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
                     onClick={() => { open.forEach((x) => updateSet(we.id, x.id, { weightKg: suggestion.weightKg, reps: suggestion.reps })); haptic('success'); }}
                     className="shrink-0 rounded-full bg-accent-2/12 px-3 min-h-[36px] text-xs font-semibold text-accent-2 active:scale-95 transition"
                   >
-                    Use {suggestion.weightKg} kg × {suggestion.reps}
+                    {t('Use')} {suggestion.weightKg} kg × {suggestion.reps}
                   </button>
                 )}
               </div>
@@ -804,10 +808,10 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
 
             <div className="flex gap-2">
               <Button variant="ghost" className="flex-1 justify-center py-2" onClick={() => addSet(we.id)}>
-                <span className="flex items-center gap-1 text-xs"><Plus size={14} /> Set</span>
+                <span className="flex items-center gap-1 text-xs"><Plus size={14} /> {t('Set')}</span>
               </Button>
               <Button variant="ghost" className="justify-center py-2" onClick={() => openRest(we.restPresetSec ?? 90)}>
-                <span className="text-xs">Rest</span>
+                <span className="text-xs">{t('Rest')}</span>
               </Button>
             </div>
           </Card>
@@ -820,16 +824,16 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
 
       {linkMode.length >= 2 && (
         <Button className="w-full justify-center" onClick={() => { linkSuperset(linkMode); setLinkMode([]); haptic('success'); }}>
-          Link {linkMode.length} exercises as a superset
+          {t('Link')} {linkMode.length} {t('exercises as a superset')}
         </Button>
       )}
 
       <div className="flex gap-2">
         <Button variant="ghost" className="flex-1 justify-center" onClick={() => setPickerOpen(true)}>
-          <span className="flex items-center gap-1"><Plus size={16} /> Exercise</span>
+          <span className="flex items-center gap-1"><Plus size={16} /> {t('Exercise')}</span>
         </Button>
         <Button variant="ghost" className="flex-1 justify-center" disabled={cardioBusy} onClick={() => cardioRef.current?.click()}>
-          <span className="flex items-center gap-1"><Camera size={16} /> {cardioBusy ? 'Reading…' : 'Cardio'}</span>
+          <span className="flex items-center gap-1"><Camera size={16} /> {cardioBusy ? t('Reading…') : t('Cardio')}</span>
         </Button>
         <Button variant="ghost" className="justify-center" onClick={onOpenTools}><Wrench size={16} /></Button>
       </div>
@@ -837,8 +841,8 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
 
       {/* Finish is the one thing to hit here. Discard throws the session away,
           so it sits apart, looks quiet, and asks first once there is work to lose. */}
-      <Button className="w-full justify-center py-3.5" onClick={finish}>Finish workout 🔥</Button>
-      <button onClick={() => void discard()} className="mx-auto block min-h-[44px] px-4 text-xs text-muted underline underline-offset-2">Discard this workout</button>
+      <Button className="w-full justify-center py-3.5" onClick={finish}>{t('Finish workout 🔥')}</Button>
+      <button onClick={() => void discard()} className="mx-auto block min-h-[44px] px-4 text-xs text-muted underline underline-offset-2">{t('Discard this workout')}</button>
 
       <FocusHud
         open={focusMode}
@@ -851,38 +855,38 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       <HeavyDrop drop={drop} onClose={() => { setDrop(null); if (restTimerEnabled) openRest(pendingRestSec.current); }} />
 
       {/* Exercise picker */}
-      <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title="Add exercise">
+      <Sheet open={pickerOpen} onClose={() => setPickerOpen(false)} title={t('Add exercise')}>
         <ExercisePicker onPick={(id) => { addExercise(id); setPickerOpen(false); haptic('tap'); }} />
       </Sheet>
 
       {/* Substitution */}
-      <Sheet open={!!subFor} onClose={() => setSubFor(null)} title="Substitute exercise">
+      <Sheet open={!!subFor} onClose={() => setSubFor(null)} title={t('Substitute exercise')}>
         {subFor && (() => {
           const base = exerciseById(active.exercises.find((e) => e.id === subFor)?.exerciseId ?? '');
           return base
             ? <SubstituteList key={subFor} base={base} onPick={(id) => { swapExercise(subFor, id); setSubFor(null); }} />
-            : <p className="text-sm text-muted">This exercise is no longer in the library.</p>;
+            : <p className="text-sm text-muted">{t('This exercise is no longer in the library.')}</p>;
         })()}
       </Sheet>
 
       {/* Long-press: note / history / swap */}
-      <Sheet open={!!noteFor} onClose={() => setNoteFor(null)} title="Set options">
+      <Sheet open={!!noteFor} onClose={() => setNoteFor(null)} title={t('Set options')}>
         {noteFor && (
           <div className="space-y-3">
             <textarea
-              placeholder="Add a note (form cue, pain, tempo)…"
+              placeholder={t('Add a note (form cue, pain, tempo)…')}
               defaultValue={active.exercises.find((e) => e.id === noteFor.weId)?.sets.find((s) => s.id === noteFor.setId)?.note ?? ''}
               onChange={(e) => updateSet(noteFor.weId, noteFor.setId, { note: e.target.value })}
               className="w-full rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm h-24"
             />
-            <button onClick={() => { setSubFor(noteFor.weId); setNoteFor(null); }} className="w-full text-left flex items-center gap-2 text-sm py-2"><Repeat size={15} /> Swap exercise</button>
-            <button onClick={() => setNoteFor(null)} className="w-full text-left flex items-center gap-2 text-sm py-2"><History size={15} /> Close (history shown as 👻 ghost on each set)</button>
+            <button onClick={() => { setSubFor(noteFor.weId); setNoteFor(null); }} className="w-full text-left flex items-center gap-2 text-sm py-2"><Repeat size={15} /> {t('Swap exercise')}</button>
+            <button onClick={() => setNoteFor(null)} className="w-full text-left flex items-center gap-2 text-sm py-2"><History size={15} /> {t('Close (history shown as 👻 ghost on each set)')}</button>
           </div>
         )}
       </Sheet>
 
-      <Sheet open={toolsOpen} onClose={onCloseTools} title="Lifting tools"><Tools /></Sheet>
-      <p className="text-center text-[11px] text-muted/60">Swipe a set → to complete, ← to delete · long-press for notes · bodyweight {bodyweight}kg used for rank scoring</p>
+      <Sheet open={toolsOpen} onClose={onCloseTools} title={t('Lifting tools')}><Tools /></Sheet>
+      <p className="text-center text-[11px] text-muted/60">{t('Swipe a set → to complete, ← to delete · long-press for notes · bodyweight')} {bodyweight}{t('kg used for rank scoring')}</p>
     </div>
   );
 }
@@ -919,6 +923,7 @@ const EQUIP_PRESETS = ['Any', 'Home', 'Barbell', 'Dumbbell', 'Machine', 'Cable',
 const HOME_OK = ['Bodyweight', 'Dumbbell', 'Band', 'Kettlebell', 'Rings'];
 
 function ExercisePicker({ onPick }: { onPick: (id: string) => void }) {
+  const t = useT();
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<string>('All');
   const [equip, setEquip] = useState<string>('Any');
@@ -955,11 +960,11 @@ function ExercisePicker({ onPick }: { onPick: (id: string) => void }) {
 
   return (
     <div className="space-y-3">
-      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search exercises…" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+      <input value={q} onChange={(e) => setQ(e.target.value)} placeholder={t('Search exercises…')} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
 
       {showQuick && favourites.length > 0 && (
         <div>
-          <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5 flex items-center gap-1"><Star size={11} className="text-accent-2" /> Favourites</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5 flex items-center gap-1"><Star size={11} className="text-accent-2" /> {t('Favourites')}</p>
           <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
             {favourites.map((e) => <button key={e.id} onClick={() => onPick(e.id)} className="whitespace-nowrap rounded-full bg-accent-2/15 text-accent-2 px-3 py-1 text-xs">{e.name}</button>)}
           </div>
@@ -967,7 +972,7 @@ function ExercisePicker({ onPick }: { onPick: (id: string) => void }) {
       )}
       {showQuick && recent.length > 0 && (
         <div>
-          <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">Recent</p>
+          <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">{t('Recent')}</p>
           <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
             {recent.map((e) => <button key={e.id} onClick={() => onPick(e.id)} className="whitespace-nowrap rounded-full bg-surface-2 text-muted px-3 py-1 text-xs">{e.name}</button>)}
           </div>
@@ -976,7 +981,7 @@ function ExercisePicker({ onPick }: { onPick: (id: string) => void }) {
 
       <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
         {EQUIP_PRESETS.map((eqp) => (
-          <button key={eqp} onClick={() => setEquip(eqp)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${equip === eqp ? 'bg-accent-2 text-black' : 'bg-surface-2 text-muted'}`}>{eqp === 'Home' ? '🏠 Home' : eqp}</button>
+          <button key={eqp} onClick={() => setEquip(eqp)} className={`whitespace-nowrap rounded-full px-3 py-1 text-xs ${equip === eqp ? 'bg-accent-2 text-black' : 'bg-surface-2 text-muted'}`}>{eqp === 'Home' ? t('🏠 Home') : eqp}</button>
         ))}
       </div>
       <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
@@ -993,7 +998,7 @@ function ExercisePicker({ onPick }: { onPick: (id: string) => void }) {
                 <p className="text-sm font-medium">{e.name}</p>
                 <p className="text-xs text-muted">{e.primary} · {e.equipment}</p>
               </button>
-              <button onClick={() => { toggleFav(e.id); haptic('tap'); }} aria-label={fav ? 'Unfavourite' : 'Favourite'} className={fav ? 'text-accent-2 shrink-0' : 'text-muted shrink-0'}>
+              <button onClick={() => { toggleFav(e.id); haptic('tap'); }} aria-label={fav ? t('Unfavourite') : t('Favourite')} className={fav ? 'text-accent-2 shrink-0' : 'text-muted shrink-0'}>
                 <Star size={16} className={fav ? 'fill-accent-2' : ''} />
               </button>
             </div>

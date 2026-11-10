@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Lock, Star, Gift, Sparkles } from 'lucide-react';
@@ -17,6 +18,7 @@ function dayOfYear() {
 type Filter = QuoteGenre | 'all' | 'fav';
 
 export default function Collection() {
+  const t = useT();
   const navigate = useNavigate();
   const { collected, favourites, claimedMilestones, collect, toggleFav, claimMilestone } = useQuotes();
   const addXp = useGami((s) => s.addXp);
@@ -52,16 +54,16 @@ export default function Collection() {
 
   return (
     <div className="px-4 pt-12 pb-6 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Back')}</button>
 
       <div className="flex items-end justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold">Quote Collection</h1>
-          <p className="text-sm text-muted">Unlock a new one each day.</p>
+          <h1 className="text-2xl font-extrabold">{t('Quote Collection')}</h1>
+          <p className="text-sm text-muted">{t('Unlock a new one each day.')}</p>
         </div>
         <div className="text-right">
           <p className="font-mono font-bold text-lg text-accent">{have}/{total}</p>
-          <p className="text-[10px] text-muted">collected</p>
+          <p className="text-[10px] text-muted">{t('collected')}</p>
         </div>
       </div>
 
@@ -74,8 +76,8 @@ export default function Collection() {
         <Card onClick={() => { collect(todayQuote.id); haptic('success'); navigate(`/quote/${todayQuote.id}`); }} className="flex items-center gap-3 border-accent/50">
           <Sparkles size={18} className="text-accent" />
           <div className="flex-1">
-            <p className="text-sm font-semibold">Reveal today’s quote</p>
-            <p className="text-[11px] text-muted">Tap to unlock it into your collection.</p>
+            <p className="text-sm font-semibold">{t('Reveal today’s quote')}</p>
+            <p className="text-[11px] text-muted">{t('Tap to unlock it into your collection.')}</p>
           </div>
           <Badge>+1</Badge>
         </Card>
@@ -86,24 +88,24 @@ export default function Collection() {
         <Card className="flex items-center gap-3 border-accent-2/50">
           <Gift size={18} className="text-accent-2" />
           <div className="flex-1">
-            <p className="text-sm font-semibold">{claimable}-quote milestone!</p>
-            <p className="text-[11px] text-muted">Claim +{claimable * 25} XP · 🪙{Math.round(claimable / 2)}</p>
+            <p className="text-sm font-semibold">{claimable}{t('-quote milestone!')}</p>
+            <p className="text-[11px] text-muted">{t('Claim +')}{claimable * 25} XP · 🪙{Math.round(claimable / 2)}</p>
           </div>
-          <Button className="py-1.5" onClick={claim}>Claim</Button>
+          <Button className="py-1.5" onClick={claim}>{t('Claim')}</Button>
         </Card>
       )}
 
       {/* Filters */}
       <div className="flex gap-2 overflow-x-auto no-scrollbar" data-noswipe>
-        <Pill active={filter === 'all'} onClick={() => setFilter('all')}>All</Pill>
+        <Pill active={filter === 'all'} onClick={() => setFilter('all')}>{t('All')}</Pill>
         {QUOTE_GENRES.map((g) => (
           <Pill key={g.id} active={filter === g.id} onClick={() => setFilter(g.id)}>{g.label}</Pill>
         ))}
-        <Pill active={filter === 'fav'} onClick={() => setFilter('fav')}>★ Favourites</Pill>
+        <Pill active={filter === 'fav'} onClick={() => setFilter('fav')}>{t('★ Favourites')}</Pill>
       </div>
 
       <div className="space-y-2">
-        {list.length === 0 && <p className="text-sm text-muted">{filter === 'fav' ? 'No favourites yet: tap the star on a quote.' : 'Nothing here.'}</p>}
+        {list.length === 0 && <p className="text-sm text-muted">{filter === 'fav' ? t('No favourites yet: tap the star on a quote.') : t('Nothing here.')}</p>}
         {list.map((q) => {
           const owned = collected.includes(q.id);
           if (!owned) {
@@ -111,7 +113,7 @@ export default function Collection() {
               <Card key={q.id} className="flex items-center gap-3 opacity-70">
                 <div className="w-9 h-9 rounded-lg bg-surface-2 flex items-center justify-center shrink-0"><Lock size={16} className="text-muted" /></div>
                 <div className="flex-1">
-                  <p className="text-sm text-muted">Locked: collect the daily quote to unlock</p>
+                  <p className="text-sm text-muted">{t('Locked: collect the daily quote to unlock')}</p>
                   <Badge color="rgb(var(--muted))">{q.genre}</Badge>
                 </div>
               </Card>

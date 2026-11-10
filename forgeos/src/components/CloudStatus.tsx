@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 import { Cloud, CloudOff, RefreshCw, Check, X, Loader2 } from 'lucide-react';
 import { Card, Button } from './ui';
@@ -12,6 +13,7 @@ import { haptic } from '../lib/haptics';
 // friends are synced — and a one-tap "Sync now". This is what turns
 // "social doesn't work" into a clear, fixable diagnosis.
 export function CloudStatus() {
+  const t = useT();
   const friends = useSocial((s) => s.friends);
   const syncFriends = useSocial((s) => s.syncFriends);
   const [auth, setAuth] = useState<'checking' | 'in' | 'out' | 'error'>('checking');
@@ -41,11 +43,11 @@ export function CloudStatus() {
       const connected = await ensureCloudAccount(); // creates an anon session if needed
       await syncFriends();
       await refresh();
-      if (!isBackendLive) toast('No cloud backend connected', 'info');
-      else if (connected) toast('Connected & synced ✅', 'success');
-      else toast('Backend reachable but no session: enable Anonymous sign-ins in Supabase.', 'error');
+      if (!isBackendLive) toast(t('No cloud backend connected'), 'info');
+      else if (connected) toast(t('Connected & synced ✅'), 'success');
+      else toast(t('Backend reachable but no session: enable Anonymous sign-ins in Supabase.'), 'error');
     } catch {
-      toast('Sync failed: check your connection / backend.', 'error');
+      toast(t('Sync failed: check your connection / backend.'), 'error');
     } finally {
       setBusy(false);
     }
@@ -66,15 +68,15 @@ export function CloudStatus() {
     <Card className="space-y-3">
       <div className="flex items-center gap-2">
         {isBackendLive ? <Cloud size={16} className="text-accent" /> : <CloudOff size={16} className="text-muted" />}
-        <p className="font-semibold text-sm flex-1">Cloud & social</p>
+        <p className="font-semibold text-sm flex-1">{t('Cloud & social')}</p>
         <Button variant="ghost" className="px-3 py-1.5" disabled={busy} onClick={syncNow}>
-          <span className="flex items-center gap-1 text-xs">{busy ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />} Sync now</span>
+          <span className="flex items-center gap-1 text-xs">{busy ? <Loader2 size={13} className="animate-spin" /> : <RefreshCw size={13} />} {t('Sync now')}</span>
         </Button>
       </div>
       <div className="space-y-1.5 text-sm">
-        <StatusRow label="Backend connected" ok={isBackendLive} />
-        <StatusRow label="Signed in to cloud account" ok={signedIn} pending={auth === 'checking'} />
-        <StatusRow label="Real friends synced" ok={signedIn && friends.length > 0} value={`${friends.length}`} />
+        <StatusRow label={t('Backend connected')} ok={isBackendLive} />
+        <StatusRow label={t('Signed in to cloud account')} ok={signedIn} pending={auth === 'checking'} />
+        <StatusRow label={t('Real friends synced')} ok={signedIn && friends.length > 0} value={`${friends.length}`} />
       </div>
       <p className="text-[11px] text-muted">{hint}</p>
     </Card>

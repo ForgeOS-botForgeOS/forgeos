@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ChevronLeft, Flame, Trophy } from 'lucide-react';
@@ -5,15 +6,16 @@ import { Card, Button } from '../components/ui';
 import { decodeProfile } from '../lib/profileShare';
 
 export default function PublicProfile() {
+  const t = useT();
   const navigate = useNavigate();
   const [params] = useSearchParams();
   const p = useMemo(() => decodeProfile(params.get('d') ?? ''), [params]);
 
   return (
     <div className="px-4 pt-12 pb-8 space-y-4">
-      <button onClick={() => navigate('/home')} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Home</button>
+      <button onClick={() => navigate('/home')} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Home')}</button>
       {!p ? (
-        <Card><p className="text-sm text-muted">This profile link is invalid or private.</p></Card>
+        <Card><p className="text-sm text-muted">{t('This profile link is invalid or private.')}</p></Card>
       ) : (
         <>
           <div className="text-center space-y-1 pt-4">
@@ -29,14 +31,14 @@ export default function PublicProfile() {
           </Card>
           {p.bestLifts.length > 0 && (
             <Card className="space-y-1">
-              <p className="text-xs uppercase tracking-wide text-muted mb-1">Top lifts</p>
+              <p className="text-xs uppercase tracking-wide text-muted mb-1">{t('Top lifts')}</p>
               {p.bestLifts.map((l) => (
                 <div key={l.name} className="flex justify-between text-sm"><span>{l.name}</span><span className="font-mono">{l.e1rm} kg</span></div>
               ))}
             </Card>
           )}
-          <Button className="w-full justify-center" onClick={() => navigate('/home')}>Open ForgeOS</Button>
-          <p className="text-[11px] text-muted/70 text-center">A shared ForgeOS profile · read-only</p>
+          <Button className="w-full justify-center" onClick={() => navigate('/home')}>{t('Open ForgeOS')}</Button>
+          <p className="text-[11px] text-muted/70 text-center">{t('A shared ForgeOS profile · read-only')}</p>
         </>
       )}
     </div>

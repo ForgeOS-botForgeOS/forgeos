@@ -1,3 +1,4 @@
+import { useT } from '../../lib/i18n';
 import { useState } from 'react';
 import { Pill } from '../ui';
 import { platesPerSide, warmupSets, e1rm } from '../../lib/fitness';
@@ -6,12 +7,13 @@ import { useUser } from '../../state/userStore';
 type Tool = 'plate' | 'warmup' | '1rm';
 
 export function Tools() {
+  const t = useT();
   const [tool, setTool] = useState<Tool>('plate');
   return (
     <div className="space-y-4">
       <div className="flex gap-2">
-        <Pill active={tool === 'plate'} onClick={() => setTool('plate')}>Plate calc</Pill>
-        <Pill active={tool === 'warmup'} onClick={() => setTool('warmup')}>Warm-up</Pill>
+        <Pill active={tool === 'plate'} onClick={() => setTool('plate')}>{t('Plate calc')}</Pill>
+        <Pill active={tool === 'warmup'} onClick={() => setTool('warmup')}>{t('Warm-up')}</Pill>
         <Pill active={tool === '1rm'} onClick={() => setTool('1rm')}>1RM</Pill>
       </div>
       {tool === 'plate' && <PlateCalc />}
@@ -32,14 +34,15 @@ const PLATE_COLOR: Record<number, string> = {
 };
 
 function PlateCalc() {
+  const t = useT();
   const [total, setTotal] = useState(100);
   const [maxPlate, setMaxPlate] = useState(20);
   const plates = platesPerSide(total, 20, maxPlate);
   return (
     <div className="space-y-3">
-      <NumInput label="Target (incl. 20kg bar)" value={total} step={2.5} onChange={setTotal} unit="kg" />
+      <NumInput label={t('Target (incl. 20kg bar)')} value={total} step={2.5} onChange={setTotal} unit="kg" />
       <div className="flex items-center justify-between">
-        <span className="text-xs text-muted">Heaviest plate available</span>
+        <span className="text-xs text-muted">{t('Heaviest plate available')}</span>
         <div className="flex gap-1">
           {[25, 20, 15].map((p) => (
             <button key={p} onClick={() => setMaxPlate(p)} className={`rounded-full px-2.5 py-1 text-xs font-medium ${maxPlate === p ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}>{p}kg</button>
@@ -49,7 +52,7 @@ function PlateCalc() {
       <div className="flex items-center justify-center gap-1 py-4 bg-surface-2 rounded-xl min-h-[100px]">
         {/* visual plate layout, one side */}
         {plates.length === 0 ? (
-          <span className="text-sm text-muted">Just the bar.</span>
+          <span className="text-sm text-muted">{t('Just the bar.')}</span>
         ) : (
           <>
             <div className="w-1.5 h-2 bg-muted" />
@@ -76,17 +79,18 @@ function PlateCalc() {
           <span key={plate} className="rounded-full bg-surface-2 px-2 py-1">{count} × {plate}kg</span>
         ))}
       </div>
-      <p className="text-[11px] text-muted text-center">Plates shown per side · 20 kg Olympic bar</p>
+      <p className="text-[11px] text-muted text-center">{t('Plates shown per side · 20 kg Olympic bar')}</p>
     </div>
   );
 }
 
 function WarmupCalc() {
+  const t = useT();
   const [work, setWork] = useState(100);
   const sets = warmupSets(work);
   return (
     <div className="space-y-3">
-      <NumInput label="Working weight" value={work} step={2.5} onChange={setWork} unit="kg" />
+      <NumInput label={t('Working weight')} value={work} step={2.5} onChange={setWork} unit="kg" />
       <div className="space-y-2">
         {sets.map((s) => (
           <div key={s.pct} className="flex items-center justify-between rounded-xl bg-surface-2 px-4 py-3">
@@ -95,7 +99,7 @@ function WarmupCalc() {
           </div>
         ))}
         <div className="flex items-center justify-between rounded-xl bg-accent/15 px-4 py-3">
-          <span className="text-sm">Working</span>
+          <span className="text-sm">{t('Working')}</span>
           <span className="font-mono font-bold">{work} kg</span>
         </div>
       </div>
@@ -112,6 +116,7 @@ const STANDARDS: Record<string, { mult: number; label: string }[]> = {
 };
 
 function OneRmCalc() {
+  const t = useT();
   const bodyweight = useUser((s) => s.profile?.weightKg ?? 80);
   const [lift, setLift] = useState<'Squat' | 'Bench' | 'Deadlift'>('Bench');
   const [w, setW] = useState(60);
@@ -132,17 +137,17 @@ function OneRmCalc() {
           <Pill key={l} active={lift === l} onClick={() => setLift(l)}>{l}</Pill>
         ))}
       </div>
-      <NumInput label="Weight" value={w} step={2.5} onChange={setW} unit="kg" />
-      <NumInput label="Reps" value={r} step={1} onChange={setR} unit="" />
+      <NumInput label={t('Weight')} value={w} step={2.5} onChange={setW} unit="kg" />
+      <NumInput label={t('Reps')} value={r} step={1} onChange={setR} unit="" />
       <div className="rounded-xl bg-accent/15 px-4 py-5 text-center">
-        <p className="text-xs text-muted">Estimated 1RM (Epley + Brzycki avg)</p>
+        <p className="text-xs text-muted">{t('Estimated 1RM (Epley + Brzycki avg)')}</p>
         <p className="font-mono text-3xl font-bold mt-1">{est} kg</p>
-        <p className="text-xs text-muted mt-1">{ratio.toFixed(2)}× bodyweight</p>
+        <p className="text-xs text-muted mt-1">{ratio.toFixed(2)}{t('× bodyweight')}</p>
       </div>
       <div className="rounded-xl bg-surface-2 px-4 py-3 text-center">
-        <p className="text-xs text-muted">{lift} strength level</p>
+        <p className="text-xs text-muted">{lift} {t('strength level')}</p>
         <p className="text-lg font-bold text-accent-2">{level}</p>
-        {next && <p className="text-[11px] text-muted">Next: {next.label} at {Math.round(next.mult * bodyweight)} kg ({next.mult}× BW)</p>}
+        {next && <p className="text-[11px] text-muted">{t('Next:')} {next.label} at {Math.round(next.mult * bodyweight)} kg ({next.mult}× BW)</p>}
       </div>
       <div className="grid grid-cols-3 gap-2 text-center text-xs">
         {[0.9, 0.8, 0.7].map((p) => (
@@ -152,7 +157,7 @@ function OneRmCalc() {
           </div>
         ))}
       </div>
-      <p className="text-[11px] text-muted/70">Standards are relative to your bodyweight ({bodyweight} kg): set it in your profile.</p>
+      <p className="text-[11px] text-muted/70">{t('Standards are relative to your bodyweight (')}{bodyweight} {t('kg): set it in your profile.')}</p>
     </div>
   );
 }

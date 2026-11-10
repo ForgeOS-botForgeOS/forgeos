@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -47,6 +48,7 @@ function fmtDur(min: number): string {
 }
 
 export default function Health() {
+  const t = useT();
   const navigate = useNavigate();
   const days = useHealth((s) => s.days);
   const lastSyncAt = useHealth((s) => s.lastSyncAt);
@@ -96,12 +98,12 @@ export default function Health() {
     haptic('tap');
     try {
       const granted = await requestHealthConnectPermissions();
-      if (!granted) { toast('Health Connect permission was not granted.', 'info'); return; }
+      if (!granted) { toast(t('Health Connect permission was not granted.'), 'info'); return; }
       // From now on data also flows while the app is closed; user-initiated,
       // so it may prompt once for the notification permission (Android 13+).
       void configureBackgroundSync(true, { interactive: true });
       const r = await readHealthConnect(21);
-      if (!r.days.length && !r.workouts.length) { toast('Connected, but no data came back yet. Make sure Garmin Connect is syncing to Health Connect.', 'info'); return; }
+      if (!r.days.length && !r.workouts.length) { toast(t('Connected, but no data came back yet. Make sure Garmin Connect is syncing to Health Connect.'), 'info'); return; }
       const n = ingest(r.days, 'healthconnect');
       ingestGarminWorkouts(r.workouts);
       celebrate();
@@ -112,18 +114,18 @@ export default function Health() {
   return (
     <div className="px-4 pt-12 pb-10 space-y-4 max-w-md mx-auto">
       <div className="flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Back')}</button>
         {lastSyncAt && (
           <span className={`text-[11px] ${Date.now() - lastSyncAt > 12 * 3600 * 1000 ? 'text-warn' : 'text-muted'}`}>
-            Synced {relTime(lastSyncAt)}
+            {t('Synced')} {relTime(lastSyncAt)}
           </span>
         )}
       </div>
 
       <div className="text-center space-y-1">
         <div className="mx-auto w-12 h-12 rounded-2xl bg-accent/15 flex items-center justify-center"><Watch className="text-accent" size={24} /></div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Health &amp; recovery</h1>
-        <p className="text-sm text-muted">Pull in sleep and daily activity from Garmin: automatically on the app, or by import anywhere.</p>
+        <h1 className="text-2xl font-extrabold tracking-tight">{t('Health & recovery')}</h1>
+        <p className="text-sm text-muted">{t('Pull in sleep and daily activity from Garmin: automatically on the app, or by import anywhere.')}</p>
       </div>
 
       {/* Recovery readiness hero */}
@@ -131,26 +133,26 @@ export default function Health() {
 
       {/* Today / last-night summary */}
       <div className="grid grid-cols-2 gap-2">
-        <Stat icon={Moon} label="Sleep" value={fmtSleep(latest?.sleepMinutes)} sub={latest?.sleepScore ? `Score ${latest.sleepScore}` : latest?.date} />
-        <Stat icon={Footprints} label="Steps" value={latest?.steps != null ? latest.steps.toLocaleString() : '–'} sub={latest?.date} />
-        <Stat icon={HeartPulse} label="Resting HR" value={latest?.restingHr != null ? `${latest.restingHr} bpm` : '–'} />
-        <Stat icon={Flame} label="Active kcal" value={latest?.activeCalories != null ? latest.activeCalories.toLocaleString() : '–'} sub={latest?.bodyBattery != null ? `Body Battery ${latest.bodyBattery}` : undefined} />
+        <Stat icon={Moon} label={t('Sleep')} value={fmtSleep(latest?.sleepMinutes)} sub={latest?.sleepScore ? `Score ${latest.sleepScore}` : latest?.date} />
+        <Stat icon={Footprints} label={t('Steps')} value={latest?.steps != null ? latest.steps.toLocaleString() : '–'} sub={latest?.date} />
+        <Stat icon={HeartPulse} label={t('Resting HR')} value={latest?.restingHr != null ? `${latest.restingHr} bpm` : '–'} />
+        <Stat icon={Flame} label={t('Active kcal')} value={latest?.activeCalories != null ? latest.activeCalories.toLocaleString() : '–'} sub={latest?.bodyBattery != null ? `Body Battery ${latest.bodyBattery}` : undefined} />
       </div>
 
       {/* 7-day recovery trends */}
       {trend.scores.length >= 2 && (
         <Card className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">7-day recovery</p>
-            {trend.avgScore != null && <Badge color={readiness?.color ?? 'rgb(var(--accent))'}>avg {trend.avgScore}</Badge>}
+            <p className="text-sm font-semibold">{t('7-day recovery')}</p>
+            {trend.avgScore != null && <Badge color={readiness?.color ?? 'rgb(var(--accent))'}>{t('avg')} {trend.avgScore}</Badge>}
           </div>
           <div className="flex items-center gap-3">
             <Sparkline values={trend.scores} color={readiness?.color ?? 'rgb(var(--accent))'} />
             <div className="flex-1 grid grid-cols-3 gap-2 text-center">
-              <TrendStat label="Avg sleep" value={trend.avgSleepMin != null ? fmtDur(trend.avgSleepMin) : '–'} />
-              <TrendStat label="Sleep debt" value={trend.sleepDebtMin > 0 ? `-${fmtDur(trend.sleepDebtMin)}` : 'none'} warn={trend.sleepDebtMin >= 240} />
+              <TrendStat label={t('Avg sleep')} value={trend.avgSleepMin != null ? fmtDur(trend.avgSleepMin) : '–'} />
+              <TrendStat label={t('Sleep debt')} value={trend.sleepDebtMin > 0 ? `-${fmtDur(trend.sleepDebtMin)}` : 'none'} warn={trend.sleepDebtMin >= 240} />
               <TrendStat
-                label="Rest HR"
+                label={t('Rest HR')}
                 value={trend.rhrAvg != null ? `${trend.rhrAvg}` : '–'}
                 sub={trend.rhrDrift != null && trend.rhrDrift !== 0 ? `${trend.rhrDrift > 0 ? '▲' : '▼'}${Math.abs(trend.rhrDrift)}` : undefined}
                 warn={(trend.rhrDrift ?? 0) >= 3}
@@ -164,8 +166,8 @@ export default function Health() {
       {list.length >= 5 && (
         <Card className="space-y-2">
           <div className="flex items-center justify-between">
-            <p className="text-sm font-semibold">Forge Coach</p>
-            <Badge>private · on-device</Badge>
+            <p className="text-sm font-semibold">{t('Forge Coach')}</p>
+            <Badge>{t('private · on-device')}</Badge>
           </div>
           {insights.length > 0 ? (
             insights.map((i) => (
@@ -173,7 +175,7 @@ export default function Health() {
             ))
           ) : (
             <p className="text-[11px] text-muted">
-              Personal insights unlock after 14 days of data: {daysUntilInsights(list)} to go. Keep syncing 🔄
+              {t('Personal insights unlock after 14 days of data:')} {daysUntilInsights(list)} {t('to go. Keep syncing 🔄')}
             </p>
           )}
         </Card>
@@ -184,19 +186,19 @@ export default function Health() {
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center shrink-0"><Watch size={18} className="text-accent" /></div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold">Garmin auto-sync</p>
-            <p className="text-[11px] text-muted">Sleep &amp; activity flow in on their own, even with the app closed.</p>
+            <p className="text-sm font-semibold">{t('Garmin auto-sync')}</p>
+            <p className="text-[11px] text-muted">{t('Sleep & activity flow in on their own, even with the app closed.')}</p>
           </div>
-          {connected && <Badge color="rgb(var(--success))">Connected</Badge>}
+          {connected && <Badge color="rgb(var(--success))">{t('Connected')}</Badge>}
         </div>
 
         {connected ? (
           <>
             <p className="text-[11px] text-muted flex items-start gap-1.5">
-              <Check size={13} className="mt-0.5 shrink-0 text-success" /> All set: nothing else to do. New data shows up here by itself.
+              <Check size={13} className="mt-0.5 shrink-0 text-success" /> {t('All set: nothing else to do. New data shows up here by itself.')}
             </p>
             <Button variant="ghost" className="w-full justify-center" disabled={syncing} onClick={autoSync}>
-              <span className="flex items-center gap-1.5"><RefreshCw size={15} className={syncing ? 'animate-spin' : ''} />{syncing ? 'Syncing…' : 'Sync now'}</span>
+              <span className="flex items-center gap-1.5"><RefreshCw size={15} className={syncing ? 'animate-spin' : ''} />{syncing ? t('Syncing…') : t('Sync now')}</span>
             </Button>
           </>
         ) : (
@@ -204,64 +206,64 @@ export default function Health() {
             <div className="space-y-1.5">
               {/* The install step only exists for browser visitors — inside the
                   APK it's already satisfied, so don't show it at all. */}
-              {hcStatus === 'web' && <SetupStep n={1}>Install the <b>ForgeOS Android app</b> (You → Get the app)</SetupStep>}
-              <SetupStep n={hcStatus === 'web' ? 2 : 1} done={hcStatus === 'ready'}>In <b>Garmin Connect</b>: profile picture → Settings → <b>Health Connect</b> → allow sleep &amp; activity</SetupStep>
-              <SetupStep n={hcStatus === 'web' ? 3 : 2}>Tap the button: one permission screen, then it’s automatic forever</SetupStep>
+              {hcStatus === 'web' && <SetupStep n={1}>{t('Install the')} <b>{t('ForgeOS Android app')}</b> {t('(You → Get the app)')}</SetupStep>}
+              <SetupStep n={hcStatus === 'web' ? 2 : 1} done={hcStatus === 'ready'}>In <b>{t('Garmin Connect')}</b>{t(': profile picture → Settings →')} <b>Health Connect</b> {t('→ allow sleep & activity')}</SetupStep>
+              <SetupStep n={hcStatus === 'web' ? 3 : 2}>{t('Tap the button: one permission screen, then it’s automatic forever')}</SetupStep>
             </div>
             {hcStatus === 'ready' && (
               <Button className="w-full justify-center" disabled={syncing} onClick={autoSync}>
-                <span className="flex items-center gap-1.5"><Watch size={15} className={syncing ? 'animate-pulse' : ''} />{syncing ? 'Connecting…' : 'Connect Garmin'}</span>
+                <span className="flex items-center gap-1.5"><Watch size={15} className={syncing ? 'animate-pulse' : ''} />{syncing ? t('Connecting…') : t('Connect Garmin')}</span>
               </Button>
             )}
             {hcStatus === 'unavailable' && (
               <>
                 <Button className="w-full justify-center" onClick={() => window.open('https://play.google.com/store/apps/details?id=com.google.android.apps.healthdata', '_blank')}>
-                  <span className="flex items-center gap-1.5"><BatteryCharging size={15} /> Get Health Connect</span>
+                  <span className="flex items-center gap-1.5"><BatteryCharging size={15} /> {t('Get Health Connect')}</span>
                 </Button>
-                <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> Health Connect isn’t ready on this phone yet. It’s built into Android 14+; on older Android install it from Play. Also grab the newest ForgeOS APK from the download page: older ones can’t auto-sync.</p>
+                <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> {t('Health Connect isn’t ready on this phone yet. It’s built into Android 14+; on older Android install it from Play. Also grab the newest ForgeOS APK from the download page: older ones can’t auto-sync.')}</p>
               </>
             )}
             {hcStatus === 'checking' && (
               <Button className="w-full justify-center" disabled>
-                <span className="flex items-center gap-1.5"><RefreshCw size={15} className="animate-spin" /> Checking this phone…</span>
+                <span className="flex items-center gap-1.5"><RefreshCw size={15} className="animate-spin" /> {t('Checking this phone…')}</span>
               </Button>
             )}
           </>
         )}
         <button onClick={() => openTutorial('garmin')} className="w-full text-center text-[11px] text-accent">
-          How does Garmin sync work?
+          {t('How does Garmin sync work?')}
         </button>
       </Card>
 
-      <ManualImport onImport={(rows) => { const n = ingest(rows, 'import'); if (n) { celebrate(); toast(`Imported ${n} day(s) 🎉`, 'success'); } else toast('No usable days found in that file.', 'info'); }} />
+      <ManualImport onImport={(rows) => { const n = ingest(rows, 'import'); if (n) { celebrate(); toast(`Imported ${n} day(s) 🎉`, 'success'); } else toast(t('No usable days found in that file.'), 'info'); }} />
 
-      <QuickLog onSave={(d) => { upsertDay(d); haptic('success'); toast('Logged today’s recovery.'); }} />
+      <QuickLog onSave={(d) => { upsertDay(d); haptic('success'); toast(t('Logged today’s recovery.')); }} />
 
       {/* Recent days */}
       {list.length > 0 && (
         <div>
-          <SectionTitle>Recent days</SectionTitle>
+          <SectionTitle>{t('Recent days')}</SectionTitle>
           <div className="space-y-1.5">
             {list.slice(0, 14).map((d) => (
               <Card key={d.date} className="flex items-center gap-3 py-2.5">
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-semibold">{new Date(d.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' })}</p>
                   <p className="text-[11px] text-muted flex flex-wrap gap-x-2">
-                    {d.sleepMinutes != null && <span>{fmtSleep(d.sleepMinutes)} sleep</span>}
-                    {d.steps != null && <span>{d.steps.toLocaleString()} steps</span>}
+                    {d.sleepMinutes != null && <span>{fmtSleep(d.sleepMinutes)} {t('sleep')}</span>}
+                    {d.steps != null && <span>{d.steps.toLocaleString()} {t('steps')}</span>}
                     {d.restingHr != null && <span>{d.restingHr} bpm</span>}
                     {d.activeCalories != null && <span>{d.activeCalories} kcal</span>}
                   </p>
                 </div>
                 <Badge>{d.source === 'healthconnect' ? 'auto' : d.source}</Badge>
-                <button onClick={() => { removeDay(d.date); haptic('warning'); }} className="text-muted hover:text-warn p-1" aria-label="Delete day"><Trash2 size={15} /></button>
+                <button onClick={() => { removeDay(d.date); haptic('warning'); }} className="text-muted hover:text-warn p-1" aria-label={t('Delete day')}><Trash2 size={15} /></button>
               </Card>
             ))}
           </div>
         </div>
       )}
 
-      <p className="text-[11px] text-muted/60 text-center">Your health data stays on your device. Nothing is uploaded.</p>
+      <p className="text-[11px] text-muted/60 text-center">{t('Your health data stays on your device. Nothing is uploaded.')}</p>
     </div>
   );
 }
@@ -299,6 +301,7 @@ function TrendStat({ label, value, sub, warn }: { label: string; value: string; 
 }
 
 function ManualImport({ onImport }: { onImport: (rows: HealthDay[]) => void }) {
+  const t = useT();
   const [text, setText] = useState('');
   const [copied, setCopied] = useState(false);
   const [count, setCount] = useState<number | null>(null);
@@ -316,8 +319,8 @@ function ManualImport({ onImport }: { onImport: (rows: HealthDay[]) => void }) {
       <div className="flex items-center gap-2">
         <FileUp size={18} className="text-accent-2 shrink-0" />
         <div className="flex-1">
-          <p className="text-sm font-semibold">Import from a file or paste</p>
-          <p className="text-[11px] text-muted">Garmin export, a CSV, or JSON: we match the columns for you.</p>
+          <p className="text-sm font-semibold">{t('Import from a file or paste')}</p>
+          <p className="text-[11px] text-muted">{t('Garmin export, a CSV, or JSON: we match the columns for you.')}</p>
         </div>
       </div>
       <textarea
@@ -326,18 +329,18 @@ function ManualImport({ onImport }: { onImport: (rows: HealthDay[]) => void }) {
         placeholder={'Paste CSV or JSON here, e.g.\n' + HEALTH_CSV_TEMPLATE}
         className="w-full h-28 rounded-xl bg-surface-2 border border-line px-3 py-2 text-xs font-mono"
       />
-      {count === 0 && <p className="text-[11px] text-warn">No rows matched a date + a metric.</p>}
+      {count === 0 && <p className="text-[11px] text-warn">{t('No rows matched a date + a metric.')}</p>}
       <div className="flex gap-2">
         <Button variant="ghost" className="flex-1 justify-center" onClick={() => fileRef.current?.click()}>
-          <span className="flex items-center gap-1.5 text-sm"><FileUp size={14} /> File</span>
+          <span className="flex items-center gap-1.5 text-sm"><FileUp size={14} /> {t('File')}</span>
         </Button>
-        <Button className="flex-1 justify-center" disabled={!text.trim()} onClick={() => analyze(text)}>Import paste</Button>
+        <Button className="flex-1 justify-center" disabled={!text.trim()} onClick={() => analyze(text)}>{t('Import paste')}</Button>
       </div>
       <button
-        onClick={async () => { try { await navigator.clipboard.writeText(HEALTH_CSV_TEMPLATE); setCopied(true); toast('Template copied: fill it in a notes/Sheets app.'); setTimeout(() => setCopied(false), 2000); } catch { toast('Could not copy: select the placeholder text.', 'error'); } }}
+        onClick={async () => { try { await navigator.clipboard.writeText(HEALTH_CSV_TEMPLATE); setCopied(true); toast(t('Template copied: fill it in a notes/Sheets app.')); setTimeout(() => setCopied(false), 2000); } catch { toast(t('Could not copy: select the placeholder text.'), 'error'); } }}
         className="text-[11px] text-accent flex items-center gap-1 mx-auto"
       >
-        {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? 'Copied' : 'Copy the CSV template'}
+        {copied ? <Check size={12} /> : <Copy size={12} />} {copied ? t('Copied') : t('Copy the CSV template')}
       </button>
       <input ref={fileRef} type="file" accept=".csv,.json,.txt,text/csv,application/json,text/plain" className="hidden"
         onChange={async (e) => {
@@ -351,6 +354,7 @@ function ManualImport({ onImport }: { onImport: (rows: HealthDay[]) => void }) {
 }
 
 function QuickLog({ onSave }: { onSave: (d: HealthDay) => void }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const [sleep, setSleep] = useState('');
   const [steps, setSteps] = useState('');
@@ -362,29 +366,29 @@ function QuickLog({ onSave }: { onSave: (d: HealthDay) => void }) {
     if (sm) day.sleepMinutes = sm;
     if (steps) day.steps = parseInt(steps, 10) || undefined;
     if (rhr) day.restingHr = parseInt(rhr, 10) || undefined;
-    if (day.sleepMinutes == null && day.steps == null && day.restingHr == null) { toast('Fill in at least one field.', 'info'); return; }
+    if (day.sleepMinutes == null && day.steps == null && day.restingHr == null) { toast(t('Fill in at least one field.'), 'info'); return; }
     onSave(day);
     setSleep(''); setSteps(''); setRhr(''); setOpen(false);
   }
 
   if (!open) return (
     <Button variant="outline" className="w-full justify-center" onClick={() => setOpen(true)}>
-      <span className="flex items-center gap-1.5"><Plus size={15} /> Log today by hand</span>
+      <span className="flex items-center gap-1.5"><Plus size={15} /> {t('Log today by hand')}</span>
     </Button>
   );
 
   return (
     <motion.div initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
       <Card className="space-y-2">
-        <p className="text-sm font-semibold">Today’s recovery</p>
+        <p className="text-sm font-semibold">{t('Today’s recovery')}</p>
         <div className="grid grid-cols-3 gap-2">
-          <label className="text-[11px] text-muted">Sleep<input value={sleep} onChange={(e) => setSleep(e.target.value)} placeholder="7h 30m" className="w-full mt-0.5 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-text" /></label>
-          <label className="text-[11px] text-muted">Steps<input value={steps} onChange={(e) => setSteps(e.target.value)} inputMode="numeric" placeholder="9000" className="w-full mt-0.5 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-text" /></label>
-          <label className="text-[11px] text-muted">Rest HR<input value={rhr} onChange={(e) => setRhr(e.target.value)} inputMode="numeric" placeholder="52" className="w-full mt-0.5 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-text" /></label>
+          <label className="text-[11px] text-muted">{t('Sleep')}<input value={sleep} onChange={(e) => setSleep(e.target.value)} placeholder="7h 30m" className="w-full mt-0.5 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-text" /></label>
+          <label className="text-[11px] text-muted">{t('Steps')}<input value={steps} onChange={(e) => setSteps(e.target.value)} inputMode="numeric" placeholder="9000" className="w-full mt-0.5 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-text" /></label>
+          <label className="text-[11px] text-muted">{t('Rest HR')}<input value={rhr} onChange={(e) => setRhr(e.target.value)} inputMode="numeric" placeholder="52" className="w-full mt-0.5 rounded-lg bg-surface-2 border border-line px-2 py-1.5 text-sm text-text" /></label>
         </div>
         <div className="flex gap-2">
-          <Button variant="ghost" className="flex-1 justify-center" onClick={() => setOpen(false)}>Cancel</Button>
-          <Button className="flex-1 justify-center" onClick={save}>Save</Button>
+          <Button variant="ghost" className="flex-1 justify-center" onClick={() => setOpen(false)}>{t('Cancel')}</Button>
+          <Button className="flex-1 justify-center" onClick={save}>{t('Save')}</Button>
         </div>
       </Card>
     </motion.div>

@@ -200,7 +200,7 @@ function Outro({ recap, onShare, onCard, onReplay, manualLink, canShare }: {
           </button>
         )}
         {manualLink && (
-          <textarea readOnly value={manualLink} onFocus={(e) => e.currentTarget.select()} aria-label="Workout link" className="w-full h-20 rounded-xl bg-black/30 p-2 text-[10px] font-mono break-all text-white" />
+          <textarea readOnly value={manualLink} onFocus={(e) => e.currentTarget.select()} aria-label={t('Workout link')} className="w-full h-20 rounded-xl bg-black/30 p-2 text-[10px] font-mono break-all text-white" />
         )}
         <div className="grid grid-cols-2 gap-2">
           <button onClick={onCard} className="rounded-2xl bg-white/15 font-semibold py-3 flex items-center justify-center gap-2 backdrop-blur active:scale-[0.98] transition">

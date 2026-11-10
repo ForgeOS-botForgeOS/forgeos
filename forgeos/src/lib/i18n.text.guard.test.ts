@@ -20,8 +20,8 @@ function sourceFiles(dir: string): string[] {
 
 function textKeys(source: string): string[] {
   const out: string[] = [];
-  for (const m of source.matchAll(/(?<![\w.])t\(\s*'((?:[^'\\]|\\.)+)'/g)) out.push(m[1].replace(/\\'/g, "'"));
-  for (const m of source.matchAll(/(?<![\w.])t\(\s*"((?:[^"\\]|\\.)+)"/g)) out.push(m[1]);
+  for (const m of source.matchAll(/(?<![\w.])(?:t|tr)\(\s*'((?:[^'\\]|\\.)+)'/g)) out.push(m[1].replace(/\\'/g, "'"));
+  for (const m of source.matchAll(/(?<![\w.])(?:t|tr)\(\s*"((?:[^"\\]|\\.)+)"/g)) out.push(m[1]);
   return out.filter((k) => !DOTTED_KEY.test(k));
 }
 

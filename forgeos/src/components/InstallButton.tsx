@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useState } from 'react';
 import { Download, Share, Plus, X, CheckCircle2 } from 'lucide-react';
 import { useInstall } from '../lib/pwaInstall';
@@ -6,6 +7,7 @@ import { haptic } from '../lib/haptics';
 // A prominent "Install app" CTA. Uses the native prompt on Android/desktop
 // Chrome; shows Add-to-Home-Screen steps on iOS; hides once installed.
 export function InstallButton({ variant = 'big' }: { variant?: 'big' | 'banner' }) {
+  const t = useT();
   const { promptInstall, standalone, ios } = useInstall();
   const [iosOpen, setIosOpen] = useState(false);
   const [done, setDone] = useState(false);
@@ -47,9 +49,9 @@ export function InstallButton({ variant = 'big' }: { variant?: 'big' | 'banner' 
           className="w-full flex items-center justify-between rounded-xl bg-accent/15 border border-accent/40 px-4 py-3 active:scale-[0.99] transition"
         >
           <span className="flex items-center gap-2 text-sm font-semibold text-accent">
-            <Download size={16} /> Install ForgeOS on your phone
+            <Download size={16} /> {t('Install ForgeOS on your phone')}
           </span>
-          <span className="text-[11px] text-muted">tap</span>
+          <span className="text-[11px] text-muted">{t('tap')}</span>
         </button>
       )}
 
@@ -58,17 +60,16 @@ export function InstallButton({ variant = 'big' }: { variant?: 'big' | 'banner' 
           <div className="absolute inset-0 bg-black/70" />
           <div className="relative w-full rounded-t-2xl bg-surface border-t border-line p-5 pb-8" onClick={(e) => e.stopPropagation()}>
             <button className="absolute top-4 right-4 text-muted" onClick={() => setIosOpen(false)}><X size={18} /></button>
-            <h3 className="text-lg font-bold mb-3">Add ForgeOS to your home screen</h3>
+            <h3 className="text-lg font-bold mb-3">{t('Add ForgeOS to your home screen')}</h3>
             {ios ? (
               <ol className="space-y-3 text-sm">
-                <li className="flex items-center gap-3"><Share className="text-accent shrink-0" size={20} /> Tap the <b>Share</b> button in Safari’s toolbar.</li>
-                <li className="flex items-center gap-3"><Plus className="text-accent shrink-0" size={20} /> Choose <b>Add to Home Screen</b>.</li>
-                <li className="flex items-center gap-3"><CheckCircle2 className="text-accent shrink-0" size={20} /> Tap <b>Add</b> and ForgeOS lands on your home screen.</li>
+                <li className="flex items-center gap-3"><Share className="text-accent shrink-0" size={20} /> {t('Tap the')} <b>{t('Share')}</b> {t('button in Safari’s toolbar.')}</li>
+                <li className="flex items-center gap-3"><Plus className="text-accent shrink-0" size={20} /> {t('Choose')} <b>{t('Add to Home Screen')}</b>.</li>
+                <li className="flex items-center gap-3"><CheckCircle2 className="text-accent shrink-0" size={20} /> {t('Tap')} <b>{t('Add')}</b> {t('and ForgeOS lands on your home screen.')}</li>
               </ol>
             ) : (
               <p className="text-sm text-muted">
-                In your browser menu (⋮), choose <b>Install app</b> or <b>Add to Home screen</b>. If you don’t see it,
-                your browser may not support installs: try Chrome or Edge.
+                {t('In your browser menu (⋮), choose')} <b>{t('Install app')}</b> or <b>{t('Add to Home screen')}</b>{t('. If you don’t see it, your browser may not support installs: try Chrome or Edge.')}
               </p>
             )}
           </div>

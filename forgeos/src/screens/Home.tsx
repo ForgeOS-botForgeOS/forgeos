@@ -121,18 +121,18 @@ export default function Home() {
                   <span className="text-[10px] text-muted">/ {macros.calories} kcal</span>
                 </Ring>
                 <div className="flex-1 space-y-2">
-                  <MacroBar label="Protein" value={totals.proteinG} max={macros.proteinG} unit="g" color="rgb(var(--accent))" />
-                  <MacroBar label="Carbs" value={totals.carbsG} max={macros.carbsG} unit="g" color="rgb(var(--accent-2))" />
-                  <MacroBar label="Fat" value={totals.fatG} max={macros.fatG} unit="g" color="rgb(var(--success))" />
+                  <MacroBar label={t('Protein')} value={totals.proteinG} max={macros.proteinG} unit="g" color="rgb(var(--accent))" />
+                  <MacroBar label={t('Carbs')} value={totals.carbsG} max={macros.carbsG} unit="g" color="rgb(var(--accent-2))" />
+                  <MacroBar label={t('Fat')} value={totals.fatG} max={macros.fatG} unit="g" color="rgb(var(--success))" />
                 </div>
               </div>
             </Card>
             <Card onClick={() => navigate('/train')} className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted">Today’s training</p>
-                <p className="font-semibold">{history[0] && isToday(history[0].date) ? 'Session logged ✅' : 'Ready when you are'}</p>
+                <p className="text-sm text-muted">{t('Today’s training')}</p>
+                <p className="font-semibold">{history[0] && isToday(history[0].date) ? t('Session logged ✅') : t('Ready when you are')}</p>
               </div>
-              <Badge>Open Train</Badge>
+              <Badge>{t('Open Train')}</Badge>
             </Card>
           </>
         )}
@@ -150,11 +150,11 @@ export default function Home() {
               <div className="flex items-center gap-2">
                 <Watch size={16} className="text-accent shrink-0" />
                 <div>
-                  <p className="text-sm font-semibold">Track recovery</p>
-                  <p className="text-[12px] text-muted">Connect Garmin or log sleep to unlock readiness</p>
+                  <p className="text-sm font-semibold">{t('Track recovery')}</p>
+                  <p className="text-[12px] text-muted">{t('Connect Garmin or log sleep to unlock readiness')}</p>
                 </div>
               </div>
-              <Badge color="rgb(var(--accent))">Set up</Badge>
+              <Badge color="rgb(var(--accent))">{t('Set up')}</Badge>
             </Card>
           ) : null)}
 
@@ -209,7 +209,7 @@ export default function Home() {
                 return (
                   <div key={m.muscle}>
                     <div className="flex justify-between text-xs mb-0.5">
-                      <span className="text-muted">{m.muscle}</span>
+                      <span className="text-muted">{t(m.muscle)}</span>
                       <span className="font-mono">{m.sets} {t('sets')} <span className="text-muted/70">/ {m.mev}–{m.mrv}</span></span>
                     </div>
                     <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
@@ -220,7 +220,7 @@ export default function Home() {
               })}
               {(() => {
                 const n = neglectedMuscles(muscleLoads);
-                return n.length > 0 ? <p className="text-xs text-warn/90 pt-1">⚠ {t('Light this week')}: {n.slice(0, 4).join(', ')}{n.length > 4 ? '…' : ''}</p> : null;
+                return n.length > 0 ? <p className="text-xs text-warn/90 pt-1">⚠ {t('Light this week')}: {n.slice(0, 4).map((x) => t(x)).join(', ')}{n.length > 4 ? '…' : ''}</p> : null;
               })()}
             </Card>
           </div>
@@ -279,6 +279,7 @@ export default function Home() {
 // Friday-to-Sunday banner from lib/nudges: quiet unless a streak is genuinely
 // on the line or the weekly session goal is still winnable.
 function WeekendNudge() {
+  const t = useT();
   const navigate = useNavigate();
   const weekStart = useGami((s) => s.weekStart);
   const weekSessions = useGami((s) => s.weekSessions);
@@ -293,12 +294,13 @@ function WeekendNudge() {
     <Card onClick={() => navigate('/train')} className="flex items-center gap-2">
       <Flame size={16} className={nudge.kind === 'streak' ? 'text-accent' : 'text-accent-2'} />
       <p className="text-sm flex-1">{nudge.message}</p>
-      <Badge color={nudge.kind === 'streak' ? 'rgb(var(--accent))' : 'rgb(var(--accent-2))'}>Train</Badge>
+      <Badge color={nudge.kind === 'streak' ? 'rgb(var(--accent))' : 'rgb(var(--accent-2))'}>{t('Train')}</Badge>
     </Card>
   );
 }
 
 function HealthGlance() {
+  const t = useT();
   const ck = useChartKit();
   const navigate = useNavigate();
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
@@ -331,13 +333,13 @@ function HealthGlance() {
   return (
     <Card onClick={() => navigate('/health')} className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wide text-muted">Last 7 days · Garmin</p>
-        <Badge>Open Health</Badge>
+        <p className="text-xs uppercase tracking-wide text-muted">{t('Last 7 days · Garmin')}</p>
+        <Badge>{t('Open Health')}</Badge>
       </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <p className="flex items-center gap-1 text-[11px] text-muted mb-1">
-            <Moon size={12} className="text-accent-2" /> Sleep{glance.avgSleepH != null && <span className="font-mono text-text ml-auto">Ø {glance.avgSleepH}h</span>}
+            <Moon size={12} className="text-accent-2" /> {t('Sleep')}{glance.avgSleepH != null && <span className="font-mono text-text ml-auto">Ø {glance.avgSleepH}h</span>}
           </p>
           <div className="h-20">
             <ResponsiveContainer width="100%" height="100%">
@@ -355,7 +357,7 @@ function HealthGlance() {
         </div>
         <div>
           <p className="flex items-center gap-1 text-[11px] text-muted mb-1">
-            <Footprints size={12} className="text-success" /> Steps{glance.totalSteps != null && <span className="font-mono text-text ml-auto">{glance.totalSteps.toLocaleString()}</span>}
+            <Footprints size={12} className="text-success" /> {t('Steps')}{glance.totalSteps != null && <span className="font-mono text-text ml-auto">{glance.totalSteps.toLocaleString()}</span>}
           </p>
           <div className="h-20">
             <ResponsiveContainer width="100%" height="100%">

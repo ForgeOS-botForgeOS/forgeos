@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { Plus, X } from 'lucide-react';
 import { Pill } from './ui';
 import { speedKmh, paceLabel, CARDIO_MACHINES, metricTypeFor, METRIC_FIELD, type CardioData } from '../lib/cardio';
@@ -25,25 +26,26 @@ export function CRow({ label, v, step, onChange }: { label: string; v: number; s
 
 // Add / edit / remove your own metrics (label + free-text value).
 export function MetricsEditor({ metrics, onChange }: { metrics: CardioMetric[]; onChange: (m: CardioMetric[]) => void }) {
+  const t = useT();
   const add = (label = '') => { haptic('tap'); onChange([...metrics, { id: muid(), label, value: '' }]); };
   const patch = (id: string, p: Partial<CardioMetric>) => onChange(metrics.map((m) => (m.id === id ? { ...m, ...p } : m)));
   const remove = (id: string) => onChange(metrics.filter((m) => m.id !== id));
   const used = new Set(metrics.map((m) => m.label));
   return (
     <div className="space-y-2">
-      <p className="text-[11px] uppercase tracking-wide text-muted">Your metrics</p>
+      <p className="text-[11px] uppercase tracking-wide text-muted">{t('Your metrics')}</p>
       {metrics.map((m) => (
         <div key={m.id} className="flex items-center gap-2">
-          <input value={m.label} onChange={(e) => patch(m.id, { label: e.target.value })} placeholder="Metric" className="w-28 shrink-0 rounded-lg bg-surface-2 border border-line px-3 py-2 text-sm" />
-          <input value={m.value} onChange={(e) => patch(m.id, { value: e.target.value })} placeholder="e.g. 152 bpm" className="flex-1 min-w-0 rounded-lg bg-surface-2 border border-line px-3 py-2 text-sm font-mono" />
-          <button onClick={() => remove(m.id)} aria-label="Remove metric" className="text-muted shrink-0 p-1"><X size={16} /></button>
+          <input value={m.label} onChange={(e) => patch(m.id, { label: e.target.value })} placeholder={t('Metric')} className="w-28 shrink-0 rounded-lg bg-surface-2 border border-line px-3 py-2 text-sm" />
+          <input value={m.value} onChange={(e) => patch(m.id, { value: e.target.value })} placeholder={t('e.g. 152 bpm')} className="flex-1 min-w-0 rounded-lg bg-surface-2 border border-line px-3 py-2 text-sm font-mono" />
+          <button onClick={() => remove(m.id)} aria-label={t('Remove metric')} className="text-muted shrink-0 p-1"><X size={16} /></button>
         </div>
       ))}
       <div className="flex gap-1.5 flex-wrap">
         {METRIC_PRESETS.filter((p) => !used.has(p)).map((p) => (
           <button key={p} onClick={() => add(p)} className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-muted flex items-center gap-1"><Plus size={11} /> {p}</button>
         ))}
-        <button onClick={() => add()} className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-accent flex items-center gap-1"><Plus size={11} /> Custom</button>
+        <button onClick={() => add()} className="rounded-full bg-surface-2 px-2.5 py-1 text-xs text-accent flex items-center gap-1"><Plus size={11} /> {t('Custom')}</button>
       </div>
     </div>
   );
@@ -52,6 +54,7 @@ export function MetricsEditor({ metrics, onChange }: { metrics: CardioMetric[]; 
 // The full, fully-editable cardio form: activity, distance/time/calories,
 // live-derived speed + pace, and your own metrics.
 export function CardioFields({ data, onChange }: { data: CardioData; onChange: (d: CardioData) => void }) {
+  const t = useT();
   const set = (patch: Partial<CardioData>) => onChange({ ...data, ...patch });
   // The primary field adapts to the activity: distance for runs/machines, an
   // intensity dial for combat/HIIT/yoga, laps for swimming, a grade for climbing.
@@ -62,22 +65,22 @@ export function CardioFields({ data, onChange }: { data: CardioData; onChange: (
       <div className="flex gap-2 flex-wrap">
         {CARDIO_MACHINES.map((m) => <Pill key={m} active={data.machine === m} onClick={() => set({ machine: m })}>{m}</Pill>)}
       </div>
-      <input value={data.machine} onChange={(e) => set({ machine: e.target.value })} placeholder="Activity name" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm font-semibold" />
+      <input value={data.machine} onChange={(e) => set({ machine: e.target.value })} placeholder={t('Activity name')} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm font-semibold" />
       <div>
         <CRow label={field.label} v={data.distanceKm} step={field.step} onChange={(v) => set({ distanceKm: Math.max(field.min, Math.min(field.max, v)) })} />
         {field.format && <p className="text-right text-[11px] text-muted mt-0.5">{field.format(data.distanceKm)}</p>}
       </div>
-      <CRow label="Time (min)" v={data.durationMin} step={1} onChange={(v) => set({ durationMin: v })} />
-      <CRow label="Calories" v={data.calories} step={10} onChange={(v) => set({ calories: v })} />
+      <CRow label={t('Time (min)')} v={data.durationMin} step={1} onChange={(v) => set({ durationMin: v })} />
+      <CRow label={t('Calories')} v={data.calories} step={10} onChange={(v) => set({ calories: v })} />
       {field.showSpeed && (
         <div className="flex gap-2">
           <div className="flex-1 rounded-xl bg-surface-2 py-2 text-center">
-            <p className="font-mono font-bold text-sm">{speedKmh(data.distanceKm, data.durationMin) || '–'}<span className="text-[10px] text-muted font-sans"> km/h</span></p>
-            <p className="text-[10px] text-muted">avg speed</p>
+            <p className="font-mono font-bold text-sm">{speedKmh(data.distanceKm, data.durationMin) || '–'}<span className="text-[10px] text-muted font-sans"> {t('km/h')}</span></p>
+            <p className="text-[10px] text-muted">{t('avg speed')}</p>
           </div>
           <div className="flex-1 rounded-xl bg-surface-2 py-2 text-center">
             <p className="font-mono font-bold text-sm">{paceLabel(data.distanceKm, data.durationMin)}</p>
-            <p className="text-[10px] text-muted">pace</p>
+            <p className="text-[10px] text-muted">{t('pace')}</p>
           </div>
         </div>
       )}

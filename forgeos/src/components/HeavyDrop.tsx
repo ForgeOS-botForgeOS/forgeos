@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Confetti } from './Celebrate';
 import { RARITY, type Rarity, type HeavyQuote } from '../data/heavyQuotes';
@@ -10,6 +11,7 @@ export interface Drop {
 }
 
 export function HeavyDrop({ drop, onClose }: { drop: Drop | null; onClose: () => void }) {
+  const t = useT();
   return (
     <AnimatePresence>
       {drop && (
@@ -19,7 +21,7 @@ export function HeavyDrop({ drop, onClose }: { drop: Drop | null; onClose: () =>
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label="Reward"
+            aria-label={t('Reward')}
             initial={{ scale: 0.7, opacity: 0, y: 20 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
             exit={{ scale: 0.9, opacity: 0 }}
@@ -34,12 +36,12 @@ export function HeavyDrop({ drop, onClose }: { drop: Drop | null; onClose: () =>
               animate={{ opacity: [0.6, 1, 0.6] }}
               transition={{ repeat: Infinity, duration: 1.8 }}
             >
-              ✦ {RARITY[drop.rarity].label} drop ✦
+              ✦ {RARITY[drop.rarity].label} {t('drop ✦')}
             </motion.p>
             <p className="text-[11px] text-muted mb-3">{drop.exercise} · {drop.weightKg} kg</p>
             <p className="text-base font-semibold leading-snug">“{drop.quote.text}”</p>
             <p className="text-xs text-muted mt-3">– {drop.quote.source}</p>
-            <button onClick={onClose} className="mt-5 text-sm text-muted">Tap to claim</button>
+            <button onClick={onClose} className="mt-5 text-sm text-muted">{t('Tap to claim')}</button>
           </motion.div>
         </div>
       )}

@@ -1,3 +1,4 @@
+import { useT } from '../../lib/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence, useMotionValue, useTransform } from 'framer-motion';
 import { Check, Trash2 } from 'lucide-react';
@@ -43,6 +44,7 @@ function ghostLabel(ghost: SetEntry, timed = false): string {
 }
 
 export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLongPress, timed = false }: Props) {
+  const t = useT();
   const detail = useSettings((s) => s.setRowDetail);
   const [rpeOpen, setRpeOpen] = useState(false);
   const [subOpen, setSubOpen] = useState(false);
@@ -160,7 +162,7 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
                 value={set.weightKg}
                 step={2.5}
                 unit="kg"
-                label="weight"
+                label={t('weight')}
                 onChange={(v) => onChange({ weightKg: Math.max(0, v) })}
               />
             )}
@@ -175,7 +177,7 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
             {!set.completed && (
               <button
                 onClick={onComplete}
-                aria-label="Complete set"
+                aria-label={t('Complete set')}
                 className="ml-auto shrink-0 grid place-items-center h-11 w-11 rounded-lg bg-success/20 text-success active:scale-95 transition"
               >
                 <Check size={22} strokeWidth={3} />
@@ -188,7 +190,7 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
               effort slider used to sit open under every set and tripled the
               height of the row; it now opens only when its chip is tapped. */}
           <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
-            {ghost && <span className="text-xs text-muted">Last {ghostLabel(ghost, timed)}{ghost.grip ? ` · ${GRIP_LABEL[ghost.grip].toLowerCase()} grip` : ''}</span>}
+            {ghost && <span className="text-xs text-muted">{t('Last')} {ghostLabel(ghost, timed)}{ghost.grip ? ` · ${GRIP_LABEL[ghost.grip].toLowerCase()} grip` : ''}</span>}
             <span className="flex-1" />
             {!timed && detail === 'subtarget' && (
               <button
@@ -196,14 +198,14 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
                 aria-expanded={subOpen}
                 className={`inline-flex items-center rounded-full px-2.5 min-h-[32px] text-xs font-medium active:scale-95 transition ${subKind === 'none' ? 'bg-surface-2 text-muted' : 'bg-accent-2/12 text-accent-2'}`}
               >
-                {subKind === 'none' ? '+ Sub-target' : subKind === 'grip' && set.grip ? `Grip: ${GRIP_LABEL[set.grip].toLowerCase()}` : SUB_LABEL[subKind]}
+                {subKind === 'none' ? t('+ Sub-target') : subKind === 'grip' && set.grip ? `Grip: ${GRIP_LABEL[set.grip].toLowerCase()}` : SUB_LABEL[subKind]}
               </button>
             )}
             {!timed && (
               <button
                 onClick={() => setRpeOpen((o) => !o)}
                 aria-expanded={rpeOpen}
-                aria-label={set.rpe == null ? 'Rate the effort of this set' : `Effort ${set.rpe} out of 10, change`}
+                aria-label={set.rpe == null ? t('Rate the effort of this set') : `Effort ${set.rpe} out of 10, change`}
                 className={`inline-flex items-center rounded-full px-2.5 min-h-[32px] text-xs font-medium active:scale-95 transition ${set.rpe == null ? 'bg-surface-2 text-muted' : 'bg-accent-2/12 text-accent-2'}`}
               >
                 {set.rpe == null ? 'RPE' : `RPE ${set.rpe}`}
@@ -213,18 +215,18 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
 
           {rpeOpen && !timed && (
             <div className="flex items-center gap-2 mt-1.5">
-              <span className="text-xs text-muted">Easy</span>
+              <span className="text-xs text-muted">{t('Easy')}</span>
               <input
                 type="range"
                 min={1}
                 max={10}
                 step={0.5}
                 value={set.rpe ?? 7}
-                aria-label="Effort, 1 to 10"
+                aria-label={t('Effort, 1 to 10')}
                 onChange={(e) => onChange({ rpe: Number(e.target.value) })}
                 className="flex-1 h-6 accent-[rgb(var(--accent-2))]"
               />
-              <span className="text-xs text-muted">Max</span>
+              <span className="text-xs text-muted">{t('Max')}</span>
             </div>
           )}
 
@@ -270,6 +272,7 @@ const SUB_LABEL: Record<NonNullable<SetEntry['subKind']>, string> = {
 };
 
 function SubTarget({ set, onChange }: { set: SetEntry; onChange: (patch: Partial<SetEntry>) => void }) {
+  const t = useT();
   const kind = set.subKind ?? 'none';
   return (
         <div className="mt-1.5 flex flex-wrap gap-1.5 items-center">
@@ -283,14 +286,14 @@ function SubTarget({ set, onChange }: { set: SetEntry; onChange: (patch: Partial
             </button>
           ))}
           {kind === 'tut' && (
-            <input type="number" inputMode="numeric" placeholder="sec" value={set.tutSeconds ?? ''} onChange={(e) => onChange({ tutSeconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} className="w-16 rounded bg-surface-2 px-2 py-1.5 text-xs" />
+            <input type="number" inputMode="numeric" placeholder={t('sec')} value={set.tutSeconds ?? ''} onChange={(e) => onChange({ tutSeconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} className="w-16 rounded bg-surface-2 px-2 py-1.5 text-xs" />
           )}
           {kind === 'band' && (
-            <input placeholder="band colour" value={set.bandColor ?? ''} onChange={(e) => onChange({ bandColor: e.target.value })} className="w-24 rounded bg-surface-2 px-2 py-1.5 text-xs" />
+            <input placeholder={t('band colour')} value={set.bandColor ?? ''} onChange={(e) => onChange({ bandColor: e.target.value })} className="w-24 rounded bg-surface-2 px-2 py-1.5 text-xs" />
           )}
           {kind === 'grip' && (
             <div className="w-full space-y-1">
-              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label="Grip position">
+              <div className="flex flex-wrap gap-1" role="radiogroup" aria-label={t('Grip position')}>
                 {GRIP_POSITIONS.map((g) => (
                   <button
                     key={g}
@@ -307,7 +310,7 @@ function SubTarget({ set, onChange }: { set: SetEntry; onChange: (patch: Partial
             </div>
           )}
           {kind === 'isometric' && (
-            <input type="number" inputMode="numeric" placeholder="hold s" value={set.isoSeconds ?? ''} onChange={(e) => onChange({ isoSeconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} className="w-16 rounded bg-surface-2 px-2 py-1.5 text-xs" />
+            <input type="number" inputMode="numeric" placeholder={t('hold s')} value={set.isoSeconds ?? ''} onChange={(e) => onChange({ isoSeconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} className="w-16 rounded bg-surface-2 px-2 py-1.5 text-xs" />
           )}
         </div>
   );

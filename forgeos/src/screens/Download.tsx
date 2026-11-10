@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Smartphone, Download as DownloadIcon, ShieldCheck, Apple, Share, Copy, Check, RefreshCcw } from 'lucide-react';
@@ -18,6 +19,7 @@ const APK_URL = 'https://github.com/ForgeOS-botForgeOS/forgeos/releases/download
 const isInstalledApp = Capacitor.getPlatform() === 'android' && Capacitor.isNativePlatform();
 
 export default function Download() {
+  const t = useT();
   const navigate = useNavigate();
   const [qr, setQr] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -61,21 +63,20 @@ export default function Download() {
 
   return (
     <div className="min-h-full px-5 py-12 space-y-5 max-w-md mx-auto">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Back')}</button>
 
       <div className="text-center space-y-2">
         <div className="mx-auto w-fit"><ForgeLogo size={72} tile /></div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Get ForgeOS</h1>
-        <p className="text-sm text-muted">Install the app on any device. No app store needed. You download it right here.</p>
+        <h1 className="text-2xl font-extrabold tracking-tight">{t('Get ForgeOS')}</h1>
+        <p className="text-sm text-muted">{t('Install the app on any device. No app store needed. You download it right here.')}</p>
       </div>
 
       {/* Inside the up-to-date app: no APK download — it updates itself. */}
       {isInstalledApp && !nativeUpdate && (
         <Card className="space-y-1.5 border-success/40 bg-success/5">
-          <p className="font-semibold flex items-center gap-2"><RefreshCcw size={16} className="text-success" /> You're on the app. Updates are automatic</p>
+          <p className="font-semibold flex items-center gap-2"><RefreshCcw size={16} className="text-success" /> {t('You\'re on the app. Updates are automatic')}</p>
           <p className="text-[11px] text-muted">
-            New features install themselves silently every time you open the app. You never
-            need to download the APK again. That's only for putting ForgeOS on a new phone.
+            {t('New features install themselves silently every time you open the app. You never need to download the APK again. That\'s only for putting ForgeOS on a new phone.')}
           </p>
         </Card>
       )}
@@ -83,59 +84,58 @@ export default function Download() {
       {/* Android APK */}
       <Card className="space-y-3">
         <div className="flex items-center justify-between">
-          <p className="font-semibold flex items-center gap-2"><Smartphone size={16} className="text-accent" /> {isInstalledApp && !nativeUpdate ? 'Install on another phone' : 'Android app'}</p>
+          <p className="font-semibold flex items-center gap-2"><Smartphone size={16} className="text-accent" /> {isInstalledApp && !nativeUpdate ? t('Install on another phone') : t('Android app')}</p>
           <Badge color="rgb(var(--accent))">{latest ? `APK v${latest}` : 'APK'}</Badge>
         </div>
         {isInstalledApp && nativeUpdate && (
           <p className="text-[11px] text-muted">
-            This update changes the app's native core, which the automatic updater can't swap:
-            a one-time download is needed. It installs straight over the old version, nothing is lost.
+            {t('This update changes the app\'s native core, which the automatic updater can\'t swap: a one-time download is needed. It installs straight over the old version, nothing is lost.')}
           </p>
         )}
         {qr && (
           <div className="flex justify-center">
-            <img src={qr} alt="Scan to download ForgeOS" className="w-40 h-40 rounded-xl border border-line bg-white p-1.5" />
+            <img src={qr} alt={t('Scan to download ForgeOS')} className="w-40 h-40 rounded-xl border border-line bg-white p-1.5" />
           </div>
         )}
-        <p className="text-[11px] text-muted text-center">{showApkDownload ? 'Scan with your phone, or tap to download.' : 'Scan with the other phone to download ForgeOS there.'}</p>
+        <p className="text-[11px] text-muted text-center">{showApkDownload ? t('Scan with your phone, or tap to download.') : t('Scan with the other phone to download ForgeOS there.')}</p>
         {showApkDownload && (isInstalledApp ? (
           // Inside the app: self-update — download + system install prompt in one
           // tap. Old APKs without the native method fall back to the plain link.
           <Button disabled={updating} className="w-full justify-center gap-2" onClick={() => { void handleInstallUpdate(); }}>
-            <DownloadIcon size={16} /> {updating ? 'Getting the update…' : 'Install the update'}
+            <DownloadIcon size={16} /> {updating ? t('Getting the update…') : t('Install the update')}
           </Button>
         ) : (
           <a href={APK_URL}>
-            <Button className="w-full justify-center gap-2"><DownloadIcon size={16} /> Download Android app</Button>
+            <Button className="w-full justify-center gap-2"><DownloadIcon size={16} /> {t('Download Android app')}</Button>
           </a>
         ))}
         {/* The direct download link, shown so you can copy/share it anywhere. */}
         <button onClick={shareLink} className="w-full flex items-center justify-between gap-2 rounded-xl bg-surface-2 border border-line px-3 py-2.5 text-left active:scale-[0.99] transition">
           <span className="text-[11px] text-muted truncate font-mono">{APK_URL}</span>
-          <span className="text-[11px] text-accent flex items-center gap-1 shrink-0">{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? 'Copied' : 'Copy link'}</span>
+          <span className="text-[11px] text-accent flex items-center gap-1 shrink-0">{copied ? <Check size={13} /> : <Copy size={13} />} {copied ? t('Copied') : t('Copy link')}</span>
         </button>
         <p className="text-[11px] text-muted/80 flex items-start gap-1.5">
           <ShieldCheck size={13} className="mt-0.5 shrink-0 text-success" />
-          When Android asks, allow “Install unknown apps” for your browser. The app is distributed directly, not via Google Play.
+          {t('When Android asks, allow “Install unknown apps” for your browser. The app is distributed directly, not via Google Play.')}
         </p>
       </Card>
 
       {/* PWA install (iOS + desktop + Android) */}
       <Card className="space-y-3">
-        <p className="font-semibold flex items-center gap-2"><Apple size={16} className="text-muted" /> iPhone, iPad &amp; desktop</p>
-        <p className="text-[11px] text-muted">Install the web app. It runs full-screen like a native app and works offline.</p>
+        <p className="font-semibold flex items-center gap-2"><Apple size={16} className="text-muted" /> {t('iPhone, iPad & desktop')}</p>
+        <p className="text-[11px] text-muted">{t('Install the web app. It runs full-screen like a native app and works offline.')}</p>
         <InstallButton variant="big" />
         <p className="text-[11px] text-muted/80 flex items-start gap-1.5">
           <Share size={13} className="mt-0.5 shrink-0 text-accent-2" />
-          On iPhone: tap the <b>Share</b> icon in Safari → <b>Add to Home Screen</b>.
+          {t('On iPhone: tap the')} <b>{t('Share')}</b> {t('icon in Safari →')} <b>{t('Add to Home Screen')}</b>.
         </p>
       </Card>
 
-      <p className="text-[11px] text-muted/60 text-center">ForgeOS is also a website. Open it in any browser, no install needed.</p>
+      <p className="text-[11px] text-muted/60 text-center">{t('ForgeOS is also a website. Open it in any browser, no install needed.')}</p>
       <p className="text-[11px] text-muted/60 text-center">
-        <a href={`${import.meta.env.BASE_URL}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a>
+        <a href={`${import.meta.env.BASE_URL}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">{t('Privacy Policy')}</a>
         {' · '}
-        <a href={`${import.meta.env.BASE_URL}terms.html`} target="_blank" rel="noopener noreferrer" className="underline">Terms of Use</a>
+        <a href={`${import.meta.env.BASE_URL}terms.html`} target="_blank" rel="noopener noreferrer" className="underline">{t('Terms of Use')}</a>
       </p>
     </div>
   );

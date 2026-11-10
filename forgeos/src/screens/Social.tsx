@@ -56,7 +56,7 @@ export default function Social() {
   ];
 
   return (
-    <Screen title={t('nav.social')} subtitle="Iron sharpens iron.">
+    <Screen title={t('nav.social')} subtitle={t('Iron sharpens iron.')}>
       {v2 ? (
         <div data-noswipe className="flex gap-5 border-b border-line overflow-x-auto no-scrollbar">
           {tabDefs.map((d) => (
@@ -65,7 +65,7 @@ export default function Social() {
               onClick={() => setTab(d.id)}
               className={`relative shrink-0 pt-1 pb-2 text-sm uppercase tracking-wide ${tab === d.id ? 'text-text font-semibold' : 'text-muted'}`}
             >
-              {d.label}
+              {t(d.label)}
               {d.badge > 0 && <span className="ml-1 rounded-full bg-accent-2 px-1.5 text-[10px] font-bold text-black">{d.badge}</span>}
               {tab === d.id && <span className="absolute left-0 right-0 -bottom-px h-0.5 bg-accent" />}
             </button>
@@ -93,6 +93,7 @@ export default function Social() {
 /* ------------------------------- FEED ------------------------------- */
 
 function Feed({ onRace }: { onRace: () => void }) {
+  const t = useT();
   const feed = useSocial((s) => s.feed);
   const refreshFeed = useSocial((s) => s.refreshFeed);
   const friends = useSocial((s) => s.friends);
@@ -106,7 +107,7 @@ function Feed({ onRace }: { onRace: () => void }) {
     const fresh = await refreshFeed();
     setRefreshing(false);
     haptic(fresh ? 'tap' : 'warning');
-    if (fresh === null) toast('Could not reach the feed. Check your connection.', 'error');
+    if (fresh === null) toast(t('Could not reach the feed. Check your connection.'), 'error');
     else toast(fresh === 0 ? 'You are up to date' : `${fresh} new ${fresh === 1 ? 'post' : 'posts'}`);
   }
 
@@ -124,9 +125,9 @@ function Feed({ onRace }: { onRace: () => void }) {
         >
           <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'rgb(var(--success))', boxShadow: '0 0 0 3px rgb(var(--success) / 0.2)' }} />
           <span className="text-[13px] flex-1">
-            <b className="text-success">{trainingNowLabel(liveFriends.map((f) => f.name))}</b> training now
+            <b className="text-success">{trainingNowLabel(liveFriends.map((f) => f.name))}</b> {t('training now')}
           </span>
-          <span className="text-[10px] uppercase tracking-wide text-accent shrink-0">Race ▸</span>
+          <span className="text-[10px] uppercase tracking-wide text-accent shrink-0">{t('Race ▸')}</span>
         </button>
       )}
       <StoriesRow />
@@ -140,18 +141,18 @@ function Feed({ onRace }: { onRace: () => void }) {
         </div>
         {isBackendLive && (
           <button className="text-xs text-muted flex items-center gap-1 min-h-[40px] px-1 disabled:opacity-50" disabled={refreshing} onClick={() => void refresh()}>
-            <Zap size={13} /> {refreshing ? 'Checking…' : 'Refresh'}
+            <Zap size={13} /> {refreshing ? t('Checking…') : t('Refresh')}
           </button>
         )}
       </div>
 
       {shown.length === 0 && (
         <Card className="text-center space-y-1 py-6">
-          <p className="text-sm font-semibold">{filter === 'friends' ? 'No posts from friends yet' : 'Your feed is empty'}</p>
+          <p className="text-sm font-semibold">{filter === 'friends' ? t('No posts from friends yet') : t('Your feed is empty')}</p>
           <p className="text-xs text-muted">
             {friends.length === 0
-              ? 'Add a gym partner in the Friends tab and their workouts show up here.'
-              : 'Post a workout above, or check back after your friends train.'}
+              ? t('Add a gym partner in the Friends tab and their workouts show up here.')
+              : t('Post a workout above, or check back after your friends train.')}
           </p>
         </Card>
       )}
@@ -168,6 +169,7 @@ function Feed({ onRace }: { onRace: () => void }) {
 const DOUBLE_TAP_EMOJI = '🔥';
 
 function PostCard({ post: p }: { post: FeedPost }) {
+  const t = useT();
   const react = useSocial((s) => s.react);
   const deletePost = useSocial((s) => s.deletePost);
   const [openComments, setOpenComments] = useState(false);
@@ -191,11 +193,11 @@ function PostCard({ post: p }: { post: FeedPost }) {
       <div className="flex items-center gap-2">
         <Avatar seed={p.avatarSeed} />
         <div className="flex-1">
-          <p className="text-sm font-semibold">{p.authorName}{p.mine && <span className="ml-1 text-[10px] text-muted">· you</span>}</p>
+          <p className="text-sm font-semibold">{p.authorName}{p.mine && <span className="ml-1 text-[10px] text-muted">{t('· you')}</span>}</p>
           <p className="text-[11px] text-muted">{timeAgo(p.createdAt)}</p>
         </div>
         {p.mine && (
-          <button onClick={() => { deletePost(p.id); haptic('tap'); }} aria-label="Delete post" className="text-muted hover:text-danger"><Trash2 size={15} /></button>
+          <button onClick={() => { deletePost(p.id); haptic('tap'); }} aria-label={t('Delete post')} className="text-muted hover:text-danger"><Trash2 size={15} /></button>
         )}
       </div>
 
@@ -212,7 +214,7 @@ function PostCard({ post: p }: { post: FeedPost }) {
         {p.workoutSummary && (p.workoutSummary.volumeKg > 0 || p.workoutSummary.durationMin > 0) && (
           <div className="flex gap-2 text-[11px] text-muted mt-1">
             {p.workoutSummary.volumeKg > 0 && <><span>{p.workoutSummary.volumeKg.toLocaleString()} kg</span>·</>}
-            {p.workoutSummary.sets > 0 && <><span>{p.workoutSummary.sets} sets</span>·</>}
+            {p.workoutSummary.sets > 0 && <><span>{p.workoutSummary.sets} {t('sets')}</span>·</>}
             <span>{p.workoutSummary.durationMin} min</span>
           </div>
         )}
@@ -254,6 +256,7 @@ function PostCard({ post: p }: { post: FeedPost }) {
 }
 
 function Comments({ postId }: { postId: string }) {
+  const t = useT();
   const comments = useSocial((s) => s.feed.find((p) => p.id === postId)?.comments ?? []);
   const addComment = useSocial((s) => s.addComment);
   const [text, setText] = useState('');
@@ -270,7 +273,7 @@ function Comments({ postId }: { postId: string }) {
       ))}
       <div className="flex gap-2">
         <input value={text} onChange={(e) => setText(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter' && text.trim()) { addComment(postId, text); setText(''); haptic('tap'); } }}
-          placeholder="Add a comment…" className="flex-1 rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm" />
+          placeholder={t('Add a comment…')} className="flex-1 rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm" />
         <Button className="px-3" disabled={!text.trim()} onClick={() => { addComment(postId, text); setText(''); haptic('tap'); }}><Send size={15} /></Button>
       </div>
     </div>
@@ -278,6 +281,7 @@ function Comments({ postId }: { postId: string }) {
 }
 
 function Composer({ onShareCard }: { onShareCard: () => void }) {
+  const t = useT();
   const publishPost = useSocial((s) => s.publishPost);
   const profile = useUser((s) => s.profile);
   const xp = useGami((s) => s.xp);
@@ -317,7 +321,7 @@ function Composer({ onShareCard }: { onShareCard: () => void }) {
     <Card className="space-y-2">
       <div className="flex items-center gap-2">
         <Avatar seed={(profile?.name ?? 'You').slice(0, 2).toUpperCase()} />
-        <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder="Flex something: a PR, a streak, a win…"
+        <textarea value={body} onChange={(e) => setBody(e.target.value)} placeholder={t('Flex something: a PR, a streak, a win…')}
           className="flex-1 resize-none rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm h-12 focus:h-20 transition-all" />
       </div>
       <div className="flex gap-1.5 flex-wrap">
@@ -330,12 +334,12 @@ function Composer({ onShareCard }: { onShareCard: () => void }) {
         {last && (
           <button onClick={() => { setAttachWorkout((v) => !v); haptic('tap'); }}
             className={`rounded-full px-2.5 py-1 text-xs flex items-center gap-1 ${attachWorkout ? 'bg-accent/20 ring-1 ring-accent text-accent' : 'bg-surface-2 text-muted'}`}>
-            <Dumbbell size={12} /> Attach last workout
+            <Dumbbell size={12} /> {t('Attach last workout')}
           </button>
         )}
       </div>
       <div className="flex gap-2">
-        <Button className="flex-1 justify-center" onClick={post}>Post to feed</Button>
+        <Button className="flex-1 justify-center" onClick={post}>{t('Post to feed')}</Button>
         <Button variant="ghost" className="justify-center px-3" onClick={onShareCard}><Share2 size={16} /></Button>
       </div>
     </Card>
@@ -343,6 +347,7 @@ function Composer({ onShareCard }: { onShareCard: () => void }) {
 }
 
 function ShareCardSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
   const profile = useUser((s) => s.profile);
   const xp = useGami((s) => s.xp);
   const last = useWorkout((s) => s.history)[0];
@@ -361,19 +366,19 @@ function ShareCardSheet({ open, onClose }: { open: boolean; onClose: () => void 
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="Workout share card">
+    <Sheet open={open} onClose={onClose} title={t('Workout share card')}>
       <div className="space-y-3">
-        {!last && <p className="text-sm text-muted">Finish a workout to generate a real summary. Showing a sample otherwise.</p>}
+        {!last && <p className="text-sm text-muted">{t('Finish a workout to generate a real summary. Showing a sample otherwise.')}</p>}
         {url ? (
           <>
-            <img src={url} alt="share card" className="w-40 mx-auto rounded-xl border border-line" />
+            <img src={url} alt={t('share card')} className="w-40 mx-auto rounded-xl border border-line" />
             <div className="flex gap-2">
-              <Button className="flex-1 justify-center" onClick={() => downloadDataUrl(url, 'forgeos-card.png')}>Save image</Button>
-              <Button variant="ghost" className="flex-1 justify-center" onClick={() => { publishPost('Just forged a session 🔥', { summary: last ? { volumeKg: Math.round(last.totalVolumeKg ?? 0), sets: last.exercises.reduce((a, e) => a + e.sets.length, 0), durationMin: 45 } : undefined, imageUrl: url ?? undefined }); onClose(); }}>Post to feed</Button>
+              <Button className="flex-1 justify-center" onClick={() => downloadDataUrl(url, 'forgeos-card.png')}>{t('Save image')}</Button>
+              <Button variant="ghost" className="flex-1 justify-center" onClick={() => { publishPost('Just forged a session 🔥', { summary: last ? { volumeKg: Math.round(last.totalVolumeKg ?? 0), sets: last.exercises.reduce((a, e) => a + e.sets.length, 0), durationMin: 45 } : undefined, imageUrl: url ?? undefined }); onClose(); }}>{t('Post to feed')}</Button>
             </div>
           </>
         ) : (
-          <Button className="w-full justify-center" onClick={make}>Generate card</Button>
+          <Button className="w-full justify-center" onClick={make}>{t('Generate card')}</Button>
         )}
       </div>
     </Sheet>
@@ -402,6 +407,7 @@ function friendSlides(f: Friend): StorySlide[] {
 }
 
 function StoriesRow() {
+  const t = useT();
   const friends = useSocial((s) => s.friends);
   const profile = useUser((s) => s.profile);
   const xp = useGami((s) => s.xp);
@@ -436,7 +442,7 @@ function StoriesRow() {
               </span>
               {g.mine && <span className="absolute -bottom-0.5 -right-0.5 rounded-full bg-accent text-black p-0.5 ring-2 ring-bg"><Plus size={11} strokeWidth={3} /></span>}
             </span>
-            <span className="text-[10px] text-muted truncate w-full text-center">{g.mine ? 'You' : g.name}</span>
+            <span className="text-[10px] text-muted truncate w-full text-center">{g.mine ? t('You') : g.name}</span>
           </button>
         ))}
       </div>
@@ -446,6 +452,7 @@ function StoriesRow() {
 }
 
 function StoryViewer({ groups, start, onClose }: { groups: StoryGroup[]; start: number; onClose: () => void }) {
+  const tr = useT();
   const [gi, setGi] = useState(start);
   const [si, setSi] = useState(0);
   const group = groups[gi];
@@ -488,13 +495,13 @@ function StoryViewer({ groups, start, onClose }: { groups: StoryGroup[]; start: 
         {/* header */}
         <div className="absolute top-6 inset-x-3 flex items-center gap-2 z-10">
           <Avatar seed={group.avatarSeed} small />
-          <span className="text-sm font-semibold text-white drop-shadow">{group.mine ? 'Your story' : group.name}</span>
-          <button onClick={onClose} aria-label="Close story" className="ml-auto text-white/90 p-1"><X size={20} /></button>
+          <span className="text-sm font-semibold text-white drop-shadow">{group.mine ? tr('Your story') : group.name}</span>
+          <button onClick={onClose} aria-label={tr('Close story')} className="ml-auto text-white/90 p-1"><X size={20} /></button>
         </div>
 
         {/* tap zones */}
-        <button aria-label="Previous" onClick={prev} className="absolute inset-y-0 left-0 w-1/3 z-[5]" />
-        <button aria-label="Next" onClick={next} className="absolute inset-y-0 right-0 w-2/3 z-[5]" />
+        <button aria-label={tr('Previous')} onClick={prev} className="absolute inset-y-0 left-0 w-1/3 z-[5]" />
+        <button aria-label={tr('Next')} onClick={next} className="absolute inset-y-0 right-0 w-2/3 z-[5]" />
 
         {/* content */}
         <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 pointer-events-none">
@@ -563,7 +570,7 @@ function Friends() {
     const invite = tryExtractInvite(clean);
     if (invite) {
       const res = addFriendByInvite(invite);
-      if (res === 'self') toast("That's your own invite link 🙂", 'info');
+      if (res === 'self') toast(t('That\'s your own invite link 🙂'), 'info');
       else if (res === 'duplicate') toast(`${invite.name} is already in your circle`);
       else { haptic('success'); toast(`${invite.name} is now your gym partner 🤝`); }
       setName('');
@@ -571,16 +578,16 @@ function Friends() {
     }
     // A bare friend code is looked up on the server, so it needs the cloud.
     if (isFriendCode(clean)) {
-      if (!isBackendLive) { toast('Friend codes need a cloud account. Use an invite link instead.', 'info'); return; }
-      if (clean.toUpperCase() === code.toUpperCase()) { toast("That's your own code 🙂", 'info'); return; }
+      if (!isBackendLive) { toast(t('Friend codes need a cloud account. Use an invite link instead.'), 'info'); return; }
+      if (clean.toUpperCase() === code.toUpperCase()) { toast(t('That\'s your own code 🙂'), 'info'); return; }
       const friend = await addFriendByCode(clean);
-      if (!friend) { haptic('warning'); toast('No one has that code. Check it, and make sure you are signed in.', 'error'); return; }
+      if (!friend) { haptic('warning'); toast(t('No one has that code. Check it, and make sure you are signed in.'), 'error'); return; }
       haptic('success'); toast(`${friend.name} is now your gym partner 🤝`);
       setName('');
       return;
     }
     haptic('warning');
-    toast('That is not an invite link or a friend code (FORGE-…)', 'error');
+    toast(t('That is not an invite link or a friend code (FORGE-…)'), 'error');
   }
 
   async function shareCode() {
@@ -589,13 +596,13 @@ function Friends() {
     if (nav.share) { try { await nav.share({ title: 'ForgeOS', text, url: inviteLink }); return; } catch { /* cancelled */ } }
     await navigator.clipboard.writeText(inviteLink);
     setCopied(true); setTimeout(() => setCopied(false), 1500);
-    toast('Invite link copied: paste it to a friend');
+    toast(t('Invite link copied: paste it to a friend'));
   }
 
   function regenCode() {
     updateProfile({ friendCode: generateFriendCode() });
     haptic('success');
-    toast('New friend code generated 🔁');
+    toast(t('New friend code generated 🔁'));
   }
 
   const q = query.trim().toLowerCase();
@@ -620,15 +627,15 @@ function Friends() {
       <Card className="space-y-2">
         <div className="flex items-center justify-between">
           <div className="min-w-0">
-            <p className="text-[11px] uppercase tracking-wide text-muted">Your friend code</p>
+            <p className="text-[11px] uppercase tracking-wide text-muted">{t('Your friend code')}</p>
             <p className="font-mono font-bold text-lg">{code}</p>
           </div>
           <div className="flex items-center gap-1 shrink-0">
-            <button onClick={regenCode} aria-label="Generate a new code" className="rounded-full p-2 text-muted hover:text-accent"><RotateCw size={15} /></button>
-            <Button onClick={shareCode}><span className="flex items-center gap-1 text-xs">{copied ? <Check size={14} /> : <Share2 size={14} />} {copied ? 'Copied' : 'Invite link'}</span></Button>
+            <button onClick={regenCode} aria-label={t('Generate a new code')} className="rounded-full p-2 text-muted hover:text-accent"><RotateCw size={15} /></button>
+            <Button onClick={shareCode}><span className="flex items-center gap-1 text-xs">{copied ? <Check size={14} /> : <Share2 size={14} />} {copied ? t('Copied') : t('Invite link')}</span></Button>
           </div>
         </div>
-        <p className="text-[11px] text-muted">Share your invite link: when a friend taps it, you're added to each other instantly. No code typing needed.</p>
+        <p className="text-[11px] text-muted">{t('Share your invite link: when a friend taps it, you\'re added to each other instantly. No code typing needed.')}</p>
       </Card>
 
       {/* Add by name or code */}
@@ -636,7 +643,7 @@ function Friends() {
         <SectionTitle>{t('s.addFriend')}</SectionTitle>
         <div className="flex gap-2">
           <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void add(); }}
-            aria-label="Invite link or friend code" placeholder="Invite link or FORGE-code" className="flex-1 rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+            aria-label={t('Invite link or friend code')} placeholder={t('Invite link or FORGE-code')} className="flex-1 rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
           <Button disabled={!name.trim()} onClick={() => void add()}><span className="flex items-center gap-1"><UserPlus size={15} /> {t('s.add')}</span></Button>
         </div>
       </Card>
@@ -644,7 +651,7 @@ function Friends() {
       {/* Incoming requests */}
       {incoming.length > 0 && (
         <div>
-          <SectionTitle>Friend requests</SectionTitle>
+          <SectionTitle>{t('Friend requests')}</SectionTitle>
           {incoming.map((r) => (
             <Card key={r.id} className="flex items-center gap-3">
               <Avatar seed={r.avatarSeed} />
@@ -652,7 +659,7 @@ function Friends() {
                 <p className="text-sm font-semibold truncate">{r.name}</p>
                 <p className="text-xs text-muted">{r.rank} · {r.xp.toLocaleString()} XP{r.mutuals ? ` · ${r.mutuals} mutual` : ''}</p>
               </div>
-              <button onClick={() => { acceptRequest(r.id); haptic('success'); toast(`${r.name} is now your friend 🤝`); }} className="rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-black flex items-center gap-1 shrink-0"><Check size={14} /> Confirm</button>
+              <button onClick={() => { acceptRequest(r.id); haptic('success'); toast(`${r.name} is now your friend 🤝`); }} className="rounded-full bg-accent px-3 py-1.5 text-xs font-semibold text-black flex items-center gap-1 shrink-0"><Check size={14} /> {t('Confirm')}</button>
               <button onClick={() => { declineRequest(r.id); haptic('tap'); }} aria-label={`Delete request from ${r.name}`} className="rounded-full bg-surface-2 p-1.5 text-muted shrink-0"><X size={16} /></button>
             </Card>
           ))}
@@ -662,12 +669,12 @@ function Friends() {
       {/* Outgoing pending */}
       {outgoing.length > 0 && (
         <div>
-          <SectionTitle>Pending</SectionTitle>
+          <SectionTitle>{t('Pending')}</SectionTitle>
           {outgoing.map((r) => (
             <Card key={r.id} className="flex items-center gap-3 opacity-70">
               <Avatar seed={r.avatarSeed} />
-              <div className="flex-1"><p className="text-sm font-semibold">{r.name}</p><p className="text-xs text-muted">Request sent…</p></div>
-              <Badge>pending</Badge>
+              <div className="flex-1"><p className="text-sm font-semibold">{r.name}</p><p className="text-xs text-muted">{t('Request sent…')}</p></div>
+              <Badge>{t('pending')}</Badge>
             </Card>
           ))}
         </div>
@@ -678,8 +685,8 @@ function Friends() {
       {friends.length > 4 && (
         <div className="flex items-center gap-2 rounded-xl bg-surface-2 border border-line px-3">
           <Search size={15} className="text-muted shrink-0" />
-          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search friends" className="flex-1 bg-transparent py-2.5 text-sm outline-none" />
-          {query && <button onClick={() => setQuery('')} aria-label="Clear search" className="text-muted"><X size={15} /></button>}
+          <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder={t('Search friends')} className="flex-1 bg-transparent py-2.5 text-sm outline-none" />
+          {query && <button onClick={() => setQuery('')} aria-label={t('Clear search')} className="text-muted"><X size={15} /></button>}
         </div>
       )}
       {shownFriends.map((f) => (
@@ -688,13 +695,13 @@ function Friends() {
           <button className="flex-1 text-left" onClick={() => setOpenFriend(f)}>
             <p className="text-sm font-semibold flex items-center gap-2">
               {f.name}
-              {f.friendCode && <Check size={12} className="text-accent" aria-label="Added via invite link" />}
-              {f.trainingNow ? <span className="text-[10px] text-success flex items-center gap-0.5"><Circle size={7} className="fill-success" /> training</span>
+              {f.friendCode && <Check size={12} className="text-accent" aria-label={t('Added via invite link')} />}
+              {f.trainingNow ? <span className="text-[10px] text-success flex items-center gap-0.5"><Circle size={7} className="fill-success" /> {t('training')}</span>
                 : <Circle size={8} className={f.online ? 'text-success fill-success' : 'text-muted fill-muted'} />}
             </p>
             <p className="text-xs text-muted">{f.rank} · {f.xp.toLocaleString()} XP{f.streak ? ` · 🔥${f.streak}` : ''}</p>
           </button>
-          <button onClick={() => { cheerFriend(f.id); haptic('success'); toast(`Cheered ${f.name} 👏`); }} aria-label="Cheer" className={`rounded-full p-2 ${f.cheeredAt ? 'text-accent' : 'text-muted hover:text-accent'}`}>
+          <button onClick={() => { cheerFriend(f.id); haptic('success'); toast(`Cheered ${f.name} 👏`); }} aria-label={t('Cheer')} className={`rounded-full p-2 ${f.cheeredAt ? 'text-accent' : 'text-muted hover:text-accent'}`}>
             <Heart size={16} className={f.cheeredAt ? 'fill-accent' : ''} />
           </button>
           <ChevronRight size={16} className="text-muted" onClick={() => setOpenFriend(f)} />
@@ -702,16 +709,16 @@ function Friends() {
       ))}
       {friends.length === 0 && (
         <Card className="text-center space-y-2 py-5">
-          <p className="text-sm font-semibold">No gym partners yet</p>
-          <p className="text-xs text-muted">Send your invite link to a friend. When they open it you are added to each other.</p>
-          <Button className="mx-auto" onClick={shareCode}><span className="flex items-center gap-1 text-xs"><Share2 size={14} /> Share invite link</span></Button>
+          <p className="text-sm font-semibold">{t('No gym partners yet')}</p>
+          <p className="text-xs text-muted">{t('Send your invite link to a friend. When they open it you are added to each other.')}</p>
+          <Button className="mx-auto" onClick={shareCode}><span className="flex items-center gap-1 text-xs"><Share2 size={14} /> {t('Share invite link')}</span></Button>
         </Card>
       )}
-      {friends.length > 0 && shownFriends.length === 0 && <p className="text-sm text-muted">No friend matches “{query}”.</p>}
+      {friends.length > 0 && shownFriends.length === 0 && <p className="text-sm text-muted">{t('No friend matches “')}{query}”.</p>}
 
       {/* Friends leaderboard */}
       <div>
-        <SectionTitle action={<Crown size={14} className="text-accent-2" />}>Friends leaderboard</SectionTitle>
+        <SectionTitle action={<Crown size={14} className="text-accent-2" />}>{t('Friends leaderboard')}</SectionTitle>
         <Card className="space-y-1.5">
           {board.map((r, i) => (
             <div key={i} className={`flex items-center gap-3 rounded-lg px-2 py-1.5 ${r.you ? 'bg-accent/15' : ''}`}>
@@ -726,16 +733,16 @@ function Friends() {
       {/* Step race — friendly competition for recovery, resets every Monday */}
       {stepBoard.length > 1 && (
         <div>
-          <SectionTitle action={<Footprints size={14} className="text-success" />}>Step race (this week)</SectionTitle>
+          <SectionTitle action={<Footprints size={14} className="text-success" />}>{t('Step race (this week)')}</SectionTitle>
           <Card className="space-y-1.5">
             {stepBoard.map((r, i) => (
               <div key={i} className={`flex items-center gap-3 rounded-lg px-2 py-1.5 ${r.you ? 'bg-accent/15' : ''}`}>
                 <span className="font-mono w-5 text-center text-muted">{['🥇', '🥈', '🥉'][i] ?? i + 1}</span>
                 <span className={`flex-1 text-sm ${r.you ? 'text-accent font-semibold' : ''}`}>{r.name}</span>
-                <span className="font-mono text-xs text-muted">{r.steps.toLocaleString()} steps</span>
+                <span className="font-mono text-xs text-muted">{r.steps.toLocaleString()} {t('steps')}</span>
               </div>
             ))}
-            <p className="text-[10px] text-muted/70">Synced from Garmin · friends without a tracker aren’t shown</p>
+            <p className="text-[10px] text-muted/70">{t('Synced from Garmin · friends without a tracker aren’t shown')}</p>
           </Card>
         </div>
       )}
@@ -770,21 +777,21 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
           <div className="min-w-0">
             <p className="font-bold text-lg">{friend.name}</p>
             <p className="text-sm text-accent">{friend.rank} · {friend.xp.toLocaleString()} XP</p>
-            <p className="text-[11px] text-muted">{friend.trainingNow ? 'Training now 🟢' : friend.online ? 'Online' : `Last active ${friend.lastActiveISO ? timeAgo(friend.lastActiveISO) : 'recently'}`}{friend.streak ? ` · 🔥 ${friend.streak}` : ''}</p>
+            <p className="text-[11px] text-muted">{friend.trainingNow ? t('Training now 🟢') : friend.online ? t('Online') : `Last active ${friend.lastActiveISO ? timeAgo(friend.lastActiveISO) : 'recently'}`}{friend.streak ? ` · 🔥 ${friend.streak}` : ''}</p>
           </div>
         </div>
         {/* honesty tag: is this data live & real, or a local sample? */}
         <p className="text-[10px] text-muted flex items-center gap-1">
           {act.real
-            ? <><Circle size={7} className="fill-success text-success" /> Live activity</>
-            : <>✦ Sample activity (no backend connected)</>}
+            ? <><Circle size={7} className="fill-success text-success" /> {t('Live activity')}</>
+            : <>{t('✦ Sample activity (no backend connected)')}</>}
         </p>
 
         {act.private ? (
           <div className="rounded-xl bg-surface-2 px-4 py-6 text-center">
             <p className="text-2xl mb-1">🔒</p>
-            <p className="text-sm font-medium">{friend.name} keeps their activity private</p>
-            <p className="text-[11px] text-muted mt-1">You can still see their rank and XP.</p>
+            <p className="text-sm font-medium">{friend.name} {t('keeps their activity private')}</p>
+            <p className="text-[11px] text-muted mt-1">{t('You can still see their rank and XP.')}</p>
           </div>
         ) : (
           <>
@@ -797,12 +804,12 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
               <MiniStat v={`${act.prs}`} l="PRs" />
               <MiniStat v={friend.streak ? `${friend.streak}` : '–'} l="streak" />
             </div>
-            {act.favourite && <p className="text-[11px] text-muted text-center">Top lift: <span className="text-text font-medium">{act.favourite}</span></p>}
+            {act.favourite && <p className="text-[11px] text-muted text-center">{t('Top lift:')} <span className="text-text font-medium">{act.favourite}</span></p>}
 
             {/* recent activity */}
             {act.sessions.length > 0 && (
               <div>
-                <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Recent activity</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted mb-1">{t('Recent activity')}</p>
                 <div className="space-y-1.5">
                   {act.sessions.map((s, i) => (
                     <div key={i} className="flex items-center gap-2 rounded-xl bg-surface-2 px-3 py-2">
@@ -821,7 +828,7 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
             {/* their posts */}
             {theirPosts.length > 0 && (
               <div>
-                <p className="text-[11px] uppercase tracking-wide text-muted mb-1">Latest posts</p>
+                <p className="text-[11px] uppercase tracking-wide text-muted mb-1">{t('Latest posts')}</p>
                 <div className="space-y-1.5">
                   {theirPosts.map((p) => (
                     <div key={p.id} className="rounded-xl bg-surface-2 px-3 py-2">
@@ -842,17 +849,17 @@ function FriendSheet({ friend, onClose }: { friend: Friend | null; onClose: () =
             <span className="flex items-center gap-1"><Swords size={15} /> {t('duel.btn')}</span>
           </Button>
           <Button variant="ghost" className="justify-center" onClick={() => { cheerFriend(friend.id); haptic('success'); toast(`Cheered ${friend.name} 👏`); }}>
-            <span className="flex items-center gap-1"><Heart size={15} /> Cheer</span>
+            <span className="flex items-center gap-1"><Heart size={15} /> {t('Cheer')}</span>
           </Button>
           <Button variant="ghost" className="justify-center" onClick={() => {
             if (!confirmRemove) { setConfirmRemove(true); haptic('warning'); return; }
             const name = friend.name;
             removeFriend(friend.id); haptic('tap'); toast(`Unfriended ${name}`); onClose();
           }}>
-            <span className="flex items-center gap-1 text-danger"><UserMinus size={15} /> {confirmRemove ? 'Confirm?' : 'Unfriend'}</span>
+            <span className="flex items-center gap-1 text-danger"><UserMinus size={15} /> {confirmRemove ? t('Confirm?') : t('Unfriend')}</span>
           </Button>
         </div>
-        {confirmRemove && <p className="text-[11px] text-muted text-center">Tap “Confirm?” again to remove {friend.name} from your circle.</p>}
+        {confirmRemove && <p className="text-[11px] text-muted text-center">{t('Tap “Confirm?” again to remove')} {friend.name} {t('from your circle.')}</p>}
       </div>
     </Sheet>
   );
@@ -875,6 +882,7 @@ function Race() {
 }
 
 function LiveRace() {
+  const t = useT();
   const profile = useUser((s) => s.profile);
   const friends = useSocial((s) => s.friends);
   const meName = profile?.name ?? 'You';
@@ -925,28 +933,28 @@ function LiveRace() {
       <Card className="space-y-3">
         <div className="text-center space-y-1">
           <Swords className="mx-auto text-accent" />
-          <p className="font-semibold">Live race</p>
-          <p className="text-sm text-muted">Train side-by-side in real time: first to {TARGET.toLocaleString()} kg wins.</p>
+          <p className="font-semibold">{t('Live race')}</p>
+          <p className="text-sm text-muted">{t('Train side-by-side in real time: first to')} {TARGET.toLocaleString()} {t('kg wins.')}</p>
         </div>
-        <p className="text-[11px] uppercase tracking-wide text-muted">Challenge a friend</p>
-        {online.length === 0 && <p className="text-sm text-muted">Add friends first to race them.</p>}
+        <p className="text-[11px] uppercase tracking-wide text-muted">{t('Challenge a friend')}</p>
+        {online.length === 0 && <p className="text-sm text-muted">{t('Add friends first to race them.')}</p>}
         <div className="space-y-1.5 max-h-56 overflow-y-auto no-scrollbar">
           {online.map((f) => (
             <button key={f.id} onClick={() => start(f)} className="w-full flex items-center gap-3 rounded-xl bg-surface-2 px-3 py-2 text-left">
               <Avatar seed={f.avatarSeed} />
               <div className="flex-1"><p className="text-sm font-semibold flex items-center gap-1">{f.name} {f.trainingNow && <Circle size={7} className="fill-success text-success" />}</p><p className="text-[11px] text-muted">{f.rank} · {f.xp.toLocaleString()} XP</p></div>
-              <Badge color="rgb(var(--accent))">Race</Badge>
+              <Badge color="rgb(var(--accent))">{t('Race')}</Badge>
             </button>
           ))}
         </div>
-        <p className="text-[11px] text-muted/70 flex items-center justify-center gap-1"><Wifi size={12} /> Realtime via Supabase presence + broadcast (auto-live with keys).</p>
+        <p className="text-[11px] text-muted/70 flex items-center justify-center gap-1"><Wifi size={12} /> {t('Realtime via Supabase presence + broadcast (auto-live with keys).')}</p>
       </Card>
     );
   }
 
   return (
     <Card>
-      <SectionTitle action={won ? <Badge color="rgb(var(--success))">🏁 {leader.name} wins</Badge> : <button onClick={stop} className="text-xs text-muted">Leave</button>}>
+      <SectionTitle action={won ? <Badge color="rgb(var(--success))">🏁 {leader.name} {t('wins')}</Badge> : <button onClick={stop} className="text-xs text-muted">{t('Leave')}</button>}>
         vs {opponent?.name}
       </SectionTitle>
       {scores.map((s) => (
@@ -959,8 +967,8 @@ function LiveRace() {
         </div>
       ))}
       {!won
-        ? <Button variant="ghost" className="w-full justify-center mt-2" onClick={logRep}>Log a set (+200 kg)</Button>
-        : <Button className="w-full justify-center mt-2" onClick={stop}>Finish race</Button>}
+        ? <Button variant="ghost" className="w-full justify-center mt-2" onClick={logRep}>{t('Log a set (+200 kg)')}</Button>
+        : <Button className="w-full justify-center mt-2" onClick={stop}>{t('Finish race')}</Button>}
     </Card>
   );
 }
@@ -1150,6 +1158,7 @@ function NewDuelSheet({ open, onClose, friends, onStart }: { open: boolean; onCl
 /* ---------------------------- MARKETPLACE ---------------------------- */
 
 function Marketplace() {
+  const t = useT();
   const owned = useSocial((s) => s.ownedRoutineIds);
   const published = useSocial((s) => s.publishedRoutines);
   const buy = useSocial((s) => s.buyRoutine);
@@ -1173,32 +1182,32 @@ function Marketplace() {
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">
-        <SectionTitle>Routine marketplace</SectionTitle>
+        <SectionTitle>{t('Routine marketplace')}</SectionTitle>
         <Badge color="rgb(var(--accent-2))">🪙 {coins}</Badge>
       </div>
-      <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/plan')}>Publish your plan → open editor</Button>
+      <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/plan')}>{t('Publish your plan → open editor')}</Button>
       {all.map((r) => {
         const isOwned = owned.includes(r.id);
         return (
           <Card key={r.id} className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="font-semibold text-sm">{r.title} {r.byMe && <Badge color="rgb(var(--success))">yours</Badge>}</p>
+              <p className="font-semibold text-sm">{r.title} {r.byMe && <Badge color="rgb(var(--success))">{t('yours')}</Badge>}</p>
               <Badge>{r.focus}</Badge>
             </div>
             <p className="text-xs text-muted">
-              {r.author === BUILT_IN_AUTHOR && !r.byMe ? 'Built-in program' : `by ${r.author}${r.authorRank ? ` (${r.authorRank})` : ''}`} · {r.weeks} wk · {r.daysPerWeek} days/wk
+              {r.author === BUILT_IN_AUTHOR && !r.byMe ? t('Built-in program') : `by ${r.author}${r.authorRank ? ` (${r.authorRank})` : ''}`} · {r.weeks} wk · {r.daysPerWeek} {t('days/wk')}
             </p>
             {isOwned && r.plan ? (
-              <Button className="w-full justify-center" onClick={() => applyPlan(r)}>Use this plan</Button>
+              <Button className="w-full justify-center" onClick={() => applyPlan(r)}>{t('Use this plan')}</Button>
             ) : (
               <Button variant={isOwned ? 'ghost' : 'primary'} className="w-full justify-center" disabled={isOwned} onClick={() => purchase(r.id, r.priceCoins, r.title)}>
-                {isOwned ? 'Owned ✓' : `Buy · 🪙 ${r.priceCoins}`}
+                {isOwned ? t('Owned ✓') : `Buy · 🪙 ${r.priceCoins}`}
               </Button>
             )}
           </Card>
         );
       })}
-      <p className="text-[11px] text-muted/70 flex items-center gap-1"><Store size={12} /> Publish your own plan from the week-plan editor; buyers can adopt it in one tap.</p>
+      <p className="text-[11px] text-muted/70 flex items-center gap-1"><Store size={12} /> {t('Publish your own plan from the week-plan editor; buyers can adopt it in one tap.')}</p>
     </div>
   );
 }

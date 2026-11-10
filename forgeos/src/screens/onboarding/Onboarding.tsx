@@ -312,20 +312,20 @@ export default function Onboarding() {
 
       {step === 'metrics' && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
-          <h2 className="text-2xl font-bold">Your numbers</h2>
-          <p className="text-sm text-muted">Metric only: kg, cm, kcal.</p>
+          <h2 className="text-2xl font-bold">{t('Your numbers')}</h2>
+          <p className="text-sm text-muted">{t('Metric only: kg, cm, kcal.')}</p>
 
           <div className="flex gap-2">
-            <Pill active={sex === 'male'} onClick={() => setSex('male')}>Male</Pill>
-            <Pill active={sex === 'female'} onClick={() => setSex('female')}>Female</Pill>
+            <Pill active={sex === 'male'} onClick={() => setSex('male')}>{t('Male')}</Pill>
+            <Pill active={sex === 'female'} onClick={() => setSex('female')}>{t('Female')}</Pill>
           </div>
 
-          <NumberRow label="Age" value={age} unit="yrs" set={setAge} min={14} max={90} step={1} />
-          <NumberRow label="Height" value={heightCm} unit="cm" set={setHeightCm} min={130} max={220} step={1} />
-          <NumberRow label="Weight" value={weightKg} unit="kg" set={setWeightKg} min={35} max={250} step={0.5} />
+          <NumberRow label={t('Age')} value={age} unit="yrs" set={setAge} min={14} max={90} step={1} />
+          <NumberRow label={t('Height')} value={heightCm} unit="cm" set={setHeightCm} min={130} max={220} step={1} />
+          <NumberRow label={t('Weight')} value={weightKg} unit="kg" set={setWeightKg} min={35} max={250} step={0.5} />
 
           <div>
-            <p className="text-sm font-medium mb-2">Goal</p>
+            <p className="text-sm font-medium mb-2">{t('Goal')}</p>
             <div className="flex gap-2 flex-wrap">
               {(['lose', 'recomp', 'maintain', 'gain', 'strength'] as Goal[]).map((g) => (
                 <Pill key={g} active={goal === g} onClick={() => setGoal(g)}>{g}</Pill>
@@ -334,7 +334,7 @@ export default function Onboarding() {
           </div>
 
           <div>
-            <p className="text-sm font-medium mb-2">Daily activity</p>
+            <p className="text-sm font-medium mb-2">{t('Daily activity')}</p>
             <div className="flex gap-2 flex-wrap">
               {(['sedentary', 'light', 'moderate', 'active', 'athlete'] as ActivityLevel[]).map((a) => (
                 <Pill key={a} active={activity === a} onClick={() => setActivity(a)}>{a}</Pill>
@@ -346,36 +346,36 @@ export default function Onboarding() {
             <div className="grid grid-cols-4 gap-2 text-center">
               <MiniStat label="BMR" value={`${derived.bmr}`} />
               <MiniStat label="TDEE" value={`${derived.td}`} />
-              <MiniStat label="Protein" value={`${derived.macros.proteinG}g`} />
-              <MiniStat label="Cals" value={`${derived.macros.calories}`} />
+              <MiniStat label={t('Protein')} value={`${derived.macros.proteinG}g`} />
+              <MiniStat label={t('Cals')} value={`${derived.macros.calories}`} />
             </div>
-            <p className="text-[11px] text-muted mt-2">Mifflin-St Jeor · protein {(derived.macros.proteinG / weightKg).toFixed(1)} g/kg</p>
+            <p className="text-[11px] text-muted mt-2">{t('Mifflin-St Jeor · protein')} {(derived.macros.proteinG / weightKg).toFixed(1)} {t('g/kg')}</p>
           </Card>
 
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="What should we call you?"
+            placeholder={t('What should we call you?')}
             className="w-full rounded-xl bg-surface border border-line px-4 py-3 text-sm"
           />
 
           {/* Special requests for the generated plan */}
           <Card className="space-y-3 bg-surface-2">
-            <p className="text-sm font-semibold">Special requests</p>
+            <p className="text-sm font-semibold">{t('Special requests')}</p>
             <div className="flex items-center justify-between">
-              <span className="text-sm">Don’t train on weekends</span>
-              <Toggle label="Don’t train on weekends" checked={noWeekends} onChange={setNoWeekends} />
+              <span className="text-sm">{t('Don’t train on weekends')}</span>
+              <Toggle label={t('Don’t train on weekends')} checked={noWeekends} onChange={setNoWeekends} />
             </div>
             <textarea
               value={specialRequest}
               onChange={(e) => setSpecialRequest(e.target.value)}
-              placeholder="Anything else? e.g. bad knees, no overhead pressing, short on time…"
+              placeholder={t('Anything else? e.g. bad knees, no overhead pressing, short on time…')}
               className="w-full rounded-xl bg-surface border border-line px-3 py-2 text-sm h-20"
             />
-            <p className="text-[11px] text-muted/70">We’ll keep weekends as rest if toggled, and save your notes to your profile.</p>
+            <p className="text-[11px] text-muted/70">{t('We’ll keep weekends as rest if toggled, and save your notes to your profile.')}</p>
           </Card>
 
-          <Button className="w-full justify-center" onClick={() => setStep('test')}>Continue to fitness test</Button>
+          <Button className="w-full justify-center" onClick={() => setStep('test')}>{t('Continue to fitness test')}</Button>
         </motion.div>
       )}
 
@@ -391,14 +391,14 @@ export default function Onboarding() {
 
       {step === 'plan' && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
-          <h2 className="text-2xl font-bold">Your starting point</h2>
+          <h2 className="text-2xl font-bold">{t('Your starting point')}</h2>
           <Card className="bg-surface-2 space-y-1">
-            <p className="text-sm">Estimated level: <b className="capitalize">{experience}</b></p>
-            <p className="text-sm">Body-fat range: <b>{bodyFatBand(sex, fitnessScore)}</b></p>
-            <p className="text-sm">Plan: <b>{daysPerWeek} days/week</b> · {style}</p>
+            <p className="text-sm">{t('Estimated level:')} <b className="capitalize">{experience}</b></p>
+            <p className="text-sm">{t('Body-fat range:')} <b>{bodyFatBand(sex, fitnessScore)}</b></p>
+            <p className="text-sm">{t('Plan:')} <b>{daysPerWeek} {t('days/week')}</b> · {style}</p>
           </Card>
           <p className="text-sm text-muted">
-            We generated an editable week plan. You can change training days and swap workouts anytime from the Profile tab.
+            {t('We generated an editable week plan. You can change training days and swap workouts anytime from the Profile tab.')}
           </p>
           <PlanPreview days={daysPerWeek} style={style} goal={goal} noWeekends={noWeekends} />
           <Button className="w-full justify-center" onClick={finish}>{t('ob.enter')}</Button>
@@ -425,6 +425,7 @@ export default function Onboarding() {
 }
 
 function EmailAuthSheet({ open, initialMode = 'up', onClose, onAuthed }: { open: boolean; initialMode?: 'in' | 'up'; onClose: () => void; onAuthed: (email: string, mode: 'in' | 'up') => void }) {
+  const t = useT();
   const [mode, setMode] = useState<'in' | 'up'>(initialMode);
   const [email, setEmail] = useState('');
   const [pw, setPw] = useState('');
@@ -473,28 +474,28 @@ function EmailAuthSheet({ open, initialMode = 'up', onClose, onAuthed }: { open:
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title={mode === 'up' ? 'Create account' : 'Sign in'}>
+    <Sheet open={open} onClose={onClose} title={mode === 'up' ? t('Create account') : t('Sign in')}>
       <div className="space-y-3">
         <div className="flex gap-2">
-          <Pill active={mode === 'up'} onClick={() => setMode('up')}>Sign up</Pill>
-          <Pill active={mode === 'in'} onClick={() => setMode('in')}>Sign in</Pill>
+          <Pill active={mode === 'up'} onClick={() => setMode('up')}>{t('Sign up')}</Pill>
+          <Pill active={mode === 'in'} onClick={() => setMode('in')}>{t('Sign in')}</Pill>
         </div>
-        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@email.com" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-3 text-sm" />
+        <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={t('you@email.com')} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-3 text-sm" />
         <div className="relative">
-          <input type={show ? 'text' : 'password'} value={pw} onChange={(e) => setPw(e.target.value)} placeholder="Password" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-3 pr-11 text-sm" />
-          <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide password' : 'Show password'} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text">
+          <input type={show ? 'text' : 'password'} value={pw} onChange={(e) => setPw(e.target.value)} placeholder={t('Password')} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-3 pr-11 text-sm" />
+          <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? t('Hide password') : t('Show password')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text">
             {show ? <EyeOff size={18} /> : <Eye size={18} />}
           </button>
         </div>
         {mode === 'in' && (
-          <button type="button" onClick={forgotPassword} className="text-xs text-accent text-left underline-offset-2 hover:underline">Forgot password?</button>
+          <button type="button" onClick={forgotPassword} className="text-xs text-accent text-left underline-offset-2 hover:underline">{t('Forgot password?')}</button>
         )}
         {err && <p className="text-xs text-danger">{err}</p>}
         {notice && <p className="text-xs text-accent-2">{notice}</p>}
         <Button className="w-full justify-center" disabled={busy || !email || pw.length < 6} onClick={submit}>
-          {busy ? 'Please wait…' : mode === 'up' ? 'Create account' : 'Sign in'}
+          {busy ? t('Please wait…') : mode === 'up' ? t('Create account') : t('Sign in')}
         </Button>
-        <p className="text-[11px] text-muted/70">Real accounts via Supabase. Passwords are min. 6 characters. Tap the eye to show what you type. Your existing password can’t be displayed (it’s stored encrypted).</p>
+        <p className="text-[11px] text-muted/70">{t('Real accounts via Supabase. Passwords are min. 6 characters. Tap the eye to show what you type. Your existing password can’t be displayed (it’s stored encrypted).')}</p>
         <LegalNote />
       </div>
     </Sheet>
@@ -505,13 +506,13 @@ function EmailAuthSheet({ open, initialMode = 'up', onClose, onAuthed }: { open:
 // to happen before the account exists, not somewhere in Settings afterwards.
 // Under 16 needs a parent's OK in Slovakia (GDPR art. 8), so it says so here.
 function LegalNote() {
+  const t = useT();
   const base = import.meta.env.BASE_URL;
   return (
     <p className="text-[11px] text-muted/80 text-center leading-snug">
-      By continuing you agree to the{' '}
-      <a href={`${base}terms.html`} target="_blank" rel="noopener noreferrer" className="underline">Terms</a> and the{' '}
-      <a href={`${base}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">Privacy Policy</a>.
-      Under 16? Ask a parent before you create an account.
+      {t('By continuing you agree to the')}{' '}
+      <a href={`${base}terms.html`} target="_blank" rel="noopener noreferrer" className="underline">{t('Terms')}</a> {t('and the')}{' '}
+      <a href={`${base}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">{t('Privacy Policy')}</a>{t('. Under 16? Ask a parent before you create an account.')}
     </p>
   );
 }
@@ -543,6 +544,7 @@ function QuizStep({
   name: string;
   setName: (n: string) => void;
 }) {
+  const t = useT();
   const SEP = ' · ';
   const [mode, setMode] = useState<'quiz' | 'type'>('quiz');
   const [i, setI] = useState(0);
@@ -590,10 +592,10 @@ function QuizStep({
           className="w-full rounded-xl border border-accent/40 bg-accent/5 px-4 py-2.5 text-sm text-left flex items-center gap-2"
         >
           <span className="text-lg">💬</span>
-          <span className="flex-1">Rather just describe yourself? <b className="text-accent">Type it instead →</b></span>
+          <span className="flex-1">{t('Rather just describe yourself?')} <b className="text-accent">{t('Type it instead →')}</b></span>
         </button>
       )}
-      <p className="text-xs text-muted">Question {i + 1} of {ICE_BREAKER.length} · pick all that apply</p>
+      <p className="text-xs text-muted">{t('Question')} {i + 1} of {ICE_BREAKER.length} {t('· pick all that apply')}</p>
       <h2 className="text-2xl font-bold leading-snug">{q.q}</h2>
       <div className="space-y-2">
         {q.options.map((o) => {
@@ -618,7 +620,7 @@ function QuizStep({
         {selected.filter((s) => !q.options.includes(s)).map((s) => (
           <button key={s} onClick={() => toggle(s)} className="w-full flex items-center gap-3 text-left rounded-xl border border-accent bg-accent/10 px-4 py-3 text-sm">
             <span className="w-5 h-5 shrink-0 rounded-md bg-accent border-accent text-black flex items-center justify-center"><Check size={13} strokeWidth={3} /></span>
-            {s} <span className="ml-auto text-xs text-muted">tap to remove</span>
+            {s} <span className="ml-auto text-xs text-muted">{t('tap to remove')}</span>
           </button>
         ))}
 
@@ -627,10 +629,10 @@ function QuizStep({
             value={custom}
             onChange={(e) => setCustom(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') addCustom(); }}
-            placeholder="…or write your own"
+            placeholder={t('…or write your own')}
             className="flex-1 rounded-xl bg-surface border border-line px-4 py-3 text-sm"
           />
-          <Button variant="ghost" disabled={!custom.trim()} onClick={addCustom}>Add</Button>
+          <Button variant="ghost" disabled={!custom.trim()} onClick={addCustom}>{t('Add')}</Button>
         </div>
       </div>
 
@@ -638,18 +640,18 @@ function QuizStep({
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Your name (optional)"
+          placeholder={t('Your name (optional)')}
           className="w-full rounded-xl bg-surface border border-line px-4 py-3 text-sm"
         />
       )}
 
       <div className="flex items-center gap-2 pt-1">
-        {i > 0 && <Button variant="outline" onClick={() => setI(i - 1)}>← Back</Button>}
+        {i > 0 && <Button variant="outline" onClick={() => setI(i - 1)}>{t('← Back')}</Button>}
         <Button className="flex-1 justify-center" disabled={selected.length === 0} onClick={next}>
-          {isLast ? 'Finish' : 'Next'} {selected.length > 0 && `(${selected.length})`}
+          {isLast ? t('Finish') : t('Next')} {selected.length > 0 && `(${selected.length})`}
         </Button>
       </div>
-      {selected.length === 0 && <p className="text-[11px] text-muted/70 text-center">Select at least one option to continue.</p>}
+      {selected.length === 0 && <p className="text-[11px] text-muted/70 text-center">{t('Select at least one option to continue.')}</p>}
     </motion.div>
   );
 }
@@ -670,57 +672,56 @@ function ManualIntro({
   onSkip: () => void;
   onBack: () => void;
 }) {
+  const tr = useT();
   const [text, setText] = useState('');
   const parsed = useMemo(() => parseAbout(text), [text]);
   const caught = parsedFieldCount(parsed);
 
   return (
     <motion.div initial={{ opacity: 0, x: 16 }} animate={{ opacity: 1, x: 0 }} className="space-y-4 mt-6">
-      <h2 className="text-2xl font-bold leading-snug">Tell me about yourself</h2>
+      <h2 className="text-2xl font-bold leading-snug">{tr('Tell me about yourself')}</h2>
       <p className="text-sm text-muted">
-        In your own words: your age, height &amp; weight, what you want (lose fat, build muscle, get stronger…),
-        how long you’ve trained, how many days a week you can, and anything to work around (bad knees, no time…).
-        I’ll fill the form in for you to check.
+        {tr('In your own words: your age, height & weight, what you want (lose fat, build muscle, get stronger…), how long you’ve trained, how many days a week you can, and anything to work around (bad knees, no time…). I’ll fill the form in for you to check.')}
       </p>
 
       <textarea
         value={text}
         onChange={(e) => setText(e.target.value)}
-        placeholder="e.g. I’m 16, 178cm, around 72kg. Total beginner, want to build muscle, can train 4 days a week. Bad knees so nothing that aggravates them."
+        placeholder={tr('e.g. I’m 16, 178cm, around 72kg. Total beginner, want to build muscle, can train 4 days a week. Bad knees so nothing that aggravates them.')}
         className="w-full rounded-xl bg-surface border border-line px-4 py-3 text-sm h-40"
       />
 
       {/* Voice-to-text: dictate your plan instead of typing (where supported) */}
       <div className="flex items-center gap-2">
-        <VoiceDictate onText={(t) => setText((prev) => (prev.trim() ? `${prev.trim()} ${t}` : t))} label="Say it instead" />
-        {text.trim() !== '' && <button onClick={() => setText('')} className="text-[11px] text-muted/70">clear</button>}
+        <VoiceDictate onText={(t) => setText((prev) => (prev.trim() ? `${prev.trim()} ${t}` : t))} label={tr('Say it instead')} />
+        {text.trim() !== '' && <button onClick={() => setText('')} className="text-[11px] text-muted/70">{tr('clear')}</button>}
       </div>
 
       {/* If nothing parsed, ask for the specifics we still need. */}
       {text.trim() !== '' && caught === 0 && (
         <p className="text-[12px] text-warn/90 bg-warn/10 rounded-xl px-3 py-2">
-          I couldn’t pick out the details yet: try including your <b>goal</b> (lose fat / build muscle / get stronger), your <b>age, height &amp; weight</b>, and <b>how many days a week</b> you can train.
+          {tr('I couldn’t pick out the details yet: try including your')} <b>{tr('goal')}</b> {tr('(lose fat / build muscle / get stronger), your')} <b>{tr('age, height & weight')}</b>{tr(', and')} <b>{tr('how many days a week')}</b> {tr('you can train.')}
         </p>
       )}
 
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Your name (optional)"
+        placeholder={tr('Your name (optional)')}
         className="w-full rounded-xl bg-surface border border-line px-4 py-3 text-sm"
       />
 
       {caught > 0 && (
         <div className="rounded-xl bg-surface-2 border border-line px-4 py-3 text-xs space-y-1">
-          <p className="text-muted">Caught {caught} thing{caught === 1 ? '' : 's'}. You can fix anything on the next screen:</p>
+          <p className="text-muted">{tr('Caught')} {caught} {tr('thing')}{caught === 1 ? '' : 's'}{tr('. You can fix anything on the next screen:')}</p>
           <div className="flex flex-wrap gap-1.5 pt-1">
-            {parsed.goal && <Chip>goal: {parsed.goal}</Chip>}
+            {parsed.goal && <Chip>{tr('goal:')} {parsed.goal}</Chip>}
             {parsed.experience && <Chip>{parsed.experience}</Chip>}
-            {parsed.age !== undefined && <Chip>{parsed.age} yrs</Chip>}
+            {parsed.age !== undefined && <Chip>{parsed.age} {tr('yrs')}</Chip>}
             {parsed.heightCm !== undefined && <Chip>{parsed.heightCm} cm</Chip>}
             {parsed.weightKg !== undefined && <Chip>{parsed.weightKg} kg</Chip>}
             {parsed.sex && <Chip>{parsed.sex}</Chip>}
-            {parsed.daysPerWeek !== undefined && <Chip>{parsed.daysPerWeek} days/wk</Chip>}
+            {parsed.daysPerWeek !== undefined && <Chip>{parsed.daysPerWeek} {tr('days/wk')}</Chip>}
             {parsed.style && <Chip>{parsed.style}</Chip>}
             {parsed.constraints.map((c) => <Chip key={c}>⚠ {c}</Chip>)}
           </div>
@@ -728,13 +729,13 @@ function ManualIntro({
       )}
 
       <div className="flex items-center gap-2 pt-1">
-        <Button variant="outline" onClick={onBack}>← Quiz</Button>
+        <Button variant="outline" onClick={onBack}>{tr('← Quiz')}</Button>
         <Button className="flex-1 justify-center" onClick={() => onManual(parsed, text)}>
-          {caught > 0 ? 'Use this →' : 'Continue →'}
+          {caught > 0 ? tr('Use this →') : tr('Continue →')}
         </Button>
       </div>
       <button onClick={onSkip} className="w-full text-center text-[11px] text-muted/70">
-        Skip, I’ll just use the sliders
+        {tr('Skip, I’ll just use the sliders')}
       </button>
     </motion.div>
   );
@@ -812,13 +813,14 @@ function MiniStat({ label, value }: { label: string; value: string }) {
 }
 
 function PlanPreview({ days, style, goal, noWeekends }: { days: number; style: string; goal: Goal; noWeekends?: boolean }) {
+  const t = useT();
   const plan = useMemo(() => buildWeekPlan(days, style, goal, { noWeekends, includeCardio: true }), [days, style, goal, noWeekends]);
   return (
     <div className="grid grid-cols-7 gap-1">
       {plan.days.map((d) => (
         <div key={d.day} className={`rounded-lg p-2 text-center ${d.rest ? 'bg-surface' : 'bg-accent/15'}`}>
           <p className="text-[10px] text-muted">{d.day}</p>
-          <p className="text-[10px] font-semibold mt-1 leading-tight">{d.rest ? 'Rest' : d.label}</p>
+          <p className="text-[10px] font-semibold mt-1 leading-tight">{d.rest ? t('Rest') : d.label}</p>
         </div>
       ))}
     </div>

@@ -1,3 +1,4 @@
+import { useT } from '../../lib/i18n';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { Activity, Dumbbell, Move } from 'lucide-react';
@@ -39,6 +40,7 @@ const ITEMS = [
 ] as const;
 
 export function FitnessTest({ onComplete }: { onComplete: (score: number, level: ExperienceLevel) => void }) {
+  const t = useT();
   const [answers, setAnswers] = useState<Record<string, number>>({});
   const done = Object.keys(answers).length === ITEMS.length;
 
@@ -52,8 +54,8 @@ export function FitnessTest({ onComplete }: { onComplete: (score: number, level:
 
   return (
     <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
-      <h2 className="text-2xl font-bold">Quick fitness test</h2>
-      <p className="text-sm text-muted">Four honest answers: we estimate your level and body-fat range. No equipment needed.</p>
+      <h2 className="text-2xl font-bold">{t('Quick fitness test')}</h2>
+      <p className="text-sm text-muted">{t('Four honest answers: we estimate your level and body-fat range. No equipment needed.')}</p>
       {ITEMS.map((it) => {
         const Icon = it.icon;
         return (
@@ -80,7 +82,7 @@ export function FitnessTest({ onComplete }: { onComplete: (score: number, level:
         );
       })}
       <Button className="w-full justify-center" disabled={!done} onClick={finish}>
-        Score my test
+        {t('Score my test')}
       </Button>
     </motion.div>
   );

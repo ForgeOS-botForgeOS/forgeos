@@ -176,7 +176,7 @@ export default function Nutrition() {
       {/* No `capture` attribute → the native picker offers Camera *and* Photo Library. */}
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
 
-      <div className="flex gap-2" role="tablist" aria-label="Food">
+      <div className="flex gap-2" role="tablist" aria-label={t('Food')}>
         <Pill active={tab === 'log'} onClick={() => setTab('log')}>{t('Today')}</Pill>
         <Pill active={tab === 'info'} onClick={() => setTab('info')}>{t('Trends')}</Pill>
       </div>
@@ -191,9 +191,9 @@ export default function Nutrition() {
         <Card className="border-warn/50 flex gap-3 items-start">
           <Moon size={18} className="text-warn mt-0.5 shrink-0" />
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted">Short night ({Math.floor(shortNight / 60)}h {String(shortNight % 60).padStart(2, '0')}m)</p>
-            <p className="text-sm mt-1">Aim for <b>+20 g protein</b> and extra water today: poor sleep raises muscle breakdown and fake hunger.</p>
-            <p className="text-[11px] text-muted mt-1">Go easy on the sugar; cravings hit harder on low sleep.</p>
+            <p className="text-xs uppercase tracking-wide text-muted">{t('Short night (')}{Math.floor(shortNight / 60)}h {String(shortNight % 60).padStart(2, '0')}m)</p>
+            <p className="text-sm mt-1">{t('Aim for')} <b>{t('+20 g protein')}</b> {t('and extra water today: poor sleep raises muscle breakdown and fake hunger.')}</p>
+            <p className="text-[11px] text-muted mt-1">{t('Go easy on the sugar; cravings hit harder on low sleep.')}</p>
           </div>
         </Card>
       )}
@@ -220,30 +220,30 @@ export default function Nutrition() {
       <>
       <Card className="space-y-3">
         <div className="flex items-center justify-between">
-          <SectionTitle>AI macro scanner</SectionTitle>
-          {visionIsLive ? <Badge color="rgb(var(--success))">Live</Badge> : <Badge color="rgb(var(--warn))">Mock</Badge>}
+          <SectionTitle>{t('AI macro scanner')}</SectionTitle>
+          {visionIsLive ? <Badge color="rgb(var(--success))">{t('Live')}</Badge> : <Badge color="rgb(var(--warn))">{t('Mock')}</Badge>}
         </div>
         <Button className="w-full justify-center" disabled={scanning} onClick={() => fileRef.current?.click()}>
           <span className="flex items-center gap-2">
             {scanning ? <Sparkles size={16} className="animate-pulse" /> : <Camera size={16} />}
-            {scanning ? 'Analysing photo…' : 'Scan a meal photo'}
+            {scanning ? t('Analysing photo…') : t('Scan a meal photo')}
           </span>
         </Button>
         <DescribeFood value={desc} onChange={setDesc} busy={describing || scanning} onUse={() => void logFromDescription()} />
         <Button variant="ghost" className="w-full justify-center" onClick={() => setBarcodeOpen(true)}>
-          <span className="flex items-center gap-2"><Barcode size={16} /> Scan a barcode (exact macros)</span>
+          <span className="flex items-center gap-2"><Barcode size={16} /> {t('Scan a barcode (exact macros)')}</span>
         </Button>
-        <p className="text-[11px] text-muted/70">Barcode = exact macros (Open Food Facts). Photo = AI estimate you can edit.</p>
+        <p className="text-[11px] text-muted/70">{t('Barcode = exact macros (Open Food Facts). Photo = AI estimate you can edit.')}</p>
       </Card>
 
       {/* Today's totals */}
       <Card>
-        <SectionTitle>Today</SectionTitle>
+        <SectionTitle>{t('Today')}</SectionTitle>
         <div className="grid grid-cols-4 gap-2 text-center">
           <Tot label="kcal" value={Math.round(totals.calories)} target={macros.calories} />
-          <Tot label="protein" value={Math.round(totals.proteinG)} target={macros.proteinG} />
-          <Tot label="carbs" value={Math.round(totals.carbsG)} target={macros.carbsG} />
-          <Tot label="fat" value={Math.round(totals.fatG)} target={macros.fatG} />
+          <Tot label={t('protein')} value={Math.round(totals.proteinG)} target={macros.proteinG} />
+          <Tot label={t('carbs')} value={Math.round(totals.carbsG)} target={macros.carbsG} />
+          <Tot label={t('fat')} value={Math.round(totals.fatG)} target={macros.fatG} />
         </div>
       </Card>
       </>
@@ -262,11 +262,11 @@ export default function Nutrition() {
             {log.map((f) => (
               <Card key={f.id} className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium flex items-center gap-2">{f.name} {f.source === 'scan' && <Badge color="rgb(var(--accent-2))">scan</Badge>}</p>
-                  <p className="text-xs text-muted">{f.calories} kcal · {t('P')} {f.proteinG} · {t('C')} {f.carbsG} · {t('F')} {f.fatG} g</p>
+                  <p className="text-sm font-medium flex items-center gap-2">{f.name} {f.source === 'scan' && <Badge color="rgb(var(--accent-2))">{t('scan')}</Badge>}</p>
+                  <p className="text-xs text-muted">{f.calories} {t('kcal ·')} {t('P')} {f.proteinG} · {t('C')} {f.carbsG} · {t('F')} {f.fatG} g</p>
                 </div>
                 <div className="flex items-center shrink-0 -mr-2">
-                  <button onClick={() => { saveMeal({ name: f.name, calories: f.calories, proteinG: f.proteinG, carbsG: f.carbsG, fatG: f.fatG, sugarG: f.sugarG }); haptic('success'); toast(`Saved ${f.name} for quick-add ⭐`); }} title="Save for quick-add" aria-label={`Save ${f.name} for quick-add`} className="grid place-items-center w-10 h-10 text-muted"><Star size={16} /></button>
+                  <button onClick={() => { saveMeal({ name: f.name, calories: f.calories, proteinG: f.proteinG, carbsG: f.carbsG, fatG: f.fatG, sugarG: f.sugarG }); haptic('success'); toast(`Saved ${f.name} for quick-add ⭐`); }} title={t('Save for quick-add')} aria-label={`Save ${f.name} for quick-add`} className="grid place-items-center w-10 h-10 text-muted"><Star size={16} /></button>
                   <button onClick={() => removeEntry(f.id)} aria-label={`Delete ${f.name}`} className="grid place-items-center w-10 h-10 text-muted"><Trash2 size={16} /></button>
                 </div>
               </Card>
@@ -283,7 +283,7 @@ export default function Nutrition() {
             {savedMeals.map((m) => (
               <button key={m.id} onClick={() => { addEntry({ name: m.name, calories: m.calories, proteinG: m.proteinG, carbsG: m.carbsG, fatG: m.fatG, sugarG: m.sugarG, source: 'manual' }); haptic('success'); toast(`Added ${m.name} · ${m.calories} kcal`); }} className="shrink-0 rounded-xl bg-surface-2 px-3 py-2 text-left min-h-[48px]">
                 <p className="text-sm font-medium">{m.name}</p>
-                <p className="text-xs text-muted">{m.calories} kcal · P{m.proteinG}</p>
+                <p className="text-xs text-muted">{m.calories} {t('kcal · P')}{m.proteinG}</p>
               </button>
             ))}
           </div>
@@ -298,8 +298,8 @@ export default function Nutrition() {
         </div>
         <div className="h-2 rounded-full bg-surface-2 overflow-hidden"><div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, (water / waterGoal) * 100)}%`, background: 'rgb(var(--water))' }} /></div>
         <div className="flex gap-2">
-          <Button variant="ghost" className="flex-1 justify-center py-2.5" onClick={() => { const hit = water < waterGoal && water + 250 >= waterGoal; addWater(250); if (hit) { celebrate(); toast('Hydration goal hit 💧'); } else haptic('tap'); }}>+250 ml</Button>
-          <Button variant="ghost" className="flex-1 justify-center py-2.5" onClick={() => { const hit = water < waterGoal && water + 500 >= waterGoal; addWater(500); if (hit) { celebrate(); toast('Hydration goal hit 💧'); } else haptic('tap'); }}>+500 ml</Button>
+          <Button variant="ghost" className="flex-1 justify-center py-2.5" onClick={() => { const hit = water < waterGoal && water + 250 >= waterGoal; addWater(250); if (hit) { celebrate(); toast(t('Hydration goal hit 💧')); } else haptic('tap'); }}>+250 ml</Button>
+          <Button variant="ghost" className="flex-1 justify-center py-2.5" onClick={() => { const hit = water < waterGoal && water + 500 >= waterGoal; addWater(500); if (hit) { celebrate(); toast(t('Hydration goal hit 💧')); } else haptic('tap'); }}>+500 ml</Button>
           <Button variant="ghost" className="justify-center py-2.5 px-5" aria-label={t('Remove 250 ml')} onClick={() => addWater(-250)}>−</Button>
         </div>
       </Card>
@@ -321,7 +321,7 @@ export default function Nutrition() {
 
       {!v2 && (
         <div className="flex gap-2">
-          <Button variant="ghost" className="flex-1 justify-center" onClick={() => setManualOpen(true)}>+ Manual entry</Button>
+          <Button variant="ghost" className="flex-1 justify-center" onClick={() => setManualOpen(true)}>{t('+ Manual entry')}</Button>
           {!simple && <Button variant="ghost" className="justify-center" onClick={() => setRecompOpen(true)}><Calculator size={16} /></Button>}
         </div>
       )}
@@ -330,11 +330,11 @@ export default function Nutrition() {
       )}
 
       {/* Scan review — per-item, editable, toggleable, learns your edits */}
-      <Sheet open={!!items} onClose={() => setItems(null)} title="Review scan">
+      <Sheet open={!!items} onClose={() => setItems(null)} title={t('Review scan')}>
         {items && (
           <div className="space-y-3">
             {scanNote && <p className="text-xs text-accent-2 bg-accent-2/10 rounded-lg px-3 py-2">{scanNote}</p>}
-            <p className="text-[11px] text-muted">Tick the items to log and tweak anything: your edits are remembered for next time.</p>
+            <p className="text-[11px] text-muted">{t('Tick the items to log and tweak anything: your edits are remembered for next time.')}</p>
             <div className="space-y-2 max-h-[52vh] overflow-y-auto no-scrollbar">
               {items.map((it, idx) => {
                 const on = selected.has(idx);
@@ -349,11 +349,11 @@ export default function Nutrition() {
                       <MiniNum label="P" v={it.proteinG} onChange={(v) => patchItem(idx, { proteinG: v })} />
                       <MiniNum label="C" v={it.carbsG} onChange={(v) => patchItem(idx, { carbsG: v })} />
                       <MiniNum label="F" v={it.fatG} onChange={(v) => patchItem(idx, { fatG: v })} />
-                      <MiniNum label="sug" v={it.sugarG} onChange={(v) => patchItem(idx, { sugarG: v })} />
+                      <MiniNum label={t('sug')} v={it.sugarG} onChange={(v) => patchItem(idx, { sugarG: v })} />
                     </div>
                     {on && (
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] text-muted">Portion</span>
+                        <span className="text-[10px] text-muted">{t('Portion')}</span>
                         <div className="flex gap-1">
                           <button onClick={() => scaleItem(idx, 0.9)} className="rounded-md bg-surface px-2 py-1 text-[11px] font-medium">−10%</button>
                           <button onClick={() => scaleItem(idx, 0.5)} className="rounded-md bg-surface px-2 py-1 text-[11px] font-medium">½×</button>
@@ -366,8 +366,8 @@ export default function Nutrition() {
                 );
               })}
             </div>
-            <p className="text-xs text-muted text-center">Selected total: {items.filter((_, i) => selected.has(i)).reduce((a, b) => a + b.calories, 0)} kcal</p>
-            <Button className="w-full justify-center" disabled={selected.size === 0} onClick={addSelected}>Add {selected.size} item{selected.size === 1 ? '' : 's'} to log</Button>
+            <p className="text-xs text-muted text-center">{t('Selected total:')} {items.filter((_, i) => selected.has(i)).reduce((a, b) => a + b.calories, 0)} kcal</p>
+            <Button className="w-full justify-center" disabled={selected.size === 0} onClick={addSelected}>{t('Add')} {selected.size} {t('item')}{selected.size === 1 ? '' : 's'} {t('to log')}</Button>
           </div>
         )}
       </Sheet>
@@ -478,22 +478,23 @@ function MiniNum({ label, v, onChange }: { label: string; v: number; onChange: (
 }
 
 function ManualEntry({ open, onClose, onAdd }: { open: boolean; onClose: () => void; onAdd: (e: { name: string; calories: number; proteinG: number; carbsG: number; fatG: number; sugarG: number }) => void }) {
+  const t = useT();
   const [name, setName] = useState('');
   const [c, setC] = useState(0);
   const [p, setP] = useState(0);
   const [cb, setCb] = useState(0);
   const [f, setF] = useState(0);
   return (
-    <Sheet open={open} onClose={onClose} title="Manual entry">
+    <Sheet open={open} onClose={onClose} title={t('Manual entry')}>
       <div className="space-y-3">
-        <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Food name" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+        <input value={name} onChange={(e) => setName(e.target.value)} placeholder={t('Food name')} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
         <div className="grid grid-cols-2 gap-2">
-          <Num label="Calories" v={c} set={setC} />
-          <Num label="Protein g" v={p} set={setP} />
-          <Num label="Carbs g" v={cb} set={setCb} />
-          <Num label="Fat g" v={f} set={setF} />
+          <Num label={t('Calories')} v={c} set={setC} />
+          <Num label={t('Protein g')} v={p} set={setP} />
+          <Num label={t('Carbs g')} v={cb} set={setCb} />
+          <Num label={t('Fat g')} v={f} set={setF} />
         </div>
-        <Button className="w-full justify-center" disabled={!name} onClick={() => onAdd({ name, calories: c, proteinG: p, carbsG: cb, fatG: f, sugarG: 0 })}>Add</Button>
+        <Button className="w-full justify-center" disabled={!name} onClick={() => onAdd({ name, calories: c, proteinG: p, carbsG: cb, fatG: f, sugarG: 0 })}>{t('Add')}</Button>
       </div>
     </Sheet>
   );
@@ -509,6 +510,7 @@ function Num({ label, v, set }: { label: string; v: number; set: (n: number) => 
 }
 
 function RecompCalc({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
   const profile = useUser((s) => s.profile);
   const weight = profile?.weightKg ?? 80;
   const [bf, setBf] = useState(profile?.bodyFatPct ?? 18);
@@ -522,19 +524,19 @@ function RecompCalc({ open, onClose }: { open: boolean; onClose: () => void }) {
   const restCals = Math.round(base * (1 - trainAdj / 100));
 
   return (
-    <Sheet open={open} onClose={onClose} title="Recomp calculator">
+    <Sheet open={open} onClose={onClose} title={t('Recomp calculator')}>
       <div className="space-y-4">
         <Slider label={`Body fat: ${bf}%`} min={5} max={45} step={1} value={bf} onChange={setBf} />
         <Slider label={`Protein: ${proteinPerKg.toFixed(1)} g/kg`} min={1.4} max={2.8} step={0.1} value={proteinPerKg} onChange={setProteinPerKg} />
         <Slider label={`Calorie cycling: ±${trainAdj}%`} min={0} max={25} step={1} value={trainAdj} onChange={setTrainAdj} />
         <div className="grid grid-cols-3 gap-2 text-center">
-          <RC label="LBM" v={`${lbm} kg`} />
-          <RC label="Protein" v={`${proteinG} g`} />
-          <RC label="Base" v={`${base}`} />
+          <RC label={t('LBM')} v={`${lbm} kg`} />
+          <RC label={t('Protein')} v={`${proteinG} g`} />
+          <RC label={t('Base')} v={`${base}`} />
         </div>
         <div className="grid grid-cols-2 gap-2 text-center">
-          <div className="rounded-xl bg-accent/15 py-3"><p className="text-xs text-muted">Training day</p><p className="font-mono font-bold">{trainingCals} kcal</p></div>
-          <div className="rounded-xl bg-surface-2 py-3"><p className="text-xs text-muted">Rest day</p><p className="font-mono font-bold">{restCals} kcal</p></div>
+          <div className="rounded-xl bg-accent/15 py-3"><p className="text-xs text-muted">{t('Training day')}</p><p className="font-mono font-bold">{trainingCals} kcal</p></div>
+          <div className="rounded-xl bg-surface-2 py-3"><p className="text-xs text-muted">{t('Rest day')}</p><p className="font-mono font-bold">{restCals} kcal</p></div>
         </div>
       </div>
     </Sheet>

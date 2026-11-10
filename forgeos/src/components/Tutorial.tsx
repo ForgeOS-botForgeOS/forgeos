@@ -49,6 +49,7 @@ const TOURS: Record<TourId, { slides: typeof MAIN_SLIDES; done: string }> = {
 };
 
 export function Tutorial() {
+  const t = useT();
   const apprentice = useSettings((s) => s.apprentice);
   const [phase, setPhase] = useState<'closed' | 'ask' | 'tour'>('closed');
   const [tour, setTour] = useState<TourId>('main');
@@ -79,11 +80,11 @@ export function Tutorial() {
       <Overlay>
         <div className="text-center space-y-3">
           <Flame className="mx-auto text-accent" size={32} />
-          <h3 className="text-lg font-bold">New here?</h3>
-          <p className="text-sm text-muted">Want a quick 30-second tour of what ForgeOS can do?</p>
+          <h3 className="text-lg font-bold">{t('New here?')}</h3>
+          <p className="text-sm text-muted">{t('Want a quick 30-second tour of what ForgeOS can do?')}</p>
           <div className="flex gap-2 pt-1">
-            <Button variant="outline" className="flex-1 justify-center" onClick={finish}>Skip</Button>
-            <Button className="flex-1 justify-center" onClick={() => { setI(0); setPhase('tour'); }}>Show me</Button>
+            <Button variant="outline" className="flex-1 justify-center" onClick={finish}>{t('Skip')}</Button>
+            <Button className="flex-1 justify-center" onClick={() => { setI(0); setPhase('tour'); }}>{t('Show me')}</Button>
           </div>
           {/* The offer that matters more than the tour: a tour is forgotten by
               the second screen, a smaller app is still smaller tomorrow. */}
@@ -101,7 +102,7 @@ export function Tutorial() {
   const last = i === slides.length - 1;
   return (
     <Overlay>
-      <button aria-label="Close the tour" className="absolute top-3 right-3 text-muted" onClick={finish}><X size={18} /></button>
+      <button aria-label={t('Close the tour')} className="absolute top-3 right-3 text-muted" onClick={finish}><X size={18} /></button>
       <div className="text-center space-y-3">
         <div className="mx-auto w-14 h-14 rounded-2xl bg-accent/15 flex items-center justify-center"><Icon className="text-accent" size={26} /></div>
         <h3 className="text-lg font-bold">{s.title}</h3>
@@ -110,8 +111,8 @@ export function Tutorial() {
           {slides.map((_, idx) => <span key={idx} className={`h-1.5 rounded-full transition-all ${idx === i ? 'w-5 bg-accent' : 'w-1.5 bg-surface-2'}`} />)}
         </div>
         <div className="flex gap-2 pt-1">
-          {i > 0 && <Button variant="outline" className="flex-1 justify-center" onClick={() => setI(i - 1)}>Back</Button>}
-          <Button className="flex-1 justify-center" onClick={() => (last ? finish() : setI(i + 1))}>{last ? done : 'Next'}</Button>
+          {i > 0 && <Button variant="outline" className="flex-1 justify-center" onClick={() => setI(i - 1)}>{t('Back')}</Button>}
+          <Button className="flex-1 justify-center" onClick={() => (last ? finish() : setI(i + 1))}>{last ? done : t('Next')}</Button>
         </div>
       </div>
     </Overlay>
@@ -139,10 +140,11 @@ function StartSimple({ onChosen }: { onChosen: () => void }) {
 }
 
 function Overlay({ children }: { children: React.ReactNode }) {
+  const t = useT();
   return (
     <div className="absolute inset-0 z-[75] flex items-center justify-center p-6">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
-      <motion.div role="dialog" aria-modal="true" aria-label="App tour" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="fx-card relative w-full rounded-2xl bg-surface border border-line p-6">
+      <motion.div role="dialog" aria-modal="true" aria-label={t('App tour')} initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="fx-card relative w-full rounded-2xl bg-surface border border-line p-6">
         {children}
       </motion.div>
     </div>

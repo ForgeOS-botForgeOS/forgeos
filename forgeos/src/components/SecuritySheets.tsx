@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 import { Eye, EyeOff, Loader2, Check, KeyRound, ShieldCheck } from 'lucide-react';
 import { Sheet, Button } from './ui';
@@ -17,6 +18,7 @@ function strength(pw: string): { score: 0 | 1 | 2 | 3; label: string } {
 
 /** Polished account-password change — replaces the old prompt()/alert() flow. */
 export function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const t = useT();
   const [pw, setPw] = useState('');
   const [confirm, setConfirm] = useState('');
   const [show, setShow] = useState(false);
@@ -62,29 +64,29 @@ export function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose:
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title="Change password">
+    <Sheet open={open} onClose={onClose} title={t('Change password')}>
       {done ? (
         <div className="flex flex-col items-center gap-3 py-6 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/15">
             <ShieldCheck className="text-accent" size={30} />
           </div>
-          <p className="font-semibold">Password updated</p>
-          <p className="text-xs text-muted">You’ll use your new password next time you log in.</p>
+          <p className="font-semibold">{t('Password updated')}</p>
+          <p className="text-xs text-muted">{t('You’ll use your new password next time you log in.')}</p>
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-xs text-muted">Choose a new password for your account. Minimum 6 characters.</p>
+          <p className="text-xs text-muted">{t('Choose a new password for your account. Minimum 6 characters.')}</p>
 
           <div className="relative">
             <input
               type={show ? 'text' : 'password'}
               value={pw}
               onChange={(e) => setPw(e.target.value)}
-              placeholder="New password"
+              placeholder={t('New password')}
               autoComplete="new-password"
               className={field}
             />
-            <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide' : 'Show'} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text">
+            <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? t('Hide') : t('Show')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text">
               {show ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
@@ -105,17 +107,17 @@ export function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose:
             type={show ? 'text' : 'password'}
             value={confirm}
             onChange={(e) => setConfirm(e.target.value)}
-            placeholder="Confirm new password"
+            placeholder={t('Confirm new password')}
             autoComplete="new-password"
             className={field}
           />
 
-          {tooShort && <p className="text-[11px] text-danger">Use at least 6 characters.</p>}
-          {mismatch && <p className="text-[11px] text-danger">Passwords don’t match.</p>}
+          {tooShort && <p className="text-[11px] text-danger">{t('Use at least 6 characters.')}</p>}
+          {mismatch && <p className="text-[11px] text-danger">{t('Passwords don’t match.')}</p>}
           {err && <p className="text-xs text-danger">{err}</p>}
 
           <Button className="w-full justify-center gap-2" disabled={!valid || busy} onClick={submit}>
-            {busy ? <><Loader2 size={16} className="animate-spin" /> Updating…</> : <><KeyRound size={16} /> Update password</>}
+            {busy ? <><Loader2 size={16} className="animate-spin" /> {t('Updating…')}</> : <><KeyRound size={16} /> {t('Update password')}</>}
           </Button>
         </div>
       )}
@@ -125,6 +127,7 @@ export function ChangePasswordSheet({ open, onClose }: { open: boolean; onClose:
 
 /** Polished numeric passcode set/change — replaces prompt()/alert(). */
 export function PasscodeSheet({ open, mode, onClose, onSave }: { open: boolean; mode: 'set' | 'change'; onClose: () => void; onSave: (code: string) => void }) {
+  const t = useT();
   const [code, setCode] = useState('');
   const [confirm, setConfirm] = useState('');
   const [show, setShow] = useState(false);
@@ -148,25 +151,25 @@ export function PasscodeSheet({ open, mode, onClose, onSave }: { open: boolean; 
   }
 
   return (
-    <Sheet open={open} onClose={onClose} title={mode === 'set' ? 'Set passcode' : 'Change passcode'}>
+    <Sheet open={open} onClose={onClose} title={mode === 'set' ? t('Set passcode') : t('Change passcode')}>
       {done ? (
         <div className="flex flex-col items-center gap-3 py-6 text-center">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent/15"><ShieldCheck className="text-accent" size={30} /></div>
-          <p className="font-semibold">Passcode {mode === 'set' ? 'set' : 'updated'}</p>
+          <p className="font-semibold">{t('Passcode')} {mode === 'set' ? 'set' : 'updated'}</p>
         </div>
       ) : (
         <div className="space-y-3">
-          <p className="text-xs text-muted">A 4–8 digit code, asked for each time the app launches.</p>
+          <p className="text-xs text-muted">{t('A 4–8 digit code, asked for each time the app launches.')}</p>
           <div className="relative">
             <input
               type={show ? 'text' : 'password'}
               inputMode="numeric"
               value={code}
               onChange={(e) => setCode(onlyDigits(e.target.value))}
-              placeholder="New passcode"
+              placeholder={t('New passcode')}
               className={`${field} tracking-[0.4em]`}
             />
-            <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? 'Hide' : 'Show'} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text">
+            <button type="button" onClick={() => setShow((v) => !v)} aria-label={show ? t('Hide') : t('Show')} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted hover:text-text">
               {show ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
@@ -175,13 +178,13 @@ export function PasscodeSheet({ open, mode, onClose, onSave }: { open: boolean; 
             inputMode="numeric"
             value={confirm}
             onChange={(e) => setConfirm(onlyDigits(e.target.value))}
-            placeholder="Confirm passcode"
+            placeholder={t('Confirm passcode')}
             className={`${field} tracking-[0.4em]`}
           />
-          {tooShort && <p className="text-[11px] text-danger">Use 4–8 digits.</p>}
-          {mismatch && <p className="text-[11px] text-danger">Codes don’t match.</p>}
+          {tooShort && <p className="text-[11px] text-danger">{t('Use 4–8 digits.')}</p>}
+          {mismatch && <p className="text-[11px] text-danger">{t('Codes don’t match.')}</p>}
           <Button className="w-full justify-center gap-2" disabled={!valid} onClick={submit}>
-            <Check size={16} /> {mode === 'set' ? 'Set passcode' : 'Update passcode'}
+            <Check size={16} /> {mode === 'set' ? t('Set passcode') : t('Update passcode')}
           </Button>
         </div>
       )}

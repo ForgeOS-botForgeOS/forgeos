@@ -1,4 +1,4 @@
-import { useLocale } from '../lib/i18n';
+import { useLocale, useT } from '../lib/i18n';
 import { shortDate } from '../lib/shortDate';
 import { useMemo, useState } from 'react';
 import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Area } from 'recharts';
@@ -11,6 +11,7 @@ import { haptic } from '../lib/haptics';
 import { toast } from '../lib/toast';
 
 export function WeighInTracker() {
+  const t = useT();
   const locale = useLocale();
   const ck = useChartKit();
   const weighIns = useUser((s) => s.weighIns);
@@ -62,7 +63,7 @@ export function WeighInTracker() {
             </ComposedChart>
           </ResponsiveContainer>
         ) : (
-          <div className="h-full flex items-center justify-center text-sm text-muted">Log a weigh-in to see your trend.</div>
+          <div className="h-full flex items-center justify-center text-sm text-muted">{t('Log a weigh-in to see your trend.')}</div>
         )}
       </div>
 
@@ -71,31 +72,31 @@ export function WeighInTracker() {
         <p className="text-[11px] text-muted flex items-center gap-1.5">
           {trend.ratePerWeek < 0 ? <TrendingDown size={12} className="text-success" /> : <TrendingUp size={12} className="text-accent-2" />}
           {Math.abs(trend.ratePerWeek) < 0.05
-            ? 'Holding steady'
+            ? t('Holding steady')
             : `${trend.ratePerWeek > 0 ? '+' : ''}${trend.ratePerWeek.toFixed(2)} kg/week`}
-          {goalKg !== undefined && trend.etaWeeks === 0 && <span>· at your goal 🎉</span>}
+          {goalKg !== undefined && trend.etaWeeks === 0 && <span>{t('· at your goal 🎉')}</span>}
           {goalKg !== undefined && trend.etaDate && trend.etaWeeks !== null && trend.etaWeeks > 0 && (
-            <span>· {goalKg} kg around {new Date(trend.etaDate + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
+            <span>· {goalKg} {t('kg around')} {new Date(trend.etaDate + 'T12:00:00').toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</span>
           )}
-          {goalKg !== undefined && !trend.etaDate && trend.etaWeeks !== 0 && <span>· not moving toward {goalKg} kg yet</span>}
+          {goalKg !== undefined && !trend.etaDate && trend.etaWeeks !== 0 && <span>{t('· not moving toward')} {goalKg} {t('kg yet')}</span>}
         </p>
       )}
       {staleDays !== null && staleDays >= 7 && (
-        <p className="text-[11px] text-muted">Last weigh-in {staleDays} days ago: hop on the scale 📈</p>
+        <p className="text-[11px] text-muted">{t('Last weigh-in')} {staleDays} {t('days ago: hop on the scale 📈')}</p>
       )}
 
       {/* Goal weight row */}
       {editGoal ? (
         <div className="flex items-center gap-2">
           <button className="rounded-lg bg-surface-2 w-9 h-9 text-lg" onClick={() => setGoalDraft((v) => Math.round((v - 0.5) * 10) / 10)}>−</button>
-          <span className="font-mono font-bold flex-1 text-center">{goalDraft.toFixed(1)} kg goal</span>
+          <span className="font-mono font-bold flex-1 text-center">{goalDraft.toFixed(1)} {t('kg goal')}</span>
           <button className="rounded-lg bg-surface-2 w-9 h-9 text-lg" onClick={() => setGoalDraft((v) => Math.round((v + 0.5) * 10) / 10)}>+</button>
-          <Button onClick={saveGoal}>Set</Button>
+          <Button onClick={saveGoal}>{t('Set')}</Button>
         </div>
       ) : (
         <button onClick={() => { setGoalDraft(goalKg ?? profile?.weightKg ?? 80); setEditGoal(true); }} className="flex items-center gap-1.5 text-[11px] text-accent-2">
           <Target size={12} />
-          {goalKg !== undefined ? `Goal: ${goalKg} kg · change` : 'Set a goal weight'}
+          {goalKg !== undefined ? `Goal: ${goalKg} kg · change` : t('Set a goal weight')}
         </button>
       )}
 
@@ -103,7 +104,7 @@ export function WeighInTracker() {
         <button className="rounded-lg bg-surface-2 w-9 h-9 text-lg" onClick={() => setVal((v) => Math.round((v - 0.1) * 10) / 10)}>−</button>
         <span className="font-mono font-bold flex-1 text-center">{val.toFixed(1)} kg</span>
         <button className="rounded-lg bg-surface-2 w-9 h-9 text-lg" onClick={() => setVal((v) => Math.round((v + 0.1) * 10) / 10)}>+</button>
-        <Button onClick={() => { addWeighIn(val); haptic('success'); }}>Log</Button>
+        <Button onClick={() => { addWeighIn(val); haptic('success'); }}>{t('Log')}</Button>
       </div>
     </Card>
   );

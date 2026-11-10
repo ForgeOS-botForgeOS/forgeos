@@ -1,8 +1,10 @@
+import { useT } from '../lib/i18n';
 import { useMemo } from 'react';
 import { useWorkout } from '../state/workoutStore';
 
 // Volume/intensity heatmap: last ~17 weeks, darker = more daily volume.
 export function Heatmap() {
+  const t = useT();
   const history = useWorkout((s) => s.history);
 
   const { cells, max } = useMemo(() => {
@@ -37,12 +39,12 @@ export function Heatmap() {
         })}
       </div>
       <div className="flex items-center gap-1 text-[10px] text-muted">
-        <span>less</span>
+        <span>{t('less')}</span>
         <div className="w-3 h-3 rounded-sm" style={{ background: 'rgb(var(--surface-2))' }} />
         <div className="w-3 h-3 rounded-sm" style={{ background: 'rgb(var(--accent) / 0.4)' }} />
         <div className="w-3 h-3 rounded-sm" style={{ background: 'rgb(var(--accent) / 0.7)' }} />
         <div className="w-3 h-3 rounded-sm" style={{ background: 'rgb(var(--accent))' }} />
-        <span>more</span>
+        <span>{t('more')}</span>
       </div>
     </div>
   );

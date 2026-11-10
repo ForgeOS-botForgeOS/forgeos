@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useMemo } from 'react';
 import { Card, SectionTitle } from './ui';
 import type { FoodEntry, MacroTargets, UserProfile } from '../types';
@@ -20,6 +21,7 @@ const weekday = (key: string) => new Date(`${key}T12:00:00Z`).toLocaleDateString
  * food log and the profile; nothing here is stored.
  */
 export function CalInfo({ log, today, macros, profile }: { log: readonly FoodEntry[]; today: string; macros: MacroTargets; profile: UserProfile | null }) {
+  const t = useT();
   const todays = useMemo(() => log.filter((e) => e.date.slice(0, 10) === today), [log, today]);
   const totals = useMemo(() => sumEntries(todays), [todays]);
   const left = remaining(totals, macros);
@@ -39,36 +41,36 @@ export function CalInfo({ log, today, macros, profile }: { log: readonly FoodEnt
     <div className="space-y-3">
       {/* Today: what is left, and where the calories came from */}
       <Card className="space-y-3">
-        <SectionTitle>Left today</SectionTitle>
+        <SectionTitle>{t('Left today')}</SectionTitle>
         <div className="grid grid-cols-4 gap-2 text-center">
           <Left label="kcal" v={left.calories} />
-          <Left label="protein" v={left.proteinG} unit="g" />
-          <Left label="carbs" v={left.carbsG} unit="g" />
-          <Left label="fat" v={left.fatG} unit="g" />
+          <Left label={t('protein')} v={left.proteinG} unit="g" />
+          <Left label={t('carbs')} v={left.carbsG} unit="g" />
+          <Left label={t('fat')} v={left.fatG} unit="g" />
         </div>
         <div>
-          <p className="text-[11px] text-muted mb-1">Where today's calories came from (your target split in brackets)</p>
+          <p className="text-[11px] text-muted mb-1">{t('Where today\'s calories came from (your target split in brackets)')}</p>
           <div className="flex h-2.5 rounded-full overflow-hidden bg-surface-2" aria-hidden>
             <div className="bg-accent" style={{ width: `${split.protein}%` }} />
             <div className="bg-accent-2" style={{ width: `${split.carbs}%` }} />
             <div className="bg-text/50" style={{ width: `${split.fat}%` }} />
           </div>
           <div className="flex justify-between text-[11px] mt-1">
-            <span><span className="text-accent">●</span> Protein {split.protein}% <span className="text-muted">({targetSplit.protein}%)</span></span>
-            <span><span className="text-accent-2">●</span> Carbs {split.carbs}% <span className="text-muted">({targetSplit.carbs}%)</span></span>
-            <span><span className="text-text/50">●</span> Fat {split.fat}% <span className="text-muted">({targetSplit.fat}%)</span></span>
+            <span><span className="text-accent">●</span> {t('Protein')} {split.protein}% <span className="text-muted">({targetSplit.protein}%)</span></span>
+            <span><span className="text-accent-2">●</span> {t('Carbs')} {split.carbs}% <span className="text-muted">({targetSplit.carbs}%)</span></span>
+            <span><span className="text-text/50">●</span> {t('Fat')} {split.fat}% <span className="text-muted">({targetSplit.fat}%)</span></span>
           </div>
         </div>
         {weight > 0 && (
           <p className="text-xs text-muted">
-            Protein so far: <b className="text-text">{(totals.proteinG / weight).toFixed(1)} g per kg</b> of body weight (target {(macros.proteinG / weight).toFixed(1)} g/kg).
+            {t('Protein so far:')} <b className="text-text">{(totals.proteinG / weight).toFixed(1)} {t('g per kg')}</b> {t('of body weight (target')} {(macros.proteinG / weight).toFixed(1)} {t('g/kg).')}
           </p>
         )}
       </Card>
 
       {/* The last 7 days */}
       <Card className="space-y-2">
-        <SectionTitle>Last 7 days</SectionTitle>
+        <SectionTitle>{t('Last 7 days')}</SectionTitle>
         <div role="img" aria-label={`Calories for the last 7 days, average ${summary.avgCalories} kcal`}>
           <div className="relative flex items-end gap-1.5 h-20">
             {/* the goal, as one dashed line across every day */}
@@ -90,76 +92,76 @@ export function CalInfo({ log, today, macros, profile }: { log: readonly FoodEnt
           </div>
         </div>
         <div className="grid grid-cols-3 gap-2 text-center pt-1">
-          <Stat label="average / day" v={summary.daysLogged ? `${summary.avgCalories}` : '–'} />
-          <Stat label="days logged" v={`${summary.daysLogged}/7`} />
-          <Stat label="on target" v={`${summary.daysOnTarget}/7`} />
+          <Stat label={t('average / day')} v={summary.daysLogged ? `${summary.avgCalories}` : '–'} />
+          <Stat label={t('days logged')} v={`${summary.daysLogged}/7`} />
+          <Stat label={t('on target')} v={`${summary.daysOnTarget}/7`} />
         </div>
-        <p className="text-[11px] text-muted">Dashed line = your {macros.calories} kcal goal. Green = within 10% of it. The average only counts days you logged.</p>
+        <p className="text-[11px] text-muted">{t('Dashed line = your')} {macros.calories} {t('kcal goal. Green = within 10% of it. The average only counts days you logged.')}</p>
       </Card>
 
       {/* When and what */}
       {todays.length > 0 && (
         <Card className="space-y-2">
-          <SectionTitle>Today by meal</SectionTitle>
+          <SectionTitle>{t('Today by meal')}</SectionTitle>
           {(Object.keys(slots) as MealSlot[]).filter((k) => slots[k] > 0).map((k) => (
             <Row key={k} k={MEAL_SLOT_LABEL[k]} v={`${slots[k]} kcal`} />
           ))}
-          <p className="text-[11px] uppercase tracking-wide text-muted pt-2">Biggest sources</p>
+          <p className="text-[11px] uppercase tracking-wide text-muted pt-2">{t('Biggest sources')}</p>
           {top.map((s, i) => <Row key={i} k={s.name} v={`${s.calories} kcal · ${s.pct}%`} />)}
         </Card>
       )}
 
       {/* Sugar */}
       <Card className="space-y-1">
-        <SectionTitle>Sugar</SectionTitle>
+        <SectionTitle>{t('Sugar')}</SectionTitle>
         <p className="text-sm">
-          <b className={sugar.level === 'over' ? 'text-danger' : sugar.level === 'high' ? 'text-warn' : 'text-success'}>{Math.round(totals.sugarG)} g</b> today · WHO limit for your intake ≈ {sugar.limitG} g, ideally under {sugar.idealG} g.
+          <b className={sugar.level === 'over' ? 'text-danger' : sugar.level === 'high' ? 'text-warn' : 'text-success'}>{Math.round(totals.sugarG)} g</b> {t('today · WHO limit for your intake ≈')} {sugar.limitG} {t('g, ideally under')} {sugar.idealG} g.
         </p>
-        <p className="text-[11px] text-muted">The log counts all sugar, fruit and milk included. The WHO limit is for added sugar, so you are probably under this number.</p>
+        <p className="text-[11px] text-muted">{t('The log counts all sugar, fruit and milk included. The WHO limit is for added sugar, so you are probably under this number.')}</p>
       </Card>
 
       {/* How the target is built */}
       {profile && (
         <Card className="space-y-1">
-          <SectionTitle>Your numbers explained</SectionTitle>
-          <Row k="Burned at rest (BMR)" v={`${Math.round(profile.bmr)} kcal`} />
-          <Row k="Burned with activity (TDEE)" v={`${Math.round(profile.tdee)} kcal`} />
-          <Row k="Your daily target" v={`${macros.calories} kcal`} />
+          <SectionTitle>{t('Your numbers explained')}</SectionTitle>
+          <Row k={t('Burned at rest (BMR)')} v={`${Math.round(profile.bmr)} kcal`} />
+          <Row k={t('Burned with activity (TDEE)')} v={`${Math.round(profile.tdee)} kcal`} />
+          <Row k={t('Your daily target')} v={`${macros.calories} kcal`} />
           {balance && (
             <p className="text-xs text-muted pt-1">
               {balance.dailyDiff === 0
-                ? 'Your target equals maintenance: weight should hold steady.'
+                ? t('Your target equals maintenance: weight should hold steady.')
                 : `That is ${Math.abs(balance.dailyDiff)} kcal ${balance.dailyDiff < 0 ? 'under' : 'over'} maintenance a day, about ${Math.abs(balance.kgPerWeek)} kg ${balance.dailyDiff < 0 ? 'lost' : 'gained'} a week.`}
-              {' '}Real change is noisier: water and food in the gut move the scale by a kilo day to day.
+              {' '}{t('Real change is noisier: water and food in the gut move the scale by a kilo day to day.')}
             </p>
           )}
           {profile.age < 18 && balance && balance.dailyDiff < 0 && (
-            <p className="text-xs text-warn pt-1">You are still growing: keep any deficit small and never skip meals to hit a number.</p>
+            <p className="text-xs text-warn pt-1">{t('You are still growing: keep any deficit small and never skip meals to hit a number.')}</p>
           )}
-          <p className="text-[11px] text-muted pt-1">BMR uses the Mifflin-St Jeor formula from your height, weight, age and sex. Update your weight in You and the numbers follow.</p>
+          <p className="text-[11px] text-muted pt-1">{t('BMR uses the Mifflin-St Jeor formula from your height, weight, age and sex. Update your weight in You and the numbers follow.')}</p>
         </Card>
       )}
 
       {/* Reference */}
       <Card className="space-y-1">
-        <SectionTitle>Cheat sheet</SectionTitle>
-        <Row k="1 g protein" v={`${KCAL_PER_G.protein} kcal`} />
-        <Row k="1 g carbs" v={`${KCAL_PER_G.carbs} kcal`} />
-        <Row k="1 g fat" v={`${KCAL_PER_G.fat} kcal`} />
-        <Row k="1 g alcohol" v={`${KCAL_PER_G.alcohol} kcal`} />
-        <Row k="1 kg body fat" v={`≈ ${KCAL_PER_KG_FAT.toLocaleString()} kcal`} />
-        <p className="text-[11px] uppercase tracking-wide text-muted pt-3">What 100 kcal looks like</p>
+        <SectionTitle>{t('Cheat sheet')}</SectionTitle>
+        <Row k={t('1 g protein')} v={`${KCAL_PER_G.protein} kcal`} />
+        <Row k={t('1 g carbs')} v={`${KCAL_PER_G.carbs} kcal`} />
+        <Row k={t('1 g fat')} v={`${KCAL_PER_G.fat} kcal`} />
+        <Row k={t('1 g alcohol')} v={`${KCAL_PER_G.alcohol} kcal`} />
+        <Row k={t('1 kg body fat')} v={`≈ ${KCAL_PER_KG_FAT.toLocaleString()} kcal`} />
+        <p className="text-[11px] uppercase tracking-wide text-muted pt-3">{t('What 100 kcal looks like')}</p>
         <div className="grid grid-cols-2 gap-x-4">
           {HUNDRED_KCAL_FOODS.map((f) => {
             const g = gramsFor(f);
             return g ? <Row key={f} k={f} v={`${g} g`} /> : null;
           })}
         </div>
-        <p className="text-[11px] uppercase tracking-wide text-muted pt-3">Most protein per 100 kcal</p>
+        <p className="text-[11px] uppercase tracking-wide text-muted pt-3">{t('Most protein per 100 kcal')}</p>
         <div className="grid grid-cols-2 gap-x-4">
           {dense.map((d) => <Row key={d.name} k={d.name} v={`${d.proteinPer100kcal} g`} />)}
         </div>
-        <p className="text-[11px] text-muted pt-2">Foods weighed cooked or as eaten, from the same food table the describe box uses.</p>
+        <p className="text-[11px] text-muted pt-2">{t('Foods weighed cooked or as eaten, from the same food table the describe box uses.')}</p>
       </Card>
     </div>
   );

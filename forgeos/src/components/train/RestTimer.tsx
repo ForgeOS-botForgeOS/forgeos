@@ -1,3 +1,4 @@
+import { useT } from '../../lib/i18n';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useMotionValue } from 'framer-motion';
 import { Timer, X, Plus, Minus, Pause, Play } from 'lucide-react';
@@ -37,6 +38,7 @@ function beep() {
 // exercise's rest preset. `nonce` changes on every open so back-to-back sets
 // restart the clock cleanly.
 export function RestTimer({ open, onClose, autoStartSec = 0, nonce }: { open: boolean; onClose: () => void; autoStartSec?: number; nonce?: number }) {
+  const tr = useT();
   const [remaining, setRemaining] = useState(0);
   const [total, setTotal] = useState(0); // the countdown we started from — drives the ring
   const [running, setRunning] = useState(false);
@@ -167,12 +169,12 @@ export function RestTimer({ open, onClose, autoStartSec = 0, nonce }: { open: bo
           </span>
           {!compact && <span className="relative text-[11px] text-muted">{done ? 'go 💪' : 'rest'}</span>}
           <div className="relative ml-auto flex items-center gap-0.5">
-            {!compact && <button onClick={() => bump(-15)} aria-label="Minus 15 seconds" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><Minus size={15} /></button>}
-            {!compact && <button onClick={() => bump(15)} aria-label="Plus 15 seconds" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><Plus size={15} /></button>}
-            <button onClick={toggle} aria-label={running ? 'Pause' : 'Start'} className="w-8 h-8 rounded-full bg-accent text-black flex items-center justify-center active:scale-90">
+            {!compact && <button onClick={() => bump(-15)} aria-label={tr('Minus 15 seconds')} className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><Minus size={15} /></button>}
+            {!compact && <button onClick={() => bump(15)} aria-label={tr('Plus 15 seconds')} className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><Plus size={15} /></button>}
+            <button onClick={toggle} aria-label={running ? tr('Pause') : tr('Start')} className="w-8 h-8 rounded-full bg-accent text-black flex items-center justify-center active:scale-90">
               {running ? <Pause size={15} /> : <Play size={15} />}
             </button>
-            <button onClick={onClose} aria-label="Close rest timer" className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><X size={15} /></button>
+            <button onClick={onClose} aria-label={tr('Close rest timer')} className="w-8 h-8 rounded-full flex items-center justify-center text-muted active:scale-90"><X size={15} /></button>
           </div>
         </div>
       </motion.div>

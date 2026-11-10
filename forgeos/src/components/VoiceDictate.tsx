@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useRef, useState } from 'react';
 import { Mic, Square } from 'lucide-react';
 import { listen, sttSupported, type Dictation } from '../lib/speech';
@@ -8,6 +9,7 @@ import { haptic } from '../lib/haptics';
 // no speech recognition (older webviews, iOS Safari), so callers can drop it in
 // freely alongside a normal text field.
 export function VoiceDictate({ onText, label = 'Speak', className = '' }: { onText: (text: string) => void; label?: string; className?: string }) {
+  const tr = useT();
   const [listening, setListening] = useState(false);
   const dictation = useRef<Dictation | null>(null);
   if (!sttSupported) return null;
@@ -30,11 +32,11 @@ export function VoiceDictate({ onText, label = 'Speak', className = '' }: { onTe
     <button
       type="button"
       onClick={toggle}
-      aria-label={listening ? 'Stop dictation' : 'Dictate with your voice'}
+      aria-label={listening ? tr('Stop dictation') : tr('Dictate with your voice')}
       className={`inline-flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-medium transition ${listening ? 'bg-accent text-black animate-pulse' : 'bg-surface-2 text-muted'} ${className}`}
     >
       {listening ? <Square size={14} /> : <Mic size={16} />}
-      {listening ? 'Listening…' : label}
+      {listening ? tr('Listening…') : label}
     </button>
   );
 }

@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, useMotionValue } from 'framer-motion';
@@ -15,6 +16,7 @@ let cdPos = { x: 0, y: 0 };
 // open the full Spotify screen. Respects prefers-reduced-motion (the global
 // rule freezes the spin).
 export function NowPlayingCD() {
+  const t = useT();
   const active = usePlayer((s) => s.active);
   const playing = usePlayer((s) => s.playing);
   const index = usePlayer((s) => s.index);
@@ -82,11 +84,11 @@ export function NowPlayingCD() {
         </button>
 
         {/* Transport */}
-        <button onClick={() => { toggle(); haptic('tap'); }} aria-label={playing ? 'Pause' : 'Play'} className="w-9 h-9 rounded-full bg-accent text-black grid place-items-center shrink-0 active:scale-90 transition">
+        <button onClick={() => { toggle(); haptic('tap'); }} aria-label={playing ? t('Pause') : t('Play')} className="w-9 h-9 rounded-full bg-accent text-black grid place-items-center shrink-0 active:scale-90 transition">
           {playing ? <Pause size={16} /> : <Play size={16} className="translate-x-[1px]" />}
         </button>
-        <button onClick={() => { next(); haptic('tap'); }} aria-label="Next track" className="text-muted shrink-0 active:scale-90 transition"><SkipForward size={18} /></button>
-        <button onClick={() => { dismiss(); haptic('tap'); }} aria-label="Turn music off" className="text-muted shrink-0 active:scale-90 transition"><X size={16} /></button>
+        <button onClick={() => { next(); haptic('tap'); }} aria-label={t('Next track')} className="text-muted shrink-0 active:scale-90 transition"><SkipForward size={18} /></button>
+        <button onClick={() => { dismiss(); haptic('tap'); }} aria-label={t('Turn music off')} className="text-muted shrink-0 active:scale-90 transition"><X size={16} /></button>
 
         {/* Progress line */}
         <div className="absolute left-0 bottom-0 h-0.5 bg-accent" style={{ width: `${pct}%`, transition: 'width 1s linear' }} />

@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
@@ -27,6 +28,7 @@ const LANES: { id: LaneId; title: string; trust: TrustLevel; icon: typeof Link2;
 ];
 
 export default function ImportProgress() {
+  const t = useT();
   const navigate = useNavigate();
   const imports = useImports((s) => s.imports);
   const [lane, setLane] = useState<LaneId>('api');
@@ -52,8 +54,8 @@ export default function ImportProgress() {
   async function copyPrompt() {
     const ok = await copyText(AI_CONVERT_PROMPT);
     haptic(ok ? 'tap' : 'warning');
-    if (ok) { setCopied(true); toast('Prompt copied: paste it into any AI with your data', 'success'); setTimeout(() => setCopied(false), 2500); }
-    else toast('Couldn’t copy: select the text and copy it manually', 'error');
+    if (ok) { setCopied(true); toast(t('Prompt copied: paste it into any AI with your data'), 'success'); setTimeout(() => setCopied(false), 2500); }
+    else toast(t('Couldn’t copy: select the text and copy it manually'), 'error');
   }
 
   async function analyze(ing: Ingested) {
@@ -79,7 +81,7 @@ export default function ImportProgress() {
     if (!preview || preview.rejected) return;
     const summary = applyImport(preview.patch, lane);
     celebrate();
-    toast('Progress imported 🎉');
+    toast(t('Progress imported 🎉'));
     setResult(summary.message);
     setPreview(null);
     setText('');
@@ -89,20 +91,20 @@ export default function ImportProgress() {
     <div className="px-4 pt-12 pb-10 space-y-4 max-w-md mx-auto">
       {showTut && <ImportTutorial onClose={closeTut} />}
       <div className="flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
-        <button onClick={() => setShowTut(true)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><HelpCircle size={16} /> How it works</button>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Back')}</button>
+        <button onClick={() => setShowTut(true)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><HelpCircle size={16} /> {t('How it works')}</button>
       </div>
       <div className="text-center space-y-1">
         <div className="mx-auto w-fit"><ForgeLogo size={48} tile /></div>
-        <h1 className="text-2xl font-extrabold tracking-tight">Import your progress</h1>
-        <p className="text-sm text-muted">Bring your streak, XP, history and PRs from any app. It only ever <b>adds</b>, so you can’t lose anything.</p>
+        <h1 className="text-2xl font-extrabold tracking-tight">{t('Import your progress')}</h1>
+        <p className="text-sm text-muted">{t('Bring your streak, XP, history and PRs from any app. It only ever')} <b>{t('adds')}</b>{t(', so you can’t lose anything.')}</p>
       </div>
 
       {result && (
         <Card className="border-accent/40 space-y-2 text-center">
           <Sparkles className="mx-auto text-accent" />
           <p className="font-semibold">{result}</p>
-          <Button variant="ghost" className="w-full justify-center" onClick={() => setResult(null)}>Import another</Button>
+          <Button variant="ghost" className="w-full justify-center" onClick={() => setResult(null)}>{t('Import another')}</Button>
         </Card>
       )}
 
@@ -113,22 +115,22 @@ export default function ImportProgress() {
             <button onClick={() => setAiOpen((v) => !v)} className="w-full flex items-center gap-2 text-left">
               <Wand2 size={18} className="text-accent shrink-0" />
               <div className="flex-1">
-                <p className="text-sm font-semibold">Easiest: let an AI convert it</p>
-                <p className="text-[11px] text-muted">Works for any app, even from a screenshot. No export needed.</p>
+                <p className="text-sm font-semibold">{t('Easiest: let an AI convert it')}</p>
+                <p className="text-[11px] text-muted">{t('Works for any app, even from a screenshot. No export needed.')}</p>
               </div>
-              <Badge color="rgb(var(--accent))">{aiOpen ? 'Hide' : 'How'}</Badge>
+              <Badge color="rgb(var(--accent))">{aiOpen ? t('Hide') : t('How')}</Badge>
             </button>
             {aiOpen && (
               <div className="space-y-2 pt-1">
                 <ol className="text-[12px] text-muted space-y-1 list-decimal list-inside marker:text-accent">
-                  <li>Copy the prompt below.</li>
-                  <li>Paste it into ChatGPT / Claude, then add your other app’s export <i>or</i> a screenshot of your stats.</li>
-                  <li>Copy the JSON it replies with into the <b>“Connect / paste export”</b> box and tap Analyze.</li>
+                  <li>{t('Copy the prompt below.')}</li>
+                  <li>{t('Paste it into ChatGPT / Claude, then add your other app’s export')} <i>or</i> {t('a screenshot of your stats.')}</li>
+                  <li>{t('Copy the JSON it replies with into the')} <b>{t('“Connect / paste export”')}</b> {t('box and tap Analyze.')}</li>
                 </ol>
                 <Button className="w-full justify-center" onClick={copyPrompt}>
-                  <span className="flex items-center gap-1.5">{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? 'Copied!' : 'Copy the AI prompt'}</span>
+                  <span className="flex items-center gap-1.5">{copied ? <Check size={15} /> : <Copy size={15} />}{copied ? t('Copied!') : t('Copy the AI prompt')}</span>
                 </Button>
-                <p className="text-[11px] text-muted/70">The AI never sees your ForgeOS account: it only reformats the numbers you give it. We still verify everything before importing.</p>
+                <p className="text-[11px] text-muted/70">{t('The AI never sees your ForgeOS account: it only reformats the numbers you give it. We still verify everything before importing.')}</p>
               </div>
             )}
           </Card>
@@ -144,43 +146,43 @@ export default function ImportProgress() {
                     <p className="text-sm font-semibold">{l.title}</p>
                     <p className="text-[11px] text-muted">{l.blurb}</p>
                   </div>
-                  <Badge color={TRUST_COLOR[l.trust]}>{l.trust} trust</Badge>
+                  <Badge color={TRUST_COLOR[l.trust]}>{l.trust} {t('trust')}</Badge>
                 </Card>
               );
             })}
           </div>
 
           {/* source + input */}
-          <input value={source} onChange={(e) => setSource(e.target.value)} placeholder="Which app? (e.g. Strava, Duolingo)" className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+          <input value={source} onChange={(e) => setSource(e.target.value)} placeholder={t('Which app? (e.g. Strava, Duolingo)')} className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
 
           {lane === 'api' && (
             <div className="space-y-1.5">
               <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder='Paste the JSON your other app exported (or the AI&apos;s reply):&#10;{ "currentStreak": 247, "xp": 12400, "memberSince": "2023-01-04" }' className="w-full h-36 rounded-xl bg-surface-2 border border-line px-3 py-2 text-sm font-mono" />
-              <button onClick={() => setText(JSON.stringify(EXAMPLE_EXPORT, null, 2))} className="text-[11px] text-accent underline-offset-2 hover:underline">Don’t have it handy? Load an example →</button>
+              <button onClick={() => setText(JSON.stringify(EXAMPLE_EXPORT, null, 2))} className="text-[11px] text-accent underline-offset-2 hover:underline">{t('Don’t have it handy? Load an example →')}</button>
             </div>
           )}
-          {lane === 'file' && <p className="text-[11px] text-muted">Tap “Analyze” and choose your export file (.json / .csv / .xml).</p>}
+          {lane === 'file' && <p className="text-[11px] text-muted">{t('Tap “Analyze” and choose your export file (.json / .csv / .xml).')}</p>}
           {lane === 'screenshot' && (
             <div className="space-y-2">
-              <p className="text-[11px] text-muted">Tap “Analyze” to pick a screenshot. The image is read, then discarded: never stored. {!screenshotLive && <span className="text-warn">No image reader is configured here: use the AI bridge above or type your stats.</span>}</p>
-              <button onClick={() => setShowManual((v) => !v)} className="text-xs text-accent underline-offset-2 hover:underline">Can’t auto-read? Type your stats →</button>
+              <p className="text-[11px] text-muted">{t('Tap “Analyze” to pick a screenshot. The image is read, then discarded: never stored.')} {!screenshotLive && <span className="text-warn">{t('No image reader is configured here: use the AI bridge above or type your stats.')}</span>}</p>
+              <button onClick={() => setShowManual((v) => !v)} className="text-xs text-accent underline-offset-2 hover:underline">{t('Can’t auto-read? Type your stats →')}</button>
               {showManual && (
                 <Card className="grid grid-cols-2 gap-2">
                   {(['currentStreak', 'longestStreak', 'lastActive', 'xp', 'coins', 'sessions', 'memberSince'] as const).map((k) => (
                     <label key={k} className="text-[11px] text-muted">{k}
-                      <input value={manual[k]} onChange={(e) => setManual({ ...manual, [k]: e.target.value })} placeholder={k.includes('Active') || k.includes('Since') ? 'YYYY-MM-DD' : '0'} className="w-full mt-0.5 rounded-lg bg-surface-2 border border-line px-2 py-1 text-sm text-text" />
+                      <input value={manual[k]} onChange={(e) => setManual({ ...manual, [k]: e.target.value })} placeholder={k.includes('Active') || k.includes('Since') ? t('YYYY-MM-DD') : '0'} className="w-full mt-0.5 rounded-lg bg-surface-2 border border-line px-2 py-1 text-sm text-text" />
                     </label>
                   ))}
-                  <Button className="col-span-2 justify-center" onClick={() => analyze(ingestManual(coerceManual(manual)))}>Analyze typed stats</Button>
+                  <Button className="col-span-2 justify-center" onClick={() => analyze(ingestManual(coerceManual(manual)))}>{t('Analyze typed stats')}</Button>
                 </Card>
               )}
             </div>
           )}
 
           <input ref={fileRef} type="file" accept=".json,.csv,.xml,application/json,text/csv,text/xml" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; e.target.value = ''; if (f) try { await analyze(await ingestFile(f)); } catch (err) { toast((err as Error).message, 'error'); } }} />
-          <input ref={imgRef} type="file" accept="image/*" multiple className="hidden" onChange={async (e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; if (!fs.length) return; try { await analyze(await ingestScreenshots(fs)); } catch (err) { if ((err as Error).message === 'NO_VISION') { setShowManual(true); toast('No image reader configured: type your stats instead.', 'info'); } else toast((err as Error).message, 'error'); } }} />
+          <input ref={imgRef} type="file" accept="image/*" multiple className="hidden" onChange={async (e) => { const fs = Array.from(e.target.files ?? []); e.target.value = ''; if (!fs.length) return; try { await analyze(await ingestScreenshots(fs)); } catch (err) { if ((err as Error).message === 'NO_VISION') { setShowManual(true); toast(t('No image reader configured: type your stats instead.'), 'info'); } else toast((err as Error).message, 'error'); } }} />
 
-          {!preview && <Button className="w-full justify-center" disabled={busy} onClick={onAnalyzeClick}>{busy ? 'Reading…' : 'Analyze'}</Button>}
+          {!preview && <Button className="w-full justify-center" disabled={busy} onClick={onAnalyzeClick}>{busy ? t('Reading…') : t('Analyze')}</Button>}
 
           {preview && <PreviewCard preview={preview} onCancel={() => setPreview(null)} onConfirm={commit} />}
         </>
@@ -189,27 +191,28 @@ export default function ImportProgress() {
       {/* history / undo */}
       {imports.length > 0 && (
         <div>
-          <SectionTitle action={<Lock size={13} className="text-muted" />}>Import history</SectionTitle>
+          <SectionTitle action={<Lock size={13} className="text-muted" />}>{t('Import history')}</SectionTitle>
           {imports.map((r) => (
             <Card key={r.id} className="flex items-center gap-2">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold truncate">{r.source} · <span className="text-muted font-normal">{r.lane}</span></p>
-                <p className="text-[11px] text-muted">{new Date(r.at).toLocaleDateString()} · +{r.summary.xpAdded.toLocaleString()} XP · {r.summary.streakDays}d streak</p>
+                <p className="text-[11px] text-muted">{new Date(r.at).toLocaleDateString()} · +{r.summary.xpAdded.toLocaleString()} XP · {r.summary.streakDays}{t('d streak')}</p>
               </div>
               <Button variant="ghost" className="px-3 py-1.5" onClick={() => { if (undoImport(r.id)) { haptic('warning'); toast(`Reverted ${r.source} import`); } }}>
-                <span className="flex items-center gap-1 text-xs"><Undo2 size={13} /> Undo</span>
+                <span className="flex items-center gap-1 text-xs"><Undo2 size={13} /> {t('Undo')}</span>
               </Button>
             </Card>
           ))}
         </div>
       )}
 
-      <p className="text-[11px] text-muted/60 text-center">Your data stays on your device. Nothing is uploaded except screenshots you choose to read (then discarded).</p>
+      <p className="text-[11px] text-muted/60 text-center">{t('Your data stays on your device. Nothing is uploaded except screenshots you choose to read (then discarded).')}</p>
     </div>
   );
 }
 
 function PreviewCard({ preview, onCancel, onConfirm }: { preview: ImportPreview; onCancel: () => void; onConfirm: () => void }) {
+  const t = useT();
   const { canonical: c, patch, streak, report, issues, rejected } = preview;
   const rows: [string, string][] = [];
   if (patch.streakDays || patch.bestStreak) rows.push(['Streak', streak.continuity === 'continue' ? `${patch.streakDays} days (kept alive)` : `${patch.bestStreak} days (record)`]);
@@ -224,14 +227,14 @@ function PreviewCard({ preview, onCancel, onConfirm }: { preview: ImportPreview;
   return (
     <Card className="space-y-3">
       <div className="flex items-center justify-between">
-        <SectionTitle>Preview</SectionTitle>
-        <Badge color={TRUST_COLOR[c.trust]}>{c.trust} trust</Badge>
+        <SectionTitle>{t('Preview')}</SectionTitle>
+        <Badge color={TRUST_COLOR[c.trust]}>{c.trust} {t('trust')}</Badge>
       </div>
 
       {rejected ? (
-        <div className="flex items-start gap-2 text-sm text-warn"><AlertTriangle size={16} className="mt-0.5 shrink-0" />{report.warnings[0] ?? 'Could not read enough to import.'}</div>
+        <div className="flex items-start gap-2 text-sm text-warn"><AlertTriangle size={16} className="mt-0.5 shrink-0" />{report.warnings[0] ?? t('Could not read enough to import.')}</div>
       ) : rows.length === 0 ? (
-        <p className="text-sm text-muted">Nothing recognisable found: try another lane or check the format.</p>
+        <p className="text-sm text-muted">{t('Nothing recognisable found: try another lane or check the format.')}</p>
       ) : (
         <div className="space-y-1">
           {rows.map(([k, v]) => (
@@ -245,20 +248,20 @@ function PreviewCard({ preview, onCancel, onConfirm }: { preview: ImportPreview;
       {/* Honest "is this true?" verdict */}
       {!rejected && rows.length > 0 && (
         report.warnings.length === 0 && report.quarantined.length === 0 ? (
-          <p className="text-[11px] text-success flex items-start gap-1.5"><Check size={13} className="mt-0.5 shrink-0" /> Cross-checked streak against account age and capped values by trust: everything looks consistent.</p>
+          <p className="text-[11px] text-success flex items-start gap-1.5"><Check size={13} className="mt-0.5 shrink-0" /> {t('Cross-checked streak against account age and capped values by trust: everything looks consistent.')}</p>
         ) : (
-          <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> We adjusted some values that didn’t add up (below): only the verified amounts are imported.</p>
+          <p className="text-[11px] text-warn flex items-start gap-1.5"><AlertTriangle size={13} className="mt-0.5 shrink-0" /> {t('We adjusted some values that didn’t add up (below): only the verified amounts are imported.')}</p>
         )
       )}
 
       {report.warnings.filter((_, i) => !(rejected && i === 0)).map((w, i) => <p key={i} className="text-[11px] text-warn">⚠️ {w}</p>)}
-      {report.quarantined.length > 0 && <p className="text-[11px] text-warn">Held back as unverified: {report.quarantined.join('; ')}.</p>}
-      {issues.length > 0 && <p className="text-[11px] text-muted">{issues.length} bad row(s) skipped.</p>}
+      {report.quarantined.length > 0 && <p className="text-[11px] text-warn">{t('Held back as unverified:')} {report.quarantined.join('; ')}.</p>}
+      {issues.length > 0 && <p className="text-[11px] text-muted">{issues.length} {t('bad row(s) skipped.')}</p>}
       {patch.notes.map((n, i) => <p key={i} className="text-[11px] text-muted/80">• {n}</p>)}
 
       <div className="flex gap-2">
-        <Button variant="ghost" className="flex-1 justify-center" onClick={onCancel}>Cancel</Button>
-        <Button className="flex-1 justify-center" disabled={rejected || rows.length === 0} onClick={onConfirm}>Import: keeps the better value</Button>
+        <Button variant="ghost" className="flex-1 justify-center" onClick={onCancel}>{t('Cancel')}</Button>
+        <Button className="flex-1 justify-center" disabled={rejected || rows.length === 0} onClick={onConfirm}>{t('Import: keeps the better value')}</Button>
       </div>
     </Card>
   );
@@ -273,6 +276,7 @@ const TUT_STEPS: { icon: typeof Wand2; title: string; text: string }[] = [
 ];
 
 function ImportTutorial({ onClose }: { onClose: () => void }) {
+  const t = useT();
   const [i, setI] = useState(0);
   const s = TUT_STEPS[i];
   const Icon = s.icon;
@@ -281,20 +285,20 @@ function ImportTutorial({ onClose }: { onClose: () => void }) {
     <div className="absolute inset-0 z-[75] flex items-center justify-center p-6">
       <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={onClose} />
       <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="relative w-full rounded-2xl bg-surface border border-line p-6">
-        <button className="absolute top-3 right-3 text-muted" onClick={onClose} aria-label="Close"><X size={18} /></button>
+        <button className="absolute top-3 right-3 text-muted" onClick={onClose} aria-label={t('Close')}><X size={18} /></button>
         <div className="text-center space-y-3">
           <div className="mx-auto w-14 h-14 rounded-2xl bg-accent/15 flex items-center justify-center"><Icon className="text-accent" size={26} /></div>
-          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">Step {i + 1} of {TUT_STEPS.length}</p>
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-muted">{t('Step')} {i + 1} of {TUT_STEPS.length}</p>
           <h3 className="text-lg font-bold">{s.title}</h3>
           <p className="text-sm text-muted min-h-[96px]">{s.text}</p>
           <div className="flex justify-center gap-1.5">
             {TUT_STEPS.map((_, idx) => <span key={idx} className={`h-1.5 rounded-full transition-all ${idx === i ? 'w-5 bg-accent' : 'w-1.5 bg-surface-2'}`} />)}
           </div>
           <div className="flex gap-2 pt-1">
-            {i > 0 && <Button variant="outline" className="flex-1 justify-center" onClick={() => setI(i - 1)}>Back</Button>}
-            <Button className="flex-1 justify-center" onClick={() => (last ? onClose() : setI(i + 1))}>{last ? 'Got it 🔥' : 'Next'}</Button>
+            {i > 0 && <Button variant="outline" className="flex-1 justify-center" onClick={() => setI(i - 1)}>{t('Back')}</Button>}
+            <Button className="flex-1 justify-center" onClick={() => (last ? onClose() : setI(i + 1))}>{last ? t('Got it 🔥') : t('Next')}</Button>
           </div>
-          {!last && <button onClick={onClose} className="text-[11px] text-muted underline-offset-2 hover:underline">Skip</button>}
+          {!last && <button onClick={onClose} className="text-[11px] text-muted underline-offset-2 hover:underline">{t('Skip')}</button>}
         </div>
       </motion.div>
     </div>

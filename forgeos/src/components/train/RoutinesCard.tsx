@@ -1,3 +1,4 @@
+import { useT } from '../../lib/i18n';
 import { useMemo, useState } from 'react';
 import { BookmarkPlus, MoreHorizontal, Pencil, Play, Repeat, Trash2 } from 'lucide-react';
 import { Card, Button, Sheet } from '../ui';
@@ -17,6 +18,7 @@ import type { Workout } from '../../types';
 // run every Monday floats to the top without you organising anything.
 
 export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
+  const t = useT();
   const routines = useWorkout((s) => s.routines);
   const startRoutine = useWorkout((s) => s.startRoutine);
   const saveRoutine = useWorkout((s) => s.saveRoutine);
@@ -43,7 +45,7 @@ export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
     if (!name) return;
     const saved = saveRoutine(lastStrength.id, name);
     if (saved) { haptic('success'); toast(`“${saved.name}” saved as a routine 📌`); }
-    else toast('That session has nothing to save yet.', 'error');
+    else toast(t('That session has nothing to save yet.'), 'error');
   }
 
   async function rename(id: string, name: string) {
@@ -66,7 +68,7 @@ export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
       confirmLabel: 'Delete',
       tone: 'danger',
     });
-    if (gone) { deleteRoutine(id); haptic('warning'); toast('Routine deleted'); }
+    if (gone) { deleteRoutine(id); haptic('warning'); toast(t('Routine deleted')); }
   }
 
   function start(id: string, name: string) {
@@ -76,13 +78,13 @@ export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
   return (
     <Card className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-xs uppercase tracking-wide text-muted">Your routines</p>
+        <p className="text-xs uppercase tracking-wide text-muted">{t('Your routines')}</p>
         {lastStrength && (
           <button
             onClick={() => void saveLast()}
             className="flex items-center gap-1 text-[11px] text-accent active:opacity-70"
           >
-            <BookmarkPlus size={13} aria-hidden="true" /> Save last session
+            <BookmarkPlus size={13} aria-hidden="true" /> {t('Save last session')}
           </button>
         )}
       </div>
@@ -98,7 +100,7 @@ export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
                 <p className="truncate text-sm font-semibold">{r.name}</p>
                 <p className="text-[11px] text-muted">
                   {r.exerciseIds.length} {r.exerciseIds.length === 1 ? 'exercise' : 'exercises'}
-                  {r.uses > 0 ? ` · run ${r.uses}×` : ' · never run yet'}
+                  {r.uses > 0 ? ` · run ${r.uses}×` : t(' · never run yet')}
                 </p>
               </button>
               <Button
@@ -106,7 +108,7 @@ export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
                 className="shrink-0 py-1.5"
                 onClick={() => start(r.id, r.name)}
               >
-                <span className="flex items-center gap-1.5 text-xs"><Play size={13} /> Start</span>
+                <span className="flex items-center gap-1.5 text-xs"><Play size={13} /> {t('Start')}</span>
               </Button>
               <button
                 onClick={() => { haptic('tap'); setMenu({ id: r.id, name: r.name }); }}
@@ -120,7 +122,7 @@ export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
         </div>
       ) : (
         <p className="text-[11px] leading-relaxed text-muted">
-          Save a session you liked and it becomes a one-tap routine here: same lifts, same weights, ready to go.
+          {t('Save a session you liked and it becomes a one-tap routine here: same lifts, same weights, ready to go.')}
         </p>
       )}
 
@@ -128,20 +130,20 @@ export function RoutinesCard({ lastStrength }: { lastStrength?: Workout }) {
           saved: it is the fastest path for someone who never saves anything. */}
       {lastStrength && (
         <button
-          onClick={() => { if (repeatWorkout(lastStrength.id)) { haptic('success'); toast('Repeating your last session 💪'); } }}
+          onClick={() => { if (repeatWorkout(lastStrength.id)) { haptic('success'); toast(t('Repeating your last session 💪')); } }}
           className="flex w-full items-center gap-2 border-t border-line/70 pt-2.5 text-left text-[11px] text-muted active:opacity-70"
         >
           <Repeat size={13} className="shrink-0" aria-hidden="true" />
-          <span className="truncate">Repeat last session: {lastStrength.name}</span>
+          <span className="truncate">{t('Repeat last session:')} {lastStrength.name}</span>
         </button>
       )}
 
       <Sheet open={menu !== null} onClose={() => setMenu(null)} title={menu?.name}>
         {menu && (
           <div className="divide-y divide-line/70">
-            <ActionRow icon={<Play size={15} />} title="Start it now" onClick={() => { setMenu(null); start(menu.id, menu.name); }} />
-            <ActionRow icon={<Pencil size={15} />} title="Rename" onClick={() => void rename(menu.id, menu.name)} />
-            <ActionRow icon={<Trash2 size={15} />} title="Delete routine" tone="danger" onClick={() => void remove(menu.id, menu.name)} />
+            <ActionRow icon={<Play size={15} />} title={t('Start it now')} onClick={() => { setMenu(null); start(menu.id, menu.name); }} />
+            <ActionRow icon={<Pencil size={15} />} title={t('Rename')} onClick={() => void rename(menu.id, menu.name)} />
+            <ActionRow icon={<Trash2 size={15} />} title={t('Delete routine')} tone="danger" onClick={() => void remove(menu.id, menu.name)} />
           </div>
         )}
       </Sheet>

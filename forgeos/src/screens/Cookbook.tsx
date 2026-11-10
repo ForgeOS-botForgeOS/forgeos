@@ -90,7 +90,7 @@ export default function Cookbook() {
       {/* The three switches people actually use */}
       <div data-noswipe className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
         <Pill active={onlyGoal} onClick={() => setOnlyGoal((v) => !v)}>{onlyGoal ? t('cook.forGoal', { goal }) : t('cook.allGoals')}</Pill>
-        <Pill active={quickOnly} onClick={() => setQuickOnly((v) => !v)}>≤15 min</Pill>
+        <Pill active={quickOnly} onClick={() => setQuickOnly((v) => !v)}>{t('≤15 min')}</Pill>
         <Pill active={favesOnly} onClick={() => setFavesOnly((v) => !v)}>♥ {favourites.length}</Pill>
       </div>
 
@@ -136,6 +136,7 @@ export default function Cookbook() {
 }
 
 function RecipeRow({ recipe, onOpen, mealLabel }: { recipe: Recipe; onOpen: () => void; mealLabel: (m: string) => string }) {
+  const t = useT();
   const favourites = useCookbook((s) => s.favourites);
   const toggleFavourite = useCookbook((s) => s.toggleFavourite);
   const cooked = useCookbook((s) => s.cooked[recipe.id] ?? 0);
@@ -157,7 +158,7 @@ function RecipeRow({ recipe, onOpen, mealLabel }: { recipe: Recipe; onOpen: () =
           <Badge color="rgb(var(--accent-2))">{mealLabel(recipe.meal)}</Badge>
           <button
             onClick={(e) => { e.stopPropagation(); toggleFavourite(recipe.id); haptic('tap'); }}
-            aria-label="Favourite"
+            aria-label={t('Favourite')}
             className={fav ? 'text-danger' : 'text-muted'}
           >
             <Heart size={15} fill={fav ? 'currentColor' : 'none'} />
@@ -193,13 +194,13 @@ export function ShoppingSheet({ open, onClose }: { open: boolean; onClose: () =>
                 <button
                   onClick={() => { toggle(item.id); haptic('tap'); }}
                   className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${item.checked ? 'border-success bg-success text-black' : 'border-line'}`}
-                  aria-label={item.checked ? 'Uncheck' : 'Check'}
+                  aria-label={item.checked ? t('Uncheck') : t('Check')}
                 >
                   {item.checked && <Check size={13} strokeWidth={3} />}
                 </button>
                 <span className={`flex-1 text-sm ${item.checked ? 'text-muted line-through' : ''}`}>{item.text}</span>
                 {item.count > 1 && <span className="font-mono text-[11px] text-accent">×{item.count}</span>}
-                <button onClick={() => remove(item.id)} className="text-muted" aria-label="Remove"><Trash2 size={13} /></button>
+                <button onClick={() => remove(item.id)} className="text-muted" aria-label={t('Remove')}><Trash2 size={13} /></button>
               </div>
             ))}
           </div>

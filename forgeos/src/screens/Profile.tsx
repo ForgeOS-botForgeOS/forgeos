@@ -90,6 +90,7 @@ const THEMES: { id: ThemeId; name: string; locked: boolean; unlockRank: string }
 const RANK_ORDER = ['Bronze', 'Silver', 'Gold', 'Platinum', 'Legend', 'Strongman'];
 
 export default function Profile() {
+  const tr = useT();
   const t = useT();
   const s = useSettings();
   const profile = useUser((u) => u.profile);
@@ -119,7 +120,7 @@ export default function Profile() {
   // classic download page.
   async function handleApkUpdate() {
     setUpdating(true);
-    toast('Getting the update… Android will ask you to confirm 📲', 'info');
+    toast(tr('Getting the update… Android will ask you to confirm 📲'), 'info');
     const started = await installApkUpdate();
     setUpdating(false);
     if (!started) navigate('/download');
@@ -138,7 +139,7 @@ export default function Profile() {
     updateProfile({ name: next });
     void pushMyActivity(); // let friends see the new name
     haptic('success');
-    toast('Name updated ✅');
+    toast(tr('Name updated ✅'));
   }
 
   // `enabling`: called from the check-in toggle while the gym is still the
@@ -164,7 +165,7 @@ export default function Profile() {
         s.set('gym', { ...s.gym, lat: pos.coords.latitude, lng: pos.coords.longitude });
         setGymBusy(false);
         setGymMsg('Saved this spot as your gym ✅');
-        if (enabling) toast('Check-in on: this spot is now your gym ✅');
+        if (enabling) toast(tr('Check-in on: this spot is now your gym ✅'));
         haptic('success');
       },
       () => fail('Couldn’t get your location (permission denied?).'),
@@ -201,8 +202,8 @@ export default function Profile() {
   }
   async function shareMyProfile() {
     const r = await shareProfile(buildSummary());
-    if (r === 'copied') toast('Public profile link copied to clipboard.');
-    else toast('Profile shared 🔥');
+    if (r === 'copied') toast(tr('Public profile link copied to clipboard.'));
+    else toast(tr('Profile shared 🔥'));
   }
 
   const { tier } = rankForXp(xp);
@@ -227,16 +228,16 @@ export default function Profile() {
   const badge = equippedBadge ? cosmeticById(equippedBadge)?.value : null;
 
   return (
-    <Screen title={profile?.name ?? 'You'} subtitle={title ?? (profile?.email ?? `${profile?.authProvider ?? 'guest'} account`)}>
+    <Screen title={profile?.name ?? tr('You')} subtitle={title ?? (profile?.email ?? `${profile?.authProvider ?? 'guest'} account`)}>
       {/* APK update nudge — only appears when a newer build is published */}
       {updateReady && (
         <Card className="border-accent/40 bg-accent/5 flex items-center gap-3">
           <div className="w-9 h-9 rounded-xl bg-accent/15 flex items-center justify-center shrink-0"><Download size={18} className="text-accent" /></div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold">Core update ready</p>
-            <p className="text-[11px] text-muted">Tap Update: the app fetches it and Android asks to confirm the install. Nothing is lost.</p>
+            <p className="text-sm font-semibold">{tr('Core update ready')}</p>
+            <p className="text-[11px] text-muted">{tr('Tap Update: the app fetches it and Android asks to confirm the install. Nothing is lost.')}</p>
           </div>
-          <Button disabled={updating} onClick={() => { void handleApkUpdate(); }}>{updating ? 'Getting it…' : 'Update'}</Button>
+          <Button disabled={updating} onClick={() => { void handleApkUpdate(); }}>{updating ? tr('Getting it…') : tr('Update')}</Button>
         </Card>
       )}
 
@@ -247,7 +248,7 @@ export default function Profile() {
             {(profile?.name ?? 'Y').slice(0, 2).toUpperCase()}
           </div>
           {badge && (
-            <span aria-label="Badge" className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-line bg-surface text-sm leading-none">
+            <span aria-label={tr('Badge')} className="absolute -bottom-1 -right-1 flex h-6 w-6 items-center justify-center rounded-full border border-line bg-surface text-sm leading-none">
               {badge}
             </span>
           )}
@@ -261,7 +262,7 @@ export default function Profile() {
               onChange={(e) => setNameDraft(e.target.value)}
               onKeyDown={(e) => { if (e.key === 'Enter') saveName(); if (e.key === 'Escape') setEditingName(false); }}
               onBlur={saveName}
-              placeholder="Your name"
+              placeholder={tr('Your name')}
               className="w-full rounded-lg bg-surface-2 border border-line px-2 py-1 text-sm font-bold"
             />
           ) : (
@@ -269,7 +270,7 @@ export default function Profile() {
               onClick={() => { setNameDraft(profile?.name ?? ''); setEditingName(true); haptic('tap'); }}
               className={`flex items-center gap-1.5 text-left font-bold ${s.designMode === 'v2' ? 'uppercase italic text-lg leading-tight' : ''}`}
             >
-              <span className="truncate">{profile?.name ?? 'You'}</span>
+              <span className="truncate">{profile?.name ?? tr('You')}</span>
               <Pencil size={13} className="text-muted shrink-0" />
             </button>
           )}
@@ -278,7 +279,7 @@ export default function Profile() {
           )}
           {title && <p className="text-xs text-accent-2 font-semibold">“{title}”</p>}
         </div>
-        <Button variant="ghost" className="py-1.5 shrink-0" onClick={() => navigate('/shop')}>Shop</Button>
+        <Button variant="ghost" className="py-1.5 shrink-0" onClick={() => navigate('/shop')}>{tr('Shop')}</Button>
       </Card>
 
       {/* How much app you want — Apprentice Mode lives here for everyone, so the
@@ -287,7 +288,7 @@ export default function Profile() {
 
       {/* Goal — changing it recalculates your calories & macros */}
       <div>
-        <SectionTitle action={<Target size={14} className="text-muted" />}>Your goal</SectionTitle>
+        <SectionTitle action={<Target size={14} className="text-muted" />}>{tr('Your goal')}</SectionTitle>
         <div className="grid grid-cols-2 gap-2">
           {GOALS.map((g) => {
             const active = profile?.goal === g.id;
@@ -298,14 +299,14 @@ export default function Profile() {
                 className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-sm text-left transition active:scale-[0.99] ${active ? 'border-accent bg-accent/10' : 'border-line bg-surface'}`}
               >
                 <span>{g.emoji}</span>
-                <span className="flex-1">{g.label}</span>
+                <span className="flex-1">{tr(g.label)}</span>
                 {active && <Check size={14} className="text-accent shrink-0" />}
               </button>
             );
           })}
         </div>
         {profile?.macros && (
-          <p className="text-[11px] text-muted mt-2">Now targeting <span className="font-mono text-text">{profile.macros.calories.toLocaleString()} kcal</span> · {profile.macros.proteinG}g protein: recalculated from your goal.</p>
+          <p className="text-[11px] text-muted mt-2">{tr('Now targeting')} <span className="font-mono text-text">{profile.macros.calories.toLocaleString()} kcal</span> · {profile.macros.proteinG}{tr('g protein: recalculated from your goal.')}</p>
         )}
         <Button
           variant="ghost"
@@ -315,11 +316,11 @@ export default function Profile() {
             const style = profile?.quizAnswers?.['style']?.split(' · ')[0] ?? 'A bit of everything';
             setWeekPlan(buildWeekPlan(days, style, profile?.goal ?? 'recomp', { includeCardio: true }));
             haptic('success');
-            toast('Week plan re-tuned to your goal 🔁');
+            toast(tr('Week plan re-tuned to your goal 🔁'));
             navigate('/plan');
           }}
         >
-          <span className="flex items-center gap-2"><RefreshCw size={15} /> Re-tune my week plan to this goal</span>
+          <span className="flex items-center gap-2"><RefreshCw size={15} /> {tr('Re-tune my week plan to this goal')}</span>
         </Button>
 
         {/* Auto-suggest: nudge a goal switch when the weight trend stops matching */}
@@ -338,7 +339,7 @@ export default function Profile() {
           if (spans.length === 0) return null;
           return (
             <div className="mt-3">
-              <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">Your phases</p>
+              <p className="text-[10px] uppercase tracking-wide text-muted mb-1.5">{tr('Your phases')}</p>
               <div className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
                 {spans.map((sp, i) => (
                   <span key={i} className={`shrink-0 rounded-full px-2.5 py-1 text-[11px] ${sp.current ? 'bg-accent/15 text-accent' : 'bg-surface-2 text-muted'}`}>
@@ -374,21 +375,21 @@ export default function Profile() {
                 <p className="text-sm font-medium flex items-center gap-1" style={{ color: 'rgb(var(--text))' }}>
                   {th.name} {!unlocked && <Lock size={12} />}
                 </p>
-                {!unlocked && <p className="text-[10px]" style={{ color: 'rgb(var(--muted))' }}>{th.unlockRank} rank · or buy in Shop</p>}
+                {!unlocked && <p className="text-[10px]" style={{ color: 'rgb(var(--muted))' }}>{th.unlockRank} {tr('rank · or buy in Shop')}</p>}
               </button>
             );
           })}
         </div>
         <div className="flex items-center justify-between mt-2">
           <div>
-            <p className="text-sm">Auto day / night</p>
-            <p className="text-[11px] text-muted">Light by day, dark at night</p>
+            <p className="text-sm">{tr('Auto day / night')}</p>
+            <p className="text-[11px] text-muted">{tr('Light by day, dark at night')}</p>
           </div>
-          <Toggle label="Auto day / night" checked={s.autoTheme} onChange={(v) => s.set('autoTheme', v)} />
+          <Toggle label={tr('Auto day / night')} checked={s.autoTheme} onChange={(v) => s.set('autoTheme', v)} />
         </div>
         <AppIconPicker />
         <div className={s.apprentice ? 'hidden' : 'mt-3'}>
-          <p className="text-sm font-medium mb-2 flex items-center gap-1.5">App design</p>
+          <p className="text-sm font-medium mb-2 flex items-center gap-1.5">{tr('App design')}</p>
           <div className="space-y-2" data-noswipe>
             {DESIGN_MODES.map((m) => {
               const active = s.designMode === m.id;
@@ -422,55 +423,55 @@ export default function Profile() {
       </div>
 
       {/* Quote genre */}
-      <Fold hidden={s.apprentice} icon={<BookOpen size={16} />} title={t('p.quoteGenre')} summary={QUOTE_GENRES.find((g) => g.id === s.quoteGenre)?.label ?? 'All'}>
+      <Fold hidden={s.apprentice} icon={<BookOpen size={16} />} title={t('p.quoteGenre')} summary={QUOTE_GENRES.find((g) => g.id === s.quoteGenre)?.label ?? tr('All')}>
         <div className="flex gap-2 flex-wrap" data-noswipe>
           {QUOTE_GENRES.map((g) => (
             <Pill key={g.id} active={s.quoteGenre === g.id} onClick={() => s.set('quoteGenre', g.id)}>{g.label}</Pill>
           ))}
-          <Pill active={s.quoteGenre === 'all'} onClick={() => s.set('quoteGenre', 'all')}>All</Pill>
+          <Pill active={s.quoteGenre === 'all'} onClick={() => s.set('quoteGenre', 'all')}>{tr('All')}</Pill>
         </div>
         <button onClick={() => navigate('/collection')} className="text-xs text-accent-2 mt-2 flex items-center gap-1">
-          <BookOpen size={13} /> View quote collection
+          <BookOpen size={13} /> {tr('View quote collection')}
         </button>
       </Fold>
 
       {/* Toggles */}
       <Fold hidden={s.apprentice} icon={<SlidersHorizontal size={16} />} title={t('p.preferences')}>
         <Card className="divide-y divide-line">
-          <Row label={t('p.publicLeaderboard')} desc="Show your rank to others">
+          <Row label={t('p.publicLeaderboard')} desc={tr('Show your rank to others')}>
             <Toggle label={t('p.publicLeaderboard')} checked={s.leaderboardPublic} onChange={(v) => s.set('leaderboardPublic', v)} />
           </Row>
-          <Row label="Share activity" desc="Let friends see your real sessions & PRs">
-            <Toggle label="Share activity" checked={s.shareActivity} onChange={(v) => { s.set('shareActivity', v); void pushMyActivity(); }} />
+          <Row label={tr('Share activity')} desc={tr('Let friends see your real sessions & PRs')}>
+            <Toggle label={tr('Share activity')} checked={s.shareActivity} onChange={(v) => { s.set('shareActivity', v); void pushMyActivity(); }} />
           </Row>
-          <Row label={t('p.streakGambling')} desc="Wager coins on session targets">
+          <Row label={t('p.streakGambling')} desc={tr('Wager coins on session targets')}>
             <Toggle label={t('p.streakGambling')} checked={s.streakGambling} onChange={(v) => s.set('streakGambling', v)} />
           </Row>
-          <Row label="Pre-fill from last time" desc="New sets start at your last weights and reps">
-            <Toggle label="Pre-fill from last time" checked={s.prefillWeights} onChange={(v) => s.set('prefillWeights', v)} />
+          <Row label={tr('Pre-fill from last time')} desc={tr('New sets start at your last weights and reps')}>
+            <Toggle label={tr('Pre-fill from last time')} checked={s.prefillWeights} onChange={(v) => s.set('prefillWeights', v)} />
           </Row>
-          <Row label="Rest timer" desc="Auto-open the rest countdown after each set">
-            <Toggle label="Rest timer" checked={s.restTimerEnabled} onChange={(v) => s.set('restTimerEnabled', v)} />
+          <Row label={tr('Rest timer')} desc={tr('Auto-open the rest countdown after each set')}>
+            <Toggle label={tr('Rest timer')} checked={s.restTimerEnabled} onChange={(v) => s.set('restTimerEnabled', v)} />
           </Row>
           <div className="py-3" data-noswipe>
-            <p className="text-sm">Set card focus</p>
-            <p className="text-[11px] text-muted mb-2">What fills the space under each set</p>
+            <p className="text-sm">{tr('Set card focus')}</p>
+            <p className="text-[11px] text-muted mb-2">{tr('What fills the space under each set')}</p>
             <div className="flex gap-2">
               {SET_FOCUS.map((o) => (
                 <Pill key={o.id} active={s.setRowDetail === o.id} onClick={() => { s.set('setRowDetail', o.id); haptic('tap'); }}>{o.label}</Pill>
               ))}
             </div>
           </div>
-          <Row label="Voice cues" desc="Speak the next set aloud during a workout">
-            <Toggle label="Voice cues" checked={s.voiceCoach} onChange={(v) => s.set('voiceCoach', v)} />
+          <Row label={tr('Voice cues')} desc={tr('Speak the next set aloud during a workout')}>
+            <Toggle label={tr('Voice cues')} checked={s.voiceCoach} onChange={(v) => s.set('voiceCoach', v)} />
           </Row>
-          <Row label="Progress charts" desc="PR timeline & XP growth curve on the Quests screen">
-            <Toggle label="Progress charts" checked={s.showProgressCharts} onChange={(v) => s.set('showProgressCharts', v)} />
+          <Row label={tr('Progress charts')} desc={tr('PR timeline & XP growth curve on the Quests screen')}>
+            <Toggle label={tr('Progress charts')} checked={s.showProgressCharts} onChange={(v) => s.set('showProgressCharts', v)} />
           </Row>
-          <Row label={t('p.marketplace')} desc="Buy & sell programs">
+          <Row label={t('p.marketplace')} desc={tr('Buy & sell programs')}>
             <Toggle label={t('p.marketplace')} checked={s.marketplaceEnabled} onChange={(v) => s.set('marketplaceEnabled', v)} />
           </Row>
-          <Row label={t('p.haptics')} desc="Vibration feedback">
+          <Row label={t('p.haptics')} desc={tr('Vibration feedback')}>
             <Toggle label={t('p.haptics')} checked={s.hapticsEnabled} onChange={(v) => s.set('hapticsEnabled', v)} />
           </Row>
           {/* Independent of Apprentice Mode on purpose: gloves, cold hands and
@@ -478,20 +479,20 @@ export default function Profile() {
           <Row label={t('p.bigControls')} desc={t('p.bigControlsDesc')}>
             <Toggle label={t('p.bigControls')} checked={s.a11yLargeTargets} onChange={(v) => { s.set('a11yLargeTargets', v); haptic('tap'); }} />
           </Row>
-          <Row label={t('p.geofence')} desc="“Welcome to the Forge” check-in">
+          <Row label={t('p.geofence')} desc={tr('“Welcome to the Forge” check-in')}>
             <Toggle label={t('p.geofence')} checked={s.geofenceEnabled} onChange={toggleGeofence} />
           </Row>
-          <Row label="Health & recovery" desc="Sleep, readiness & Garmin sync">
-            <Toggle label="Health & recovery" checked={s.recoveryEnabled} onChange={(v) => { s.set('recoveryEnabled', v); void configureBackgroundSync(v, { bedtime: s.bedtimeNudge }); }} />
+          <Row label={tr('Health & recovery')} desc={tr('Sleep, readiness & Garmin sync')}>
+            <Toggle label={tr('Health & recovery')} checked={s.recoveryEnabled} onChange={(v) => { s.set('recoveryEnabled', v); void configureBackgroundSync(v, { bedtime: s.bedtimeNudge }); }} />
           </Row>
           {s.recoveryEnabled && (
-            <Row label="Bedtime reminder" desc="Evening nudge when sleep debt builds">
-              <Toggle label="Bedtime reminder" checked={s.bedtimeNudge} onChange={(v) => { s.set('bedtimeNudge', v); void configureBackgroundSync(true, { bedtime: v }); }} />
+            <Row label={tr('Bedtime reminder')} desc={tr('Evening nudge when sleep debt builds')}>
+              <Toggle label={tr('Bedtime reminder')} checked={s.bedtimeNudge} onChange={(v) => { s.set('bedtimeNudge', v); void configureBackgroundSync(true, { bedtime: v }); }} />
             </Row>
           )}
           {s.recoveryEnabled && (
-            <Row label="Import watch workouts" desc="Garmin runs & sessions join your history">
-              <Toggle label="Import watch workouts" checked={s.autoImportWorkouts} onChange={(v) => s.set('autoImportWorkouts', v)} />
+            <Row label={tr('Import watch workouts')} desc={tr('Garmin runs & sessions join your history')}>
+              <Toggle label={tr('Import watch workouts')} checked={s.autoImportWorkouts} onChange={(v) => s.set('autoImportWorkouts', v)} />
             </Row>
           )}
         </Card>
@@ -516,7 +517,7 @@ export default function Profile() {
           <RefreshCw size={16} className="text-muted" />
           <div>
             <p className="text-sm">{t('p.offlineSync')}</p>
-            <p className="text-[11px] text-muted">{pending} queued · {navigator.onLine ? 'online' : 'offline'}</p>
+            <p className="text-[11px] text-muted">{pending} {tr('queued ·')} {navigator.onLine ? 'online' : 'offline'}</p>
           </div>
         </div>
         <Button variant="outline" className="py-1.5" onClick={async () => { const r = await syncQueue(); setPending(0); haptic('success'); toast(`Synced ${r.synced} item(s).`); }}>{t('p.syncNow')}</Button>
@@ -527,11 +528,11 @@ export default function Profile() {
         <Badge>{t('common.open')}</Badge>
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/library')}>
-        <div className="flex items-center gap-2"><BookOpen size={16} className="text-muted" /><span className="text-sm">Exercise library</span></div>
+        <div className="flex items-center gap-2"><BookOpen size={16} className="text-muted" /><span className="text-sm">{tr('Exercise library')}</span></div>
         <Badge>{EXERCISES.length}</Badge>
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/calendar')}>
-        <div className="flex items-center gap-2"><CalendarDays size={16} className="text-muted" /><span className="text-sm">Workout calendar</span></div>
+        <div className="flex items-center gap-2"><CalendarDays size={16} className="text-muted" /><span className="text-sm">{tr('Workout calendar')}</span></div>
         <Badge>{t('common.open')}</Badge>
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/trainer')}>
@@ -546,49 +547,49 @@ export default function Profile() {
           : <Badge>{t('common.open')}</Badge>}
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/wrapped')}>
-        <div className="flex items-center gap-2"><Gift size={16} className="text-muted" /><span className="text-sm">Forge Wrapped: last month's recap</span></div>
+        <div className="flex items-center gap-2"><Gift size={16} className="text-muted" /><span className="text-sm">{tr('Forge Wrapped: last month\'s recap')}</span></div>
         <Badge>{t('common.open')}</Badge>
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/progress')}>
-        <div className="flex items-center gap-2"><LineChart size={16} className="text-muted" /><span className="text-sm">Progress &amp; body</span></div>
+        <div className="flex items-center gap-2"><LineChart size={16} className="text-muted" /><span className="text-sm">{tr('Progress & body')}</span></div>
         <Badge>{t('common.open')}</Badge>
       </Card>
       {s.recoveryEnabled && (
         <Card className="flex items-center justify-between" onClick={() => navigate('/health')}>
-          <div className="flex items-center gap-2"><Watch size={16} className="text-muted" /><span className="text-sm">Health &amp; recovery (Garmin sync)</span></div>
-          <Badge color="rgb(var(--accent))">Open</Badge>
+          <div className="flex items-center gap-2"><Watch size={16} className="text-muted" /><span className="text-sm">{tr('Health & recovery (Garmin sync)')}</span></div>
+          <Badge color="rgb(var(--accent))">{tr('Open')}</Badge>
         </Card>
       )}
       <Card className="flex items-center justify-between" onClick={() => navigate('/download')}>
-        <div className="flex items-center gap-2"><Smartphone size={16} className="text-muted" /><span className="text-sm">Get the app (install / APK)</span></div>
-        <Badge color="rgb(var(--accent))">Open</Badge>
+        <div className="flex items-center gap-2"><Smartphone size={16} className="text-muted" /><span className="text-sm">{tr('Get the app (install / APK)')}</span></div>
+        <Badge color="rgb(var(--accent))">{tr('Open')}</Badge>
       </Card>
       <Card className="flex items-center justify-between" onClick={() => navigate('/import-progress')}>
-        <div className="flex items-center gap-2"><Download size={16} className="text-muted" /><span className="text-sm">Import progress from another app</span></div>
-        <Badge color="rgb(var(--accent-2))">Open</Badge>
+        <div className="flex items-center gap-2"><Download size={16} className="text-muted" /><span className="text-sm">{tr('Import progress from another app')}</span></div>
+        <Badge color="rgb(var(--accent-2))">{tr('Open')}</Badge>
       </Card>
 
       {/* Training & rewards */}
       <div>
-        <SectionTitle action={<Trophy size={14} className="text-muted" />}>Training &amp; rewards</SectionTitle>
+        <SectionTitle action={<Trophy size={14} className="text-muted" />}>{tr('Training & rewards')}</SectionTitle>
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm">Weekly session goal</span>
+            <span className="text-sm">{tr('Weekly session goal')}</span>
             <div className="flex items-center gap-1">
               <button onClick={() => s.set('weeklyGoal', Math.max(1, s.weeklyGoal - 1))} className="w-8 h-8 rounded-md bg-surface-2">−</button>
               <span className="w-8 text-center font-mono text-sm">{s.weeklyGoal}</span>
               <button onClick={() => s.set('weeklyGoal', Math.min(7, s.weeklyGoal + 1))} className="w-8 h-8 rounded-md bg-surface-2">+</button>
             </div>
           </div>
-          <p className="text-[11px] text-muted -mt-1">Your streak counts <b>weeks</b> you hit this many planned sessions: not daily gym days.</p>
+          <p className="text-[11px] text-muted -mt-1">{tr('Your streak counts')} <b>{tr('weeks')}</b> {tr('you hit this many planned sessions: not daily gym days.')}</p>
           <div className="flex items-center justify-between">
-            <div><p className="text-sm">Heavy-set quote drops</p><p className="text-[11px] text-muted">Rare/legendary quotes past 100 kg</p></div>
-            <Toggle label="Heavy-set quote drops" checked={s.heavyQuotesEnabled} onChange={(v) => s.set('heavyQuotesEnabled', v)} />
+            <div><p className="text-sm">{tr('Heavy-set quote drops')}</p><p className="text-[11px] text-muted">{tr('Rare/legendary quotes past 100 kg')}</p></div>
+            <Toggle label={tr('Heavy-set quote drops')} checked={s.heavyQuotesEnabled} onChange={(v) => s.set('heavyQuotesEnabled', v)} />
           </div>
         </Card>
       </div>
       <Card className="flex items-center justify-between" onClick={() => openTutorial()}>
-        <div className="flex items-center gap-2"><HelpCircle size={16} className="text-muted" /><span className="text-sm">Replay app tour</span></div>
+        <div className="flex items-center gap-2"><HelpCircle size={16} className="text-muted" /><span className="text-sm">{tr('Replay app tour')}</span></div>
         <Badge>{t('common.open')}</Badge>
       </Card>
 
@@ -596,13 +597,13 @@ export default function Profile() {
       <Fold icon={<Bell size={16} />} title={t('Workout reminders')}>
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-sm">Daily reminder</span>
-            <Toggle label="Daily reminder" checked={s.reminder.enabled} onChange={async (v) => { if (v) { const ok = await requestNotifyPermission(); if (!ok) { toast('Enable notifications in your browser to use reminders.', 'error'); return; } } s.set('reminder', { ...s.reminder, enabled: v }); }} />
+            <span className="text-sm">{tr('Daily reminder')}</span>
+            <Toggle label={tr('Daily reminder')} checked={s.reminder.enabled} onChange={async (v) => { if (v) { const ok = await requestNotifyPermission(); if (!ok) { toast(tr('Enable notifications in your browser to use reminders.'), 'error'); return; } } s.set('reminder', { ...s.reminder, enabled: v }); }} />
           </div>
           {s.reminder.enabled && (
             <>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-muted">Time</span>
+                <span className="text-sm text-muted">{tr('Time')}</span>
                 <input type="time" value={s.reminder.time} onChange={(e) => s.set('reminder', { ...s.reminder, time: e.target.value })} className="rounded-lg bg-surface-2 border border-line px-3 py-1.5 text-sm" />
               </div>
               <div className="flex gap-1 justify-between">
@@ -613,7 +614,7 @@ export default function Profile() {
                   );
                 })}
               </div>
-              <p className="text-[11px] text-muted/70">Fires while the app is open or in the background. Say “notify me when…” for one-offs.</p>
+              <p className="text-[11px] text-muted/70">{tr('Fires while the app is open or in the background. Say “notify me when…” for one-offs.')}</p>
             </>
           )}
         </Card>
@@ -623,16 +624,16 @@ export default function Profile() {
       <Fold icon={<Globe2 size={16} />} title={t('Public profile')}>
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
-            <div><p className="text-sm">Shareable profile</p><p className="text-[11px] text-muted">Let others view your rank & stats via a link</p></div>
-            <Toggle label="Shareable profile" checked={s.publicProfile} onChange={(v) => s.set('publicProfile', v)} />
+            <div><p className="text-sm">{tr('Shareable profile')}</p><p className="text-[11px] text-muted">{tr('Let others view your rank & stats via a link')}</p></div>
+            <Toggle label={tr('Shareable profile')} checked={s.publicProfile} onChange={(v) => s.set('publicProfile', v)} />
           </div>
           {s.publicProfile ? (
             <div className="flex gap-2">
-              <Button className="flex-1 justify-center" onClick={shareMyProfile}>Share profile</Button>
-              <Button variant="ghost" className="flex-1 justify-center" onClick={() => downloadDataUrl(generateProfileCard(buildSummary()), 'forgeos-profile.png')}>Save card</Button>
+              <Button className="flex-1 justify-center" onClick={shareMyProfile}>{tr('Share profile')}</Button>
+              <Button variant="ghost" className="flex-1 justify-center" onClick={() => downloadDataUrl(generateProfileCard(buildSummary()), 'forgeos-profile.png')}>{tr('Save card')}</Button>
             </div>
           ) : (
-            <p className="text-[11px] text-muted/70">Turn on to generate a read-only share link and a profile card.</p>
+            <p className="text-[11px] text-muted/70">{tr('Turn on to generate a read-only share link and a profile card.')}</p>
           )}
         </Card>
       </Fold>
@@ -641,16 +642,16 @@ export default function Profile() {
       <Fold icon={<Shield size={16} />} title={t('Security')}>
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
-            <div><p className="text-sm">App passcode lock</p><p className="text-[11px] text-muted">Ask for a code on launch</p></div>
-            <Toggle label="App passcode lock" checked={s.appLock.enabled} onChange={(v) => {
+            <div><p className="text-sm">{tr('App passcode lock')}</p><p className="text-[11px] text-muted">{tr('Ask for a code on launch')}</p></div>
+            <Toggle label={tr('App passcode lock')} checked={s.appLock.enabled} onChange={(v) => {
               if (v) setPasscodeSheet('set');
               else s.set('appLock', { enabled: false, code: '' });
             }} />
           </div>
           {s.appLock.enabled && (
-            <Button variant="ghost" className="w-full justify-center" onClick={() => setPasscodeSheet('change')}>Change passcode</Button>
+            <Button variant="ghost" className="w-full justify-center" onClick={() => setPasscodeSheet('change')}>{tr('Change passcode')}</Button>
           )}
-          <Button variant="ghost" className="w-full justify-center" onClick={() => setPwSheet(true)}>Change account password</Button>
+          <Button variant="ghost" className="w-full justify-center" onClick={() => setPwSheet(true)}>{tr('Change account password')}</Button>
         </Card>
       </Fold>
 
@@ -666,33 +667,33 @@ export default function Profile() {
       {/* Backup */}
       <Fold icon={<Database size={16} />} title={t('Backup & restore')}>
         <div className="flex gap-2">
-          <Button variant="ghost" className="flex-1 justify-center" onClick={exportData}>Export file</Button>
-          <Button variant="ghost" className="flex-1 justify-center" onClick={() => backupFileRef.current?.click()}>Import file</Button>
+          <Button variant="ghost" className="flex-1 justify-center" onClick={exportData}>{tr('Export file')}</Button>
+          <Button variant="ghost" className="flex-1 justify-center" onClick={() => backupFileRef.current?.click()}>{tr('Import file')}</Button>
         </div>
         {cloudSyncAvailable() && (
           <div className="flex gap-2 mt-2">
             <Button variant="ghost" className="flex-1 justify-center" onClick={async () => {
               const r = await pushCloudBackup();
               toast(r === 'ok' ? 'Backed up to the cloud.' : r === 'unauth' ? 'Log in with email to use cloud backup.' : 'Cloud backup failed. Try again.', r === 'ok' ? 'success' : 'error');
-            }}><Cloud size={15} aria-hidden /> Back up to cloud</Button>
+            }}><Cloud size={15} aria-hidden /> {tr('Back up to cloud')}</Button>
             <Button variant="ghost" className="flex-1 justify-center" onClick={async () => {
               if (cloudConfirm) {
                 const r = await pullCloudBackup();
-                if (r === 'restored') { toast('Restoring…'); setTimeout(() => location.reload(), 600); }
+                if (r === 'restored') { toast(tr('Restoring…')); setTimeout(() => location.reload(), 600); }
                 else toast(r === 'none' ? 'No cloud backup found.' : r === 'unauth' ? 'Log in to restore.' : 'Restore failed.', 'error');
                 setCloudConfirm(false);
-              } else { setCloudConfirm(true); toast('Tap again to replace local data with your cloud backup.', 'info'); }
-            }}>{cloudConfirm ? 'Confirm restore' : 'Restore from cloud'}</Button>
+              } else { setCloudConfirm(true); toast(tr('Tap again to replace local data with your cloud backup.'), 'info'); }
+            }}>{cloudConfirm ? tr('Confirm restore') : tr('Restore from cloud')}</Button>
           </div>
         )}
         {/* GDPR art. 9: health data needs explicit consent, so say what the
             button uploads before anyone taps it. */}
         {cloudSyncAvailable() && (
           <p className="text-[11px] text-muted mt-1.5">
-            A cloud backup includes your health data (sleep, heart rate, weight, measurements). Tapping Back up means you agree to store it on our EU server. Details in the <a href={`${import.meta.env.BASE_URL}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">privacy policy</a>.
+            {tr('A cloud backup includes your health data (sleep, heart rate, weight, measurements). Tapping Back up means you agree to store it on our EU server. Details in the')} <a href={`${import.meta.env.BASE_URL}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">{tr('privacy policy')}</a>.
           </p>
         )}
-        <input ref={backupFileRef} type="file" accept="application/json" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { try { await importData(f); toast('Backup restored ✅'); } catch { toast('That file is not a valid ForgeOS backup.', 'error'); } } }} />
+        <input ref={backupFileRef} type="file" accept="application/json" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { try { await importData(f); toast(tr('Backup restored ✅')); } catch { toast(tr('That file is not a valid ForgeOS backup.'), 'error'); } } }} />
       </Fold>
 
       {/* Your gym */}
@@ -701,7 +702,7 @@ export default function Profile() {
           <input
             value={s.gym.name}
             onChange={(e) => s.set('gym', { ...s.gym, name: e.target.value })}
-            placeholder="Gym name"
+            placeholder={tr('Gym name')}
             className="w-full rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm"
           />
           <Button variant="outline" className="w-full justify-center" onClick={() => setGymToHere()}>
@@ -735,7 +736,7 @@ export default function Profile() {
         reset();
         navigate('/onboarding', { replace: true });
       }}>
-        <span className="flex items-center gap-2"><LogOut size={16} /> Sign out</span>
+        <span className="flex items-center gap-2"><LogOut size={16} /> {tr('Sign out')}</span>
       </Button>
 
       {/* Quiet on purpose: the last line above the version number, where
@@ -746,13 +747,13 @@ export default function Profile() {
           the bottom, pointing at pages that live outside the app so they work
           even when someone has not installed it. */}
       <p className="text-center text-[11px] text-muted/70">
-        <a href={`${import.meta.env.BASE_URL}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">Privacy</a>
+        <a href={`${import.meta.env.BASE_URL}privacy.html`} target="_blank" rel="noopener noreferrer" className="underline">{tr('Privacy')}</a>
         {' · '}
-        <a href={`${import.meta.env.BASE_URL}terms.html`} target="_blank" rel="noopener noreferrer" className="underline">Terms</a>
+        <a href={`${import.meta.env.BASE_URL}terms.html`} target="_blank" rel="noopener noreferrer" className="underline">{tr('Terms')}</a>
       </p>
 
       <p className="text-center text-[11px] text-muted pb-2">
-        ForgeOS {__APP_VERSION__ === 'dev' ? 'dev build' : `v${__APP_VERSION__}`}
+        ForgeOS {__APP_VERSION__ === 'dev' ? tr('dev build') : `v${__APP_VERSION__}`}
       </p>
     </Screen>
   );

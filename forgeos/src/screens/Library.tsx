@@ -1,3 +1,4 @@
+import { useT } from '../lib/i18n';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Search, Nfc, Plus, Trash2 } from 'lucide-react';
@@ -29,6 +30,7 @@ function equipGroup(equipment: string): string {
 }
 
 export default function Library() {
+  const t = useT();
   const navigate = useNavigate();
   const [q, setQ] = useState('');
   const [cat, setCat] = useState<string>('All');
@@ -76,10 +78,10 @@ export default function Library() {
 
   return (
     <div className="px-4 pt-12 pb-6 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('Back')}</button>
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-extrabold">Exercise Library</h1>
-        <button onClick={pairNfc} className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5 text-xs"><Nfc size={14} className="text-accent" /> NFC</button>
+        <h1 className="text-2xl font-extrabold">{t('Exercise Library')}</h1>
+        <button onClick={pairNfc} className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5 text-xs"><Nfc size={14} className="text-accent" /> {t('NFC')}</button>
       </div>
       {nfcMsg && <p className="text-xs text-accent-2">{nfcMsg}</p>}
 
@@ -90,12 +92,12 @@ export default function Library() {
 
       {/* Create your own — described in your words, classified by the coach */}
       <Button className="w-full justify-center" onClick={() => setCreateOpen(true)}>
-        <span className="flex items-center gap-1.5 text-sm"><Plus size={15} /> Create your own exercise{custom.length ? ` (${custom.length} made)` : ''}</span>
+        <span className="flex items-center gap-1.5 text-sm"><Plus size={15} /> {t('Create your own exercise')}{custom.length ? ` (${custom.length} made)` : ''}</span>
       </Button>
 
       {/* Category filter */}
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">Category</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">{t('Category')}</p>
         <div data-noswipe className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
           {['All', ...EXERCISE_CATEGORIES].map((c) => (
             <button key={c} onClick={() => setCat(c)} className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium border transition ${cat === c ? 'bg-accent text-black border-accent' : 'bg-surface-2 text-muted border-line'}`}>{c}</button>
@@ -105,7 +107,7 @@ export default function Library() {
 
       {/* Muscle-group filter */}
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">Muscle group</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">{t('Muscle group')}</p>
         <div data-noswipe className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
           {['All', ...MUSCLES].map((m) => (
             <button key={m} onClick={() => setMuscle(m)} className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium border transition ${muscle === m ? 'bg-accent-2 text-black border-accent-2' : 'bg-surface-2 text-muted border-line'}`}>{m}</button>
@@ -115,7 +117,7 @@ export default function Library() {
 
       {/* Equipment filter */}
       <div>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">Equipment</p>
+        <p className="text-[11px] font-semibold uppercase tracking-wide text-muted mb-1.5">{t('Equipment')}</p>
         <div data-noswipe className="flex gap-1.5 overflow-x-auto no-scrollbar pb-1">
           {['All', ...EQUIPMENT].map((x) => (
             <button key={x} onClick={() => setEquip(x)} className={`whitespace-nowrap rounded-full px-3 py-2 text-xs font-medium border transition ${equip === x ? 'bg-success text-black border-success' : 'bg-surface-2 text-muted border-line'}`}>{x}</button>
@@ -124,9 +126,9 @@ export default function Library() {
       </div>
 
       <div className="flex items-center justify-between">
-        <p className="text-xs text-muted"><b className="text-text">{list.length}</b> exercises{cat !== 'All' && ` · ${cat}`}{muscle !== 'All' && ` · ${muscle}`}{equip !== 'All' && ` · ${equip}`}</p>
+        <p className="text-xs text-muted"><b className="text-text">{list.length}</b> {t('exercises')}{cat !== 'All' && ` · ${cat}`}{muscle !== 'All' && ` · ${muscle}`}{equip !== 'All' && ` · ${equip}`}</p>
         {(cat !== 'All' || muscle !== 'All' || equip !== 'All' || q) && (
-          <button onClick={() => { setCat('All'); setMuscle('All'); setEquip('All'); setQ(''); }} className="text-xs text-accent">Clear filters</button>
+          <button onClick={() => { setCat('All'); setMuscle('All'); setEquip('All'); setQ(''); }} className="text-xs text-accent">{t('Clear filters')}</button>
         )}
       </div>
       <div className="space-y-2">
@@ -137,18 +139,18 @@ export default function Library() {
               <p className="text-xs text-muted">{e.primary}{e.secondary.length ? ` · ${e.secondary.join(', ')}` : ''}</p>
             </div>
             <div className="flex items-center gap-2">
-              {e.id.startsWith('cus-') && <Badge color="rgb(var(--success))">yours</Badge>}
-              {e.isCore && <Badge>core</Badge>}
+              {e.id.startsWith('cus-') && <Badge color="rgb(var(--success))">{t('yours')}</Badge>}
+              {e.isCore && <Badge>{t('core')}</Badge>}
               <Badge color="rgb(var(--accent-2))">{e.category}</Badge>
               {e.id.startsWith('cus-') && (
-                <button onClick={(ev) => { ev.stopPropagation(); removeCustom(e.id); }} className="text-danger" aria-label="Delete custom exercise"><Trash2 size={14} /></button>
+                <button onClick={(ev) => { ev.stopPropagation(); removeCustom(e.id); }} className="text-danger" aria-label={t('Delete custom exercise')}><Trash2 size={14} /></button>
               )}
             </div>
           </Card>
         ))}
         {list.length > shown && (
           <button onClick={() => setShown((n) => n + PAGE)} className="w-full rounded-xl border border-line py-2.5 text-xs text-muted">
-            Show more ({list.length - shown} left)
+            {t('Show more (')}{list.length - shown} {t('left)')}
           </button>
         )}
       </div>
