@@ -112,7 +112,7 @@ export default function Health() {
   return (
     <div className="px-4 pt-12 pb-10 space-y-4 max-w-md mx-auto">
       <div className="flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
         {lastSyncAt && (
           <span className={`text-[11px] ${Date.now() - lastSyncAt > 12 * 3600 * 1000 ? 'text-warn' : 'text-muted'}`}>
             Synced {relTime(lastSyncAt)}

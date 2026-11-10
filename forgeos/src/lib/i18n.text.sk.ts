@@ -81,4 +81,16 @@ export const SK_TEXT: Record<string, string> = {
   'Public profile': 'Verejný profil',
   'Security': 'Zabezpečenie',
   'Backup & restore': 'Záloha a obnova',
+
+  // Train
+  'Log cardio': 'Zapísať kardio',
+
+  // Onboarding
+  'Training, food and progress in one place. Free, and it works without an account.': 'Tréning, strava a pokrok na jednom mieste. Zadarmo a funguje aj bez účtu.',
+  'Get started': 'Začať',
+  'About 2 minutes. You can sign in later.': 'Asi 2 minúty. Prihlásiť sa môžeš aj neskôr.',
+  'Or sign in to back up and sync': 'Alebo sa prihlás pre zálohu a synchronizáciu',
+  'Already have an account?': 'Už máš účet?',
+  'Log in': 'Prihlásiť sa',
+  'Download the Android app': 'Stiahnuť aplikáciu pre Android',
 };

@@ -61,7 +61,7 @@ export default function Download() {
 
   return (
     <div className="min-h-full px-5 py-12 space-y-5 max-w-md mx-auto">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
 
       <div className="text-center space-y-2">
         <div className="mx-auto w-fit"><ForgeLogo size={72} tile /></div>

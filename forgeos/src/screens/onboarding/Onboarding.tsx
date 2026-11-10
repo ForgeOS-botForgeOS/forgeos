@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { Capacitor } from '@capacitor/core';
-import { Mail, Globe, Loader2, Check, Eye, EyeOff, Download } from 'lucide-react';
+import { Mail, Loader2, Check, Eye, EyeOff, Download } from 'lucide-react';
 import { Button, Card, Pill, Sheet, Toggle } from '../../components/ui';
 import { ForgeLogo } from '../../components/ForgeLogo';
 import { InstallButton } from '../../components/InstallButton';
@@ -264,46 +264,45 @@ export default function Onboarding() {
       {step === 'signin' && (
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="space-y-4 mt-6">
           <h1 className="text-3xl font-extrabold leading-tight">{t('ob.tagline')}</h1>
-          <p className="text-muted">{t('ob.sub')}</p>
+          <p className="text-muted">{t('Training, food and progress in one place. Free, and it works without an account.')}</p>
 
-          {/* Install / download CTAs — only in a browser, never inside the app. */}
-          {!isStandalone() && (
-            <>
-              <InstallButton variant="big" />
-              <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={() => navigate('/download')}>
-                <Download size={16} /> Download the Android app
-              </Button>
-            </>
-          )}
+          {/* The one obvious way in: no account, no wall. Signing in is offered
+              right below for people who want a backup, not demanded first. */}
+          <Button className="w-full justify-center py-3.5 text-base" onClick={async () => { clearSignedOut(); setProvider('guest'); if (!(await restoreExistingAccount())) setStep('quiz'); }}>
+            {t('Get started')}
+          </Button>
+          <p className="text-xs text-muted text-center -mt-2">{t('About 2 minutes. You can sign in later.')}</p>
 
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-3">
+            <p className="text-xs uppercase tracking-[0.12em] text-muted">{t('Or sign in to back up and sync')}</p>
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" disabled={signingIn === 'google'} onClick={continueWithGoogle}>
-              {signingIn === 'google' ? <Loader2 size={18} className="animate-spin" /> : <Globe size={18} />}
+              {signingIn === 'google' ? <Loader2 size={18} className="animate-spin" /> : <span aria-hidden className="font-bold text-base leading-none">G</span>}
               {signingIn === 'google' ? t('ob.connecting') : t('ob.google')}
             </Button>
             <Button variant="outline" className="w-full justify-center flex items-center gap-2" onClick={emailContinue}>
               <Mail size={18} /> {t('ob.email')}
             </Button>
-            <button className="w-full text-sm text-muted pt-2" onClick={async () => { clearSignedOut(); setProvider('guest'); if (!(await restoreExistingAccount())) setStep('quiz'); }}>
-              {t('ob.guest')}
-            </button>
+            {signInErr && <p role="alert" className="text-sm text-danger text-center">{signInErr}</p>}
+            {isBackendLive && (
+              <div className="text-center text-sm">
+                <span className="text-muted">{t('Already have an account?')} </span>
+                <button className="min-h-[44px] font-semibold text-accent underline-offset-2 hover:underline" onClick={loginExisting}>
+                  {t('Log in')}
+                </button>
+              </div>
+            )}
             <LegalNote />
           </div>
 
-          {isBackendLive && (
-            <div className="pt-1 text-center text-sm">
-              <span className="text-muted">Already have an account? </span>
-              <button className="font-semibold text-accent underline-offset-2 hover:underline" onClick={loginExisting}>
-                Log in
-              </button>
+          {/* Install / download — only in a browser, never inside the app. */}
+          {!isStandalone() && (
+            <div className="space-y-2 border-t border-line pt-4">
+              <InstallButton variant="big" />
+              <Button variant="ghost" className="w-full justify-center flex items-center gap-2" onClick={() => navigate('/download')}>
+                <Download size={16} /> {t('Download the Android app')}
+              </Button>
             </div>
           )}
-          {signInErr && <p className="text-xs text-danger text-center">{signInErr}</p>}
-          <p className="text-[11px] text-muted/70 text-center pt-2">
-            {googleIsLive
-              ? 'Google sign-in opens the real Google account picker.'
-              : 'Demo mode: add a Google Client ID to enable real Google sign-in.'}
-          </p>
         </motion.div>
       )}
 

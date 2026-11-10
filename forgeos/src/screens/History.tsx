@@ -25,7 +25,7 @@ export default function History() {
 
   return (
     <div className="px-4 pt-12 pb-6 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
       <h1 className="text-2xl font-extrabold">History</h1>
       <div className="flex gap-2">
         <Pill active={tab === 'sessions'} onClick={() => setTab('sessions')}>Sessions</Pill>

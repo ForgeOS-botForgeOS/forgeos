@@ -49,7 +49,7 @@ export default function WorkoutEdit() {
   if (!draft) {
     return (
       <div className="px-4 pt-12 space-y-3">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
         <p className="text-muted">Workout not found.</p>
       </div>
     );
@@ -101,7 +101,7 @@ export default function WorkoutEdit() {
 
   return (
     <div className="px-4 pt-12 pb-10 space-y-4">
-      <button onClick={leave} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+      <button onClick={leave} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
 
       {showRestored && (
         <div className="flex items-center gap-2 rounded-xl border border-line bg-surface-2 px-3 py-2 text-xs">

@@ -26,7 +26,7 @@ export default function RecipeDetail() {
   if (!base) {
     return (
       <div className="px-4 pt-12 pb-6 space-y-4">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> {t('common.back')}</button>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('common.back')}</button>
         <p className="text-sm text-muted">{t('cook.notFound')}</p>
       </div>
     );
@@ -73,7 +73,7 @@ function RecipeView({ base, lang }: { base: Recipe; lang: string }) {
 
   return (
     <div className="px-4 pt-12 pb-8 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> {t('common.back')}</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('common.back')}</button>
 
       <header className="space-y-2">
         <div className="flex items-start justify-between gap-3">

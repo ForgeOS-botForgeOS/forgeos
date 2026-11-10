@@ -323,6 +323,7 @@ function cardioXp(activity: string, primary: number, durationMin: number, calori
 }
 
 function CardioScanCard() {
+  const t = useT();
   const fileRef = useRef<HTMLInputElement>(null);
   const logCardio = useWorkout((s) => s.logCardio);
   const registerSession = useGami((s) => s.registerSession);
@@ -389,6 +390,7 @@ function CardioScanCard() {
   return (
     <Card className="space-y-2">
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
+      <p className="text-xs uppercase tracking-[0.12em] text-muted">{t('Log cardio')}</p>
       <div className="flex gap-2">
         <Button variant="ghost" className="flex-1 justify-center" disabled={busy} onClick={() => pick('watch')}>
           <span className="flex items-center gap-2"><Watch size={16} /> {busy && source === 'watch' ? 'Reading…' : 'From watch'}</span>

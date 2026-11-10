@@ -38,7 +38,7 @@ export default function Shop() {
 
   return (
     <div className="px-4 pt-12 pb-8 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
       <div className="flex items-end justify-between">
         <h1 className="text-2xl font-extrabold">Forge Shop</h1>
         <Badge color="rgb(var(--accent-2))"><span className="flex items-center gap-1"><Coins size={12} /> <CountUp value={coins} /></span></Badge>

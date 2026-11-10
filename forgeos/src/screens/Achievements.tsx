@@ -70,7 +70,7 @@ export default function Achievements() {
 
   return (
     <div className="px-4 pt-12 pb-8 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> {t('common.back')}</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('common.back')}</button>
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-extrabold">{t('ach.title')}</h1>

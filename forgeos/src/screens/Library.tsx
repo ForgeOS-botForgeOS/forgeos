@@ -76,7 +76,7 @@ export default function Library() {
 
   return (
     <div className="px-4 pt-12 pb-6 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-extrabold">Exercise Library</h1>
         <button onClick={pairNfc} className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5 text-xs"><Nfc size={14} className="text-accent" /> NFC</button>

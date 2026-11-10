@@ -1136,6 +1136,25 @@ button {
 }
 
 /* ---------------------------------------------------------------------------
+   READABLE FLOOR — every design mode.
+   A third of the text in the app was set at 9-11px, which is below what most
+   people read comfortably on a phone at arm's length in a gym. Rather than
+   touch 400 class names, the three sub-12px sizes are floored here. Tap
+   targets get the same treatment: a pill is at least 40px tall.
+   (Placed before the .ui-a11y block, which steps these up further.)
+   --------------------------------------------------------------------------- */
+:root .text-\[9px\],
+:root .text-\[10px\],
+:root .text-\[11px\] {
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+:root .fx-pill {
+  min-height: 40px;
+}
+
+/* ---------------------------------------------------------------------------
    Accessibility: bigger, calmer controls  (settings.a11yLargeTargets)
 
    One class on <html>, the same mechanism as the design modes, so it composes

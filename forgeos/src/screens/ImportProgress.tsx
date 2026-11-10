@@ -89,8 +89,8 @@ export default function ImportProgress() {
     <div className="px-4 pt-12 pb-10 space-y-4 max-w-md mx-auto">
       {showTut && <ImportTutorial onClose={closeTut} />}
       <div className="flex items-center justify-between">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
-        <button onClick={() => setShowTut(true)} className="flex items-center gap-1 text-muted text-sm"><HelpCircle size={16} /> How it works</button>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
+        <button onClick={() => setShowTut(true)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><HelpCircle size={16} /> How it works</button>
       </div>
       <div className="text-center space-y-1">
         <div className="mx-auto w-fit"><ForgeLogo size={48} tile /></div>

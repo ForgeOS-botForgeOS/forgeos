@@ -134,7 +134,7 @@ export default function PlanEditor() {
   if (!plan) {
     return (
       <div className="px-4 pt-12 space-y-3">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
         <p className="text-muted">No plan yet: finish onboarding to generate one.</p>
       </div>
     );
@@ -272,7 +272,7 @@ export default function PlanEditor() {
 
   return (
     <div className="px-4 pt-12 pb-10 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-extrabold">Week plan</h1>

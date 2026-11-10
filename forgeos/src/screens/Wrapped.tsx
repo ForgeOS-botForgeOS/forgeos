@@ -59,7 +59,7 @@ export default function Wrapped() {
 
   return (
     <Screen title={t('wrap.title')} subtitle={wrapped ? wrapped.monthLabel : t('wrap.subtitleEmpty')}>
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> {t('common.back')}</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('common.back')}</button>
 
       {!wrapped && (
         <Card className="text-center py-8 space-y-1">

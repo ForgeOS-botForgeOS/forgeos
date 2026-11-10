@@ -77,7 +77,7 @@ export default function Trainer() {
   return (
     <div className="flex h-full flex-col">
       <div className="shrink-0 px-4 pt-12 pb-2 space-y-3">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> {t('common.back')}</button>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('common.back')}</button>
         <div className="flex items-start justify-between gap-2">
           <div>
             <h1 className="text-2xl font-extrabold">{t('trainer.title')}</h1>

@@ -37,7 +37,7 @@ export default function ExerciseDetail() {
   if (!ex) {
     return (
       <div className="px-4 pt-12 pb-6 space-y-4">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> {t('common.back')}</button>
+        <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('common.back')}</button>
         <p className="text-sm text-muted">{t('ex.notFound')}</p>
       </div>
     );
@@ -53,7 +53,7 @@ export default function ExerciseDetail() {
 
   return (
     <div className="px-4 pt-12 pb-6 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> {t('common.back')}</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> {t('common.back')}</button>
 
       <header className="space-y-2">
         <div className="flex items-start justify-between gap-3">

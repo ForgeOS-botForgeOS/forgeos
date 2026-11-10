@@ -42,7 +42,7 @@ export default function RaceJoin() {
 
   return (
     <div className="px-4 pt-12 pb-8 space-y-4">
-      <button onClick={() => navigate('/home')} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Home</button>
+      <button onClick={() => navigate('/home')} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Home</button>
       <h1 className="text-2xl font-extrabold">{t('s.race')} 🏁</h1>
 
       {!config ? (
