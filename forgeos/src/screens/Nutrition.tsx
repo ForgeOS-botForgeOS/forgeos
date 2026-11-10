@@ -172,7 +172,7 @@ export default function Nutrition() {
   };
 
   return (
-    <Screen title={t('nut.title')} subtitle={`${profile?.goal ?? 'recomp'} · ${macros.calories} kcal`}>
+    <Screen title={t('nut.title')} subtitle={`${t(`goal.${profile?.goal ?? 'recomp'}`)} · ${macros.calories.toLocaleString()} kcal`}>
       {/* No `capture` attribute → the native picker offers Camera *and* Photo Library. */}
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
 
@@ -324,9 +324,9 @@ export default function Nutrition() {
                   <p className="text-sm font-medium flex items-center gap-2">{f.name} {f.source === 'scan' && <Badge color="rgb(var(--accent-2))">scan</Badge>}</p>
                   <p className="text-xs text-muted">{f.calories} kcal · P{f.proteinG} C{f.carbsG} F{f.fatG}</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => { saveMeal({ name: f.name, calories: f.calories, proteinG: f.proteinG, carbsG: f.carbsG, fatG: f.fatG, sugarG: f.sugarG }); haptic('success'); toast(`Saved ${f.name} for quick-add ⭐`); }} title="Save for quick-add" className="text-muted"><Star size={15} /></button>
-                  <button onClick={() => removeEntry(f.id)} className="text-muted"><Trash2 size={16} /></button>
+                <div className="flex items-center shrink-0 -mr-2">
+                  <button onClick={() => { saveMeal({ name: f.name, calories: f.calories, proteinG: f.proteinG, carbsG: f.carbsG, fatG: f.fatG, sugarG: f.sugarG }); haptic('success'); toast(`Saved ${f.name} for quick-add ⭐`); }} title="Save for quick-add" aria-label={`Save ${f.name} for quick-add`} className="grid place-items-center w-10 h-10 text-muted"><Star size={16} /></button>
+                  <button onClick={() => removeEntry(f.id)} aria-label={`Delete ${f.name}`} className="grid place-items-center w-10 h-10 text-muted"><Trash2 size={16} /></button>
                 </div>
               </Card>
             ))}
@@ -349,7 +349,7 @@ export default function Nutrition() {
                 return (
                   <div key={idx} className={`rounded-xl border p-3 space-y-2 ${on ? 'border-accent/50 bg-surface-2' : 'border-line opacity-60'}`}>
                     <div className="flex items-center gap-2">
-                      <button onClick={() => setSelected((s) => { const n = new Set(s); if (n.has(idx)) n.delete(idx); else n.add(idx); return n; })} className={`w-5 h-5 shrink-0 rounded-md border flex items-center justify-center ${on ? 'bg-accent border-accent text-black' : 'border-line'}`}>{on && <Check size={13} strokeWidth={3} />}</button>
+                      <button onClick={() => setSelected((s) => { const n = new Set(s); if (n.has(idx)) n.delete(idx); else n.add(idx); return n; })} role="checkbox" aria-checked={on} aria-label={`Include ${it.name}`} className={`w-7 h-7 shrink-0 rounded-md border flex items-center justify-center ${on ? 'bg-accent border-accent text-black' : 'border-line'}`}>{on && <Check size={13} strokeWidth={3} />}</button>
                       <input value={it.name} onChange={(e) => patchItem(idx, { name: e.target.value })} className="flex-1 bg-transparent text-sm font-semibold outline-none" />
                     </div>
                     <div className="grid grid-cols-5 gap-1.5">

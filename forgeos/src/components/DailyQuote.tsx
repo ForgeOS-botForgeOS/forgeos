@@ -50,7 +50,7 @@ export function DailyQuote() {
         aria-label="Quote of the day"
         className="fx-card relative rounded-2xl bg-surface border border-line p-6 text-center"
       >
-        <button className="absolute top-3 right-3 text-muted" onClick={() => setOpen(false)}><X size={18} /></button>
+        <button aria-label="Close" className="absolute top-1 right-1 grid place-items-center w-11 h-11 text-muted" onClick={() => setOpen(false)}><X size={18} /></button>
         <p className="text-xs uppercase tracking-widest text-accent mb-3">{quote.genre} · today</p>
         <p className="text-lg font-semibold leading-snug">“{quote.text}”</p>
         <p className="text-sm text-muted mt-3">– {quote.source}</p>

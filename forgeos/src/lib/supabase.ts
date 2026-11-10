@@ -5,7 +5,7 @@ import type { RaceBroadcast } from './race';
 const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
 const anon = import.meta.env.VITE_SUPABASE_ANON_KEY as string | undefined;
 
-// When keys are absent we run fully on the local mock data layer (see lib/mockData
+// When keys are absent we run fully on the local mock data layer (see the stores
 // and the Zustand stores). isBackendLive() gates any realtime/socket wiring.
 export const isBackendLive = Boolean(url && anon);
 

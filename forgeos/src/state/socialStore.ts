@@ -1,14 +1,13 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type { Duel, DuelMetric, FeedComment, FeedPost, Friend, FriendRequest, MarketplaceRoutine, WeekPlan } from '../types';
-import { MOCK_FEED, MOCK_FEED_DRIP, MOCK_FRIENDS, MOCK_REQUESTS } from '../lib/mockData';
-import { publishPostRemote, reactRemote, fetchFriendsRemote, addFriendByCodeRemote, removeFriendRemote } from '../lib/repositories';
+import { purgeDemoSocial } from '../lib/socialSeed';
+import { publishPostRemote, reactRemote, fetchFeed, fetchFriendsRemote, addFriendByCodeRemote, removeFriendRemote } from '../lib/repositories';
 import { isBackendLive } from '../lib/supabase';
 import { friendFromInvite, type InvitePayload } from '../lib/invite';
 import { useUser } from './userStore';
 
 const uid = () => Math.random().toString(36).slice(2, 10);
-const RANKS = ['Bronze I', 'Bronze II', 'Silver I', 'Silver II', 'Gold I', 'Gold II', 'Platinum I'];
 const me = () => useUser.getState().profile;
 const myName = () => me()?.name ?? 'You';
 const mySeed = () => (me()?.name ?? 'You').slice(0, 2).toUpperCase();
@@ -31,10 +30,11 @@ interface SocialState {
   publishPost: (body: string, opts?: PublishOpts) => void;
   addComment: (postId: string, body: string) => void;
   deletePost: (id: string) => void;
-  refreshFeed: () => boolean;
+  /** Pull friends' recent posts from the backend. Resolves to how many were new, or null when there is no backend to ask. */
+  refreshFeed: () => Promise<number | null>;
   // friends + requests
-  addFriend: (name: string) => void;
-  sendFriendRequest: (name: string, meta?: Partial<Friend>) => void;
+  /** Add a real person by their friend code. Needs the backend; resolves to the friend, or null when the code matches nobody. */
+  addFriendByCode: (code: string) => Promise<Friend | null>;
   acceptRequest: (id: string) => void;
   declineRequest: (id: string) => void;
   addFriendByInvite: (p: InvitePayload) => 'added' | 'duplicate' | 'self';
@@ -52,7 +52,6 @@ interface SocialState {
   // marketplace
   buyRoutine: (id: string) => void;
   publishRoutine: (r: { title: string; priceCoins: number; focus: string; plan: WeekPlan; author: string; authorRank: string }) => void;
-  seedIfEmpty: () => void;
 }
 
 export const useSocial = create<SocialState>()(
@@ -64,12 +63,6 @@ export const useSocial = create<SocialState>()(
       duels: [],
       ownedRoutineIds: [],
       publishedRoutines: [],
-
-      seedIfEmpty: () => {
-        if (get().feed.length === 0) set({ feed: MOCK_FEED });
-        if (get().friends.length === 0) set({ friends: MOCK_FRIENDS });
-        if (get().requests.length === 0) set({ requests: MOCK_REQUESTS });
-      },
 
       // ---- Feed ----
       react: (postId, emoji) => {
@@ -116,61 +109,35 @@ export const useSocial = create<SocialState>()(
 
       deletePost: (id) => set({ feed: get().feed.filter((p) => p.id !== id) }),
 
-      // Drip a believable friend post into the feed (pull-to-refresh feel).
-      refreshFeed: () => {
-        const friends = get().friends;
-        if (friends.length === 0) return false;
-        const tpl = MOCK_FEED_DRIP[Math.floor(Math.random() * MOCK_FEED_DRIP.length)];
-        // only surface posts from people you're actually friends with
-        const known = friends.some((f) => f.name === tpl.authorName) ? tpl : { ...tpl, authorName: friends[0].name, avatarSeed: friends[0].avatarSeed, authorId: friends[0].id };
-        const post: FeedPost = { ...known, id: uid(), createdAt: new Date().toISOString(), comments: [] };
-        set({ feed: [post, ...get().feed] });
-        return true;
+      // Friends' posts normally stream in live (lib/liveFeed.ts); this fills in
+      // whatever was posted while the app was closed.
+      refreshFeed: async () => {
+        const remote = await fetchFeed();
+        if (!remote) return null;
+        const myId = me()?.id;
+        const have = new Set(get().feed.map((p) => p.id));
+        // Own posts are already here under a local id; the remote copy would double them.
+        const fresh = remote.filter((p) => !have.has(p.id) && p.authorId !== myId);
+        if (fresh.length === 0) return 0;
+        const feed = [...fresh, ...get().feed].sort((x, y) => y.createdAt.localeCompare(x.createdAt));
+        set({ feed });
+        return fresh.length;
       },
 
       // ---- Friends & requests ----
-      addFriend: (name) => {
-        const clean = name.trim();
-        if (!clean) return;
-        const friend: Friend = {
-          id: uid(), name: clean, rank: RANKS[Math.floor(Math.random() * RANKS.length)],
-          xp: Math.floor(Math.random() * 9000), online: Math.random() > 0.5, avatarSeed: clean.slice(0, 2).toUpperCase(),
-          streak: Math.floor(Math.random() * 30), lastActiveISO: new Date().toISOString(),
-        };
-        set({ friends: [friend, ...get().friends] });
-      },
-
-      // Send a request (by name or to a suggested person). It appears as a
-      // pending "outgoing" request, then auto-accepts shortly after to simulate
-      // the other side accepting — with no backend social graph.
-      sendFriendRequest: (name, meta = {}) => {
-        const clean = name.trim();
-        if (!clean) return;
-        if (get().friends.some((f) => f.name.toLowerCase() === clean.toLowerCase())) return;
-        if (get().requests.some((r) => r.name.toLowerCase() === clean.toLowerCase())) return;
-        const req: FriendRequest = {
-          id: uid(), name: clean, avatarSeed: clean.slice(0, 2).toUpperCase(),
-          rank: meta.rank ?? RANKS[Math.floor(Math.random() * RANKS.length)], xp: meta.xp ?? Math.floor(Math.random() * 9000),
-          direction: 'outgoing', createdAt: new Date().toISOString(),
-        };
-        set({ requests: [req, ...get().requests] });
-        setTimeout(() => {
-          const r = get().requests.find((x) => x.id === req.id);
-          if (!r) return;
-          const friend: Friend = {
-            id: uid(), name: r.name, rank: r.rank, xp: r.xp, online: Math.random() > 0.4,
-            avatarSeed: r.avatarSeed, streak: meta.streak ?? Math.floor(Math.random() * 30), lastActiveISO: new Date().toISOString(),
-          };
-          set({ requests: get().requests.filter((x) => x.id !== req.id), friends: [friend, ...get().friends] });
-        }, 2600);
+      addFriendByCode: async (code) => {
+        const friend = await addFriendByCodeRemote(code.trim().toUpperCase());
+        if (!friend) return null;
+        if (!get().friends.some((f) => f.id === friend.id)) set({ friends: [friend, ...get().friends] });
+        return friend;
       },
 
       acceptRequest: (id) => {
         const r = get().requests.find((x) => x.id === id);
         if (!r) return;
         const friend: Friend = {
-          id: uid(), name: r.name, rank: r.rank, xp: r.xp, online: Math.random() > 0.4,
-          avatarSeed: r.avatarSeed, streak: Math.floor(Math.random() * 40), lastActiveISO: new Date().toISOString(),
+          id: uid(), name: r.name, rank: r.rank, xp: r.xp, online: false,
+          avatarSeed: r.avatarSeed, streak: 0, lastActiveISO: new Date().toISOString(),
         };
         set({ requests: get().requests.filter((x) => x.id !== id), friends: [friend, ...get().friends] });
       },
@@ -248,6 +215,11 @@ export const useSocial = create<SocialState>()(
         set({ publishedRoutines: [routine, ...get().publishedRoutines], ownedRoutineIds: [...get().ownedRoutineIds, routine.id] });
       },
     }),
-    { name: 'forge-social' },
+    {
+      name: 'forge-social',
+      version: 1,
+      // v0 → v1: the invented demo friends, requests and posts are removed.
+      migrate: (persisted, version) => (version < 1 ? purgeDemoSocial(persisted as SocialState) : (persisted as SocialState)),
+    },
   ),
 );

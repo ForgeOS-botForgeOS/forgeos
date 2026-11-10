@@ -49,12 +49,12 @@ export default function Calendar() {
 
   return (
     <div className="px-4 pt-12 pb-8 space-y-4">
-      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm"><ChevronLeft size={16} /> Back</button>
+      <button onClick={() => navigate(-1)} className="flex items-center gap-1 text-muted text-sm min-h-[44px] pr-3"><ChevronLeft size={16} /> Back</button>
 
       <div className="flex items-center justify-between">
-        <button onClick={() => shift(-1)} className="w-9 h-9 rounded-lg bg-surface-2 flex items-center justify-center"><ChevronLeft size={18} /></button>
+        <button onClick={() => shift(-1)} aria-label="Previous month" className="w-11 h-11 rounded-lg bg-surface-2 flex items-center justify-center"><ChevronLeft size={18} /></button>
         <h1 className="text-lg font-extrabold">{monthName}</h1>
-        <button onClick={() => shift(1)} className="w-9 h-9 rounded-lg bg-surface-2 flex items-center justify-center"><ChevronRight size={18} /></button>
+        <button onClick={() => shift(1)} aria-label="Next month" className="w-11 h-11 rounded-lg bg-surface-2 flex items-center justify-center"><ChevronRight size={18} /></button>
       </div>
 
       <div className="grid grid-cols-7 gap-1 text-center">

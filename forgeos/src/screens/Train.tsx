@@ -9,6 +9,8 @@ import type { ReactNode } from 'react';
 import { Screen } from '../components/Screen';
 import { Card, Button, Sheet, Badge, SectionTitle, Pill } from '../components/ui';
 import { SetRow } from '../components/train/SetRow';
+import { isLoadedLift } from '../lib/exerciseKind';
+import { formatElapsed } from '../lib/elapsed';
 import { RestTimer } from '../components/train/RestTimer';
 import { FocusHud } from '../components/train/FocusHud';
 import { RaceBar } from '../components/train/RaceBar';
@@ -17,7 +19,7 @@ import { reportDuelWorkout } from '../lib/duelSync';
 import { Tools } from '../components/train/Tools';
 import { Confetti } from '../components/Celebrate';
 import { toast, celebrate } from '../lib/toast';
-import { askText } from '../lib/dialog';
+import { askConfirm, askText } from '../lib/dialog';
 import { ROUTINE_NAME_MAX } from '../lib/routines';
 import { RoutinesCard } from '../components/train/RoutinesCard';
 import { UploadError, uploadErrorMessage } from '../lib/upload';
@@ -153,7 +155,7 @@ export default function Train() {
             <p className="text-[10px] uppercase tracking-[0.12em] text-muted mb-1">Coaching</p>
             <LedgerRow k="Next block" v={<span className="capitalize">{rec.nextBlock}</span>} />
             <LedgerRow k="Avg RPE" v={rec.avgRpe || '–'} />
-            <LedgerRow k="Volume · wk" v={`${rec.weeklyVolume.toLocaleString()} kg`} />
+            <LedgerRow k="Avg volume / wk" v={`${rec.weeklyVolume.toLocaleString()} kg`} />
           </Card>
         </>
       )}
@@ -268,7 +270,7 @@ export default function Train() {
           <p className="text-xs uppercase tracking-wide text-muted">Periodisation engine</p>
           <p className="text-sm mt-1">Next block: <b className="capitalize">{rec.nextBlock}</b></p>
           <p className="text-xs text-muted mt-1">{rec.reason}</p>
-          <p className="text-[11px] text-muted/70 mt-1">avg RPE {rec.avgRpe || '–'} · ~{rec.weeklyVolume.toLocaleString()} kg/wk</p>
+          <p className="text-[11px] text-muted/70 mt-1">avg RPE {rec.avgRpe || '–'} · about {rec.weeklyVolume.toLocaleString()} kg a week on average</p>
         </div>
       </Card>
       )}
@@ -519,6 +521,19 @@ function ManualCardioSheet({ open, onClose, onLog }: { open: boolean; onClose: (
   );
 }
 
+/** How long the session has been running, ticking once a second. */
+function SessionClock({ startedAt }: { startedAt: string }) {
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+  return <span className="font-mono tabular-nums" aria-label="Time elapsed">{formatElapsed(now - new Date(startedAt).getTime())}</span>;
+}
+
+/** Icon-only buttons in the session header: the glyph is small, the target is not. */
+const ICON_BTN = 'grid place-items-center w-10 h-10 -my-1.5';
+
 function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: () => void; toolsOpen: boolean; onCloseTools: () => void }) {
   const active = useWorkout((s) => s.active)!;
   const { addExercise, removeExercise, swapExercise, addSet, updateSet, removeSet, completeSet, finishWorkout, discardWorkout, linkSuperset, reorderExercises, addCardioToActive, lastSetFor } = useWorkout();
@@ -665,6 +680,22 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
     setTimeout(() => navigate('/quests'), newPrs.length ? 2200 : 1500);
   }
 
+  async function discard() {
+    if (completedSets > 0) {
+      const ok = await askConfirm({
+        title: 'Discard this workout?',
+        body: `${completedSets} completed ${completedSets === 1 ? 'set' : 'sets'} will be lost. This cannot be undone.`,
+        confirmLabel: 'Discard',
+        cancelLabel: 'Keep training',
+        tone: 'danger',
+      });
+      if (!ok) return;
+    }
+    raceWorkoutEnded();
+    discardWorkout();
+    navigate('/home');
+  }
+
   return (
     <div className="px-4 pt-12 pb-32 space-y-4">
       {celebrating && <Confetti />}
@@ -672,21 +703,21 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       <header className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold">{active.name}</h1>
-          <p className="text-sm text-muted">{completedSets} sets · {Math.round(totalVolume).toLocaleString()} kg</p>
+          <p className="text-sm text-muted"><SessionClock startedAt={active.date} /> · {completedSets} sets · {Math.round(totalVolume).toLocaleString()} kg</p>
         </div>
         <div className="flex items-center gap-2">
           <button
             onClick={() => { setFocusMode(true); haptic('tap'); }}
             aria-label={t('focus.enter')}
             title={t('focus.enter')}
-            className="p-1"
+            className="grid place-items-center w-10 h-10"
           >
             <Crosshair size={18} className="text-accent-2" />
           </button>
           <button
             onClick={() => { const v = !voiceCoach; setSetting('voiceCoach', v); haptic('tap'); if (v) speak('Voice cues on'); }}
             aria-label={voiceCoach ? 'Turn off voice cues' : 'Turn on voice cues'}
-            className="p-1"
+            className="grid place-items-center w-10 h-10"
           >
             {voiceCoach ? <Volume2 size={18} className="text-accent" /> : <VolumeX size={18} className="text-muted" />}
           </button>
@@ -701,7 +732,14 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       {active.exercises.map((we) => {
         const ex = exerciseById(we.exerciseId);
         const last = we.sets[we.sets.length - 1];
-        const suggestion = last ? overloadSuggestion(last.weightKg, last.reps, last.reps, last.rpe) : null;
+        const loaded = !ex || isLoadedLift(ex);
+        // Progression advice is about adding load; it means nothing for a run.
+        // It is read from what you did LAST session, not from the set on screen:
+        // keyed to the live set, applying "+2.5 kg" just produced another "+2.5 kg".
+        const prev = last && loaded ? lastSetFor(we.exerciseId, we.sets.length - 1) : undefined;
+        const suggestion = prev ? overloadSuggestion(prev.weightKg, prev.reps, prev.reps, prev.rpe) : null;
+        const open = we.sets.filter((x) => !x.completed);
+        const canApply = suggestion != null && open.some((x) => x.weightKg !== suggestion.weightKg || x.reps !== suggestion.reps);
         return (
           <Sortable key={we.id} id={we.id}>
             {(handle) => (
@@ -717,16 +755,18 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
                 </button>
                 {we.supersetGroup && <Badge color="rgb(var(--accent-2))">superset</Badge>}
               </div>
-              <div className="flex items-center gap-2 text-muted">
-                <button onClick={() => setSubFor(we.id)} title="Substitute"><Repeat size={16} /></button>
+              <div className="flex items-center text-muted">
+                <button onClick={() => setSubFor(we.id)} title="Substitute" aria-label={`Swap ${ex?.name ?? 'exercise'} for another`} className={ICON_BTN}><Repeat size={16} /></button>
                 <button
                   onClick={() => setLinkMode((m) => (m.includes(we.id) ? m.filter((x) => x !== we.id) : [...m, we.id]))}
                   title="Link superset"
-                  className={linkMode.includes(we.id) ? 'text-accent-2' : ''}
+                  aria-label="Link as a superset"
+                  aria-pressed={linkMode.includes(we.id)}
+                  className={`${ICON_BTN} ${linkMode.includes(we.id) ? 'text-accent-2' : ''}`}
                 >
                   <Link2 size={16} />
                 </button>
-                <button onClick={() => removeExercise(we.id)} title="Remove">✕</button>
+                <button onClick={() => removeExercise(we.id)} title="Remove" aria-label={`Remove ${ex?.name ?? 'exercise'}`} className={ICON_BTN}>✕</button>
               </div>
             </div>
 
@@ -737,6 +777,7 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
                   set={s}
                   index={i}
                   ghost={lastSetFor(we.exerciseId, i)}
+                  timed={!loaded}
                   onChange={(patch) => updateSet(we.id, s.id, patch)}
                   onComplete={() => handleComplete(we.id, s)}
                   onDelete={() => removeSet(we.id, s.id)}
@@ -746,7 +787,17 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
             </div>
 
             {suggestion && (
-              <p className="text-[11px] text-accent-2 flex items-center gap-1"><Flag size={11} /> {suggestion.note}</p>
+              <div className="flex items-center gap-2">
+                <p className="flex-1 text-xs text-accent-2 flex items-center gap-1"><Flag size={12} className="shrink-0" /> {suggestion.note}</p>
+                {canApply && (
+                  <button
+                    onClick={() => { open.forEach((x) => updateSet(we.id, x.id, { weightKg: suggestion.weightKg, reps: suggestion.reps })); haptic('success'); }}
+                    className="shrink-0 rounded-full bg-accent-2/12 px-3 min-h-[36px] text-xs font-semibold text-accent-2 active:scale-95 transition"
+                  >
+                    Use {suggestion.weightKg} kg × {suggestion.reps}
+                  </button>
+                )}
+              </div>
             )}
 
             <div className="flex gap-2">
@@ -782,10 +833,10 @@ function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpenTools: 
       </div>
       <input ref={cardioRef} type="file" accept="image/*" className="hidden" onChange={onCardioFile} />
 
-      <div className="flex gap-2">
-        <Button variant="outline" className="flex-1 justify-center" onClick={() => { raceWorkoutEnded(); discardWorkout(); navigate('/home'); }}>Discard</Button>
-        <Button className="flex-1 justify-center" onClick={finish}>Finish 🔥</Button>
-      </div>
+      {/* Finish is the one thing to hit here. Discard throws the session away,
+          so it sits apart, looks quiet, and asks first once there is work to lose. */}
+      <Button className="w-full justify-center py-3.5" onClick={finish}>Finish workout 🔥</Button>
+      <button onClick={() => void discard()} className="mx-auto block min-h-[44px] px-4 text-xs text-muted underline underline-offset-2">Discard this workout</button>
 
       <FocusHud
         open={focusMode}

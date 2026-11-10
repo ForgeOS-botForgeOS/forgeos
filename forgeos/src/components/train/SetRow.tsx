@@ -28,10 +28,25 @@ interface Props {
   onComplete: () => void;
   onDelete: () => void;
   onLongPress: () => void;
+  /**
+   * Cardio and mobility are logged as minutes, not kilos × reps. By the app's
+   * convention the minutes live in `reps` and `weightKg` stays 0.
+   */
+  timed?: boolean;
 }
 
-export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLongPress }: Props) {
+/** "60 kg × 8", with the effort only when one was actually recorded. */
+function ghostLabel(ghost: SetEntry, timed = false): string {
+  if (timed) return `${ghost.reps} min`;
+  const base = `${ghost.weightKg} kg × ${ghost.reps}`;
+  return ghost.rpe == null ? base : `${base} · RPE ${ghost.rpe}`;
+}
+
+export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLongPress, timed = false }: Props) {
   const detail = useSettings((s) => s.setRowDetail);
+  const [rpeOpen, setRpeOpen] = useState(false);
+  const [subOpen, setSubOpen] = useState(false);
+  const subKind = set.subKind ?? 'none';
   const x = useMotionValue(0);
   // The swipe tint is two fixed-colour layers whose *opacity* follows the drag,
   // not an interpolated background colour: framer-motion cannot mix
@@ -130,26 +145,30 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
         // row) end in pointercancel, never pointerup — so cancel here too.
         onPointerCancel={endPress}
         onDragStart={endPress}
-        className={`relative overflow-hidden border rounded-xl bg-surface px-3 py-2.5 ${set.completed ? 'border-success/50' : 'border-line'}`}
+        className={`relative overflow-hidden border rounded-xl bg-surface px-2.5 py-2 ${set.completed ? 'border-success/50' : 'border-line'}`}
       >
         <motion.div className="pointer-events-none absolute inset-0 bg-success" style={{ opacity: completeTint }} />
         <motion.div className="pointer-events-none absolute inset-0 bg-danger" style={{ opacity: deleteTint }} />
         <div className="relative">
-          <div className="flex items-center gap-1.5 flex-wrap gap-y-2">
-            <span className={`w-6 h-6 shrink-0 rounded-md text-xs flex items-center justify-center font-bold ${set.completed ? 'bg-success text-black' : 'bg-surface-2 text-muted'}`}>
+          <div className="flex items-center gap-1.5">
+            <span className={`w-5 h-6 shrink-0 rounded-md text-xs flex items-center justify-center font-bold ${set.completed ? 'bg-success text-black' : 'bg-surface-2 text-muted'}`}>
               {index + 1}
             </span>
 
-            <Stepper
-              value={set.weightKg}
-              step={2.5}
-              unit="kg"
-              onChange={(v) => onChange({ weightKg: Math.max(0, v) })}
-            />
+            {!timed && (
+              <Stepper
+                value={set.weightKg}
+                step={2.5}
+                unit="kg"
+                label="weight"
+                onChange={(v) => onChange({ weightKg: Math.max(0, v) })}
+              />
+            )}
             <Stepper
               value={set.reps}
               step={1}
-              unit="rep"
+              unit={timed ? 'min' : 'rep'}
+              label={timed ? 'minutes' : 'reps'}
               onChange={(v) => onChange({ reps: Math.max(0, v) })}
             />
 
@@ -162,50 +181,73 @@ export function SetRow({ set, index, ghost, onChange, onComplete, onDelete, onLo
                 <Check size={22} strokeWidth={3} />
               </button>
             )}
-            {set.completed && <span className="ml-auto font-mono text-xs text-accent">e1RM {e1rm(set.weightKg, set.reps)}</span>}
+            {set.completed && !timed && <span className="ml-auto font-mono text-xs text-accent">e1RM {e1rm(set.weightKg, set.reps)}</span>}
           </div>
 
-          {/* RPE slider + ghost overlay */}
-          <div className="flex items-center gap-2 mt-2">
-            <span className="text-[10px] text-muted w-8">RPE</span>
-            <input
-              type="range"
-              min={1}
-              max={10}
-              step={0.5}
-              value={set.rpe ?? 7}
-              onChange={(e) => onChange({ rpe: Number(e.target.value) })}
-              className="flex-1 h-1 accent-[rgb(var(--accent-2))]"
-            />
-            <span className="font-mono text-[11px] w-6 text-right">{set.rpe ?? 7}</span>
+          {/* One quiet line under the set: last time, effort, sub-target. The
+              effort slider used to sit open under every set and tripled the
+              height of the row; it now opens only when its chip is tapped. */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
+            {ghost && <span className="text-xs text-muted">Last {ghostLabel(ghost, timed)}{ghost.grip ? ` · ${GRIP_LABEL[ghost.grip].toLowerCase()} grip` : ''}</span>}
+            <span className="flex-1" />
+            {!timed && detail === 'subtarget' && (
+              <button
+                onClick={() => setSubOpen((o) => !o)}
+                aria-expanded={subOpen}
+                className={`inline-flex items-center rounded-full px-2.5 min-h-[32px] text-xs font-medium active:scale-95 transition ${subKind === 'none' ? 'bg-surface-2 text-muted' : 'bg-accent-2/12 text-accent-2'}`}
+              >
+                {subKind === 'none' ? '+ Sub-target' : subKind === 'grip' && set.grip ? `Grip: ${GRIP_LABEL[set.grip].toLowerCase()}` : SUB_LABEL[subKind]}
+              </button>
+            )}
+            {!timed && (
+              <button
+                onClick={() => setRpeOpen((o) => !o)}
+                aria-expanded={rpeOpen}
+                aria-label={set.rpe == null ? 'Rate the effort of this set' : `Effort ${set.rpe} out of 10, change`}
+                className={`inline-flex items-center rounded-full px-2.5 min-h-[32px] text-xs font-medium active:scale-95 transition ${set.rpe == null ? 'bg-surface-2 text-muted' : 'bg-accent-2/12 text-accent-2'}`}
+              >
+                {set.rpe == null ? 'RPE' : `RPE ${set.rpe}`}
+              </button>
+            )}
           </div>
 
-          {ghost && (
-            <p className="text-[10px] text-muted/70 mt-1">
-              👻 last week: {ghost.weightKg}kg × {ghost.reps} @ RPE {ghost.rpe ?? '–'}{ghost.grip ? ` · ${GRIP_LABEL[ghost.grip].toLowerCase()} grip` : ''}
-            </p>
+          {rpeOpen && !timed && (
+            <div className="flex items-center gap-2 mt-1.5">
+              <span className="text-xs text-muted">Easy</span>
+              <input
+                type="range"
+                min={1}
+                max={10}
+                step={0.5}
+                value={set.rpe ?? 7}
+                aria-label="Effort, 1 to 10"
+                onChange={(e) => onChange({ rpe: Number(e.target.value) })}
+                className="flex-1 h-6 accent-[rgb(var(--accent-2))]"
+              />
+              <span className="text-xs text-muted">Max</span>
+            </div>
           )}
 
           {/* The space under the set is yours to spend (Settings → Set card focus):
               the sub-target controls, or a big readout of the weight / reps. */}
-          {detail === 'subtarget'
-            ? <SubTarget set={set} onChange={onChange} />
-            : <BigMetric set={set} metric={detail} />}
+          {!timed && detail === 'subtarget' && subOpen && <SubTarget set={set} onChange={onChange} />}
+          {!timed && detail !== 'subtarget' && <BigMetric set={set} metric={detail} />}
         </div>
       </motion.div>
     </motion.div>
   );
 }
 
-function Stepper({ value, step, unit, onChange }: { value: number; step: number; unit: string; onChange: (v: number) => void }) {
+function Stepper({ value, step, unit, label, onChange }: { value: number; step: number; unit: string; label: string; onChange: (v: number) => void }) {
+  const btn = 'w-8 h-10 shrink-0 rounded-md bg-surface-2 text-muted text-base active:scale-95 transition';
   return (
-    <div className="flex items-center gap-1 shrink-0">
-      <button onClick={() => { onChange(value - step); haptic('tap'); }} className="w-7 h-7 shrink-0 rounded-md bg-surface-2 text-muted">−</button>
+    <div className="flex items-center gap-0.5 shrink-0">
+      <button onClick={() => { onChange(value - step); haptic('tap'); }} aria-label={`Less ${label}`} className={btn}>−</button>
       <div className="w-10 text-center">
-        <span className="font-mono font-bold text-sm">{value}</span>
-        <span className="text-[9px] text-muted block leading-none">{unit}</span>
+        <span className="font-mono font-bold text-[15px] leading-tight">{value}</span>
+        <span className="text-[11px] text-muted block leading-none">{unit}</span>
       </div>
-      <button onClick={() => { onChange(value + step); haptic('tap'); }} className="w-7 h-7 shrink-0 rounded-md bg-surface-2 text-muted">+</button>
+      <button onClick={() => { onChange(value + step); haptic('tap'); }} aria-label={`More ${label}`} className={btn}>+</button>
     </div>
   );
 }
@@ -223,33 +265,28 @@ function BigMetric({ set, metric }: { set: SetEntry; metric: 'weight' | 'reps' }
   );
 }
 
+const SUB_LABEL: Record<NonNullable<SetEntry['subKind']>, string> = {
+  none: 'None', tut: 'Tempo', band: 'Band', isometric: 'Hold', grip: 'Grip',
+};
+
 function SubTarget({ set, onChange }: { set: SetEntry; onChange: (patch: Partial<SetEntry>) => void }) {
-  const [open, setOpen] = useState(false);
   const kind = set.subKind ?? 'none';
   return (
-    <div className="mt-1">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="inline-flex items-center rounded-full bg-accent-2/12 px-2.5 py-1 text-xs font-medium text-accent-2 active:scale-95 transition"
-      >
-        {kind === 'none' ? '+ sub-target' : kind === 'grip' && set.grip ? `grip: ${GRIP_LABEL[set.grip].toLowerCase()}` : `sub-target: ${kind}`}
-      </button>
-      {open && (
-        <div className="mt-1 flex flex-wrap gap-1.5 items-center">
+        <div className="mt-1.5 flex flex-wrap gap-1.5 items-center">
           {(['none', 'tut', 'band', 'isometric', 'grip'] as const).map((k) => (
             <button
               key={k}
               onClick={() => onChange({ subKind: k })}
-              className={`rounded-full px-2 py-0.5 text-[10px] ${kind === k ? 'bg-accent-2 text-black' : 'bg-surface-2 text-muted'}`}
+              className={`rounded-full px-3 min-h-[32px] text-xs ${kind === k ? 'bg-accent-2 text-black' : 'bg-surface-2 text-muted'}`}
             >
-              {k}
+              {SUB_LABEL[k]}
             </button>
           ))}
           {kind === 'tut' && (
-            <input type="number" inputMode="numeric" placeholder="sec" value={set.tutSeconds ?? ''} onChange={(e) => onChange({ tutSeconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} className="w-16 rounded bg-surface-2 px-2 py-0.5 text-[11px]" />
+            <input type="number" inputMode="numeric" placeholder="sec" value={set.tutSeconds ?? ''} onChange={(e) => onChange({ tutSeconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} className="w-16 rounded bg-surface-2 px-2 py-1.5 text-xs" />
           )}
           {kind === 'band' && (
-            <input placeholder="band colour" value={set.bandColor ?? ''} onChange={(e) => onChange({ bandColor: e.target.value })} className="w-24 rounded bg-surface-2 px-2 py-0.5 text-[11px]" />
+            <input placeholder="band colour" value={set.bandColor ?? ''} onChange={(e) => onChange({ bandColor: e.target.value })} className="w-24 rounded bg-surface-2 px-2 py-1.5 text-xs" />
           )}
           {kind === 'grip' && (
             <div className="w-full space-y-1">
@@ -260,20 +297,18 @@ function SubTarget({ set, onChange }: { set: SetEntry; onChange: (patch: Partial
                     role="radio"
                     aria-checked={set.grip === g}
                     onClick={() => { onChange({ grip: g }); haptic('tap'); }}
-                    className={`rounded-md px-2 py-0.5 text-[10px] ${set.grip === g ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}
+                    className={`rounded-md px-2.5 min-h-[32px] text-xs ${set.grip === g ? 'bg-accent text-black' : 'bg-surface-2 text-muted'}`}
                   >
                     {GRIP_LABEL[g]}
                   </button>
                 ))}
               </div>
-              {set.grip && <p className="text-[10px] text-muted">{GRIP_HINT[set.grip]}</p>}
+              {set.grip && <p className="text-xs text-muted">{GRIP_HINT[set.grip]}</p>}
             </div>
           )}
           {kind === 'isometric' && (
-            <input type="number" inputMode="numeric" placeholder="hold s" value={set.isoSeconds ?? ''} onChange={(e) => onChange({ isoSeconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} className="w-16 rounded bg-surface-2 px-2 py-0.5 text-[11px]" />
+            <input type="number" inputMode="numeric" placeholder="hold s" value={set.isoSeconds ?? ''} onChange={(e) => onChange({ isoSeconds: e.target.value === '' ? undefined : Math.max(0, Number(e.target.value) || 0) })} className="w-16 rounded bg-surface-2 px-2 py-1.5 text-xs" />
           )}
         </div>
-      )}
-    </div>
   );
 }

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Swords, Store, Share2, Wifi, Circle, UserPlus, Check, X,
-  MessageCircle, Send, Trash2, Crown, Zap, Heart, Dumbbell, Star, ChevronRight, Plus, UserMinus,
+  MessageCircle, Send, Trash2, Crown, Zap, Heart, Dumbbell, ChevronRight, Plus, UserMinus,
   RotateCw, Search, Footprints,
 } from 'lucide-react';
 import { joinRace, isBackendLive } from '../lib/supabase';
@@ -17,7 +17,8 @@ import { useSettings } from '../state/settingsStore';
 import { useGami } from '../state/gamificationStore';
 import { useUser } from '../state/userStore';
 import { useWorkout } from '../state/workoutStore';
-import { MOCK_MARKETPLACE, MOCK_SUGGESTED } from '../lib/mockData';
+import { BUILT_IN_AUTHOR, starterRoutines, trainingNowLabel } from '../lib/socialSeed';
+import { isFriendCode } from '../lib/friendCode';
 import { rankForXp, rankLabel } from '../data/ranks';
 import { generateShareCard, downloadDataUrl } from '../lib/shareCard';
 import { haptic } from '../lib/haptics';
@@ -98,6 +99,16 @@ function Feed({ onRace }: { onRace: () => void }) {
   const v2 = useSettings((s) => s.designMode === 'v2');
   const [filter, setFilter] = useState<'all' | 'friends' | 'mine'>('all');
   const [shareOpen, setShareOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  async function refresh() {
+    setRefreshing(true);
+    const fresh = await refreshFeed();
+    setRefreshing(false);
+    haptic(fresh ? 'tap' : 'warning');
+    if (fresh === null) toast('Could not reach the feed. Check your connection.', 'error');
+    else toast(fresh === 0 ? 'You are up to date' : `${fresh} new ${fresh === 1 ? 'post' : 'posts'}`);
+  }
 
   const shown = feed.filter((p) => (filter === 'mine' ? p.mine : filter === 'friends' ? !p.mine : true));
   const liveFriends = friends.filter((f) => f.trainingNow);
@@ -113,8 +124,7 @@ function Feed({ onRace }: { onRace: () => void }) {
         >
           <span className="w-2 h-2 rounded-full shrink-0" style={{ background: 'rgb(var(--success))', boxShadow: '0 0 0 3px rgb(var(--success) / 0.2)' }} />
           <span className="text-[13px] flex-1">
-            <b className="text-success">{liveFriends[0].name}</b>
-            {liveFriends.length > 1 ? ` & ${liveFriends.length - 1} others are` : ' is'} training now
+            <b className="text-success">{trainingNowLabel(liveFriends.map((f) => f.name))}</b> training now
           </span>
           <span className="text-[10px] uppercase tracking-wide text-accent shrink-0">Race ▸</span>
         </button>
@@ -128,12 +138,23 @@ function Feed({ onRace }: { onRace: () => void }) {
             <Pill key={f} active={filter === f} onClick={() => setFilter(f)}>{f}</Pill>
           ))}
         </div>
-        <button className="text-xs text-muted flex items-center gap-1" onClick={() => { haptic(refreshFeed() ? 'tap' : 'warning'); }}>
-          <Zap size={13} /> Refresh
-        </button>
+        {isBackendLive && (
+          <button className="text-xs text-muted flex items-center gap-1 min-h-[40px] px-1 disabled:opacity-50" disabled={refreshing} onClick={() => void refresh()}>
+            <Zap size={13} /> {refreshing ? 'Checking…' : 'Refresh'}
+          </button>
+        )}
       </div>
 
-      {shown.length === 0 && <p className="text-sm text-muted text-center py-6">Nothing here yet: flex something above 💪</p>}
+      {shown.length === 0 && (
+        <Card className="text-center space-y-1 py-6">
+          <p className="text-sm font-semibold">{filter === 'friends' ? 'No posts from friends yet' : 'Your feed is empty'}</p>
+          <p className="text-xs text-muted">
+            {friends.length === 0
+              ? 'Add a gym partner in the Friends tab and their workouts show up here.'
+              : 'Post a workout above, or check back after your friends train.'}
+          </p>
+        </Card>
+      )}
 
       {shown.map((p) => <PostCard key={p.id} post={p} />)}
 
@@ -504,7 +525,7 @@ function Friends() {
   const t = useT();
   const friends = useSocial((s) => s.friends);
   const requests = useSocial((s) => s.requests);
-  const sendFriendRequest = useSocial((s) => s.sendFriendRequest);
+  const addFriendByCode = useSocial((s) => s.addFriendByCode);
   const acceptRequest = useSocial((s) => s.acceptRequest);
   const declineRequest = useSocial((s) => s.declineRequest);
   const addFriendByInvite = useSocial((s) => s.addFriendByInvite);
@@ -534,9 +555,8 @@ function Friends() {
   }), [code, profile?.name, myXp, myStreak]);
   const incoming = requests.filter((r) => r.direction === 'incoming');
   const outgoing = requests.filter((r) => r.direction === 'outgoing');
-  const suggested = MOCK_SUGGESTED.filter((s) => !friends.some((f) => f.name === s.name) && !requests.some((r) => r.name === s.name));
 
-  function add() {
+  async function add() {
     const clean = name.trim();
     if (!clean) return;
     // Pasted an invite link / payload? Add the real person instantly.
@@ -549,11 +569,18 @@ function Friends() {
       setName('');
       return;
     }
-    // Otherwise treat it as a name (a request that can't be verified offline).
-    sendFriendRequest(clean);
-    setName('');
-    haptic('success');
-    toast(`Request sent to ${clean}`);
+    // A bare friend code is looked up on the server, so it needs the cloud.
+    if (isFriendCode(clean)) {
+      if (!isBackendLive) { toast('Friend codes need a cloud account. Use an invite link instead.', 'info'); return; }
+      if (clean.toUpperCase() === code.toUpperCase()) { toast("That's your own code 🙂", 'info'); return; }
+      const friend = await addFriendByCode(clean);
+      if (!friend) { haptic('warning'); toast('No one has that code. Check it, and make sure you are signed in.', 'error'); return; }
+      haptic('success'); toast(`${friend.name} is now your gym partner 🤝`);
+      setName('');
+      return;
+    }
+    haptic('warning');
+    toast('That is not an invite link or a friend code (FORGE-…)', 'error');
   }
 
   async function shareCode() {
@@ -608,9 +635,9 @@ function Friends() {
       <Card className="space-y-2">
         <SectionTitle>{t('s.addFriend')}</SectionTitle>
         <div className="flex gap-2">
-          <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') add(); }}
-            placeholder="Paste an invite link, or a name" className="flex-1 rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
-          <Button disabled={!name.trim()} onClick={add}><span className="flex items-center gap-1"><UserPlus size={15} /> {t('s.add')}</span></Button>
+          <input value={name} onChange={(e) => setName(e.target.value)} onKeyDown={(e) => { if (e.key === 'Enter') void add(); }}
+            aria-label="Invite link or friend code" placeholder="Invite link or FORGE-code" className="flex-1 rounded-xl bg-surface-2 border border-line px-4 py-2.5 text-sm" />
+          <Button disabled={!name.trim()} onClick={() => void add()}><span className="flex items-center gap-1"><UserPlus size={15} /> {t('s.add')}</span></Button>
         </div>
       </Card>
 
@@ -673,22 +700,14 @@ function Friends() {
           <ChevronRight size={16} className="text-muted" onClick={() => setOpenFriend(f)} />
         </Card>
       ))}
-      {friends.length === 0 && <p className="text-sm text-muted">No friends yet: add by code or pick a suggestion below.</p>}
-      {friends.length > 0 && shownFriends.length === 0 && <p className="text-sm text-muted">No friend matches “{query}”.</p>}
-
-      {/* Suggested */}
-      {suggested.length > 0 && (
-        <div>
-          <SectionTitle>People you may know</SectionTitle>
-          {suggested.map((p) => (
-            <Card key={p.id} className="flex items-center gap-3">
-              <Avatar seed={p.avatarSeed} />
-              <div className="flex-1"><p className="text-sm font-semibold">{p.name}</p><p className="text-xs text-muted">{p.rank} · {p.xp.toLocaleString()} XP</p></div>
-              <Button variant="ghost" className="px-3" onClick={() => { sendFriendRequest(p.name, p); haptic('success'); toast(`Request sent to ${p.name}`); }}><span className="flex items-center gap-1 text-xs"><UserPlus size={14} /> Add</span></Button>
-            </Card>
-          ))}
-        </div>
+      {friends.length === 0 && (
+        <Card className="text-center space-y-2 py-5">
+          <p className="text-sm font-semibold">No gym partners yet</p>
+          <p className="text-xs text-muted">Send your invite link to a friend. When they open it you are added to each other.</p>
+          <Button className="mx-auto" onClick={shareCode}><span className="flex items-center gap-1 text-xs"><Share2 size={14} /> Share invite link</span></Button>
+        </Card>
       )}
+      {friends.length > 0 && shownFriends.length === 0 && <p className="text-sm text-muted">No friend matches “{query}”.</p>}
 
       {/* Friends leaderboard */}
       <div>
@@ -1140,7 +1159,7 @@ function Marketplace() {
   const savePlanAs = useUser((s) => s.savePlanAs);
   const navigate = useNavigate();
 
-  const all = [...published, ...MOCK_MARKETPLACE];
+  const all = useMemo(() => [...published, ...starterRoutines()], [published]);
 
   function purchase(id: string, price: number, title: string) {
     if (owned.includes(id)) return;
@@ -1166,7 +1185,9 @@ function Marketplace() {
               <p className="font-semibold text-sm">{r.title} {r.byMe && <Badge color="rgb(var(--success))">yours</Badge>}</p>
               <Badge>{r.focus}</Badge>
             </div>
-            <p className="text-xs text-muted">by {r.author} ({r.authorRank}) · {r.weeks}wk · {r.daysPerWeek}d/wk · <Star size={10} className="inline" /> {r.rating}</p>
+            <p className="text-xs text-muted">
+              {r.author === BUILT_IN_AUTHOR && !r.byMe ? 'Built-in program' : `by ${r.author}${r.authorRank ? ` (${r.authorRank})` : ''}`} · {r.weeks} wk · {r.daysPerWeek} days/wk
+            </p>
             {isOwned && r.plan ? (
               <Button className="w-full justify-center" onClick={() => applyPlan(r)}>Use this plan</Button>
             ) : (

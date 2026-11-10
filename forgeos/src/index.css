@@ -656,7 +656,10 @@ button {
 
 /* --- Re-authored default palette: forge-dark → Tempo (Phase 2 delivers the
    hero theme; other themes inherit their own vars in Tempo form for now) --- */
-.ui-v2[data-theme='forge-dark'] {
+/* The second selector covers the theme picker's own swatch, which sets
+   data-theme on a nested element and used to preview the legacy orange. */
+.ui-v2[data-theme='forge-dark'],
+.ui-v2 [data-theme='forge-dark'] {
   --bg: 14 17 22; /* #0E1116 Graphite */
   --surface: 22 27 34; /* #161B22 Slate panel */
   --surface-2: 30 37 48; /* #1E2530 Raised */

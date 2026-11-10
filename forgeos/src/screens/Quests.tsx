@@ -13,7 +13,7 @@ import { useWorkout } from '../state/workoutStore';
 import { canReroll } from '../lib/shop';
 import { QUESTS } from '../data/quests';
 import { RANKS, rankForXp, rankLabel, progressToNext } from '../data/ranks';
-import { buildLeaderboard } from '../lib/mockData';
+import { buildLeaderboard } from '../lib/socialSeed';
 import { useSocial } from '../state/socialStore';
 import { MOCK_TRACKS } from '../lib/spotify';
 import { haptic } from '../lib/haptics';
@@ -271,8 +271,8 @@ function QuestBoard() {
       </div>
 
       {claimable.length > 0 && (
-        <Button className="w-full justify-center gap-2" onClick={() => { const r = claimAll(); if (r.count) { celebrate(); toast(`Claimed ${r.count} · +${r.xp.toLocaleString()} XP · 🪙${r.coins}`); } }}>
-          <Trophy size={16} /> Claim all {claimable.length} · +{totalXp.toLocaleString()} XP · 🪙{totalCoins}
+        <Button className="w-full justify-center" onClick={() => { const r = claimAll(); if (r.count) { celebrate(); toast(`Claimed ${r.count} · +${r.xp.toLocaleString()} XP · 🪙${r.coins}`); } }}>
+          <span className="flex items-center justify-center gap-2"><Trophy size={16} className="shrink-0" /> Claim all {claimable.length} · +{totalXp.toLocaleString()} XP · 🪙{totalCoins}</span>
         </Button>
       )}
       {visible.length === 0 && <p className="text-sm text-muted">No {scope} quests assigned.</p>}

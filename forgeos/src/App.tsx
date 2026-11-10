@@ -136,9 +136,11 @@ function AppShell() {
   return (
     <div className="flex flex-col h-full">
       <main className="flex-1 overflow-y-auto no-scrollbar" onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
-        <Suspense fallback={<ScreenSkeleton />}>
-          <Outlet />
-        </Suspense>
+        <ErrorBoundary resetKey={location.pathname}>
+          <Suspense fallback={<ScreenSkeleton />}>
+            <Outlet />
+          </Suspense>
+        </ErrorBoundary>
       </main>
       <RankUpWatcher />
       <Tutorial />
@@ -196,7 +198,6 @@ export default function App() {
   const autoTheme = useSettings((s) => s.autoTheme);
   const appLock = useSettings((s) => s.appLock);
   const ensureDailyQuests = useGami((s) => s.ensureDailyQuests);
-  const seedFeed = useSocial((s) => s.seedIfEmpty);
   const onboarded = useUser((s) => s.profile?.onboarded);
   const [locked, setLocked] = useState(() => appLock.enabled && !!appLock.code);
 
@@ -233,7 +234,6 @@ export default function App() {
       if (r) setTimeout(() => toast(`🌙 Auto-claimed ${r.count} quests: +${r.xp.toLocaleString()} XP, 🪙${r.coins}`, 'success'), 1500);
     };
     rollQuestDay();
-    seedFeed();
     // If a silent auto-update just applied, confirm it visibly (see updateNotice).
     announceIfUpdated();
     // Seamless wearable refresh — no-ops off-device, without Health Connect
@@ -295,7 +295,7 @@ export default function App() {
       off();
       document.removeEventListener('visibilitychange', onHide);
     };
-  }, [applyTheme, theme, autoTheme, ensureDailyQuests, seedFeed]);
+  }, [applyTheme, theme, autoTheme, ensureDailyQuests]);
 
   if (locked) {
     return (

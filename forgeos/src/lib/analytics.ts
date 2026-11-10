@@ -119,6 +119,18 @@ export interface PeriodisationRec {
   weeklyVolume: number;
 }
 
+/**
+ * How many weeks a run of sessions actually covers. This used to be guessed as
+ * "four sessions = one week", which put a three-day-a-week lifter's weekly
+ * volume a third too high and disagreed with every other number in the app.
+ */
+export function weeksSpanned(workouts: Pick<Workout, 'date'>[], now = Date.now()): number {
+  const times = workouts.map((w) => new Date(w.date).getTime()).filter(Number.isFinite);
+  if (times.length === 0) return 1;
+  const days = (now - Math.min(...times)) / 86400000;
+  return Math.max(1, Math.ceil(days / 7));
+}
+
 export function recommendBlock(history: Workout[]): PeriodisationRec {
   const recent = history.slice(0, 24);
   let volume = 0;
@@ -135,8 +147,7 @@ export function recommendBlock(history: Workout[]): PeriodisationRec {
       }
     }
   }
-  const weeks = Math.max(1, Math.min(6, Math.ceil(recent.length / 4)));
-  const weeklyVolume = Math.round(volume / weeks);
+  const weeklyVolume = Math.round(volume / weeksSpanned(recent));
   const avgRpe = rpeCount ? Math.round((rpeSum / rpeCount) * 10) / 10 : 0;
 
   if (avgRpe >= 8.7 && rpeCount > 8) {
