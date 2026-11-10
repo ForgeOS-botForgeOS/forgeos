@@ -16,7 +16,7 @@ import { toast } from '../lib/toast';
 import { shareWorkout, workoutShareUrl } from '../lib/workoutShare';
 import { hasDraft } from '../lib/workoutDraft';
 import type { Workout } from '../types';
-import { useT } from '../lib/i18n';
+import { useT, useLocale } from '../lib/i18n';
 
 export default function History() {
   const t = useT();
@@ -40,6 +40,7 @@ export default function History() {
 
 function Sessions() {
   const t = useT();
+  const locale = useLocale();
   const history = useWorkout((s) => s.history);
   const addManualWorkout = useWorkout((s) => s.addManualWorkout);
   const navigate = useNavigate();
@@ -79,10 +80,10 @@ function Sessions() {
             <Card key={w.id} className="space-y-1">
               <div className="flex items-center justify-between">
                 <button onClick={() => setEditCardio(w)} className="font-semibold text-sm flex items-center gap-2 text-left flex-1"><Activity size={14} className="text-accent-2" /> {c.machine}</button>
-                <div className="flex items-center gap-2">
-                  <button onClick={() => share(w)} title={t('Share')} className="text-muted"><Share2 size={14} /></button>
-                  <button onClick={() => duplicate(w)} title={t('Duplicate')} className="text-muted"><Copy size={14} /></button>
-                  <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString()}</span>
+                <div className="flex items-center">
+                  <button onClick={() => share(w)} title={t('Share')} aria-label={t('Share')} className="grid place-items-center w-10 h-10 text-muted"><Share2 size={16} /></button>
+                  <button onClick={() => duplicate(w)} title={t('Duplicate')} aria-label={t('Duplicate')} className="grid place-items-center w-10 h-10 text-muted"><Copy size={16} /></button>
+                  <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
                 </div>
               </div>
               <p className="text-xs text-muted">
@@ -112,9 +113,9 @@ function Sessions() {
             <div className="flex items-center justify-between">
               <button onClick={() => navigate(`/workout/${w.id}`)} className="font-semibold text-sm flex items-center gap-2 text-left flex-1"><Dumbbell size={14} className="text-accent" /> {w.name}</button>
               <div className="flex items-center gap-2">
-                {w.exercises.length > 0 && <button onClick={() => share(w)} title={t('Share')} className="text-muted"><Share2 size={14} /></button>}
-                <button onClick={() => duplicate(w)} title={t('Duplicate')} className="text-muted"><Copy size={14} /></button>
-                <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString()}</span>
+                {w.exercises.length > 0 && <button onClick={() => share(w)} title={t('Share')} aria-label={t('Share')} className="grid place-items-center w-10 h-10 text-muted"><Share2 size={16} /></button>}
+                <button onClick={() => duplicate(w)} title={t('Duplicate')} aria-label={t('Duplicate')} className="grid place-items-center w-10 h-10 text-muted"><Copy size={16} /></button>
+                <span className="text-[11px] text-muted">{new Date(w.date).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })}</span>
               </div>
             </div>
             <p className="text-xs text-muted">
