@@ -1,4 +1,5 @@
-import { forwardRef, useEffect } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
+import { ChevronDown } from 'lucide-react';
 import type { ButtonHTMLAttributes, CSSProperties, ReactNode } from 'react';
 import { createPortal } from 'react-dom';
 import { motion, AnimatePresence, useDragControls } from 'framer-motion';
@@ -267,5 +268,38 @@ export function Badge({ children, color = 'rgb(var(--accent))' }: { children: Re
     >
       {children}
     </span>
+  );
+}
+
+/**
+ * A settings section that stays folded until asked for. The You tab was one
+ * 5,500px scroll with every control of every section open at once; folded, the
+ * whole list fits on about two screens and `summary` still shows the current
+ * choice without opening anything.
+ */
+export function Fold({ icon, title, summary, children, hidden = false, defaultOpen = false }: {
+  icon?: ReactNode;
+  title: string;
+  summary?: string;
+  children: ReactNode;
+  hidden?: boolean;
+  defaultOpen?: boolean;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  if (hidden) return null;
+  return (
+    <section>
+      <button
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        className={`fx-card flex w-full items-center gap-3 rounded-2xl border bg-surface px-4 min-h-[56px] text-left ${open ? 'border-accent/40' : 'border-line'}`}
+      >
+        {icon && <span className="shrink-0 text-muted">{icon}</span>}
+        <span className="flex-1 min-w-0 text-sm font-semibold">{title}</span>
+        {summary && !open && <span className="max-w-[45%] truncate text-xs text-muted">{summary}</span>}
+        <ChevronDown size={16} className={`shrink-0 text-muted transition-transform ${open ? 'rotate-180' : ''}`} />
+      </button>
+      {open && <div className="mt-2">{children}</div>}
+    </section>
   );
 }

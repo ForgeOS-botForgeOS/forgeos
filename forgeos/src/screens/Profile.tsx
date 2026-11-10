@@ -1,8 +1,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Activity, Cloud, History, Sparkles, Zap, Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target, MessageCircle } from 'lucide-react';
+import { Activity, SlidersHorizontal, Coins, Cloud, History, Sparkles, Zap, Palette, MapPin, RefreshCw, BookOpen, Music, Lock, CalendarDays, LogOut, Languages, Trophy, Bell, Database, HelpCircle, Shield, Globe2, LineChart, Smartphone, Download, Pencil, Watch, Gift, Check, Target, MessageCircle } from 'lucide-react';
 import { Screen } from '../components/Screen';
-import { Card, Button, Toggle, Badge, SectionTitle, Pill } from '../components/ui';
+import { Card, Button, Toggle, Badge, SectionTitle, Pill, Fold } from '../components/ui';
 import { ModeSwitch } from '../components/ModeSwitch';
 import { AppIconPicker } from '../components/AppIconPicker';
 import { FeedbackLink } from '../components/Feedback';
@@ -352,8 +352,7 @@ export default function Profile() {
       </div>
 
       {/* Theme switcher */}
-      <div>
-        <SectionTitle action={<Palette size={14} className="text-muted" />}>{t('p.theme')}</SectionTitle>
+      <Fold icon={<Palette size={16} />} title={t('p.theme')} summary={THEMES.find((x) => x.id === s.theme)?.name}>
         <div className="grid grid-cols-2 gap-2">
           {THEMES.map((th) => {
             const unlocked = themeUnlocked(th);
@@ -410,7 +409,7 @@ export default function Profile() {
             })}
           </div>
         </div>
-      </div>
+      </Fold>
 
       {/* Language */}
       <div>
@@ -423,8 +422,7 @@ export default function Profile() {
       </div>
 
       {/* Quote genre */}
-      <div className={s.apprentice ? 'hidden' : undefined}>
-        <SectionTitle action={<BookOpen size={14} className="text-muted" />}>{t('p.quoteGenre')}</SectionTitle>
+      <Fold hidden={s.apprentice} icon={<BookOpen size={16} />} title={t('p.quoteGenre')} summary={QUOTE_GENRES.find((g) => g.id === s.quoteGenre)?.label ?? 'All'}>
         <div className="flex gap-2 flex-wrap" data-noswipe>
           {QUOTE_GENRES.map((g) => (
             <Pill key={g.id} active={s.quoteGenre === g.id} onClick={() => s.set('quoteGenre', g.id)}>{g.label}</Pill>
@@ -434,11 +432,10 @@ export default function Profile() {
         <button onClick={() => navigate('/collection')} className="text-xs text-accent-2 mt-2 flex items-center gap-1">
           <BookOpen size={13} /> View quote collection
         </button>
-      </div>
+      </Fold>
 
       {/* Toggles */}
-      <div className={s.apprentice ? 'hidden' : undefined}>
-        <SectionTitle>{t('p.preferences')}</SectionTitle>
+      <Fold hidden={s.apprentice} icon={<SlidersHorizontal size={16} />} title={t('p.preferences')}>
         <Card className="divide-y divide-line">
           <Row label={t('p.publicLeaderboard')} desc="Show your rank to others">
             <Toggle label={t('p.publicLeaderboard')} checked={s.leaderboardPublic} onChange={(v) => s.set('leaderboardPublic', v)} />
@@ -498,16 +495,15 @@ export default function Profile() {
             </Row>
           )}
         </Card>
-      </div>
+      </Fold>
 
       {/* XP -> coin exchange rate */}
-      <div className={s.apprentice ? 'hidden' : undefined}>
-        <SectionTitle>XP → Forge Coin rate</SectionTitle>
+      <Fold hidden={s.apprentice} icon={<Coins size={16} />} title={t('XP to coin rate')} summary={`${s.xpToCoinRate} XP = 🪙 1`}>
         <Card>
           <input type="range" min={50} max={300} step={10} value={s.xpToCoinRate} onChange={(e) => s.set('xpToCoinRate', Number(e.target.value))} className="w-full accent-[rgb(var(--accent))]" />
           <p className="text-sm text-center font-mono">{s.xpToCoinRate} XP = 🪙 1</p>
         </Card>
-      </div>
+      </Fold>
 
       {/* Plan editor */}
       <Button variant="ghost" className="w-full justify-center" onClick={() => navigate('/plan')}>
@@ -597,8 +593,7 @@ export default function Profile() {
       </Card>
 
       {/* Workout reminders */}
-      <div>
-        <SectionTitle action={<Bell size={14} className="text-muted" />}>Workout reminders</SectionTitle>
+      <Fold icon={<Bell size={16} />} title={t('Workout reminders')}>
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm">Daily reminder</span>
@@ -622,11 +617,10 @@ export default function Profile() {
             </>
           )}
         </Card>
-      </div>
+      </Fold>
 
       {/* Public profile */}
-      <div>
-        <SectionTitle action={<Globe2 size={14} className="text-muted" />}>Public profile</SectionTitle>
+      <Fold icon={<Globe2 size={16} />} title={t('Public profile')}>
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
             <div><p className="text-sm">Shareable profile</p><p className="text-[11px] text-muted">Let others view your rank & stats via a link</p></div>
@@ -641,11 +635,10 @@ export default function Profile() {
             <p className="text-[11px] text-muted/70">Turn on to generate a read-only share link and a profile card.</p>
           )}
         </Card>
-      </div>
+      </Fold>
 
       {/* Security */}
-      <div>
-        <SectionTitle action={<Shield size={14} className="text-muted" />}>Security</SectionTitle>
+      <Fold icon={<Shield size={16} />} title={t('Security')}>
         <Card className="space-y-3">
           <div className="flex items-center justify-between">
             <div><p className="text-sm">App passcode lock</p><p className="text-[11px] text-muted">Ask for a code on launch</p></div>
@@ -659,7 +652,7 @@ export default function Profile() {
           )}
           <Button variant="ghost" className="w-full justify-center" onClick={() => setPwSheet(true)}>Change account password</Button>
         </Card>
-      </div>
+      </Fold>
 
       <ChangePasswordSheet open={pwSheet} onClose={() => setPwSheet(false)} />
       <PasscodeSheet
@@ -671,8 +664,7 @@ export default function Profile() {
       />
 
       {/* Backup */}
-      <div>
-        <SectionTitle action={<Database size={14} className="text-muted" />}>Backup & restore</SectionTitle>
+      <Fold icon={<Database size={16} />} title={t('Backup & restore')}>
         <div className="flex gap-2">
           <Button variant="ghost" className="flex-1 justify-center" onClick={exportData}>Export file</Button>
           <Button variant="ghost" className="flex-1 justify-center" onClick={() => backupFileRef.current?.click()}>Import file</Button>
@@ -701,11 +693,10 @@ export default function Profile() {
           </p>
         )}
         <input ref={backupFileRef} type="file" accept="application/json" className="hidden" onChange={async (e) => { const f = e.target.files?.[0]; if (f) { try { await importData(f); toast('Backup restored ✅'); } catch { toast('That file is not a valid ForgeOS backup.', 'error'); } } }} />
-      </div>
+      </Fold>
 
       {/* Your gym */}
-      <div>
-        <SectionTitle action={<MapPin size={14} className="text-muted" />}>{t('p.yourGym')}</SectionTitle>
+      <Fold icon={<MapPin size={16} />} title={t('p.yourGym')} summary={s.gym.name || undefined}>
         <Card className="space-y-3">
           <input
             value={s.gym.name}
@@ -731,7 +722,7 @@ export default function Profile() {
           </div>
           <p className="text-[11px] text-muted/70">{t('p.gymHint')}</p>
         </Card>
-      </div>
+      </Fold>
 
       <Button variant="outline" className="w-full justify-center text-danger" onClick={async () => {
         if (!(await askConfirm({

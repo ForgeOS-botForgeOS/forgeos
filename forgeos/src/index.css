@@ -17,6 +17,8 @@
   --success: 52 211 153;
   --warn: 251 191 36;
   --danger: 248 113 113;
+  /* Water is blue in every theme: it is a meaning, not a brand colour. */
+  --water: 56 189 248;
 }
 
 [data-theme='iron-dawn'] {

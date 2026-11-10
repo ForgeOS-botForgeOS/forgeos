@@ -1,3 +1,5 @@
+import { useLocale } from '../lib/i18n';
+import { shortDate } from '../lib/shortDate';
 import { useMemo, useState } from 'react';
 import { ComposedChart, Line, XAxis, YAxis, ResponsiveContainer, Tooltip, ReferenceLine, Area } from 'recharts';
 import { useChartKit } from './chartKit';
@@ -9,6 +11,7 @@ import { haptic } from '../lib/haptics';
 import { toast } from '../lib/toast';
 
 export function WeighInTracker() {
+  const locale = useLocale();
   const ck = useChartKit();
   const weighIns = useUser((s) => s.weighIns);
   const addWeighIn = useUser((s) => s.addWeighIn);
@@ -27,9 +30,9 @@ export function WeighInTracker() {
     return weighIns.map((w, i) => {
       const window = weighIns.slice(Math.max(0, i - 2), i + 1);
       const avg = window.reduce((a, x) => a + x.weightKg, 0) / window.length;
-      return { date: w.date.slice(5), weight: w.weightKg, avg: Math.round(avg * 10) / 10 };
+      return { date: shortDate(w.date, locale), weight: w.weightKg, avg: Math.round(avg * 10) / 10 };
     });
-  }, [weighIns]);
+  }, [weighIns, locale]);
 
   function saveGoal() {
     updateProfile({ goalWeightKg: Math.round(goalDraft * 10) / 10 });

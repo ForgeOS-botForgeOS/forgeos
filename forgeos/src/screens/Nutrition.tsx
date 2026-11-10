@@ -177,8 +177,8 @@ export default function Nutrition() {
       <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={onFile} />
 
       <div className="flex gap-2" role="tablist" aria-label="Food">
-        <Pill active={tab === 'log'} onClick={() => setTab('log')}>Log</Pill>
-        <Pill active={tab === 'info'} onClick={() => setTab('info')}>Info</Pill>
+        <Pill active={tab === 'log'} onClick={() => setTab('log')}>{t('Today')}</Pill>
+        <Pill active={tab === 'info'} onClick={() => setTab('info')}>{t('Trends')}</Pill>
       </div>
 
       {tab === 'info' && <CalInfo log={rawLog} today={today} macros={macros} profile={profile} />}
@@ -198,31 +198,20 @@ export default function Nutrition() {
         </Card>
       )}
 
-      {/* V2 "log-first": the Scan CTA leads, then quick actions + a compact totals strip */}
+      {/* V2: where you stand today first, then the ways to log */}
       {v2 && (
         <>
+          <MacroTotals totals={totals} macros={macros} />
           <Button className="w-full flex items-center justify-center py-4" disabled={scanning} onClick={() => fileRef.current?.click()}>
-            <span className="flex items-center gap-2 text-base">{scanning ? <Sparkles size={18} className="animate-pulse" /> : <Camera size={18} />} {scanning ? 'Analysing photo…' : 'Scan a meal'}</span>
+            <span className="flex items-center gap-2 text-base">{scanning ? <Sparkles size={18} className="animate-pulse" /> : <Camera size={18} />} {scanning ? t('Analysing photo…') : t('Scan a meal')}</span>
           </Button>
           <DescribeFood value={desc} onChange={setDesc} busy={describing || scanning} onUse={() => void logFromDescription()} />
           <div className="grid grid-cols-4 gap-2">
-            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setBarcodeOpen(true)}><Barcode size={16} /><span className="text-[10px] uppercase tracking-wide">Barcode</span></Button>
-            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setManualOpen(true)}><span className="text-lg leading-none">＋</span><span className="text-[10px] uppercase tracking-wide">Manual</span></Button>
-            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => navigate('/cookbook')}><ChefHat size={16} /><span className="text-[10px] uppercase tracking-wide">Recipes</span></Button>
-            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setRecompOpen(true)}><Calculator size={16} /><span className="text-[10px] uppercase tracking-wide">Calc</span></Button>
+            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setBarcodeOpen(true)}><Barcode size={16} /><span className="text-xs">{t('Barcode')}</span></Button>
+            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setManualOpen(true)}><span className="text-lg leading-none">＋</span><span className="text-xs">{t('Manual')}</span></Button>
+            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => navigate('/cookbook')}><ChefHat size={16} /><span className="text-xs">{t('Recipes')}</span></Button>
+            <Button variant="ghost" className="flex flex-col items-center gap-1" onClick={() => setRecompOpen(true)}><Calculator size={16} /><span className="text-xs">{t('Calc')}</span></Button>
           </div>
-          <Card>
-            <div className="grid grid-cols-4 gap-2 text-center">
-              <Tot label="kcal" value={Math.round(totals.calories)} target={macros.calories} />
-              <Tot label="protein" value={Math.round(totals.proteinG)} target={macros.proteinG} />
-              <Tot label="carbs" value={Math.round(totals.carbsG)} target={macros.carbsG} />
-              <Tot label="fat" value={Math.round(totals.fatG)} target={macros.fatG} />
-            </div>
-            <div className="v2-meter mt-3" style={{ height: 10 }}>
-              <div className="v2-meter-fill" style={{ width: `${Math.min(100, macros.calories > 0 ? (totals.calories / macros.calories) * 100 : 0)}%`, background: 'rgb(var(--accent))' }} />
-              <div className="v2-meter-seg" />
-            </div>
-          </Card>
         </>
       )}
 
@@ -260,17 +249,58 @@ export default function Nutrition() {
       </>
       )}
 
+      {/* Food log */}
+      <div>
+        <SectionTitle action={log.length > 0 ? <span className="text-xs text-muted">{log.length}</span> : undefined}>{t('Eaten today')}</SectionTitle>
+        {log.length === 0 ? (
+          <Card className="text-center py-5">
+            <p className="text-sm font-semibold">{t('Nothing logged yet today')}</p>
+            <p className="text-xs text-muted mt-1">{t('Scan a photo, describe a meal or add it by hand.')}</p>
+          </Card>
+        ) : (
+          <div className="space-y-2">
+            {log.map((f) => (
+              <Card key={f.id} className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-medium flex items-center gap-2">{f.name} {f.source === 'scan' && <Badge color="rgb(var(--accent-2))">scan</Badge>}</p>
+                  <p className="text-xs text-muted">{f.calories} kcal · {t('P')} {f.proteinG} · {t('C')} {f.carbsG} · {t('F')} {f.fatG} g</p>
+                </div>
+                <div className="flex items-center shrink-0 -mr-2">
+                  <button onClick={() => { saveMeal({ name: f.name, calories: f.calories, proteinG: f.proteinG, carbsG: f.carbsG, fatG: f.fatG, sugarG: f.sugarG }); haptic('success'); toast(`Saved ${f.name} for quick-add ⭐`); }} title="Save for quick-add" aria-label={`Save ${f.name} for quick-add`} className="grid place-items-center w-10 h-10 text-muted"><Star size={16} /></button>
+                  <button onClick={() => removeEntry(f.id)} aria-label={`Delete ${f.name}`} className="grid place-items-center w-10 h-10 text-muted"><Trash2 size={16} /></button>
+                </div>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Saved meals quick-add */}
+      {savedMeals.length > 0 && (
+        <div>
+          <SectionTitle>{t('Quick add')}</SectionTitle>
+          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1" data-noswipe>
+            {savedMeals.map((m) => (
+              <button key={m.id} onClick={() => { addEntry({ name: m.name, calories: m.calories, proteinG: m.proteinG, carbsG: m.carbsG, fatG: m.fatG, sugarG: m.sugarG, source: 'manual' }); haptic('success'); toast(`Added ${m.name} · ${m.calories} kcal`); }} className="shrink-0 rounded-xl bg-surface-2 px-3 py-2 text-left min-h-[48px]">
+                <p className="text-sm font-medium">{m.name}</p>
+                <p className="text-xs text-muted">{m.calories} kcal · P{m.proteinG}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Water tracker */}
       <Card className="space-y-2">
         <div className="flex items-center justify-between">
-          <SectionTitle>💧 Water</SectionTitle>
+          <SectionTitle>💧 {t('Water')}</SectionTitle>
           <span className="font-mono text-sm">{(water / 1000).toFixed(2)} / {(waterGoal / 1000).toFixed(1)} L</span>
         </div>
-        <div className="h-2 rounded-full bg-surface-2 overflow-hidden"><div className="h-full bg-accent-2 rounded-full transition-all" style={{ width: `${Math.min(100, (water / waterGoal) * 100)}%` }} /></div>
+        <div className="h-2 rounded-full bg-surface-2 overflow-hidden"><div className="h-full rounded-full transition-all" style={{ width: `${Math.min(100, (water / waterGoal) * 100)}%`, background: 'rgb(var(--water))' }} /></div>
         <div className="flex gap-2">
-          <Button variant="ghost" className="flex-1 justify-center py-1.5" onClick={() => { const hit = water < waterGoal && water + 250 >= waterGoal; addWater(250); if (hit) { celebrate(); toast('Hydration goal hit 💧'); } else haptic('tap'); }}>+250 ml</Button>
-          <Button variant="ghost" className="flex-1 justify-center py-1.5" onClick={() => { const hit = water < waterGoal && water + 500 >= waterGoal; addWater(500); if (hit) { celebrate(); toast('Hydration goal hit 💧'); } else haptic('tap'); }}>+500 ml</Button>
-          <Button variant="ghost" className="justify-center py-1.5" onClick={() => addWater(-250)}>−</Button>
+          <Button variant="ghost" className="flex-1 justify-center py-2.5" onClick={() => { const hit = water < waterGoal && water + 250 >= waterGoal; addWater(250); if (hit) { celebrate(); toast('Hydration goal hit 💧'); } else haptic('tap'); }}>+250 ml</Button>
+          <Button variant="ghost" className="flex-1 justify-center py-2.5" onClick={() => { const hit = water < waterGoal && water + 500 >= waterGoal; addWater(500); if (hit) { celebrate(); toast('Hydration goal hit 💧'); } else haptic('tap'); }}>+500 ml</Button>
+          <Button variant="ghost" className="justify-center py-2.5 px-5" aria-label={t('Remove 250 ml')} onClick={() => addWater(-250)}>−</Button>
         </div>
       </Card>
 
@@ -278,21 +308,6 @@ export default function Nutrition() {
         <Sparkles size={16} className="text-accent-2 mt-0.5 shrink-0" />
         <p className="text-sm">{goalText[profile?.goal ?? 'recomp']}</p>
       </Card>
-
-      {/* Saved meals quick-add */}
-      {savedMeals.length > 0 && (
-        <div>
-          <SectionTitle>Quick add</SectionTitle>
-          <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1" data-noswipe>
-            {savedMeals.map((m) => (
-              <button key={m.id} onClick={() => { addEntry({ name: m.name, calories: m.calories, proteinG: m.proteinG, carbsG: m.carbsG, fatG: m.fatG, sugarG: m.sugarG, source: 'manual' }); haptic('success'); toast(`Added ${m.name} · ${m.calories} kcal`); }} className="shrink-0 rounded-xl bg-surface-2 px-3 py-2 text-left">
-                <p className="text-xs font-medium">{m.name}</p>
-                <p className="text-[10px] text-muted">{m.calories} kcal · P{m.proteinG}</p>
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
 
       {/* The cookbook and the goal plan are full screens now */}
       <div className="grid grid-cols-2 gap-2">
@@ -310,29 +325,6 @@ export default function Nutrition() {
           {!simple && <Button variant="ghost" className="justify-center" onClick={() => setRecompOpen(true)}><Calculator size={16} /></Button>}
         </div>
       )}
-
-      {/* Food log */}
-      <div>
-        <SectionTitle>Food log</SectionTitle>
-        {log.length === 0 ? (
-          <p className="text-sm text-muted">Nothing logged yet today.</p>
-        ) : (
-          <div className="space-y-2">
-            {log.map((f) => (
-              <Card key={f.id} className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium flex items-center gap-2">{f.name} {f.source === 'scan' && <Badge color="rgb(var(--accent-2))">scan</Badge>}</p>
-                  <p className="text-xs text-muted">{f.calories} kcal · P{f.proteinG} C{f.carbsG} F{f.fatG}</p>
-                </div>
-                <div className="flex items-center shrink-0 -mr-2">
-                  <button onClick={() => { saveMeal({ name: f.name, calories: f.calories, proteinG: f.proteinG, carbsG: f.carbsG, fatG: f.fatG, sugarG: f.sugarG }); haptic('success'); toast(`Saved ${f.name} for quick-add ⭐`); }} title="Save for quick-add" aria-label={`Save ${f.name} for quick-add`} className="grid place-items-center w-10 h-10 text-muted"><Star size={16} /></button>
-                  <button onClick={() => removeEntry(f.id)} aria-label={`Delete ${f.name}`} className="grid place-items-center w-10 h-10 text-muted"><Trash2 size={16} /></button>
-                </div>
-              </Card>
-            ))}
-          </div>
-        )}
-      </div>
 
       </>
       )}
@@ -422,6 +414,45 @@ function DescribeFood({ value, onChange, busy, onUse }: { value: string; onChang
   );
 }
 
+/** Today against the targets: calories large, then one bar per macro. */
+function MacroTotals({ totals, macros }: { totals: { calories: number; proteinG: number; carbsG: number; fatG: number }; macros: { calories: number; proteinG: number; carbsG: number; fatG: number } }) {
+  const t = useT();
+  const left = Math.round(macros.calories - totals.calories);
+  const pct = (v: number, max: number) => Math.min(100, max > 0 ? (v / max) * 100 : 0);
+  const rows = [
+    { label: t('Protein'), v: totals.proteinG, max: macros.proteinG, color: 'rgb(var(--accent-2))' },
+    { label: t('Carbs'), v: totals.carbsG, max: macros.carbsG, color: 'rgb(var(--success))' },
+    { label: t('Fat'), v: totals.fatG, max: macros.fatG, color: 'rgb(var(--warn))' },
+  ];
+  return (
+    <Card className="space-y-3">
+      <div className="flex items-end justify-between gap-3">
+        <div>
+          <p className="font-mono font-bold text-3xl leading-none">{Math.round(totals.calories).toLocaleString()}</p>
+          <p className="text-xs text-muted mt-1">{t('of {n} kcal', { n: macros.calories.toLocaleString() })}</p>
+        </div>
+        <p className={`text-sm font-semibold ${left < 0 ? 'text-warn' : 'text-accent'}`}>
+          {Math.abs(left).toLocaleString()} kcal {left < 0 ? t('over') : t('left')}
+        </p>
+      </div>
+      <div className="h-2.5 rounded-full bg-surface-2 overflow-hidden" role="progressbar" aria-label={t('Calories')} aria-valuenow={Math.round(pct(totals.calories, macros.calories))} aria-valuemin={0} aria-valuemax={100}>
+        <div className="h-full rounded-full transition-all" style={{ width: `${pct(totals.calories, macros.calories)}%`, background: 'rgb(var(--accent))' }} />
+      </div>
+      <div className="grid grid-cols-3 gap-3">
+        {rows.map((r) => (
+          <div key={r.label}>
+            <p className="text-xs text-muted">{r.label}</p>
+            <p className="font-mono text-sm font-bold">{Math.round(r.v)}<span className="text-muted font-normal"> / {r.max} g</span></p>
+            <div className="mt-1 h-1.5 rounded-full bg-surface-2 overflow-hidden">
+              <div className="h-full rounded-full transition-all" style={{ width: `${pct(r.v, r.max)}%`, background: r.color }} />
+            </div>
+          </div>
+        ))}
+      </div>
+    </Card>
+  );
+}
+
 function Tot({ label, value, target }: { label: string; value: number; target: number }) {
   const over = value > target;
   return (
@@ -472,7 +503,7 @@ function Num({ label, v, set }: { label: string; v: number; set: (n: number) => 
   return (
     <label className="text-xs text-muted">
       {label}
-      <input type="number" inputMode="decimal" value={v} onChange={(e) => set(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg bg-surface-2 border border-line px-3 py-2 text-sm mt-1 text-text" />
+      <input type="number" inputMode="decimal" placeholder="0" value={v === 0 ? '' : v} onChange={(e) => set(Math.max(0, Number(e.target.value) || 0))} className="w-full rounded-lg bg-surface-2 border border-line px-3 py-2.5 text-sm mt-1 text-text" />
     </label>
   );
 }

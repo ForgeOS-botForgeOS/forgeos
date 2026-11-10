@@ -1,3 +1,5 @@
+import { shortDate } from '../lib/shortDate';
+import { useLocale } from '../lib/i18n';
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, Plus, TrendingDown, TrendingUp, Camera, Trophy, Footprints, Dumbbell, Target, Flame } from 'lucide-react';
@@ -90,6 +92,7 @@ const AXIS_TICK = { fontSize: 10, fill: 'rgb(var(--muted))' };
 const TIP_STYLE = { background: 'rgb(var(--surface))', border: '1px solid rgb(var(--line))', borderRadius: 12, fontSize: 12 };
 
 function RecoveryGrowth() {
+  const locale = useLocale();
   const ck = useChartKit();
   const recoveryEnabled = useSettings((s) => s.recoveryEnabled);
   const days = useHealth((s) => s.days);
@@ -99,12 +102,12 @@ function RecoveryGrowth() {
     const rhrs = list.map((d) => d.restingHr).filter((v): v is number => typeof v === 'number');
     const baseline = rhrs.length >= 3 ? median(rhrs) : undefined;
     return list.map((d) => ({
-      d: d.date.slice(5),
+      d: shortDate(d.date, locale),
       score: computeReadiness(d, baseline)?.score ?? null,
       sleepH: typeof d.sleepMinutes === 'number' ? Math.round((d.sleepMinutes / 60) * 10) / 10 : null,
       steps: d.steps ?? null,
     }));
-  }, [days]);
+  }, [days, locale]);
 
   const scores = series.filter((s) => s.score != null);
   // Growth headline: this week's average readiness vs the previous week's.
@@ -183,6 +186,7 @@ function RecoveryGrowth() {
 /* ------------------------------- BODY ------------------------------- */
 
 function BodyPanel() {
+  const locale = useLocale();
   const ck = useChartKit();
   const bodyStats = useUser((s) => s.bodyStats);
   const weighIns = useUser((s) => s.weighIns);
@@ -194,8 +198,8 @@ function BodyPanel() {
   const prev = bodyStats[bodyStats.length - 2];
 
   const weightSeries = useMemo(
-    () => weighIns.slice(-30).map((w) => ({ d: w.date.slice(5), kg: Math.round(w.weightKg * 10) / 10 })),
-    [weighIns],
+    () => weighIns.slice(-30).map((w) => ({ d: shortDate(w.date, locale), kg: Math.round(w.weightKg * 10) / 10 })),
+    [weighIns, locale],
   );
   const photos = useMemo(() => bodyStats.filter((b) => b.photo).slice(-12).reverse(), [bodyStats]);
 
@@ -277,7 +281,7 @@ function BodyPanel() {
             {photos.map((b) => (
               <div key={b.date} className="shrink-0 text-center">
                 <img src={b.photo} alt={b.date} className="h-32 w-24 rounded-xl object-cover border border-line" />
-                <p className="text-[10px] text-muted mt-1">{b.date.slice(5)}</p>
+                <p className="text-[10px] text-muted mt-1">{shortDate(b.date, locale)}</p>
               </div>
             ))}
           </div>

@@ -26,6 +26,7 @@ import { readinessFromDays, type Readiness } from '../lib/readiness';
 import { muscleVolume, neglectedMuscles } from '../lib/muscleVolume';
 import { ReadinessCard } from '../components/Readiness';
 import { weekendNudge } from '../lib/nudges';
+import { last7DaysVolume, todayFocus, type TodayFocus } from '../lib/homeDash';
 
 export default function Home() {
   const ck = useChartKit();
@@ -53,23 +54,8 @@ export default function Home() {
   );
   const { tier } = rankForXp(xp);
 
-  const weeklyVolume = useMemo(() => {
-    const labels = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    const buckets = labels.map((d) => ({ day: d, volume: 0 }));
-    const now = new Date();
-    const monday = new Date(now);
-    const dow = (now.getDay() + 6) % 7;
-    monday.setDate(now.getDate() - dow);
-    monday.setHours(0, 0, 0, 0);
-    for (const w of history) {
-      const d = new Date(w.date);
-      if (d >= monday) {
-        const idx = (d.getDay() + 6) % 7;
-        buckets[idx].volume += Math.round(w.totalVolumeKg ?? 0);
-      }
-    }
-    return buckets;
-  }, [history]);
+  const weeklyVolume = useMemo(() => last7DaysVolume(history).map((b) => ({ ...b, label: t(b.day) })), [history, t]);
+  const weekPlan = useUser((s) => s.weekPlan);
 
   const macros = profile?.macros ?? { calories: 2200, proteinG: 160, carbsG: 220, fatG: 60 };
   const v2 = useSettings((s) => s.designMode === 'v2');
@@ -95,14 +81,13 @@ export default function Home() {
 
   return (
     <>
-      <DailyQuote />
       <Screen
         title={`${t('home.hi')}, ${profile?.name ?? 'Athlete'}`}
         subtitle={`${rankLabel(tier)} · ${xp.toLocaleString()} XP`}
         right={
-          <div className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5" title="Week streak: weeks you hit your planned sessions">
+          <div className="flex items-center gap-1 rounded-full bg-surface-2 px-3 py-1.5" title={t('Week streak: weeks in a row you trained')} aria-label={t('Week streak: weeks in a row you trained')}>
             <Flame size={16} className="text-accent" />
-            <CountUp value={streak} className="font-bold text-sm" /><span className="text-[10px] text-muted">wk</span>
+            <CountUp value={streak} className="font-bold text-sm" /><span className="text-xs text-muted">{t('weeks')}</span>
           </div>
         }
       >
@@ -117,7 +102,8 @@ export default function Home() {
             proteinValue={totals.proteinG}
             proteinMax={macros.proteinG}
             steps={acVitals.steps}
-            trainedToday={!!(history[0] && isToday(history[0].date))}
+            focus={todayFocus(weekPlan, !!(history[0] && isToday(history[0].date)))}
+            recoveryEnabled={recoveryEnabled}
             readiness={readiness}
             sleepH={acVitals.sleepH}
             restingHr={acVitals.restingHr}
@@ -175,32 +161,7 @@ export default function Home() {
         {/* Sleep & steps at a glance — V2 surfaces this in the recovery rail above */}
         {!v2 && <HealthGlance />}
 
-        {/* Ask the trainer — the fastest route to an answer about anything */}
-        <Card onClick={() => navigate('/trainer')} className="flex items-center gap-3">
-          <MessageCircle size={18} className="shrink-0 text-accent" />
-          <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold">{t('trainer.homeCard')}</p>
-            <p className="text-xs text-muted">{t('trainer.subtitle')}</p>
-          </div>
-        </Card>
-
-        {/* Progress shortcut */}
-        <Card onClick={() => navigate('/progress')} className="flex items-center justify-between">
-          <div>
-            <p className="text-sm text-muted">Progress &amp; body</p>
-            <p className="font-semibold">Measurements, cardio &amp; trends</p>
-          </div>
-          <Badge color="rgb(var(--accent-2))">Open</Badge>
-        </Card>
-
-        {/* Science tip */}
-        <Card className="flex gap-3 items-start">
-          <Lightbulb size={18} className="text-accent-2 mt-0.5 shrink-0" />
-          <div>
-            <p className="text-xs uppercase tracking-wide text-muted">Science tip of the day</p>
-            <p className="text-sm mt-1">{tipOfTheDay(dayIdx)}</p>
-          </div>
-        </Card>
+        <DailyQuote />
 
         {/* Week in review */}
         {/* Fresh-month recap teaser + Monday look-back at the completed week */}
@@ -210,42 +171,46 @@ export default function Home() {
 
         {/* Weekly volume — shown on every design (V2 also has a quick total in the rail) */}
         <div>
-          <SectionTitle action={<span className="text-xs text-muted flex items-center gap-1"><TrendingUp size={12} /> this week</span>}>
-            Weekly volume
+          <SectionTitle action={<span className="text-xs text-muted flex items-center gap-1"><TrendingUp size={12} /> {t('last 7 days')}</span>}>
+            {t('Volume')}
           </SectionTitle>
           <Card>
+            {weeklyVolume.every((b) => b.volume === 0) ? (
+              <p className="py-6 text-center text-sm text-muted">{t('No training logged in the last 7 days.')}</p>
+            ) : (
             <div className="h-36">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={weeklyVolume}>
                   {ck.defs}
                   {ck.grid}
-                  <XAxis dataKey="day" tick={{ fontSize: 11, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 12, fill: 'rgb(var(--muted))' }} axisLine={false} tickLine={false} />
                   <YAxis hide />
                   <Tooltip
                     cursor={{ fill: 'rgb(var(--surface-2))' }}
                     contentStyle={{ background: 'rgb(var(--surface-2))', border: 'none', borderRadius: 12, fontSize: 12 }}
-                    formatter={(v) => [`${Number(v).toLocaleString()} kg`, 'Volume']}
+                    formatter={(v) => [`${Number(v).toLocaleString()} kg`, t('Volume')]}
                   />
                   <Bar dataKey="volume" fill={ck.barFill('accent', 'rgb(var(--accent))')} radius={ck.radius([6, 6, 0, 0])} {...ck.motion} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            )}
           </Card>
         </div>
 
         {/* Muscle-group volume with productive-range (MEV–MRV) guidance */}
         {muscleLoads.some((m) => m.sets > 0) && (
           <div>
-            <SectionTitle>Muscle volume · this week</SectionTitle>
+            <SectionTitle action={<span className="text-xs text-muted">{t('last 7 days')}</span>}>{t('Muscle volume')}</SectionTitle>
             <Card className="space-y-2">
               {muscleLoads.filter((m) => m.sets > 0).map((m) => {
                 const color = m.status === 'good' ? 'rgb(var(--success))' : m.status === 'high' ? 'rgb(var(--danger))' : m.status === 'low' ? 'rgb(var(--warn))' : 'rgb(var(--muted))';
                 const pct = Math.min(100, (m.sets / m.mrv) * 100);
                 return (
                   <div key={m.muscle}>
-                    <div className="flex justify-between text-[11px] mb-0.5">
+                    <div className="flex justify-between text-xs mb-0.5">
                       <span className="text-muted">{m.muscle}</span>
-                      <span className="font-mono">{m.sets} sets <span className="text-muted/70">/ {m.mev}–{m.mrv}</span></span>
+                      <span className="font-mono">{m.sets} {t('sets')} <span className="text-muted/70">/ {m.mev}–{m.mrv}</span></span>
                     </div>
                     <div className="h-2 rounded-full bg-surface-2 overflow-hidden">
                       <div className="h-full rounded-full transition-all" style={{ width: `${pct}%`, backgroundColor: color }} />
@@ -255,7 +220,7 @@ export default function Home() {
               })}
               {(() => {
                 const n = neglectedMuscles(muscleLoads);
-                return n.length > 0 ? <p className="text-[11px] text-warn/90 pt-1">⚠ Light this week: {n.slice(0, 4).join(', ')}{n.length > 4 ? '…' : ''}</p> : null;
+                return n.length > 0 ? <p className="text-xs text-warn/90 pt-1">⚠ {t('Light this week')}: {n.slice(0, 4).join(', ')}{n.length > 4 ? '…' : ''}</p> : null;
               })()}
             </Card>
           </div>
@@ -263,21 +228,44 @@ export default function Home() {
 
         {/* Weigh-in tracker */}
         <div>
-          <SectionTitle>Weekly weigh-in</SectionTitle>
+          <SectionTitle>{t('home.weighIn')}</SectionTitle>
           <WeighInTracker />
         </div>
 
         {/* Volume heatmap */}
         <div>
-          <SectionTitle>Volume heatmap</SectionTitle>
+          <SectionTitle>{t('home.heatmap')}</SectionTitle>
           <Card><Heatmap /></Card>
         </div>
 
+        {/* Two shortcuts side by side instead of two full-width cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <Card onClick={() => navigate('/trainer')} className="space-y-1">
+            <MessageCircle size={18} className="text-accent" />
+            <p className="text-sm font-semibold">{t('Trainer')}</p>
+            <p className="text-xs text-muted">{t('Ask anything')}</p>
+          </Card>
+          <Card onClick={() => navigate('/progress')} className="space-y-1">
+            <TrendingUp size={18} className="text-accent-2" />
+            <p className="text-sm font-semibold">{t('Body & trends')}</p>
+            <p className="text-xs text-muted">{t('Measurements, cardio')}</p>
+          </Card>
+        </div>
+
+        {/* Science tip */}
+        <Card className="flex gap-3 items-start">
+          <Lightbulb size={18} className="text-accent-2 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-xs uppercase tracking-wide text-muted">{t('home.scienceTip')}</p>
+            <p className="text-sm mt-1">{tipOfTheDay(dayIdx)}</p>
+          </div>
+        </Card>
+
         <button
           onClick={() => navigate('/quests')}
-          className="w-full flex items-center justify-between rounded-2xl bg-surface-2 px-4 py-3 text-sm"
+          className="w-full flex items-center justify-between rounded-2xl bg-surface-2 px-4 py-3 text-sm min-h-[48px]"
         >
-          <span>Rank progress: {Math.round(progressToNext(xp) * 100)}% to next tier</span>
+          <span>{t('Rank progress')}: {t('{n}% to the next tier', { n: Math.round(progressToNext(xp) * 100) })}</span>
           <ChevronRight size={16} />
         </button>
       </Screen>
@@ -387,30 +375,17 @@ function HealthGlance() {
   );
 }
 
-// V2 Home — the chosen "A×C" composition: a decisive focus hero, three summary
-// gauges (energy/protein/steps), and swipeable recovery + progress rails. Same
-// data + navigation as Legacy, new structure. See docs/redesign/home-layout.md.
-function HomeAC({
-  energyValue,
-  energyMax,
-  proteinValue,
-  proteinMax,
-  steps,
-  trainedToday,
-  readiness,
-  sleepH,
-  restingHr,
-  volumeTotal,
-  weightKg,
-  prs,
-  onNav,
-}: {
+// V2 Home: a hero that names today's session, three gauges with real numbers,
+// then recovery and progress rails. A rail or gauge with nothing to show is
+// left out instead of rendering dashes.
+interface HomeACProps {
   energyValue: number;
   energyMax: number;
   proteinValue: number;
   proteinMax: number;
   steps: number | null;
-  trainedToday: boolean;
+  focus: TodayFocus;
+  recoveryEnabled: boolean;
   readiness: Readiness | null;
   sleepH: number | null;
   restingHr: number | null;
@@ -418,73 +393,103 @@ function HomeAC({
   weightKg: number | null;
   prs: number;
   onNav: (to: string) => void;
-}) {
+}
+
+function HomeAC({ energyValue, energyMax, proteinValue, proteinMax, steps, focus, recoveryEnabled, readiness, sleepH, restingHr, volumeTotal, weightKg, prs, onNav }: HomeACProps) {
+  const t = useT();
   const energyPct = energyMax > 0 ? (energyValue / energyMax) * 100 : 0;
   const proteinPct = proteinMax > 0 ? (proteinValue / proteinMax) * 100 : 0;
-  const stepsPct = steps != null ? (steps / 10000) * 100 : 0;
+  const kcalLeft = Math.round(energyMax - energyValue);
+  const hero = {
+    done: { title: t('Session logged'), body: t('Nice work. Review it, or add another block.'), cta: t('Open Train') },
+    session: { title: focus.kind === 'session' ? focus.label : '', body: t('{n} exercises planned', { n: focus.kind === 'session' ? focus.exercises : 0 }), cta: t('Start workout') },
+    rest: { title: t('Rest day'), body: t('Recovery is part of the plan. Train anyway if you feel like it.'), cta: t('Train anyway') },
+    open: { title: t('Ready to train'), body: t('Nothing planned for today. Pick a workout and go.'), cta: t('Start workout') },
+  }[focus.kind];
+  const quiet = focus.kind === 'rest' || focus.kind === 'done';
+  const hasRecovery = readiness != null || sleepH != null || restingHr != null;
   return (
     <div className="space-y-3">
-      {/* Focus hero — the one decisive action */}
-      <div
+      <button
         onClick={() => onNav('/train')}
-        className="fx-card cursor-pointer p-5"
+        className="fx-card block w-full p-5 text-left"
         style={{ background: 'linear-gradient(160deg, rgb(var(--accent) / 0.12), rgb(var(--surface)))' }}
       >
-        <p className="text-[10px] uppercase tracking-[0.14em] text-accent">Today’s focus</p>
-        <p className="text-3xl font-bold uppercase italic leading-none mt-2">{trainedToday ? 'Session logged' : 'Ready to train'}</p>
-        <p className="text-[13px] text-muted mt-2">{trainedToday ? 'Great work: review it or add another block.' : 'Your next session is queued. Let’s move.'}</p>
-        <div className="mt-4 rounded-md bg-accent text-black text-center font-bold uppercase italic tracking-wide py-3">▸ {trainedToday ? 'Open Train' : 'Start workout'}</div>
-      </div>
+        <span className="block text-xs uppercase tracking-[0.14em] text-accent">{t('Today')}</span>
+        <span className="block text-3xl font-bold uppercase italic leading-none mt-2">{hero.title}</span>
+        <span className="block text-sm text-muted mt-2">{hero.body}</span>
+        <span className={`mt-4 block rounded-md text-center font-bold uppercase italic tracking-wide py-3 ${quiet ? 'bg-surface-2 text-text' : 'bg-accent text-black'}`}>▸ {hero.cta}</span>
+      </button>
 
-      {/* Summary gauges — live vitals at a glance */}
-      <Card>
-        <div className="grid grid-cols-3 gap-2">
-          <Gauge label="Energy" center={`${Math.round(energyPct)}%`} pct={energyPct} color="rgb(var(--accent))" />
-          <Gauge label="Protein" center={`${Math.round(proteinValue)}g`} pct={proteinPct} color="rgb(var(--accent-2))" />
-          <Gauge label="Steps" center={steps != null ? fmtK(steps) : '–'} pct={stepsPct} color="rgb(var(--success))" />
+      <Card onClick={() => onNav('/nutrition')}>
+        <div className={`grid gap-2 ${steps != null ? 'grid-cols-3' : 'grid-cols-2'}`}>
+          <Gauge
+            label={t('Calories')}
+            center={String(Math.abs(kcalLeft))}
+            sub={kcalLeft >= 0 ? t('left') : t('over')}
+            foot={t('of {n} kcal', { n: energyMax.toLocaleString() })}
+            pct={energyPct}
+            color="rgb(var(--accent))"
+          />
+          <Gauge label={t('Protein')} center={`${Math.round(proteinValue)}`} sub="g" foot={t('of {n} g', { n: proteinMax })} pct={proteinPct} color="rgb(var(--accent-2))" />
+          {steps != null && <Gauge label={t('Steps')} center={fmtK(steps)} foot={t('of 10,000')} pct={(steps / 10000) * 100} color="rgb(var(--success))" />}
         </div>
       </Card>
 
-      {/* Recovery rail */}
-      <Rail title="Recovery" onSee={() => onNav('/health')}>
-        <Chip t="Readiness" v={readiness ? String(readiness.score) : '–'} s={readiness?.label} />
-        <Chip t="Sleep" v={sleepH != null ? String(sleepH) : '–'} s={sleepH != null ? 'h' : undefined} />
-        <Chip t="Resting HR" v={restingHr != null ? String(restingHr) : '–'} s={restingHr != null ? 'bpm' : undefined} />
-      </Rail>
+      {hasRecovery ? (
+        <Rail title={t('Recovery')} onSee={() => onNav('/health')}>
+          {readiness && <Chip t={t('Readiness')} v={String(readiness.score)} s={readiness.label} />}
+          {sleepH != null && <Chip t={t('Sleep')} v={String(sleepH)} s="h" />}
+          {restingHr != null && <Chip t={t('Resting HR')} v={String(restingHr)} s="bpm" />}
+        </Rail>
+      ) : recoveryEnabled ? (
+        <Card onClick={() => onNav('/health')} className="flex items-center gap-3">
+          <Watch size={18} className="text-accent shrink-0" />
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold">{t('Track your recovery')}</p>
+            <p className="text-xs text-muted">{t('Connect a watch or log your sleep to see how ready you are.')}</p>
+          </div>
+          <Badge color="rgb(var(--accent))">{t('Set up')}</Badge>
+        </Card>
+      ) : null}
 
-      {/* Progress rail */}
-      <Rail title="Progress" onSee={() => onNav('/progress')}>
-        <Chip t="Volume · wk" v={fmtK(volumeTotal)} s="kg" />
-        <Chip t="Weight" v={weightKg != null ? String(weightKg) : '–'} s={weightKg != null ? 'kg' : undefined} />
-        <Chip t="PRs" v={String(prs)} s="all-time" />
+      <Rail title={t('Progress')} onSee={() => onNav('/progress')}>
+        <Chip t={t('Volume · 7 days')} v={fmtK(volumeTotal)} s="kg" />
+        {weightKg != null && <Chip t={t('Weight')} v={String(weightKg)} s="kg" />}
+        <Chip t={t('PRs')} v={String(prs)} s={t('all-time')} />
       </Rail>
     </div>
   );
 }
 
-function Gauge({ label, center, pct, color }: { label: string; center: string; pct: number; color: string }) {
+function Gauge({ label, center, sub, foot, pct, color }: { label: string; center: string; sub?: string; foot?: string; pct: number; color: string }) {
   const p = Math.max(0, Math.min(100, pct));
   return (
-    <div className="flex flex-col items-center gap-1.5">
+    <div className="flex flex-col items-center gap-1 text-center">
+      <span className="text-xs uppercase tracking-wider text-muted">{label}</span>
       <div
         className="grid place-items-center rounded-full"
-        style={{ width: 66, height: 66, background: `conic-gradient(${color} ${p}%, rgb(var(--surface-2)) 0)` }}
+        style={{ width: 84, height: 84, background: `conic-gradient(${color} ${p}%, rgb(var(--surface-2)) 0)` }}
       >
-        <div className="grid place-items-center rounded-full bg-surface" style={{ width: 50, height: 50 }}>
-          <span className="font-mono font-bold text-sm">{center}</span>
+        <div className="grid place-items-center rounded-full bg-surface" style={{ width: 68, height: 68 }}>
+          <span className="leading-none">
+            <span className="block font-mono font-bold text-lg leading-none">{center}</span>
+            {sub && <span className="block text-xs text-muted mt-0.5">{sub}</span>}
+          </span>
         </div>
       </div>
-      <span className="text-[10px] uppercase tracking-wider text-muted">{label}</span>
+      {foot && <span className="text-xs text-muted">{foot}</span>}
     </div>
   );
 }
 
 function Rail({ title, onSee, children }: { title: string; onSee: () => void; children: ReactNode }) {
+  const t = useT();
   return (
     <div>
-      <div className="flex items-center justify-between mb-2">
-        <p className="text-[10px] uppercase tracking-[0.12em] text-muted">{title}</p>
-        <button onClick={onSee} className="text-[10px] uppercase tracking-wide text-accent font-semibold">See all ▸</button>
+      <div className="flex items-center justify-between">
+        <p className="text-xs uppercase tracking-[0.12em] text-muted">{title}</p>
+        <button onClick={onSee} className="min-h-[40px] pl-4 text-xs uppercase tracking-wide text-accent font-semibold">{t('See all')} ▸</button>
       </div>
       <div className="flex gap-2 overflow-x-auto no-scrollbar pb-1">{children}</div>
     </div>
@@ -493,11 +498,11 @@ function Rail({ title, onSee, children }: { title: string; onSee: () => void; ch
 
 function Chip({ t, v, s }: { t: string; v: string; s?: string }) {
   return (
-    <div className="fx-card shrink-0 min-w-[104px] p-3">
-      <p className="text-[10px] uppercase tracking-wide text-muted">{t}</p>
-      <p className="font-mono font-bold text-lg mt-1.5 leading-none">
+    <div className="fx-card shrink-0 min-w-[104px] flex-1 p-3">
+      <p className="text-xs uppercase tracking-wide text-muted whitespace-nowrap">{t}</p>
+      <p className="font-mono font-bold text-lg mt-1.5 leading-none whitespace-nowrap">
         {v}
-        {s && <span className="text-muted text-[11px] font-medium"> {s}</span>}
+        {s && <span className="text-muted text-xs font-medium"> {s}</span>}
       </p>
     </div>
   );
