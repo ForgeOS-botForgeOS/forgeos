@@ -286,10 +286,10 @@ function QuestBoard() {
         return (
           <Card key={def.id} className="space-y-2">
             <div className="flex items-center justify-between">
-              <p className="font-semibold text-sm">{def.title}</p>
+              <p className="font-semibold text-sm">{t(def.title)}</p>
               <Badge color="rgb(var(--accent-2))">+{def.xp} XP · 🪙{def.coins}</Badge>
             </div>
-            <p className="text-xs text-muted">{def.description}</p>
+            <p className="text-xs text-muted">{t(def.description)}</p>
             <div className="h-2 rounded-full bg-surface-2 overflow-hidden"><div className="h-full bg-accent rounded-full" style={{ width: `${pct}%` }} /></div>
             <div className="flex items-center justify-between">
               <span className="text-[11px] text-muted font-mono">{Math.round(uq.progress).toLocaleString()} / {def.target.toLocaleString()}</span>

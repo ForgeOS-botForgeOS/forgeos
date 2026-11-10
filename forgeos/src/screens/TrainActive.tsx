@@ -340,7 +340,7 @@ export function ActiveSession({ onOpenTools, toolsOpen, onCloseTools }: { onOpen
 
             {suggestion && (
               <div className="flex items-center gap-2">
-                <p className="flex-1 text-xs text-accent-2 flex items-center gap-1"><Flag size={12} className="shrink-0" /> {suggestion.note}</p>
+                <p className="flex-1 text-xs text-accent-2 flex items-center gap-1"><Flag size={12} className="shrink-0" /> {t(suggestion.note)}</p>
                 {canApply && (
                   <button
                     onClick={() => { open.forEach((x) => updateSet(we.id, x.id, { weightKg: suggestion.weightKg, reps: suggestion.reps })); haptic('success'); }}

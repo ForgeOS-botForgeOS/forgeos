@@ -189,7 +189,7 @@ export default function Train() {
           {tips.map((tip) => (
             <p key={tip.text} className="text-sm flex items-start gap-2">
               <span className="shrink-0">{tip.icon}</span>
-              <span>{tip.text}</span>
+              <span>{t(tip.text)}</span>
             </p>
           ))}
         </Card>
@@ -257,7 +257,7 @@ export default function Train() {
         <div>
           <p className="text-xs uppercase tracking-wide text-muted">{t('Periodisation engine')}</p>
           <p className="text-sm mt-1">{t('Next block:')} <b className="capitalize">{rec.nextBlock}</b></p>
-          <p className="text-xs text-muted mt-1">{rec.reason}</p>
+          <p className="text-xs text-muted mt-1">{t(rec.reason)}</p>
           <p className="text-[11px] text-muted/70 mt-1">{t('avg RPE')} {rec.avgRpe || '–'} {t('· about')} {rec.weeklyVolume.toLocaleString()} {t('kg a week on average')}</p>
         </div>
       </Card>

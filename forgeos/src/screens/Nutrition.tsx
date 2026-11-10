@@ -306,7 +306,7 @@ export default function Nutrition() {
 
       <Card className="flex gap-3 items-start bg-surface-2">
         <Sparkles size={16} className="text-accent-2 mt-0.5 shrink-0" />
-        <p className="text-sm">{goalText[profile?.goal ?? 'recomp']}</p>
+        <p className="text-sm">{t(goalText[profile?.goal ?? 'recomp'])}</p>
       </Card>
 
       {/* The cookbook and the goal plan are full screens now */}

@@ -257,7 +257,7 @@ export default function Home() {
           <Lightbulb size={18} className="text-accent-2 mt-0.5 shrink-0" />
           <div>
             <p className="text-xs uppercase tracking-wide text-muted">{t('home.scienceTip')}</p>
-            <p className="text-sm mt-1">{tipOfTheDay(dayIdx)}</p>
+            <p className="text-sm mt-1">{t(tipOfTheDay(dayIdx))}</p>
           </div>
         </Card>
 
