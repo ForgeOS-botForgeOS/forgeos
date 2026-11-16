@@ -15,6 +15,7 @@ import { DialogHost } from './components/DialogHost';
 import { PasswordReset } from './components/PasswordReset';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ScreenSkeleton } from './components/Skeleton';
+import { TrailerGate } from './components/promo/TrailerGate';
 import { useUser } from './state/userStore';
 import { useSettings } from './state/settingsStore';
 import { useGami } from './state/gamificationStore';
@@ -73,6 +74,7 @@ const PublicProfile = lazy(() => import('./screens/PublicProfile'));
 const Progress = lazy(() => import('./screens/Progress'));
 const Health = lazy(() => import('./screens/Health'));
 const Download = lazy(() => import('./screens/Download'));
+const Trailer = lazy(() => import('./screens/Trailer'));
 const ImportProgress = lazy(() => import('./screens/ImportProgress'));
 const AddFriend = lazy(() => import('./screens/AddFriend'));
 const RaceJoin = lazy(() => import('./screens/RaceJoin'));
@@ -323,11 +325,14 @@ export default function App() {
       <PasswordReset />
       <ErrorBoundary>
       <HashRouter>
+        {/* The 30-second trailer, over the website's front door for new visitors. */}
+        <TrailerGate />
         <Suspense fallback={<ScreenSkeleton />}>
         <Routes>
           <Route element={<PublicShell />}>
             <Route path="/onboarding" element={<Onboarding />} />
             <Route path="/download" element={<Download />} />
+            <Route path="/trailer" element={<Trailer />} />
             <Route path="/add-friend" element={<AddFriend />} />
           </Route>
           <Route

@@ -1,5 +1,6 @@
 import { useId } from 'react';
 import { useSettings } from '../state/settingsStore';
+import type { DesignMode } from '../types';
 
 // The ForgeOS anvil-and-spark mark, as crisp vector — same design as the app
 // icon. `tile` wraps it in the brand square (for splash/branding); without it
@@ -7,8 +8,10 @@ import { useSettings } from '../state/settingsStore';
 // design mode so in-app branding matches the look: Tempo = signal-teal tile with
 // a heat spark, Nova = rounded violet→magenta→coral gradient, Bolt = sharp ink
 // tile with an electric-yellow spark, Legacy = the original rounded orange.
-export function ForgeLogo({ size = 64, tile = false, className = '' }: { size?: number; tile?: boolean; className?: string }) {
-  const mode = useSettings((s) => s.designMode);
+// `mode` pins one look regardless of the setting (the trailer is always Tempo).
+export function ForgeLogo({ size = 64, tile = false, className = '', mode: pinned }: { size?: number; tile?: boolean; className?: string; mode?: DesignMode }) {
+  const chosen = useSettings((s) => s.designMode);
+  const mode = pinned ?? chosen;
   const gradId = useId();
   const markColor = tile ? (mode === 'v2' ? '#0E1116' : '#F5F5F7') : 'currentColor';
   const spark = mode === 'nova' ? '#FFFFFF' : mode === 'bolt' ? '#FACC15' : mode === 'v2' ? '#FF5A3C' : '#FFD34A';

@@ -1,7 +1,7 @@
 import { useT } from '../lib/i18n';
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Smartphone, Download as DownloadIcon, ShieldCheck, Apple, Share, Copy, Check, RefreshCcw } from 'lucide-react';
+import { ChevronLeft, Smartphone, Download as DownloadIcon, ShieldCheck, Apple, Share, Copy, Check, RefreshCcw, PlayCircle } from 'lucide-react';
 import { Capacitor } from '@capacitor/core';
 import { Card, Button, Badge } from '../components/ui';
 import { ForgeLogo } from '../components/ForgeLogo';
@@ -69,6 +69,11 @@ export default function Download() {
         <div className="mx-auto w-fit"><ForgeLogo size={72} tile /></div>
         <h1 className="text-2xl font-extrabold tracking-tight">{t('Get ForgeOS')}</h1>
         <p className="text-sm text-muted">{t('Install the app on any device. No app store needed. You download it right here.')}</p>
+        {!isInstalledApp && (
+          <button onClick={() => navigate('/trailer')} className="mx-auto flex items-center gap-1.5 text-sm font-semibold text-accent min-h-[44px] px-3">
+            <PlayCircle size={16} aria-hidden="true" /> {t('Watch the 30-second trailer')}
+          </button>
+        )}
       </div>
 
       {/* Inside the up-to-date app: no APK download — it updates itself. */}
