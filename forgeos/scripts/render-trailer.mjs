@@ -55,7 +55,14 @@ async function cdp() {
     }
   };
   await new Promise((r) => (ws.onopen = r));
-  const send = (method, params = {}) => new Promise((r) => { id += 1; pending.set(id, r); ws.send(JSON.stringify({ id, method, params })); });
+  const send = (method, params = {}) =>
+    new Promise((r, reject) => {
+      id += 1;
+      const mine = id;
+      const timer = setTimeout(() => reject(new Error(`${method} timed out (did the page reload?)`)), 30000);
+      pending.set(mine, (d) => { clearTimeout(timer); r(d); });
+      ws.send(JSON.stringify({ id: mine, method, params }));
+    });
   const evaluate = async (expression) => {
     const res = await send('Runtime.evaluate', { expression, awaitPromise: true, returnByValue: true });
     if (res.result?.exceptionDetails) throw new Error(res.result.exceptionDetails.exception?.description ?? res.result.exceptionDetails.text);
@@ -67,6 +74,9 @@ async function cdp() {
 try {
   const page = await cdp();
   await page.send('Page.enable');
+  // The site's PWA service worker reloads the page once it installs, which would cut the capture short.
+  await page.send('Network.enable');
+  await page.send('Network.setBypassServiceWorker', { bypass: true });
   await page.send('Emulation.setDeviceMetricsOverride', { width: 360, height: 640, deviceScaleFactor: 3, mobile: true });
   // The language is a stored setting: set it, then load the trailer fresh so the app reads it.
   await page.send('Page.navigate', { url: `${URL_BASE}#/download` });
